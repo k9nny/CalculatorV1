@@ -1,0 +1,15 @@
+D:\проекты Visual Studio\AppCalculator\AppCalculator\bin\Debug\AppCalculator.exe.config
+D:\проекты Visual Studio\AppCalculator\AppCalculator\bin\Debug\AppCalculator.exe
+D:\проекты Visual Studio\AppCalculator\AppCalculator\bin\Debug\AppCalculator.pdb
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.csprojAssemblyReference.cache
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\MainWindow.g.cs
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\App.g.cs
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator_MarkupCompile.cache
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator_MarkupCompile.lref
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\MainWindow.baml
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.g.resources
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.Properties.Resources.resources
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.csproj.GenerateResource.cache
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.csproj.CoreCompileInputs.cache
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.exe
+D:\проекты Visual Studio\AppCalculator\AppCalculator\obj\Debug\AppCalculator.pdb
