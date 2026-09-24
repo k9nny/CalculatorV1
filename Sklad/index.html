@@ -204,6 +204,87 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 .toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:8px;font-weight:500;z-index:70;width:max-content;max-width:calc(100% - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25)}
 .drop{position:fixed;inset:12px;border:3px dashed var(--accent-edge);border-radius:16px;background:color-mix(in srgb,var(--bg) 88%,transparent);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font:700 20px/1.3 var(--f-ui);z-index:40;pointer-events:none}
 .loading .needs-data{opacity:.5;pointer-events:none}
+/* v2 */
+.sum{color:var(--muted);font-size:14px}
+.track{height:8px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);overflow:hidden;margin-top:10px}
+.fill{height:100%;width:0;background:var(--accent);transition:width .3s}
+@media (prefers-reduced-motion:reduce){.fill{transition:none}}
+.tiles.four{grid-template-columns:repeat(4,1fr)}
+@media (max-width:900px){.tiles.four{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:460px){.tiles.four{grid-template-columns:1fr}}
+.notice{border:1.5px solid var(--accent-edge);background:var(--accent-soft);border-radius:var(--r);padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.notice p{margin:0;flex:1 1 320px;max-width:72ch}
+.ph{display:inline-block;flex:none;object-fit:cover;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);vertical-align:middle}
+.ph.sm{width:30px;height:40px}.ph.md{width:48px;height:64px}.ph.lg{width:72px;height:96px}
+.prod{display:flex;gap:10px;align-items:center;min-width:0}
+.prod>div{min-width:0}
+.ship{font-family:var(--f-mono);font-size:13px;white-space:nowrap}
+.addrow{display:grid;grid-template-columns:1fr 90px auto;gap:10px;align-items:end;margin-top:14px;max-width:640px}
+.addrow.ex{grid-template-columns:1fr 80px 170px auto;max-width:none}
+@media (max-width:600px){.addrow,.addrow.ex{grid-template-columns:1fr 90px}.addrow .btn,.addrow.ex label:nth-child(3){grid-column:1/-1}}
+.pav{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.pav>header{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.pav>header h3{font:800 17px/1.2 var(--f-display);letter-spacing:.02em;margin-right:auto}
+.pav>header .sum{color:var(--muted);font-size:14px}
+.model{display:grid;grid-template-columns:auto 1fr;gap:12px 14px;padding:14px 18px;border-bottom:1px dashed var(--line)}
+.model>div{min-width:0}
+.model:last-child{border-bottom:0}
+@media (max-width:560px){.model{padding:12px 14px}.pav>header{padding:12px 14px}}
+.model h4{margin:0;font:700 15px/1.3 var(--f-mono);word-break:break-all}
+.model .nm{margin-top:3px}
+.sz{width:auto;border-collapse:collapse;margin-top:8px;font-size:14px}
+.sz th:nth-child(2),.sz td:nth-child(2){width:80px}.sz th:nth-child(3),.sz td:nth-child(3){width:100px}.sz td:nth-child(4){width:40px}
+.sz th{font:600 11px/1.2 var(--f-ui);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:4px 8px 6px 0}
+.sz th.num,.sz td.num{text-align:right}
+.sz td{padding:4px 8px 4px 0;border-top:1px solid var(--line);vertical-align:middle}
+.sz td.size{font:700 15px var(--f-mono);width:70px}
+.sz .qin{width:80px}
+.plus{display:flex;gap:6px;align-items:center;margin-top:8px}
+.plus .in{width:110px;padding:7px 9px;font-size:14px}
+.plus .btn{min-height:36px;padding:7px 10px;font-size:13px}
+.golist{display:grid;gap:8px}
+.go{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 14px;border:1.5px solid var(--line);border-radius:8px}
+.go b{font:800 15px var(--f-display)}
+.go .sum{color:var(--muted);font-size:14px;margin-right:auto}
+.go .btn{min-height:38px;padding:8px 12px}
+.cnt{display:grid;grid-template-columns:64px 1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cnt .size{font:700 18px var(--f-mono)}
+.cnt .ord{color:var(--muted);font-size:14px}
+.cnt.ok .ord{color:var(--good);font-weight:600}
+.cnt.less .ord{color:var(--warn);font-weight:600}
+.cnt.more .ord{color:var(--bad);font-weight:600}
+.step{display:flex;align-items:center;gap:6px}
+.step button{appearance:none;width:46px;height:46px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink);font:600 22px/1 var(--f-ui);cursor:pointer}
+.step button.pl{background:var(--accent);border-color:var(--accent-edge);color:var(--accent-ink)}
+.step button:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.step .cin{width:60px;text-align:center;font:700 18px var(--f-mono);padding:10px 4px}
+.sticky-actions{position:sticky;bottom:env(safe-area-inset-bottom,0px);z-index:3;box-shadow:0 -6px 20px rgba(0,0,0,.08)}
+.recv-model{display:grid;gap:10px}
+.rm-head{display:flex;gap:14px;align-items:center;min-width:0}
+.rm-head>div{min-width:0}
+.cnt>*{min-width:0}
+@media (max-width:420px){.cnt{grid-template-columns:44px 1fr auto;gap:6px 8px}.step button{width:42px;height:42px}.step .cin{width:50px}}
+.recv-model h4{margin:0;font:700 15px/1.3 var(--f-mono);word-break:break-all}
+.szchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.szc{font:600 13px/1 var(--f-mono);padding:6px 8px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}
+.szc.old{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.szc.dead{background:var(--bad-soft);border-color:transparent;color:var(--bad)}
+.szc.neg{background:var(--bad);color:#fff;border-color:transparent}
+.mrow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.mrow:last-child{border-bottom:0}
+.mrow .tot{font:700 17px var(--f-mono);text-align:right;white-space:nowrap}
+.mrow .tot small{display:block;font:500 12px var(--f-ui);color:var(--muted)}
+.sortsel{width:auto;min-width:0;font-size:14px;padding:9px 10px}
+details.rep{border:1.5px solid var(--line);border-radius:8px;padding:10px 14px}
+details.rep+details.rep{margin-top:8px}
+details.rep summary{cursor:pointer;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;list-style:none}
+details.rep summary::-webkit-details-marker{display:none}
+details.rep summary b{font:800 14px var(--f-display)}
+details.rep[open] summary{margin-bottom:10px}
+.retrow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.retrow:last-child{border-bottom:0}
+.retrow .btn{min-height:36px;padding:7px 10px;font-size:13px;margin-left:auto}
+.pavtag{font:700 11px/1 var(--f-mono);padding:4px 6px;border-radius:4px;background:var(--hazard);color:var(--accent)}
 </style>
 </head>
 <body>
@@ -211,63 +292,138 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
   <header class="top">
     <div class="brand">
       <div class="logo">Склад</div>
-      <div class="tagline">приёмка · остатки · дозаказ</div>
+      <div class="tagline">лист подбора · закупка · приёмка</div>
     </div>
-    <div class="kpi"><span class="num" id="kArt">0</span><span class="lbl" id="kArtL">артикулов в наличии</span></div>
     <div class="kpi"><span class="num" id="kQty">0</span><span class="lbl">штук на складе</span></div>
+    <div class="kpi"><span class="num" id="kGo">0</span><span class="lbl">штук едет</span></div>
+    <div class="kpi"><span class="num" id="kShort">0</span><span class="lbl">штук не хватает</span></div>
     <div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div>
   </header>
   <div class="stripe" aria-hidden="true"></div>
 
   <nav class="tabs" role="tablist" aria-label="Разделы">
-    <button class="tab" role="tab" id="t-receipt" data-tab="receipt" aria-selected="true">Приёмка <span class="badge" id="bRc" hidden></span></button>
+    <button class="tab" role="tab" id="t-day" data-tab="day" aria-selected="true">День <span class="badge hot" id="bDay" hidden></span></button>
+    <button class="tab" role="tab" id="t-buy" data-tab="buy" aria-selected="false">Закупка <span class="badge" id="bBuy" hidden></span></button>
+    <button class="tab" role="tab" id="t-recv" data-tab="recv" aria-selected="false">Приёмка <span class="badge" id="bRecv" hidden></span></button>
     <button class="tab" role="tab" id="t-stock" data-tab="stock" aria-selected="false">Склад</button>
-    <button class="tab" role="tab" id="t-orders" data-tab="orders" aria-selected="false">Заказы и дозаказ <span class="badge hot" id="bOr" hidden></span></button>
     <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false">Настройки</button>
   </nav>
 
   <main class="needs-data">
-    <!-- ПРИЁМКА -->
-    <section class="pane stack" id="pane-receipt" role="tabpanel" aria-labelledby="t-receipt">
+    <!-- ДЕНЬ -->
+    <section class="pane stack" id="pane-day" role="tabpanel" aria-labelledby="t-day">
       <div class="card">
-        <h2>Приёмка и пересчёт</h2>
-        <p class="hint">Введите артикул и количество или просканируйте штрихкод — сканер сам нажмёт Enter. Одинаковые артикулы складываются. На склад товар попадёт, когда вы проведёте список.</p>
-        <ol class="steps" id="howto" hidden>
-          <li><b>Примите товар</b>Посчитайте всё, что есть, и нажмите «Это полный пересчёт».</li>
-          <li><b>Загрузите заказы</b>Во вкладке «Заказы» выберите выгрузку из Excel.</li>
-          <li><b>Скачайте «Докупить»</b>Готовый список того, чего не хватает, для ТЦ Москва.</li>
-        </ol>
-        <form class="scan" id="scanForm" autocomplete="off">
-          <label class="fld">Артикул или штрихкод<input class="in big" id="scanArt" spellcheck="false" autocapitalize="characters" enterkeyhint="done"></label>
-          <label class="fld">Кол-во, шт.<input class="in big" id="scanQty" inputmode="decimal" value="1"></label>
-          <button class="btn primary" type="submit">Добавить</button>
-        </form>
-        <div class="scaninfo" id="scanInfo" aria-live="polite"></div>
+        <h2>Лист подбора</h2>
+        <p class="hint">Загрузите лист подбора Озона (PDF) или выгрузку отправлений из Excel. Товар со склада достаётся сначала отправлениям с прошлых дней, потом новым. Отправления, которые уже есть в программе, не задвоятся.</p>
         <div class="row mt">
-          <button class="btn" type="button" data-import="receipt">Загрузить накладную (Excel, CSV)</button>
-          <button class="btn" type="button" data-paste="receipt">Вставить из Excel</button>
+          <button class="btn primary" type="button" data-import="orders">Загрузить лист подбора</button>
+          <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
         </div>
+        <div class="ometa" id="dayMeta"></div>
+        <div class="ometa" id="photoStatus" hidden></div>
       </div>
-
-      <div class="card">
+      <ol class="steps" id="dayEmpty">
+        <li><b>Загрузите лист подбора</b>Программа отдаст товар со склада и покажет, чего не хватает.</li>
+        <li><b>Оформите закупку</b>На вкладке «Закупка» впишите, сколько берёте, хоть целый мешок. Товар со склада в этот момент спишется под отправления.</li>
+        <li><b>Примите мешок</b>На вкладке «Приёмка» посчитайте, что приехало. Товар разложится по отправлениям, остаток уйдёт на склад.</li>
+      </ol>
+      <div class="tiles four" id="dayTiles" hidden>
+        <div class="tile"><span class="k">В работе</span><span class="v" id="tAll">0</span><span class="s" id="tAllS"></span></div>
+        <div class="tile"><span class="k">Можно собирать</span><span class="v" id="tPick">0</span><span class="s" id="tPickS"></span></div>
+        <div class="tile"><span class="k">Ждут мешок</span><span class="v" id="tWait">0</span><span class="s" id="tWaitS"></span></div>
+        <div class="tile hot"><span class="k">Не хватает</span><span class="v" id="tShort">0</span><span class="s" id="tShortS"></span></div>
+      </div>
+      <div class="notice" id="dayPending" hidden></div>
+      <div class="card" id="dayCard" hidden>
         <div class="lhead">
-          <h3>Список приёмки</h3>
-          <span class="sum" id="rcSum"></span>
-          <input class="in search" id="rcSearch" type="search" placeholder="Поиск в списке" aria-label="Поиск в списке приёмки">
+          <div class="seg" role="group" aria-label="Фильтр отправлений" id="daySeg">
+            <button type="button" data-f="all" aria-pressed="true">Все</button>
+            <button type="button" data-f="pick" aria-pressed="false">Собирать</button>
+            <button type="button" data-f="wait" aria-pressed="false">Ждут мешок</button>
+            <button type="button" data-f="short" aria-pressed="false">Не хватает</button>
+          </div>
+          <input class="in search" id="daySearch" type="search" placeholder="Отправление или артикул" aria-label="Поиск по отправлениям">
         </div>
         <div class="tw">
           <table class="t">
-            <thead><tr><th>Товар</th><th class="num">Сейчас на складе</th><th class="num">Принято</th><th><span class="sr" hidden>Удалить</span></th></tr></thead>
-            <tbody id="rcBody"></tbody>
+            <thead><tr><th>Отправление</th><th>Товар</th><th class="num">Шт.</th><th>Статус</th><th><span hidden>Убрать</span></th></tr></thead>
+            <tbody id="dayBody"></tbody>
           </table>
         </div>
-        <button class="btn ghost more" id="rcMore" type="button" hidden>Показать ещё</button>
+        <button class="btn ghost more" id="dayMore" type="button" hidden>Показать ещё</button>
         <div class="actions">
-          <button class="btn primary" id="rcAdd" type="button">Добавить на склад</button>
-          <button class="btn" id="rcReplace" type="button">Это полный пересчёт — заменить склад</button>
-          <button class="btn ghost danger" id="rcClear" type="button">Очистить список</button>
+          <button class="btn" type="button" id="dayExport">Скачать статусы отправлений (Excel)</button>
+          <button class="btn ghost danger" type="button" id="dayClear">Убрать все отправления</button>
         </div>
-        <div class="confirm" id="rcConfirm" hidden></div>
+        <div class="confirm" id="dayConfirm" hidden></div>
+      </div>
+    </section>
+
+    <!-- ЗАКУПКА -->
+    <section class="pane stack" id="pane-buy" role="tabpanel" aria-labelledby="t-buy" hidden>
+      <div class="card">
+        <div class="lhead"><h2 id="buyTitle">Закупка</h2><span class="sum" id="buySum"></span></div>
+        <p class="hint">Здесь всё, чего не хватает под отправления, по павильонам. В поле «Заказать» можно вписать больше, на целый мешок: лишнее поедет на склад. Когда заказали у поставщиков, нажмите «Оформить закупку».</p>
+        <form class="addrow" id="addForm" autocomplete="off">
+          <label class="fld">Добавить артикул в закупку<input class="in mono" id="addArt" placeholder="например, A04-LM9-Ser-1900-46" spellcheck="false"></label>
+          <label class="fld">Шт.<input class="in" id="addQty" inputmode="decimal" value="1"></label>
+          <button class="btn" type="submit">Добавить</button>
+        </form>
+        <div class="actions">
+          <button class="btn primary" type="button" id="buyCommit">Оформить закупку</button>
+          <button class="btn" type="button" id="buyCopy">Скопировать для WhatsApp</button>
+          <button class="btn" type="button" id="buyExport">Скачать Excel</button>
+        </div>
+        <div class="confirm" id="buyConfirm" hidden></div>
+      </div>
+      <div class="stack" id="buyList"></div>
+      <div class="card">
+        <h3>Едут от поставщиков</h3>
+        <div class="golist mt" id="goList"></div>
+        <div class="confirm" id="goConfirm" hidden></div>
+      </div>
+    </section>
+
+    <!-- ПРИЁМКА -->
+    <section class="pane stack" id="pane-recv" role="tabpanel" aria-labelledby="t-recv" hidden>
+      <div class="stack" id="recvHome">
+        <div class="card">
+          <h2>Приёмка мешков</h2>
+          <p class="hint">Выберите закупку, которая приехала, и посчитайте, что пришло на самом деле. Программа сравнит это с заказом, разложит товар по отправлениям, а остаток отправит на склад.</p>
+          <div class="golist mt" id="recvGo"></div>
+          <div class="confirm" id="recvGoConfirm" hidden></div>
+        </div>
+        <div class="card"><h3>Недавние приёмки</h3><div class="mt" id="recvHist"></div></div>
+      </div>
+      <div class="stack" id="recvView" hidden>
+        <div class="card">
+          <button class="btn ghost" type="button" id="recvBack">← Все закупки</button>
+          <h2 id="recvTitle" style="margin-top:8px"></h2>
+          <p class="hint" id="recvSub"></p>
+          <div class="track"><div class="fill" id="recvFill"></div></div>
+          <input class="in search mt" id="recvSearch" type="search" placeholder="Найти модель или размер" aria-label="Найти модель">
+        </div>
+        <div class="stack" id="recvModels"></div>
+        <div class="card">
+          <h3>Не из заказа</h3>
+          <p class="hint">Шуба, которой нет в списке выше. Впишите артикул с бирки и выберите, что с ней делать.</p>
+          <form class="addrow ex" id="exForm" autocomplete="off">
+            <label class="fld">Артикул<input class="in mono" id="exArt" list="artList" spellcheck="false"></label>
+            <label class="fld">Шт.<input class="in" id="exQty" inputmode="decimal" value="1"></label>
+            <label class="fld">Куда<select class="in" id="exTo"><option value="stock">На склад</option><option value="ret">Вернуть поставщику</option></select></label>
+            <button class="btn" type="submit">Добавить</button>
+          </form>
+          <div class="mt" id="recvExtras"></div>
+        </div>
+        <div class="card sticky-actions">
+          <div class="sum" id="recvCount"></div>
+          <div class="actions" style="margin-top:10px">
+            <button class="btn primary" type="button" id="recvFinish">Провести приёмку</button>
+            <button class="btn" type="button" id="recvAsIs">Принять как заявлено</button>
+          </div>
+          <div class="confirm" id="recvConfirm" hidden></div>
+        </div>
+        <datalist id="artList"></datalist>
       </div>
     </section>
 
@@ -279,86 +435,85 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
           <span class="sum" id="stSum"></span>
           <input class="in search" id="stSearch" type="search" placeholder="Поиск по артикулу или названию" aria-label="Поиск по складу">
         </div>
-        <div class="row" style="margin-bottom:14px">
-          <button class="btn" type="button" data-import="stock">Загрузить остатки из файла</button>
-          <button class="btn" type="button" data-paste="stock">Вставить из Excel</button>
-          <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
+        <div class="row" style="margin-bottom:12px">
+          <div class="seg" role="group" aria-label="Вид" id="stSeg">
+            <button type="button" data-v="models" aria-pressed="true">По моделям</button>
+            <button type="button" data-v="flat" aria-pressed="false">По артикулам</button>
+          </div>
+          <select class="in sortsel" id="stSort" aria-label="Сортировка">
+            <option value="pav">По павильонам</option>
+            <option value="old">Дольше всего без продаж</option>
+            <option value="big">Больше всего штук</option>
+          </select>
         </div>
-        <div class="tw">
+        <div id="stModels"></div>
+        <div class="tw" id="stFlat" hidden>
           <table class="t">
             <thead><tr><th>Товар</th><th class="num">Остаток, шт.</th><th><span hidden>Удалить</span></th></tr></thead>
             <tbody id="stBody"></tbody>
           </table>
         </div>
         <button class="btn ghost more" id="stMore" type="button" hidden>Показать ещё</button>
+        <p class="hint small">Жёлтый размер лежит без продаж 14 дней и дольше, красный — 30 дней и дольше.</p>
+        <div class="row mt">
+          <button class="btn" type="button" data-import="stock">Загрузить остатки из файла</button>
+          <button class="btn" type="button" data-paste="stock">Вставить из Excel</button>
+          <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
+        </div>
         <div class="confirm" id="stConfirm" hidden></div>
       </div>
+
+      <div class="card">
+        <h2>Пересчёт и ручной приход</h2>
+        <p class="hint">Введите артикул и количество или просканируйте штрихкод. Одинаковые артикулы складываются. Потом добавьте список на склад или замените им весь склад, если это полный пересчёт.</p>
+        <form class="scan" id="scanForm" autocomplete="off">
+          <label class="fld">Артикул или штрихкод<input class="in big" id="scanArt" spellcheck="false" autocapitalize="characters" enterkeyhint="done"></label>
+          <label class="fld">Кол-во, шт.<input class="in big" id="scanQty" inputmode="decimal" value="1"></label>
+          <button class="btn primary" type="submit">Добавить</button>
+        </form>
+        <div class="scaninfo" id="scanInfo" aria-live="polite"></div>
+        <div class="row mt">
+          <button class="btn" type="button" data-import="receipt">Загрузить из файла</button>
+          <button class="btn" type="button" data-paste="receipt">Вставить из Excel</button>
+        </div>
+        <div class="lhead mt">
+          <h3>Список</h3>
+          <span class="sum" id="rcSum"></span>
+          <input class="in search" id="rcSearch" type="search" placeholder="Поиск в списке" aria-label="Поиск в списке пересчёта">
+        </div>
+        <div class="tw">
+          <table class="t">
+            <thead><tr><th>Товар</th><th class="num">Сейчас на складе</th><th class="num">Посчитано</th><th><span hidden>Удалить</span></th></tr></thead>
+            <tbody id="rcBody"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost more" id="rcMore" type="button" hidden>Показать ещё</button>
+        <div class="actions">
+          <button class="btn primary" id="rcAdd" type="button">Добавить на склад</button>
+          <button class="btn" id="rcReplace" type="button">Это полный пересчёт — заменить склад</button>
+          <button class="btn ghost danger" id="rcClear" type="button">Очистить список</button>
+        </div>
+        <div class="confirm" id="rcConfirm" hidden></div>
+      </div>
+
+      <div class="card">
+        <div class="lhead"><h3>Вернуть поставщикам</h3><span class="sum" id="retSum"></span></div>
+        <div id="retList"></div>
+        <button class="btn mt" type="button" id="retCopy" hidden>Скопировать список</button>
+      </div>
+
       <div class="card">
         <h3>Журнал операций</h3>
         <ol class="log" id="log"></ol>
       </div>
     </section>
 
-    <!-- ЗАКАЗЫ -->
-    <section class="pane stack" id="pane-orders" role="tabpanel" aria-labelledby="t-orders" hidden>
-      <div class="card">
-        <h2>Заказы → что докупить</h2>
-        <p class="hint">Загрузите лист подбора Озона (PDF) или выгрузку заказов из Excel. Одинаковые артикулы сложатся, программа сравнит их с остатками и покажет, чего не хватает. Можно выбрать сразу несколько файлов.</p>
-        <div class="row mt">
-          <button class="btn primary" type="button" data-import="orders">Загрузить заказы</button>
-          <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
-          <button class="btn ghost danger" type="button" id="orNew" hidden>Новый заказ</button>
-        </div>
-        <div class="ometa" id="orMeta"></div>
-        <div class="confirm" id="orTopConfirm" hidden></div>
-        <div class="example" id="orExample">
-          <div class="lab"><span class="chip new">Пример</span>Так выглядит результат после загрузки заказов</div>
-          <div class="tw">
-            <table class="t">
-              <thead><tr><th>Товар</th><th class="num">Заказано</th><th class="num">На складе</th><th class="num">Докупить</th><th>Статус</th></tr></thead>
-              <tbody>
-                <tr><td><span class="art">77019</span><span class="nm">Подушка декоративная 40×40</span></td><td class="num">6</td><td class="num">0</td><td class="num strong">6</td><td><span class="chip bad">нет на складе</span></td></tr>
-                <tr><td><span class="art">A-4471</span><span class="nm">Плед флисовый серый</span></td><td class="num">8</td><td class="num">3</td><td class="num strong">5</td><td><span class="chip warn">не хватает</span></td></tr>
-                <tr><td><span class="art">00123</span><span class="nm">Кружка белая 350 мл</span></td><td class="num">12</td><td class="num">20</td><td class="num">—</td><td><span class="chip good">хватает</span></td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div class="tiles" id="orTiles" hidden>
-        <div class="tile"><span class="k">В заказе</span><span class="v" id="tNeed">0</span><span class="s" id="tNeedS"></span></div>
-        <div class="tile"><span class="k">Есть на складе</span><span class="v" id="tHave">0</span><span class="s" id="tHaveS"></span></div>
-        <div class="tile hot"><span class="k" id="tShortK">Докупить</span><span class="v" id="tShort">0</span><span class="s" id="tShortS"></span></div>
-      </div>
-
-      <div class="card" id="orCard" hidden>
-        <div class="lhead">
-          <div class="seg" role="group" aria-label="Фильтр">
-            <button type="button" data-f="short" aria-pressed="true">Докупить</button>
-            <button type="button" data-f="all" aria-pressed="false">Все</button>
-            <button type="button" data-f="ok" aria-pressed="false">Хватает</button>
-          </div>
-          <input class="in search" id="orSearch" type="search" placeholder="Поиск по заказу" aria-label="Поиск по заказу">
-        </div>
-        <div class="tw">
-          <table class="t">
-            <thead><tr><th>Товар</th><th class="num">Заказано</th><th class="num" id="orHaveH">На складе</th><th class="num">Докупить</th><th>Статус</th></tr></thead>
-            <tbody id="orBody"></tbody>
-          </table>
-        </div>
-        <button class="btn ghost more" id="orMore" type="button" hidden>Показать ещё</button>
-        <div class="actions">
-          <button class="btn primary" type="button" id="orExport">Скачать список «Докупить» (Excel)</button>
-          <button class="btn" type="button" id="orCopy">Копировать список</button>
-          <button class="btn" type="button" id="orOff">Списать заказ со склада</button>
-        </div>
-        <div class="confirm" id="orConfirm" hidden></div>
-      </div>
-    </section>
-
     <!-- НАСТРОЙКИ -->
     <section class="pane stack" id="pane-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
+      <div class="card">
+        <h2>Как читать артикул</h2>
+        <label class="opt"><input type="checkbox" id="optPav"><div><b>Первая часть артикула — павильон</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> павильон — <code class="k">A04</code>. По нему закупка делится на части. Последняя часть, если это размер (<code class="k">42</code>, <code class="k">3XL</code>), всегда считается размером.</span></div></label>
+      </div>
       <div class="card">
         <h2>Как сравнивать артикулы</h2>
         <p class="hint">Один и тот же товар в разных файлах бывает записан по-разному. Эти правила помогают понять, что это один артикул. Большие и маленькие буквы не различаются никогда.</p>
@@ -374,7 +529,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
       </div>
       <div class="card">
         <h2>Поставщик</h2>
-        <p class="hint">Где вы докупаете недостающий товар. Название попадёт в заголовок и имя файла.</p>
+        <p class="hint">Где вы докупаете товар. Название попадёт в заголовок и имя файла закупки.</p>
         <label class="fld mt" style="max-width:420px">Поставщик<input class="in" id="optSupplier"></label>
       </div>
       <div class="card">
@@ -409,6 +564,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
           <label class="fld">Колонка «Артикул»<select class="in" id="impArt"></select></label>
           <label class="fld">Колонка «Количество»<select class="in" id="impQty"></select></label>
           <label class="fld">Колонка «Наименование»<select class="in" id="impName"></select></label>
+          <label class="fld" id="impShipF">Колонка «Номер отправления»<select class="in" id="impShip"></select></label>
         </div>
         <div class="tw prev"><table class="t" id="impPrev"></table></div>
         <div class="stats" id="impStats"></div>
@@ -424,7 +580,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 
 <div class="modal" id="cpy" role="dialog" aria-modal="true" aria-labelledby="cpyTitle" hidden>
   <div class="sheet" style="max-width:640px">
-    <header><h2 id="cpyTitle">Скопируйте список</h2><button class="x" type="button" id="cpyX" aria-label="Закрыть">×</button></header>
+    <header><h2 id="cpyTitle">Скопируйте текст</h2><button class="x" type="button" id="cpyX" aria-label="Закрыть">×</button></header>
     <div class="sbody">
       <p class="hint" style="margin:0">Текст уже выделен — нажмите Ctrl+C (на телефоне: «Копировать»), затем вставьте в Excel или в сообщение.</p>
       <textarea class="in cpytext" id="cpyText" readonly></textarea>
@@ -442,7 +598,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 'use strict';
 
 /* ---------- helpers ---------- */
-const NB = 16;
+const NB = 16, DAYMS = 86400000;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -452,20 +608,26 @@ const fmt = n => nf.format(n || 0);
 const qv = n => String(n).replace('.', ',');
 const coll = new Intl.Collator('ru', {numeric: true, sensitivity: 'base'});
 const plural = (n, f) => { const a = Math.abs(Math.trunc(n)) % 100, b = a % 10; return f[(a > 10 && a < 20) ? 2 : b === 1 ? 0 : (b >= 2 && b <= 4) ? 1 : 2]; };
-const W = {ship: ['отправление', 'отправления', 'отправлений'], art: ['артикул', 'артикула', 'артикулов'], row: ['строка', 'строки', 'строк'], file: ['файл', 'файла', 'файлов'], pos: ['позиция', 'позиции', 'позиций']};
+const W = {ship: ['отправление', 'отправления', 'отправлений'], art: ['артикул', 'артикула', 'артикулов'], row: ['строка', 'строки', 'строк'], file: ['файл', 'файла', 'файлов'], pos: ['позиция', 'позиции', 'позиций'], pav: ['павильон', 'павильона', 'павильонов'], model: ['модель', 'модели', 'моделей'], day: ['день', 'дня', 'дней'], pur: ['закупка', 'закупки', 'закупок']};
 const cnt = (n, w) => `${fmt(n)} ${plural(n, w)}`;
+const inPav = n => `в ${fmt(n)} ${plural(n, ['павильоне', 'павильонах', 'павильонах'])}`;
 const trunc = (s, n) => { s = String(s ?? ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 const range = n => Array.from({length: n}, (_, i) => i);
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
-const when = t => { const d = new Date(t); const p = x => String(x).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const p2 = x => String(x).padStart(2, '0');
+const when = t => { const d = new Date(t); return `${p2(d.getDate())}.${p2(d.getMonth() + 1)} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
+const dm = t => { const d = new Date(t); return `${p2(d.getDate())}.${p2(d.getMonth() + 1)}`; };
+const daysSince = t => t ? Math.max(0, Math.floor((Date.now() - t) / DAYMS)) : null;
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
 
 /* ---------- article normalisation ---------- */
-const DEF = {latin: true, zeros: true, punct: true, supplier: 'ТЦ Москва'};
+const DEF = {latin: true, zeros: true, punct: true, pav: true, supplier: 'ТЦ Москва'};
 let S = {...DEF};
 const CYR = {'А':'A','В':'B','Е':'E','Ё':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','У':'Y','Х':'X'};
+const latinUp = s => String(s ?? '').toUpperCase().replace(/[АВЕЁКМНОРСТУХ]/g, c => CYR[c]);
 function normKey(raw, s = S) {
   let t = String(raw ?? '').normalize('NFKC')
     .replace(/[​-‍⁠﻿]/g, '')
@@ -490,18 +652,49 @@ function hash(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^=
 let SEQ = 0;
 const tick = () => (SEQ = Math.max(SEQ + 1, Date.now()));
 
+// A04-LM9-Ser-1900-3XL → павильон A04, модель A04-LM9-Ser-1900, размер 3XL
+const SIZE_RX = /^(\d{2,3}(\/\d{2,3})?|\d?X{0,4}[SML]|XXS|ONESIZE|OS)$/;
+const artCache = new Map();
+function parseArt(a) {
+  const s = String(a ?? '').trim();
+  const ck = (S.pav ? '1' : '0') + s;
+  let r = artCache.get(ck);
+  if (r) return r;
+  const parts = s.split('-');
+  let size = '', model = s;
+  if (parts.length > 1 && SIZE_RX.test(latinUp(parts[parts.length - 1]).replace(/\s+/g, ''))) { size = parts.pop().trim(); model = parts.join('-'); }
+  const pav = S.pav && s.includes('-') ? s.split('-')[0].trim() : '';
+  r = {model, size, pav, mkey: normKey(model)};
+  if (artCache.size > 20000) artCache.clear();
+  artCache.set(ck, r);
+  return r;
+}
+const shortModel = (model, pav) => pav && model.startsWith(pav + '-') ? model.slice(pav.length + 1) : model;
+const SZR = {XXS: 0, XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, '2XL': 6, XXXL: 7, '3XL': 7, '4XL': 8, XXXXL: 8, '5XL': 9, '6XL': 10};
+function sizeRank(sz) { const u = latinUp(sz).replace(/\s+/g, ''); if (u in SZR) return SZR[u]; const n = parseFloat(u); return isFinite(n) ? 100 + n : 1000; }
+const bySize = (a, b) => (sizeRank(a) - sizeRank(b)) || coll.compare(a, b);
+const pavLabel = p => p ? `Павильон ${p}` : 'Без павильона';
+
 /* ---------- storage ---------- */
 let Backend = null, DL = null;
-const ready = {stock: false, receipt: false, order: false, settings: false, log: false, om: false};
+const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false};
+const allReady = () => Object.values(ready).every(Boolean);
 
 function dbBackend(db) {
   const retry = async fn => { try { return await fn(); } catch (e) { if (e && e.code === 'unavailable') { await new Promise(r => setTimeout(r, 400 + Math.random() * 800)); return fn(); } throw e; } };
   const fail = e => syncFail(e);
+  const docs = s => s.docs.filter(d => d.exists).map(d => ({id: d.id, data: d.data()}));
   return {
     kind: 'db',
     set: (p, data) => retry(() => db.doc(p).set(data)),
-    watchColl(name, cb) {
-      db.collection(name).onSnapshot(s => cb(s.docs.filter(d => d.exists).map(d => ({id: d.id, data: d.data()})), s.metadata.fromCache), fail);
+    del: p => retry(() => db.doc(p).delete()),
+    watchColl(name, cb) { db.collection(name).onSnapshot(s => cb(docs(s), s.metadata.fromCache), fail); },
+    watchQuery(name, q, cb) {
+      let r = db.collection(name);
+      if (q.where) r = r.where(...q.where);
+      if (q.order) r = r.orderBy(...q.order);
+      if (q.limit) r = r.limit(q.limit);
+      r.onSnapshot(s => cb(docs(s), s.metadata.fromCache), fail);
     },
     watchDoc(p, cb) { db.doc(p).onSnapshot(d => cb(d.exists ? d.data() : null), fail); },
   };
@@ -511,45 +704,44 @@ function localBackend() {
   try { ls = window.localStorage; ls.setItem('sklad/_t', '1'); ls.removeItem('sklad/_t'); } catch { ls = null; }
   const mem = new Map();
   const read = p => { try { const s = ls ? ls.getItem('sklad/' + p) : mem.get(p); return s ? JSON.parse(s) : null; } catch { return null; } };
+  const list = name => {
+    const pre = name + '/', out = [];
+    const keys = ls ? range(ls.length).map(i => ls.key(i)).filter(k => k && k.startsWith('sklad/' + pre)).map(k => k.slice(6)) : [...mem.keys()].filter(k => k.startsWith(pre));
+    for (const p of keys) { const id = p.slice(pre.length); if (id && !id.includes('/')) { const d = read(p); if (d) out.push({id, data: d}); } }
+    return out;
+  };
+  const onStore = (pre, fn) => addEventListener('storage', e => { if (e.key && e.key.startsWith('sklad/' + pre)) fn(); });
   return {
     kind: ls ? 'local' : 'memory',
     async set(p, data) { const s = JSON.stringify(data); if (ls) ls.setItem('sklad/' + p, s); else mem.set(p, s); },
-    watchColl(name, cb) {
-      const load = () => { const docs = []; for (let b = 0; b < NB; b++) { const d = read(`${name}/b${b}`); if (d) docs.push({id: 'b' + b, data: d}); } cb(docs, false); };
-      setTimeout(load, 0);
-      addEventListener('storage', e => { if (e.key && e.key.startsWith(`sklad/${name}/`)) load(); });
+    async del(p) { if (ls) ls.removeItem('sklad/' + p); else mem.delete(p); },
+    watchColl(name, cb) { const load = () => cb(list(name), false); setTimeout(load, 0); onStore(name + '/', load); },
+    watchQuery(name, q, cb) {
+      const load = () => {
+        let d = list(name);
+        if (q.where) { const [f, , v] = q.where; d = d.filter(x => x.data[f] === v); }
+        if (q.order) { const [f, dir] = q.order; d.sort((a, b) => ((a.data[f] > b.data[f]) - (a.data[f] < b.data[f])) * (dir === 'desc' ? -1 : 1)); }
+        if (q.limit) d = d.slice(0, q.limit);
+        cb(d, false);
+      };
+      setTimeout(load, 0); onStore(name + '/', load);
     },
-    watchDoc(p, cb) {
-      setTimeout(() => cb(read(p)), 0);
-      addEventListener('storage', e => { if (e.key === 'sklad/' + p) cb(read(p)); });
-    },
+    watchDoc(p, cb) { setTimeout(() => cb(read(p)), 0); onStore(p, () => cb(read(p))); },
   };
 }
 
+// a map of items saved as 16 bucket documents in one collection
 class PMap {
-  constructor(name) { this.name = name; this.items = new Map(); this.dirty = new Set(); this.inflight = new Set(); this.timer = 0; this.busy = false; this.again = false; this.fails = 0; this.seen = []; }
+  constructor(name, o) { this.name = name; this.o = o; this.items = new Map(); this.dirty = new Set(); this.inflight = new Set(); this.timer = 0; this.busy = false; this.again = false; this.fails = 0; this.seen = []; }
   bucket(k) { return hash(k) % NB; }
   touch(k) { this.dirty.add(this.bucket(k)); this.schedule(); }
   touchAll() { for (let b = 0; b < NB; b++) this.dirty.add(b); this.schedule(); }
   schedule(ms = 450) { clearTimeout(this.timer); setSync('busy'); this.timer = setTimeout(() => this.flush(), ms); }
-  merge(it) {
-    const k = normKey(it.a); if (!k) return null;
-    const cur = this.items.get(k);
-    if (cur) { cur.q = round(cur.q + it.q); if (!cur.n && it.n) cur.n = it.n; if (cur.s == null && it.s != null) cur.s = it.s; cur.t = Math.max(cur.t, it.t || 0); }
-    else this.items.set(k, {a: it.a, q: round(it.q), n: it.n || '', s: it.s ?? null, t: it.t || 0});
-    return k;
-  }
-  add(a, q, n, t) {
-    a = String(a ?? '').trim(); const k = normKey(a); if (!k) return null;
-    const cur = this.items.get(k);
-    if (cur) { cur.q = round(cur.q + q); if (!cur.n && n) cur.n = n; if (t) cur.t = t; }
-    else this.items.set(k, {a, q: round(q), n: n || '', s: null, t: t || tick()});
-    this.touch(k); return k;
-  }
-  setQty(k, q) { const it = this.items.get(k); if (it) { it.q = round(q); this.touch(k); } }
+  quiet(it) { const k = this.o.key(it); if (!k) return null; const c = this.items.get(k); if (c) this.o.merge(c, it); else this.items.set(k, it); return k; }
+  put(it) { const k = this.quiet(it); if (k) this.touch(k); return k; }
   remove(k) { if (this.items.delete(k)) this.touch(k); }
   clear() { this.items.clear(); this.touchAll(); }
-  rekey() { const all = [...this.items.values()]; this.items.clear(); for (const it of all) this.merge(it); }
+  rekey() { const all = [...this.items.values()]; this.items.clear(); for (const it of all) this.quiet(it); }
   total() { let s = 0; for (const it of this.items.values()) s += it.q; return round(s); }
   applyRemote(docs) {
     let changed = false;
@@ -559,11 +751,11 @@ class PMap {
       if (this.dirty.has(b) || this.inflight.has(b) || d.data === this.seen[b]) continue;
       this.seen[b] = d.data;
       for (const k of [...this.items.keys()]) if (this.bucket(k) === b) this.items.delete(k);
-      const rows = d.data && Array.isArray(d.data.items) ? d.data.items : [];
-      for (const r of rows) {
+      for (const r of (d.data && Array.isArray(d.data.items) ? d.data.items : [])) {
         if (!Array.isArray(r)) continue;
-        const it = {a: String(r[0] ?? ''), q: Number(r[1]) || 0, n: r[2] ? String(r[2]) : '', s: r[3] == null ? null : Number(r[3]), t: Number(r[4]) || 0};
-        this.merge(it); if (it.t > SEQ) SEQ = it.t;
+        const it = this.o.unpack(r);
+        this.quiet(it);
+        const t = it.t || it.i || 0; if (t > SEQ) SEQ = t;
       }
       changed = true;
     }
@@ -572,14 +764,14 @@ class PMap {
   async flush() {
     clearTimeout(this.timer);
     if (this.busy) { this.again = true; return; }
-    if (!Backend || !ready[this.name]) { this.schedule(800); return; }
+    if (!Backend || !allReady()) { this.schedule(800); return; }
     this.busy = true;
     try {
       while (this.dirty.size) {
         const bs = [...this.dirty]; this.dirty.clear();
         bs.forEach(b => this.inflight.add(b));
         const arrs = new Map(bs.map(b => [b, []]));
-        for (const [k, it] of this.items) { const arr = arrs.get(this.bucket(k)); if (arr) arr.push([it.a, it.q, it.n, it.s, it.t]); }
+        for (const [k, it] of this.items) { const arr = arrs.get(this.bucket(k)); if (arr) arr.push(this.o.pack(it)); }
         for (let i = 0; i < bs.length; i++) {
           try { await Backend.set(`${this.name}/b${bs[i]}`, {items: arrs.get(bs[i]), at: Date.now()}); }
           catch (e) { for (let j = i; j < bs.length; j++) { this.dirty.add(bs[j]); this.inflight.delete(bs[j]); } throw e; }
@@ -597,33 +789,70 @@ class PMap {
     }
   }
 }
-const stock = new PMap('stock'), draft = new PMap('receipt'), order = new PMap('order');
-const maps = [stock, draft, order];
+const stock = new PMap('stock', {
+  key: it => normKey(it.a),
+  pack: it => [it.a, it.q, it.n, null, it.t, it.in || 0, it.out || 0],
+  unpack: r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, n: r[2] ? String(r[2]) : '', t: Number(r[4]) || 0, in: Number(r[5]) || 0, out: Number(r[6]) || 0}),
+  merge: (c, it) => { c.q = round(c.q + it.q); if (!c.n && it.n) c.n = it.n; c.t = Math.max(c.t || 0, it.t || 0); if (it.in && (!c.in || it.in < c.in)) c.in = it.in; c.out = Math.max(c.out || 0, it.out || 0); },
+});
+const draft = new PMap('receipt', {
+  key: it => normKey(it.a),
+  pack: it => [it.a, it.q, it.n, null, it.t],
+  unpack: r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, n: r[2] ? String(r[2]) : '', t: Number(r[4]) || 0}),
+  merge: (c, it) => { c.q = round(c.q + it.q); if (!c.n && it.n) c.n = it.n; c.t = Math.max(c.t || 0, it.t || 0); },
+});
+// one line of an order: shipment s, article a, qty q; got = already given (from stock or a bag), w = {purchase id: qty awaited}
+const lines = new PMap('lines', {
+  key: it => { const ak = normKey(it.a); return ak ? (it.s ? String(it.s) : 'r' + it.i) + '|' + ak : null; },
+  pack: it => [it.s, it.a, it.n, it.q, it.got, it.w, it.d, it.i],
+  unpack: r => ({s: r[0] ? String(r[0]) : '', a: String(r[1] ?? ''), n: r[2] ? String(r[2]) : '', q: Number(r[3]) || 0, got: Number(r[4]) || 0, w: r[5] && typeof r[5] === 'object' && !Array.isArray(r[5]) ? {...r[5]} : {}, d: Number(r[6]) || 0, i: Number(r[7]) || 0}),
+  merge: (c, it) => { c.q = round(c.q + it.q); c.got = round(c.got + (it.got || 0)); for (const [p, v] of Object.entries(it.w || {})) c.w[p] = round((c.w[p] || 0) + v); if (!c.n && it.n) c.n = it.n; },
+});
+const maps = [stock, draft, lines];
+const wsum = ln => { let s = 0; for (const v of Object.values(ln.w)) s += v; return round(s); };
 
-let LOG = [];
-let OM = {files: '', at: 0, off: 0};
-const META = {'meta/settings': () => S, 'meta/log': () => ({entries: LOG}), 'meta/order': () => OM};
-const metaSt = {};
-function saveMeta(p) { const st = metaSt[p] || (metaSt[p] = {}); st.dirty = true; clearTimeout(st.timer); setSync('busy'); st.timer = setTimeout(() => flushMeta(p), 300); }
-async function flushMeta(p) {
-  const st = metaSt[p];
+let LOG = [], DAYM = {date: '', file: '', at: 0, expected: 0, ships: 0}, RET = [];
+let PO = new Map();               // order draft: article key → {a, n, q (null = as needed), add}
+const PUR = new Map();            // purchases by id
+const PHOTO = new Map();          // model key → data URL
+const photoUrl = new Map();       // model key → blob URL for <img>
+const META = {
+  'meta/settings': () => S,
+  'meta/log': () => ({entries: LOG}),
+  'meta/day': () => DAYM,
+  'meta/po': () => ({items: [...PO.values()].map(e => [e.a, e.n, e.q, !!e.add])}),
+  'meta/returns': () => ({items: RET.map(r => [r.a, r.q, r.pav, r.at])}),
+};
+const docSt = {};
+function saveDoc(path, get, ms = 300) { const st = docSt[path] || (docSt[path] = {}); st.get = get; st.dirty = true; clearTimeout(st.timer); setSync('busy'); st.timer = setTimeout(() => flushDoc(path), ms); }
+async function flushDoc(path) {
+  const st = docSt[path];
   if (st.busy) { st.again = true; return; }
-  if (!Backend) { st.timer = setTimeout(() => flushMeta(p), 800); return; }
+  if (!Backend || !allReady()) { st.timer = setTimeout(() => flushDoc(path), 800); return; }
   st.busy = true;
   let ok = true;
-  try { while (st.dirty) { st.dirty = false; await Backend.set(p, JSON.parse(JSON.stringify(META[p]()))); } }
-  catch (e) { ok = false; st.dirty = true; syncFail(e); st.timer = setTimeout(() => flushMeta(p), 10000); }
-  finally { st.busy = false; if (st.again) { st.again = false; if (st.dirty) flushMeta(p); } if (ok) syncDone(); }
+  try { while (st.dirty) { st.dirty = false; const data = st.get(); if (data === null) await Backend.del(path); else await Backend.set(path, JSON.parse(JSON.stringify(data))); } }
+  catch (e) { ok = false; st.dirty = true; syncFail(e); st.timer = setTimeout(() => flushDoc(path), 10000); }
+  finally { st.busy = false; if (st.again) { st.again = false; if (st.dirty) flushDoc(path); } if (ok) syncDone(); }
 }
-const metaPending = p => { const st = metaSt[p]; return !!(st && (st.dirty || st.busy)); };
-function log(x) { LOG.unshift({t: Date.now(), x}); if (LOG.length > 200) LOG.length = 200; saveMeta('meta/log'); }
+const docPending = p => { const st = docSt[p]; return !!(st && (st.dirty || st.busy)); };
+const saveMeta = p => saveDoc(p, META[p]);
+function log(x) { LOG.unshift({t: Date.now(), x}); if (LOG.length > 300) LOG.length = 300; saveMeta('meta/log'); }
+
+// purchases: one document each
+const purToDoc = p => ({id: p.id, at: p.at, pav: p.pav, st: p.st, lines: p.lines.map(l => [l.a, l.n, l.q, l.need, l.c]), extra: p.extra.map(e => [e.a, e.q, e.to]), rep: p.rep || null, doneAt: p.doneAt || 0});
+const docToPur = (id, d) => ({id, at: Number(d.at) || 0, pav: String(d.pav || ''), st: d.st === 'done' ? 'done' : 'go',
+  lines: (Array.isArray(d.lines) ? d.lines : []).map(r => ({a: String(r[0] ?? ''), n: r[1] ? String(r[1]) : '', q: Number(r[2]) || 0, need: Number(r[3]) || 0, c: Number(r[4]) || 0, k: normKey(r[0])})),
+  extra: (Array.isArray(d.extra) ? d.extra : []).map(r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, to: r[2] === 'ret' ? 'ret' : 'stock'})),
+  rep: d.rep && typeof d.rep === 'object' ? d.rep : null, doneAt: Number(d.doneAt) || 0});
+const savePur = (id, ms = 400) => saveDoc('purch/' + id, () => PUR.has(id) ? purToDoc(PUR.get(id)) : null, ms);
 
 function setSync(s, text) {
   const el = $('#sync'); el.dataset.s = s;
   const kind = Backend && Backend.kind;
   $('span', el).textContent = text || ({busy: 'Сохранение…', wait: 'Загрузка…', ok: kind === 'db' ? 'Сохранено' : kind === 'local' ? 'Сохранено в этом браузере' : 'Данные не сохраняются'})[s] || '';
 }
-const anyPending = () => maps.some(m => m.busy || m.dirty.size) || Object.keys(metaSt).some(metaPending);
+const anyPending = () => maps.some(m => m.busy || m.dirty.size) || Object.keys(docSt).some(docPending);
 function syncDone() { if (anyPending()) return; if (Backend && Backend.kind === 'memory') setSync('err', 'Данные не сохраняются'); else setSync('ok'); }
 function syncFail(e) {
   const c = e && e.code;
@@ -632,33 +861,71 @@ function syncFail(e) {
   setSync('err', 'Не сохранено: ' + why);
 }
 
+function setPhoto(mk, url) {
+  if (!mk || !url || PHOTO.get(mk) === url) return;
+  PHOTO.set(mk, url);
+  const old = photoUrl.get(mk); if (old) URL.revokeObjectURL(old);
+  try {
+    const [head, b64] = url.split(',');
+    const bin = atob(b64), u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    photoUrl.set(mk, URL.createObjectURL(new Blob([u8], {type: (head.match(/data:([^;]+)/) || [])[1] || 'image/jpeg'})));
+  } catch { photoUrl.set(mk, url); }
+}
+const photoDocId = mk => 'p' + hash(mk).toString(36) + '_' + mk.length;
+
 function subscribe() {
-  const onColl = (m) => (docs, fromCache) => {
-    const ch = m.applyRemote(docs);
-    if (!ready[m.name] && !fromCache) { ready[m.name] = true; checkReady(); }
-    if (ch) render();
-  };
-  Backend.watchColl('stock', onColl(stock));
-  Backend.watchColl('receipt', onColl(draft));
-  Backend.watchColl('order', onColl(order));
   const first = k => { if (!ready[k]) { ready[k] = true; checkReady(); } };
+  const onColl = (m, rk) => (docs, fromCache) => { const ch = m.applyRemote(docs); if (!fromCache) first(rk); if (ch) render(); };
+  Backend.watchColl('stock', onColl(stock, 'stock'));
+  Backend.watchColl('receipt', onColl(draft, 'receipt'));
+  Backend.watchColl('lines', onColl(lines, 'lines'));
+  Backend.watchQuery('purch', {where: ['st', '==', 'go']}, (docs, fromCache) => {
+    const seen = new Set();
+    for (const d of docs) { seen.add(d.id); if (!docPending('purch/' + d.id)) PUR.set(d.id, docToPur(d.id, d.data)); }
+    if (!fromCache) { for (const [id, p] of PUR) if (p.st === 'go' && !seen.has(id) && !docPending('purch/' + id)) PUR.delete(id); first('go'); }
+    render();
+  });
+  Backend.watchQuery('purch', {where: ['st', '==', 'done'], order: ['doneAt', 'desc'], limit: 25}, (docs, fromCache) => {
+    for (const d of docs) if (!docPending('purch/' + d.id)) PUR.set(d.id, docToPur(d.id, d.data));
+    if (!fromCache) first('done');
+    render();
+  });
+  Backend.watchColl('photo', (docs, fromCache) => { for (const d of docs) if (d.data && d.data.k && d.data.img) setPhoto(String(d.data.k), String(d.data.img)); if (!fromCache) first('photo'); render(); });
   Backend.watchDoc('meta/settings', d => {
     first('settings');
-    if (!d || metaPending('meta/settings')) return;
+    if (!d || docPending('meta/settings')) return;
     const ns = {...DEF};
-    for (const k of ['latin', 'zeros', 'punct']) if (typeof d[k] === 'boolean') ns[k] = d[k];
+    for (const k of ['latin', 'zeros', 'punct', 'pav']) if (typeof d[k] === 'boolean') ns[k] = d[k];
     if (typeof d.supplier === 'string' && d.supplier.trim()) ns.supplier = d.supplier;
     const rekey = ns.latin !== S.latin || ns.zeros !== S.zeros || ns.punct !== S.punct;
-    S = ns; if (rekey) maps.forEach(m => m.rekey());
+    S = ns; artCache.clear(); if (rekey) rekeyAll(false);
     renderSettings(); render();
   });
-  Backend.watchDoc('meta/log', d => { first('log'); if (d && Array.isArray(d.entries) && !metaPending('meta/log')) { LOG = d.entries.slice(0, 200); render(); } });
-  Backend.watchDoc('meta/order', d => { first('om'); if (d && !metaPending('meta/order')) { OM = {files: String(d.files || ''), at: +d.at || 0, off: +d.off || 0}; render(); } });
-  // if the store keeps answering from cache, stop waiting after a while
+  Backend.watchDoc('meta/log', d => { first('log'); if (d && Array.isArray(d.entries) && !docPending('meta/log')) { LOG = d.entries.slice(0, 300); render(); } });
+  Backend.watchDoc('meta/day', d => { first('day'); if (d && !docPending('meta/day')) { DAYM = {date: String(d.date || ''), file: String(d.file || ''), at: +d.at || 0, expected: +d.expected || 0, ships: +d.ships || 0}; render(); } });
+  Backend.watchDoc('meta/po', d => {
+    first('po');
+    if (!d || docPending('meta/po')) return;
+    PO = new Map();
+    for (const r of Array.isArray(d.items) ? d.items : []) { const a = String(r[0] ?? ''), k = normKey(a); if (k) PO.set(k, {a, n: r[1] ? String(r[1]) : '', q: r[2] == null ? null : Number(r[2]) || 0, add: !!r[3]}); }
+    render();
+  });
+  Backend.watchDoc('meta/returns', d => {
+    first('ret');
+    if (!d || docPending('meta/returns')) return;
+    RET = (Array.isArray(d.items) ? d.items : []).map(r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, pav: String(r[2] || ''), at: Number(r[3]) || 0}));
+    render();
+  });
   setTimeout(() => { for (const k in ready) ready[k] = true; checkReady(); }, 9000);
 }
-function checkReady() {
-  if (Object.values(ready).every(Boolean)) { document.body.classList.remove('loading'); syncDone(); render(); }
+function checkReady() { if (allReady()) { document.body.classList.remove('loading'); syncDone(); render(); } }
+function rekeyAll(save) {
+  artCache.clear();
+  maps.forEach(m => { m.rekey(); if (save) m.touchAll(); });
+  const po = [...PO.values()]; PO = new Map(); for (const e of po) { const k = normKey(e.a); if (k) PO.set(k, e); }
+  for (const p of PUR.values()) for (const l of p.lines) l.k = normKey(l.a);
+  if (save) saveMeta('meta/po');
 }
 
 /* ---------- file reading ---------- */
@@ -758,7 +1025,7 @@ function pdfHeader(items) {
   list.sort((a, b) => a.x - b.x);
   for (const c of list) c.s = c.parts.sort((a, b) => b.y - a.y).reduce((t, p) => t + (t && !t.endsWith('-') ? ' ' : '') + p.s, '');
   const idx = rx => list.findIndex(c => rx.test(c.s));
-  const h = {list, y: Math.min(...hi.map(i => i.y)), art: idx(/^артикул/i), qty: idx(/^кол/i), name: idx(/^товар|наимен/i), ship: idx(/отправлен|^номер/i), num: idx(/^№/)};
+  const h = {list, y: Math.min(...hi.map(i => i.y)), art: idx(/^артикул/i), qty: idx(/^кол/i), name: idx(/^товар|наимен/i), ship: idx(/отправлен|^номер/i), num: idx(/^№/), photo: idx(/^фото/i)};
   if (h.qty < 0) return null;
   // rows are found by the "№" column: a short number never wraps
   h.anchor = h.num >= 0 ? h.num : h.ship >= 0 ? h.ship : h.qty;
@@ -771,7 +1038,7 @@ async function readPdf(buf, name, onPage) {
   try { doc = await lib.getDocument({data: new Uint8Array(buf), isEvalSupported: false}).promise; }
   catch { throw new Error(`«${name}» не получилось открыть как PDF.`); }
   let h = null, head = '', anyText = false;
-  const rows = [], ships = new Set();
+  const rows = [], boxes = [], ships = new Set();
   for (let p = 1; p <= doc.numPages; p++) {
     onPage(p, doc.numPages);
     const page = await doc.getPage(p);
@@ -799,18 +1066,79 @@ async function readPdf(buf, name, onPage) {
     }
     // wrapped lines of one cell are glued back: the article without spaces, the name with spaces
     const txt = (cell, c, sep) => c < 0 ? '' : (cell[c] || []).slice().sort((a, b) => (Math.round(b.y / 2) - Math.round(a.y / 2)) || (a.x - b.x)).map(i => i.s).join(sep).replace(/\s+/g, ' ').trim();
-    cells.forEach(cell => {
+    const px0 = h.photo >= 0 ? h.list[h.photo].x - 12 : 0, px1 = h.photo >= 0 && h.list[h.photo + 1] ? h.list[h.photo + 1].x - 3 : px0 + 90;
+    cells.forEach((cell, i) => {
       const ship = txt(cell, h.ship, ''), art = txt(cell, h.art, '');
       if (!ship && !art) return;
       if (ship) ships.add(ship);
       rows.push([ship, txt(cell, h.name, ' '), art, txt(cell, h.qty, '')]);
+      const a = anchors[i], up = i ? (anchors[i - 1].y - a.y) / 2 : gap / 2, down = anchors[i + 1] ? (a.y - anchors[i + 1].y) / 2 : gap / 2;
+      boxes.push(h.photo >= 0 ? {p, x0: px0, x1: px1, y0: a.y - down * 0.96, y1: a.y + up * 0.96} : null);
     });
   }
   if (!anyText) throw new Error(`«${name}»: в PDF нет текста, это картинка. Скачайте лист подбора из кабинета Озона заново.`);
   if (!rows.length) throw new Error(`«${name}»: не нашлась таблица с колонками «Артикул» и «Кол-во». Это точно лист подбора Озона?`);
   const m = head.match(/Количество отправлений:?\s*(\d+)/i), d = head.match(/Дата:?\s*(\d{2}\.\d{2}\.\d{4})/i), w = head.match(/Склад:?\s*(.+?)\s+Служба/i);
-  return {name, info: {expected: m ? +m[1] : null, date: d ? d[1] : '', wh: w ? w[1].trim() : '', ships: ships.size},
+  return {name, pdf: doc, boxes, info: {expected: m ? +m[1] : null, date: d ? d[1] : '', wh: w ? w[1].trim() : '', ships: ships.size},
     sheets: [{name: 'Лист подбора', rows: [['Номер отправления', 'Товар', 'Артикул', 'Кол-во'], ...rows]}]};
+}
+// product photos: the picking list already has them, so they are cut out of the rendered pages
+let photoJob = Promise.resolve();
+function queuePhotos(files, linesByFile) {
+  photoJob = photoJob.then(() => extractPhotos(files, linesByFile)).catch(e => { console.warn('photos', e); $('#photoStatus').hidden = true; });
+}
+async function extractPhotos(files, linesByFile) {
+  const el = $('#photoStatus');
+  for (let fi = 0; fi < files.length; fi++) {
+    const f = files[fi];
+    if (!f.pdf) continue;
+    const need = new Map();   // page → [{mk, box}]
+    const chosen = new Set();
+    for (const l of linesByFile[fi] || []) {
+      const mk = parseArt(l.a).mkey, box = f.boxes[l.r - 1];
+      if (!mk || !box || PHOTO.has(mk) || chosen.has(mk)) continue;
+      chosen.add(mk);
+      (need.get(box.p) || need.set(box.p, []).get(box.p)).push({mk, box});
+    }
+    const pages = [...need.keys()].sort((a, b) => a - b);
+    let done = 0;
+    for (const p of pages) {
+      el.hidden = false; el.textContent = `Собираю фото моделей из листа: ${fmt(done)} из ${fmt(chosen.size)}`;
+      const page = await f.pdf.getPage(p);
+      const vp = page.getViewport({scale: 2});
+      const cv = document.createElement('canvas'); cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+      const ctx = cv.getContext('2d', {willReadFrequently: true});
+      await page.render({canvasContext: ctx, viewport: vp}).promise;
+      for (const {mk, box} of need.get(p)) {
+        const [ax, ay] = vp.convertToViewportPoint(box.x0, box.y1), [bx, by] = vp.convertToViewportPoint(box.x1, box.y0);
+        const sx = Math.max(0, Math.floor(Math.min(ax, bx))), sy = Math.max(0, Math.floor(Math.min(ay, by)));
+        const sw = Math.min(cv.width - sx, Math.ceil(Math.abs(bx - ax))), sh = Math.min(cv.height - sy, Math.ceil(Math.abs(by - ay)));
+        if (sw < 8 || sh < 8) continue;
+        // trim the white margin around the picture; full-width rows are the table's separator lines
+        const px = ctx.getImageData(sx, sy, sw, sh).data;
+        const ink = (x, y) => { const o = (y * sw + x) * 4; return px[o] < 236 || px[o + 1] < 236 || px[o + 2] < 236; };
+        const rowInk = new Uint32Array(sh);
+        for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) if (ink(x, y)) rowInk[y]++;
+        let x0 = sw, y0 = sh, x1 = -1, y1 = -1;
+        for (let y = 0; y < sh; y++) {
+          if (!rowInk[y] || rowInk[y] >= sw * 0.97) continue;
+          for (let x = 0; x < sw; x++) if (ink(x, y)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        }
+        done++;
+        if (x1 - x0 < 10 || y1 - y0 < 10) continue;
+        const cw = x1 - x0 + 1, ch = y1 - y0 + 1, H = 160, r = Math.min(1, H / ch);
+        const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(cw * r)); out.height = Math.max(1, Math.round(ch * r));
+        out.getContext('2d').drawImage(cv, sx + x0, sy + y0, cw, ch, 0, 0, out.width, out.height);
+        const url = out.toDataURL('image/jpeg', 0.72);
+        setPhoto(mk, url);
+        saveDoc('photo/' + photoDocId(mk), () => ({k: mk, img: url}), 60);
+      }
+      page.cleanup();
+      render();
+    }
+    try { await f.pdf.destroy(); } catch {}
+  }
+  el.hidden = true;
 }
 async function readFiles(list) {
   const out = [];
@@ -838,6 +1166,7 @@ const RX = {
   qty1: /кол-?во|количеств|^qty|quantity|^шт\.?$|^кол\./i,
   qty2: /остат|в наличии|наличие|^факт|^заказ(ано)?$|^итого\s*шт/i,
   name: /наименован|назван|номенклатур|^товар$|описан|^name$|product/i,
+  ship: /номер\s*отправлен|отправлени|posting|номер\s*заказа|^заказ\s*№|№\s*заказа/i,
 };
 const artRx = [RX.art1, RX.art2, RX.art3, RX.art4];
 function detect(rows) {
@@ -846,13 +1175,14 @@ function detect(rows) {
   let header = -1;
   for (let r = 0; r < lim && header < 0; r++) if (has(r, artRx)) header = r;
   for (let r = 0; r < lim && header < 0; r++) if (has(r, [RX.qty1])) header = r;
-  const m = {header, art: -1, qty: -1, name: -1};
+  const m = {header, art: -1, qty: -1, name: -1, ship: -1};
   if (header >= 0) {
     const h = (rows[header] || []).map(v => String(v || ''));
     const find = (rx, not = []) => h.findIndex((v, i) => !not.includes(i) && v.length < 80 && rx.test(v));
     for (const rx of artRx) { const i = find(rx); if (i >= 0) { m.art = i; break; } }
     for (const rx of [RX.qty1, RX.qty2]) { const i = find(rx, [m.art]); if (i >= 0) { m.qty = i; break; } }
     m.name = find(RX.name, [m.art, m.qty]);
+    m.ship = find(RX.ship, [m.art, m.qty, m.name]);
   }
   if (header < 0 || m.art < 0) guess(rows, m);
   if (m.art < 0) m.art = 0;
@@ -890,22 +1220,19 @@ function extract(rows, m) {
     if (m.qty >= 0) { q = parseQty(row[m.qty]); if (q == null) { res.badQty++; continue; } }
     if (/^\d([.,]\d+)?e\+?\d+$/i.test(a)) res.sci++;
     const n = m.name >= 0 ? trunc(String(row[m.name] ?? '').trim(), 160) : '';
-    res.lines.push({a, q, n});
+    const s = m.ship >= 0 ? String(row[m.ship] ?? '').trim() : '';
+    res.lines.push({a, q, n, s, r});
   }
   return res;
 }
 
 /* ---------- import dialog ---------- */
-const IMP = {target: 'receipt', files: [], sheet: 0, m: null, mode: 'add'};
-const TITLES = {receipt: 'Загрузка в список приёмки', stock: 'Загрузка остатков склада', orders: 'Загрузка заказов'};
+const IMP = {target: 'orders', files: [], sheet: 0, m: null, mode: 'add'};
+const TITLES = {orders: 'Загрузка листа подбора', receipt: 'Загрузка в список пересчёта', stock: 'Загрузка остатков склада'};
 const MODES = {
   stock: [
     {v: 'add', b: 'Добавить к остаткам', s: 'Приход товара: количества прибавятся к тому, что уже есть на складе.'},
     {v: 'replace', b: 'Заменить весь склад', s: 'Полный пересчёт: склад станет точно таким, как в файле. Артикулы, которых нет в файле, исчезнут.'},
-  ],
-  orders: [
-    {v: 'replace', b: 'Новый заказ', s: 'Текущий заказ заменится этим файлом.'},
-    {v: 'add', b: 'Добавить к текущему заказу', s: 'Строки прибавятся к уже загруженному заказу.'},
   ],
 };
 const curRows = (f = IMP.files[0], si = IMP.sheet) => { const sh = f.sheets[Math.min(si, f.sheets.length - 1)]; return sh ? sh.rows : []; };
@@ -917,12 +1244,12 @@ function openImport(target, files) {
   IMP.target = target; IMP.files = files;
   IMP.sheet = Math.max(0, files[0].sheets.findIndex(s => s.rows.length > 0));
   IMP.m = detect(curRows());
-  IMP.mode = target === 'stock' ? (stock.items.size ? 'add' : 'replace') : 'replace';
+  IMP.mode = target === 'stock' ? (stock.items.size ? 'add' : 'replace') : 'add';
   $('#impTitle').textContent = TITLES[target];
   $('#impPasteBox').hidden = true; $('#impMapBox').hidden = false; $('#impApply').hidden = false;
   if ($('#imp').hidden) showModal('#imp');
   renderImport();
-  $('#impArt').focus();
+  $('#impApply').focus();
 }
 function openPaste(target) {
   IMP.target = target; IMP.files = [];
@@ -937,12 +1264,13 @@ function fromText(t, target) {
   openImport(target, [{name: 'вставка из Excel', sheets: [{name: 'Вставка', rows}]}]);
 }
 function extractAll() {
-  const m = IMP.m, total = {lines: [], noArt: 0, badQty: 0, sci: 0, mismatch: false};
+  const m = IMP.m, total = {lines: [], byFile: [], noArt: 0, badQty: 0, sci: 0, mismatch: false};
   const h0 = m.header >= 0 ? String((curRows()[m.header] || [])[m.art] ?? '') : null;
   IMP.files.forEach((f, i) => {
     const rows = curRows(f);
     if (i && h0 !== null && String((rows[m.header] || [])[m.art] ?? '') !== h0) total.mismatch = true;
     const r = extract(rows, m);
+    total.byFile.push(r.lines);
     total.lines.push(...r.lines); total.noArt += r.noArt; total.badQty += r.badQty; total.sci += r.sci;
   });
   const keys = new Set(); let sum = 0;
@@ -951,7 +1279,7 @@ function extractAll() {
   return total;
 }
 function renderImport() {
-  const f0 = IMP.files[0], rows = curRows(), m = IMP.m;
+  const f0 = IMP.files[0], rows = curRows(), m = IMP.m, isOrders = IMP.target === 'orders';
   const names = IMP.files.map(f => f.name);
   $('#impFiles').innerHTML = IMP.files.length > 1
     ? `<b>${cnt(IMP.files.length, W.file)}:</b> ${esc(names.join(', '))}. Колонки выбираются по первому файлу и применяются ко всем.`
@@ -970,17 +1298,16 @@ function renderImport() {
   $('#impArt').innerHTML = opts; $('#impArt').value = String(m.art);
   $('#impQty').innerHTML = `<option value="-1">Нет колонки — каждая строка = 1 шт.</option>` + opts; $('#impQty').value = String(m.qty);
   $('#impName').innerHTML = `<option value="-1">Не загружать</option>` + opts; $('#impName').value = String(m.name);
+  $('#impShipF').hidden = !isOrders;
+  $('#impShip').innerHTML = `<option value="-1">Нет колонки</option>` + opts; $('#impShip').value = String(m.ship);
 
-  // preview
   const data = [];
   for (let r = m.header + 1; r < rows.length && data.length < 7; r++) if ((rows[r] || []).some(v => v !== '')) data.push(r);
-  const tag = c => c === m.art ? '<em>Артикул</em>' : c === m.qty ? '<em>Кол-во</em>' : c === m.name ? '<em>Наименование</em>' : '';
-  const sel = c => (c === m.art || c === m.qty || c === m.name) ? ' class="sel"' : '';
+  const role = c => c === m.art ? 'Артикул' : c === m.qty ? 'Кол-во' : c === m.name ? 'Наименование' : (isOrders && c === m.ship) ? 'Отправление' : '';
   $('#impPrev').innerHTML =
-    `<thead><tr><th class="rn">#</th>${range(ncol).map(c => `<th>${tag(c)}${colName(c)}${hdr[c] ? ' · ' + esc(trunc(hdr[c], 28)) : ''}</th>`).join('')}</tr></thead>` +
-    `<tbody>${data.map(r => `<tr><td class="rn">${r + 1}</td>${range(ncol).map(c => `<td${sel(c)}>${esc(trunc((rows[r] || [])[c] ?? '', 40))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${ncol + 1}" class="empty">Под заголовком нет строк</td></tr>`}</tbody>`;
+    `<thead><tr><th class="rn">#</th>${range(ncol).map(c => `<th>${role(c) ? `<em>${role(c)}</em>` : ''}${colName(c)}${hdr[c] ? ' · ' + esc(trunc(hdr[c], 28)) : ''}</th>`).join('')}</tr></thead>` +
+    `<tbody>${data.map(r => `<tr><td class="rn">${r + 1}</td>${range(ncol).map(c => `<td${role(c) ? ' class="sel"' : ''}>${esc(trunc((rows[r] || [])[c] ?? '', 40))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${ncol + 1}" class="empty">Под заголовком нет строк</td></tr>`}</tbody>`;
 
-  // stats
   const s = extractAll();
   let h = '';
   const pdfs = IMP.files.filter(f => f.info);
@@ -989,9 +1316,14 @@ function renderImport() {
     const got = pdfs.reduce((a, f) => a + f.info.ships, 0);
     const i0 = pdfs[0].info, where = [i0.date, i0.wh ? 'склад ' + i0.wh : ''].filter(Boolean).join(', ');
     h += `<div>Лист подбора Озона${where ? ` (${esc(where)})` : ''}: прочитано <b>${cnt(got, W.ship)}</b>${exp ? ` из ${fmt(exp)} указанных в листе` : ''}.${exp && got === exp ? ' <span class="chip good">всё сошлось</span>' : ''}</div>`;
-    if (exp && got !== exp) h += `<div class="warnline">В листе указано ${cnt(exp, W.ship)}, а прочитано ${fmt(got)}. Возможно, часть строк не распозналась: сверьте итог с листом или загрузите выгрузку заказов в Excel.</div>`;
+    if (exp && got !== exp) h += `<div class="warnline">В листе указано ${cnt(exp, W.ship)}, а прочитано ${fmt(got)}. Возможно, часть строк не распозналась: сверьте итог с листом или загрузите выгрузку отправлений в Excel.</div>`;
   }
-  h += `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b>${s.lines.length > s.uniq ? ' Повторяющиеся артикулы сложатся.' : ''}</div>`;
+  h += `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b></div>`;
+  if (isOrders) {
+    const known = s.lines.filter(l => l.s && lines.items.has(l.s + '|' + normKey(l.a))).length;
+    if (known) h += `<div>${cnt(known, W.row)} уже есть в программе — они не задвоятся.</div>`;
+    if (m.ship < 0) h += `<div class="warnline">Нет колонки с номером отправления: при повторной загрузке того же листа строки задвоятся.</div>`;
+  }
   if (s.noArt) h += `<div>Пропущено ${cnt(s.noArt, W.row)} без артикула.</div>`;
   if (s.badQty) h += `<div class="warnline">${cnt(s.badQty, W.row)} без числа в колонке «Количество» — они пропущены. Если в файле каждая строка — это 1 штука, выберите «Нет колонки — каждая строка = 1 шт.».</div>`;
   if (s.sci) h += `<div class="warnline">${cnt(s.sci, W.art)} выглядят как «4,6E+12»: Excel сократил длинные номера, и точные цифры потеряны. Возьмите исходный файл выгрузки или задайте колонке формат «Текстовый» до вставки данных.</div>`;
@@ -999,17 +1331,12 @@ function renderImport() {
   if (!s.lines.length) h += `<div class="warnline">Не нашлось ни одной строки с артикулом. Проверьте, какая колонка выбрана как «Артикул», и строку с заголовками.</div>`;
   $('#impStats').innerHTML = h;
 
-  // modes
-  let modes = MODES[IMP.target] || [];
-  if (IMP.target === 'orders' && (!order.items.size || OM.off)) modes = modes.filter(x => x.v === 'replace');
+  const modes = MODES[IMP.target] || [];
   if (!modes.some(x => x.v === IMP.mode) && modes.length) IMP.mode = modes[0].v;
   $('#impModes').hidden = modes.length < 2;
   $('#impModes').innerHTML = modes.length < 2 ? '' : `<legend class="fld" style="margin-bottom:8px">Что сделать</legend>` + modes.map(x =>
     `<label class="mode"><input type="radio" name="impMode" value="${x.v}"${x.v === IMP.mode ? ' checked' : ''}><div><b>${x.b}</b><span>${x.s}</span></div></label>`).join('');
-  const lbl = IMP.target === 'receipt' ? 'Добавить в список приёмки'
-    : IMP.target === 'stock' ? (IMP.mode === 'replace' ? 'Заменить склад' : 'Добавить на склад')
-    : 'Сравнить со складом';
-  $('#impApply').textContent = lbl;
+  $('#impApply').textContent = isOrders ? 'Загрузить лист' : IMP.target === 'receipt' ? 'Добавить в список' : IMP.mode === 'replace' ? 'Заменить склад' : 'Добавить на склад';
   $('#impApply').disabled = !s.lines.length;
 }
 function applyImport() {
@@ -1018,23 +1345,25 @@ function applyImport() {
   const src = IMP.files.map(f => f.name).join(', ');
   const t = IMP.target, mode = IMP.mode;
   if (t === 'receipt') {
-    for (const l of s.lines) draft.add(l.a, l.q, l.n, tick());
-    toast(`В список приёмки добавлено: ${cnt(s.uniq, W.art)}, ${fmt(s.sum)} шт.`);
+    for (const l of s.lines) draft.put({a: l.a, q: l.q, n: l.n, t: tick()});
+    toast(`В список пересчёта добавлено: ${cnt(s.uniq, W.art)}, ${fmt(s.sum)} шт.`);
   } else if (t === 'stock') {
     const b = [stock.items.size, stock.total()];
     if (mode === 'replace') stock.clear();
-    for (const l of s.lines) stock.add(l.a, l.q, l.n);
+    for (const l of s.lines) stockAdd(l.a, l.q, l.n);
     if (mode === 'replace') log(`Полный пересчёт из «${src}»: ${cnt(stock.items.size, W.art)}, ${fmt(stock.total())} шт. (было ${fmt(b[0])} арт., ${fmt(b[1])} шт.)`);
     else log(`Приход из «${src}»: +${fmt(s.sum)} шт., ${cnt(s.uniq, W.art)}`);
     toast(mode === 'replace' ? 'Склад заменён данными из файла' : `На склад добавлено ${fmt(s.sum)} шт.`);
   } else {
-    if (mode === 'replace' || OM.off) { order.clear(); OM = {files: src, at: Date.now(), off: 0}; }
-    else OM.files = OM.files ? `${OM.files}, ${src}` : src;
-    for (const l of s.lines) order.add(l.a, l.q, l.n);
-    saveMeta('meta/order');
-    log(`Загружен заказ «${src}»: ${cnt(order.items.size, W.art)}, ${fmt(order.total())} шт.`);
-    ui.orF = 'short'; ui.orLimit = 300; setTab('orders');
+    const pdf = IMP.files.find(f => f.info);
+    loadList(s.lines, {file: src, date: pdf ? pdf.info.date : '', expected: IMP.files.every(f => f.info && f.info.expected) ? IMP.files.reduce((a, f) => a + f.info.expected, 0) : 0});
+    const files = IMP.files, byFile = s.byFile;
+    if (files.some(f => f.pdf) && IMP.m.header === 0) queuePhotos(files, byFile);
+    else files.forEach(f => { if (f.pdf) f.pdf.destroy().catch(() => {}); });
+    ui.dayF = 'all'; ui.dayLimit = 300; setTab('day');
   }
+  if (t !== 'orders') IMP.files.forEach(f => { if (f.pdf) f.pdf.destroy().catch(() => {}); });
+  IMP.files = [];
   closeModal('#imp'); render();
 }
 
@@ -1081,145 +1410,443 @@ async function copyText(text, ok) {
   try { await navigator.clipboard.writeText(text); toast(ok); }
   catch { $('#cpyText').value = text; showModal('#cpy'); const ta = $('#cpyText'); ta.focus(); ta.select(); }
 }
+/* ---------- the day: orders, stock, purchases ---------- */
+function stockAdd(a, q, n) {
+  a = String(a ?? '').trim();
+  const k = normKey(a); if (!k) return null;
+  const c = stock.items.get(k);
+  if (c) { const was = c.q; c.q = round(c.q + q); if (!c.n && n) c.n = n; if (was <= 0 && c.q > 0) c.in = Date.now(); stock.touch(k); return k; }
+  return stock.put({a, q: round(q), n: n || '', t: tick(), in: q > 0 ? Date.now() : 0, out: 0});
+}
+function stockTake(k, q) { const c = stock.items.get(k); if (!c) return; c.q = round(c.q - q); c.out = Date.now(); stock.touch(k); }
+const byAge = (a, b) => (a.d - b.d) || (a.i - b.i);
 
-/* ---------- orders ---------- */
-function orderRows() {
-  const off = !!OM.off, rows = [];
-  for (const [k, it] of order.items) {
-    const st = stock.items.get(k);
-    const have = off ? (it.s ?? 0) : (st ? st.q : 0);
-    const short = round(Math.max(0, it.q - Math.max(0, have)));
-    const status = short <= 0 ? 'ok' : have <= 0 ? 'none' : 'part';
-    rows.push({k, a: it.a, n: it.n || (st && st.n) || '', need: it.q, have, short, status, alias: st && st.a !== it.a ? st.a : ''});
+// what the stock can give right now: older shipments first
+function plan() {
+  const free = new Map();
+  for (const [k, it] of stock.items) if (it.q > 0) free.set(k, it.q);
+  const open = [];
+  for (const [k, ln] of lines.items) { const need = round(ln.q - ln.got - wsum(ln)); if (need > 0) open.push({k, ln, need}); }
+  open.sort((a, b) => byAge(a.ln, b.ln));
+  const res = new Map();
+  for (const {k, ln, need} of open) {
+    const ak = normKey(ln.a), f = free.get(ak) || 0, take = Math.min(f, need);
+    if (take > 0) free.set(ak, round(f - take));
+    res.set(k, {take, short: round(need - take)});
+  }
+  return res;
+}
+function lineState(k, ln, p) {
+  if (ln.got >= ln.q) return 'ready';
+  const r = p.get(k);
+  if (r && r.short > 0) return 'short';
+  if (wsum(ln) > 0) return 'wait';
+  return r && r.take > 0 ? 'stock' : 'ready';
+}
+const RANK = {short: 0, wait: 1, stock: 2, ready: 3};
+function shipsOf(p) {
+  const ships = new Map();
+  for (const [k, ln] of lines.items) {
+    const st = lineState(k, ln, p), sid = ln.s || k;
+    let e = ships.get(sid);
+    if (!e) ships.set(sid, e = {sid, lines: [], state: 'ready', d: ln.d});
+    e.lines.push({k, ln, st});
+    if (RANK[st] < RANK[e.state]) e.state = st;
+    e.d = Math.min(e.d, ln.d);
+  }
+  return ships;
+}
+function shortage(p) {
+  const m = new Map();
+  for (const [k, r] of p) {
+    if (r.short <= 0) continue;
+    const ln = lines.items.get(k), ak = normKey(ln.a);
+    let e = m.get(ak);
+    if (!e) m.set(ak, e = {ak, a: ln.a, n: ln.n, need: 0});
+    e.need = round(e.need + r.short);
+    if (!e.n && ln.n) e.n = ln.n;
+  }
+  return m;
+}
+function buyRows(p) {
+  const sh = shortage(p), rows = [];
+  const keys = new Set(sh.keys());
+  for (const [k, e] of PO) if (e.add) keys.add(k);
+  for (const ak of keys) {
+    const e = sh.get(ak), po = PO.get(ak);
+    const a = e ? e.a : po.a;
+    const n = (e && e.n) || (po && po.n) || (stock.items.get(ak) || {}).n || '';
+    const need = e ? e.need : 0;
+    const order = po && po.q != null ? po.q : need;
+    rows.push({ak, a, n, need, order, add: !!(po && po.add), ...parseArt(a)});
   }
   return rows;
 }
-const rank = {none: 0, part: 1, ok: 2};
-function writeOff() {
-  let total = 0, arts = 0;
-  for (const [k, it] of order.items) {
-    const st = stock.items.get(k);
-    it.s = st ? st.q : 0;
-    const take = round(Math.min(Math.max(0, st ? st.q : 0), it.q));
-    if (take > 0) { st.q = round(st.q - take); stock.touch(k); total = round(total + take); arts++; }
+function groupModels(rows) {
+  const pavs = new Map();
+  for (const r of rows) {
+    let pv = pavs.get(r.pav); if (!pv) pavs.set(r.pav, pv = {pav: r.pav, models: new Map(), need: 0, order: 0});
+    let m = pv.models.get(r.mkey); if (!m) pv.models.set(r.mkey, m = {mkey: r.mkey, model: r.model, n: r.n, rows: []});
+    if (!m.n && r.n) m.n = r.n;
+    m.rows.push(r); pv.need = round(pv.need + r.need); pv.order = round(pv.order + r.order);
   }
-  order.touchAll(); OM.off = Date.now(); saveMeta('meta/order');
-  log(`Списан заказ со склада: −${fmt(total)} шт., ${cnt(arts, W.art)}`);
-  toast(`Со склада списано ${fmt(total)} шт.`);
+  const list = [...pavs.values()].sort((a, b) => coll.compare(a.pav || 'яяя', b.pav || 'яяя'));
+  for (const pv of list) { pv.list = [...pv.models.values()].sort((a, b) => coll.compare(a.model, b.model)); pv.list.forEach(m => m.rows.sort((a, b) => bySize(a.size, b.size))); }
+  return list;
+}
+
+function loadList(inLines, info) {
+  const day = tick();
+  const incoming = new Set(inLines.map(l => l.s ? l.s + '|' + normKey(l.a) : ''));
+  // shipments given out earlier and missing from the new list have left the warehouse
+  for (const [k, ln] of [...lines.items]) if (ln.got >= ln.q && !incoming.has(k)) lines.remove(k);
+  let added = 0, dup = 0;
+  inLines.forEach((l, idx) => {
+    const k = l.s ? l.s + '|' + normKey(l.a) : null;
+    if (k && lines.items.has(k)) {
+      const ex = lines.items.get(k);
+      if (ex.d === day) ex.q = round(ex.q + l.q); else dup++;
+      lines.touch(k); return;
+    }
+    lines.put({s: l.s, a: l.a, n: l.n, q: l.q, got: 0, w: {}, d: day, i: day + idx});
+    added++;
+  });
+  const ships = new Set(inLines.map(l => l.s).filter(Boolean)).size;
+  DAYM = {date: info.date || new Date().toLocaleDateString('ru-RU'), file: info.file, at: day, expected: info.expected || 0, ships};
+  saveMeta('meta/day');
+  // sales history for later analysis
+  const agg = new Map();
+  for (const l of inLines) { const k = normKey(l.a); const e = agg.get(k); if (e) e[1] = round(e[1] + l.q); else agg.set(k, [l.a, l.q]); }
+  const [dd, mm, yy] = DAYM.date.split('.');
+  const hid = yy ? `d${yy}-${mm}-${dd}` : 'd' + new Date().toISOString().slice(0, 10);
+  const hist = {date: DAYM.date, file: info.file, at: day, ships, items: [...agg.values()]};
+  saveDoc('hist/' + hid, () => hist, 50);
+  const old = [...lines.items.values()].filter(ln => ln.d < day && ln.got < ln.q).length;
+  log(`Лист подбора ${DAYM.date}: ${cnt(ships || inLines.length, ships ? W.ship : W.row)}, новых строк ${fmt(added)}${dup ? `, уже были ${fmt(dup)}` : ''}${old ? `; с прошлых дней ждут ${fmt(old)}` : ''}`);
+  toast(`Лист загружен: ${cnt(added, W.row)}${dup ? `, ${fmt(dup)} уже были в программе` : ''}`);
+}
+
+function commit() {
+  const p = plan(), now = Date.now();
+  let taken = 0; const takenShips = new Set();
+  for (const [k, r] of p) {
+    if (r.take <= 0) continue;
+    const ln = lines.items.get(k);
+    ln.got = round(ln.got + r.take); lines.touch(k);
+    stockTake(normKey(ln.a), r.take);
+    taken = round(taken + r.take); takenShips.add(ln.s || k);
+  }
+  // short lines by article, oldest first
+  const shortBy = new Map();
+  for (const [k, r] of p) if (r.short > 0) { const ln = lines.items.get(k), ak = normKey(ln.a); (shortBy.get(ak) || shortBy.set(ak, []).get(ak)).push({k, ln, r}); }
+  for (const arr of shortBy.values()) arr.sort((a, b) => byAge(a.ln, b.ln));
+  const rows = buyRows(p).filter(r => r.order > 0);
+  const pavs = groupModels(rows);
+  const made = [];
+  for (const pv of pavs) {
+    const id = newId('P');
+    const pur = {id, at: now, pav: pv.pav, st: 'go', lines: [], extra: [], rep: null, doneAt: 0};
+    for (const m of pv.list) for (const r of m.rows) {
+      const pl = {a: r.a, n: r.n, q: r.order, need: 0, c: 0, k: r.ak};
+      let avail = r.order;
+      for (const x of shortBy.get(r.ak) || []) {
+        if (avail <= 0) break;
+        if (x.r.short <= 0) continue;
+        const give = Math.min(avail, x.r.short);
+        x.ln.w[id] = round((x.ln.w[id] || 0) + give); lines.touch(x.k);
+        x.r.short = round(x.r.short - give); avail = round(avail - give); pl.need = round(pl.need + give);
+      }
+      pur.lines.push(pl);
+    }
+    PUR.set(id, pur); savePur(id, 50); made.push(pur);
+  }
+  PO = new Map(); saveMeta('meta/po');
+  const ordered = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.q, 0), 0);
+  const forOrders = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.need, 0), 0);
+  if (taken) log(`Списано со склада под отправления: ${fmt(taken)} шт., ${cnt(takenShips.size, W.ship)}`);
+  if (made.length) log(`Закупка у поставщиков: ${fmt(ordered)} шт. ${inPav(made.length)} (${made.map(x => x.pav || 'без павильона').join(', ')}); под заказы ${fmt(forOrders)}, на склад ${fmt(round(ordered - forOrders))}`);
+  toast(made.length ? `Закупка оформлена: ${fmt(ordered)} шт.${taken ? `, со склада списано ${fmt(taken)} шт.` : ''}` : `Со склада списано ${fmt(taken)} шт.`);
+}
+
+function recvPreview(pur) {
+  const want = new Map();
+  for (const ln of lines.items.values()) { const w = ln.w[pur.id]; if (w) { const ak = normKey(ln.a); want.set(ak, round((want.get(ak) || 0) + w)); } }
+  let toOrd = 0, toStock = 0, unc = 0, ord = 0, got = 0;
+  const diff = [];
+  for (const l of pur.lines) {
+    ord += l.q; got += l.c;
+    const w = want.get(l.k) || 0, give = Math.min(l.c, w);
+    toOrd += give; toStock += l.c - give; unc += w - give;
+    if (l.c !== l.q) diff.push(l);
+  }
+  for (const e of pur.extra) if (e.to === 'stock') toStock += e.q;
+  return {ord: round(ord), got: round(got), toOrd: round(toOrd), toStock: round(toStock), unc: round(unc), diff};
+}
+function receive(pur) {
+  const now = Date.now();
+  const rep = {ord: 0, got: 0, toOrd: 0, toStock: 0, rows: [], extra: pur.extra.map(e => [e.a, e.q, e.to]), unc: []};
+  const waitBy = new Map();
+  for (const [k, ln] of lines.items) if (ln.w[pur.id]) { const ak = normKey(ln.a); (waitBy.get(ak) || waitBy.set(ak, []).get(ak)).push({k, ln}); }
+  for (const arr of waitBy.values()) arr.sort((a, b) => byAge(a.ln, b.ln));
+  for (const l of pur.lines) {
+    let A = l.c;
+    rep.ord = round(rep.ord + l.q); rep.got = round(rep.got + l.c);
+    rep.rows.push([l.a, l.q, l.c]);
+    for (const {k, ln} of waitBy.get(l.k) || []) {
+      const want = ln.w[pur.id] || 0, give = Math.min(A, want);
+      if (give > 0) { ln.got = round(ln.got + give); A = round(A - give); rep.toOrd = round(rep.toOrd + give); }
+      if (want - give > 0) rep.unc.push(ln.s || ln.a);
+      delete ln.w[pur.id]; lines.touch(k);
+    }
+    waitBy.delete(l.k);
+    if (A > 0) { stockAdd(l.a, A, l.n); rep.toStock = round(rep.toStock + A); }
+  }
+  for (const arr of waitBy.values()) for (const {k, ln} of arr) { rep.unc.push(ln.s || ln.a); delete ln.w[pur.id]; lines.touch(k); }
+  for (const e of pur.extra) {
+    if (e.to === 'stock') { stockAdd(e.a, e.q, ''); rep.toStock = round(rep.toStock + e.q); }
+    else { RET.push({a: e.a, q: e.q, pav: pur.pav, at: now}); saveMeta('meta/returns'); }
+  }
+  pur.st = 'done'; pur.doneAt = now; pur.rep = rep; savePur(pur.id, 50);
+  const miss = round(rep.ord - rep.got);
+  log(`Приёмка ${pur.pav || 'без павильона'} от ${dm(pur.at)}: заказано ${fmt(rep.ord)}, пришло ${fmt(rep.got)}${pur.extra.length ? `, не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}; в отправления ${fmt(rep.toOrd)}, на склад ${fmt(rep.toStock)}${rep.unc.length ? `; снова не хватает: ${cnt(rep.unc.length, W.ship)}` : ''}`);
+  toast(miss > 0 ? `Приёмка проведена. Не доложили ${fmt(miss)} шт.` : 'Приёмка проведена');
+}
+function cancelPurchase(id) {
+  const pur = PUR.get(id); if (!pur) return;
+  for (const [k, ln] of lines.items) if (ln.w[id]) { delete ln.w[id]; lines.touch(k); }
+  PUR.delete(id); savePur(id, 50);
+  log(`Отменена закупка ${pur.pav || 'без павильона'} от ${when(pur.at)}`);
+}
+function cancelShipment(sid) {
+  let back = 0;
+  for (const [k, ln] of [...lines.items]) {
+    if ((ln.s || k) !== sid) continue;
+    if (ln.got > 0) { stockAdd(ln.a, ln.got, ln.n); back = round(back + ln.got); }
+    lines.remove(k);
+  }
+  log(`Убрано отправление ${sid}${back ? `: ${fmt(back)} шт. вернулись на склад` : ''}`);
 }
 
 /* ---------- UI state & render ---------- */
-const ui = {tab: 'receipt', rcQ: '', stQ: '', orQ: '', orF: 'short', rcLimit: 200, stLimit: 300, orLimit: 300, flash: null};
+const ui = {tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', stView: 'models', stSort: 'pav', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
 let raf = 0;
 function render() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); }
 function setBody(el, html) {
   const ae = document.activeElement;
-  if (ae && ae.tagName === 'INPUT' && el.contains(ae)) { el.dataset.stale = '1'; return; }
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'SELECT') && el.contains(ae)) { el.dataset.stale = '1'; return; }
   if (el._h !== html) { el.innerHTML = html; el._h = html; }
   delete el.dataset.stale;
 }
-const matches = (k, it, q) => { if (!q) return true; const nk = normKey(q); return (nk && k.includes(nk)) || String(it.n || '').toLowerCase().includes(q.toLowerCase()) || String(it.a).toLowerCase().includes(q.toLowerCase()); };
+const matches = (q, ...fields) => { if (!q) return true; const nk = normKey(q), lq = q.toLowerCase(); return fields.some(f => { const s = String(f || ''); return (nk && normKey(s).includes(nk)) || s.toLowerCase().includes(lq); }); };
+const artCell = (a, n, extra = '') => `<span class="art">${esc(a)}</span>${n ? `<span class="nm">${esc(n)}</span>` : ''}${extra}`;
+const thumb = (a, size, byModel) => { const mk = byModel ? a : parseArt(a).mkey, u = photoUrl.get(mk); return u ? `<img class="ph ${size}" src="${u}" alt="">` : `<span class="ph ${size}" aria-hidden="true"></span>`; };
 const hasCyr = s => /[а-яё]/i.test(s), hasLat = s => /[a-z]/i.test(s);
 function aliasNote(mine, theirs) {
   if (!theirs || theirs === mine) return '';
-  const lat = x => x.toUpperCase().replace(/[АВЕЁКМНОРСТУХ]/g, c => CYR[c]);
   let t = `на складе как <code>${esc(theirs)}</code>`;
-  if (lat(mine) === lat(theirs) && mine.toUpperCase() !== theirs.toUpperCase()) {
+  if (latinUp(mine) === latinUp(theirs) && mine.toUpperCase() !== theirs.toUpperCase()) {
     if (hasCyr(mine) && !hasCyr(theirs)) t = 'здесь русские буквы, на складе — английские';
     else if (hasCyr(theirs) && !hasCyr(mine) && hasLat(mine)) t = 'здесь английские буквы, на складе — русские';
-    else t = `на складе как <code>${esc(theirs)}</code> (разные русские и английские буквы)`;
   }
   return `<span class="alias">${t}</span>`;
 }
-const artCell = (a, n, extra = '') => `<span class="art">${esc(a)}</span>${n ? `<span class="nm">${esc(n)}</span>` : ''}${extra}`;
-const delBtn = (a, title) => `<button class="x" type="button" data-del title="${title}" aria-label="${title}: ${esc(a)}">×</button>`;
+const going = () => [...PUR.values()].filter(p => p.st === 'go').sort((a, b) => b.at - a.at);
 
 function renderAll() {
-  // header
-  let pos = 0, qty = 0;
-  for (const it of stock.items.values()) if (it.q > 0) { pos++; qty += it.q; }
-  $('#kArt').textContent = fmt(pos);
-  $('#kArtL').textContent = plural(pos, ['артикул в наличии', 'артикула в наличии', 'артикулов в наличии']);
-  $('#kQty').textContent = fmt(round(qty));
-  $('#bRc').hidden = !draft.items.size; $('#bRc').textContent = fmt(draft.items.size);
-  $('#howto').hidden = stock.items.size > 0;
-  renderReceipt(); renderStock(); renderOrders(); renderLog();
+  const p = plan();
+  let qty = 0; for (const it of stock.items.values()) if (it.q > 0) qty += it.q;
+  let goQ = 0; const go = going(); for (const x of go) for (const l of x.lines) goQ += l.q;
+  let shortQ = 0; for (const r of p.values()) shortQ += r.short;
+  $('#kQty').textContent = fmt(round(qty)); $('#kGo').textContent = fmt(round(goQ)); $('#kShort').textContent = fmt(round(shortQ));
+  const ships = shipsOf(p);
+  const shortShips = [...ships.values()].filter(s => s.state === 'short').length;
+  $('#bDay').hidden = !shortShips; $('#bDay').textContent = fmt(shortShips);
+  const rows = buyRows(p);
+  $('#bBuy').hidden = !rows.length; $('#bBuy').textContent = fmt(rows.length);
+  $('#bRecv').hidden = !go.length; $('#bRecv').textContent = fmt(go.length);
+  renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog();
   if (ui.flash) { const tr = $(`#rcBody tr[data-k="${CSS.escape(ui.flash)}"]`); if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } ui.flash = null; }
 }
 
-function renderReceipt() {
+function renderDay(p, ships) {
+  const has = lines.items.size > 0;
+  $('#dayEmpty').hidden = has; $('#dayTiles').hidden = !has; $('#dayCard').hidden = !has;
+  $('#dayMeta').innerHTML = DAYM.at ? `<span>Последний лист: <b>${esc(DAYM.date)}</b> · ${esc(trunc(DAYM.file, 80))} · загружен ${when(DAYM.at)}</span>` + (DAYM.expected && DAYM.ships && DAYM.expected !== DAYM.ships ? `<span class="chip warn">прочитано ${fmt(DAYM.ships)} из ${fmt(DAYM.expected)}</span>` : '') : '';
+  if (!has) { $('#dayPending').hidden = true; return; }
+  const all = [...ships.values()];
+  const c = {pick: 0, wait: 0, short: 0, old: 0, stockPend: 0};
+  let shortQ = 0, pendQ = 0;
+  for (const s of all) { if (s.state === 'ready' || s.state === 'stock') c.pick++; else c[s.state]++; if (s.d < DAYM.at) c.old++; if (s.lines.some(x => x.st === 'stock')) c.stockPend++; }
+  for (const r of p.values()) { shortQ += r.short; pendQ += r.take; }
+  $('#tAll').textContent = fmt(all.length); $('#tAllS').textContent = c.old ? `с прошлых дней: ${fmt(c.old)}` : cnt(all.length, W.ship);
+  $('#tPick').textContent = fmt(c.pick); $('#tPickS').textContent = c.stockPend ? `ещё не списано со склада: ${fmt(c.stockPend)}` : 'товар отложен';
+  $('#tWait').textContent = fmt(c.wait); $('#tWaitS').textContent = `закупок в пути: ${fmt(going().length)}`;
+  $('#tShort').textContent = fmt(c.short); $('#tShortS').textContent = c.short ? `${fmt(round(shortQ))} шт. — оформите закупку` : 'всё закрыто';
+  const pend = $('#dayPending');
+  pend.hidden = !pendQ;
+  if (pendQ) pend.innerHTML = `<p>Под ${cnt(c.stockPend, W.ship)} есть товар на складе (${fmt(round(pendQ))} шт.), но он ещё не списан. Он спишется, когда вы оформите закупку${shortQ ? '' : ' или нажмёте «Списать со склада»'}.</p>` +
+    (shortQ ? `<button class="btn primary" type="button" data-go="buy">К закупке</button>` : `<button class="btn primary" type="button" data-commit>Списать со склада</button>`);
+  $$('#daySeg button').forEach(b => { const f = b.dataset.f; b.setAttribute('aria-pressed', String(f === ui.dayF)); b.textContent = `${{all: 'Все', pick: 'Собирать', wait: 'Ждут мешок', short: 'Не хватает'}[f]} · ${fmt(f === 'all' ? all.length : c[f])}`; });
+  let list = all.filter(s => ui.dayF === 'all' || (ui.dayF === 'pick' ? (s.state === 'ready' || s.state === 'stock') : s.state === ui.dayF));
+  if (ui.dayQ) list = list.filter(s => matches(ui.dayQ, s.sid, ...s.lines.map(x => x.ln.a), ...s.lines.map(x => x.ln.n)));
+  list.sort((a, b) => (RANK[a.state] - RANK[b.state]) || (a.d - b.d) || coll.compare(a.sid, b.sid));
+  const shown = list.slice(0, ui.dayLimit);
+  const purLabel = ln => Object.keys(ln.w).map(id => { const x = PUR.get(id); return x ? `${x.pav || 'без павильона'} от ${dm(x.at)}` : ''; }).filter(Boolean).join(', ');
+  const chip = (x) => {
+    const r = p.get(x.k);
+    if (x.st === 'ready') return '<span class="chip good">к сборке</span>';
+    if (x.st === 'stock') return '<span class="chip good">со склада</span>';
+    if (x.st === 'wait') return `<span class="chip warn">ждёт мешок</span><span class="alias">${esc(purLabel(x.ln))}</span>`;
+    return `<span class="chip bad">не хватает${x.ln.q > 1 ? ` ${fmt(r.short)} шт.` : ''}</span>`;
+  };
+  const html = [];
+  for (const s of shown) s.lines.forEach((x, i) => {
+    const old = x.ln.d < DAYM.at;
+    html.push(`<tr data-sid="${esc(s.sid)}"><td class="ship">${i ? '' : esc(x.ln.s || '—')}${!i && old ? `<span class="alias">с ${dm(x.ln.d)}</span>` : ''}</td><td><div class="prod">${thumb(x.ln.a, 'sm')}<div>${artCell(x.ln.a, x.ln.n)}</div></div></td><td class="num">${fmt(x.ln.q)}</td><td>${chip(x)}</td><td class="c">${i ? '' : `<button class="x" type="button" data-cancel title="Убрать отправление" aria-label="Убрать отправление ${esc(s.sid)}">×</button>`}</td></tr>`);
+  });
+  setBody($('#dayBody'), html.join('') || `<tr><td colspan="5" class="empty">Ничего не найдено</td></tr>`);
+  $('#dayMore').hidden = list.length <= shown.length;
+  $('#dayMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
+}
+
+function renderBuy(p, rows) {
+  const pavs = groupModels(rows);
+  const need = round(rows.reduce((s, r) => s + r.need, 0)), order = round(rows.reduce((s, r) => s + r.order, 0));
+  let forOrders = 0; for (const r of rows) forOrders += Math.min(r.need, r.order);
+  let pendQ = 0; for (const r of p.values()) pendQ += r.take;
+  $('#buyTitle').textContent = `Закупка в ${S.supplier}`;
+  $('#buySum').textContent = rows.length ? `не хватает ${fmt(need)} шт. · в закупке ${fmt(order)} шт., из них на склад ${fmt(round(order - forOrders))}` : '';
+  const cm = $('#buyCommit');
+  cm.disabled = !(order > 0 || pendQ > 0);
+  cm.textContent = order > 0 ? 'Оформить закупку' : pendQ > 0 ? 'Списать со склада (докупать нечего)' : 'Оформить закупку';
+  $('#buyCopy').disabled = !(order > 0); $('#buyExport').disabled = !(order > 0);
+  const out = pavs.map(pv => `<article class="pav" data-pav="${esc(pv.pav)}">
+    <header><h3>${esc(pavLabel(pv.pav))}</h3><span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.</span><button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button></header>
+    ${pv.list.map(m => `<div class="model">${thumb(m.mkey, 'md', true)}<div>
+      <h4>${esc(shortModel(m.model, pv.pav))}</h4>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
+      <table class="sz"><thead><tr><th>Размер</th><th class="num">Нужно</th><th class="num">Заказать</th><th></th></tr></thead><tbody>
+      ${m.rows.map(r => `<tr><td class="size">${esc(r.size || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : ''}</td></tr>`).join('')}
+      </tbody></table>
+      <div class="plus"><input class="in" data-size-for="${esc(m.model)}" placeholder="размер" aria-label="Добавить размер к ${esc(m.model)}"><button class="btn" type="button" data-add-size="${esc(m.model)}">+ размер</button></div>
+    </div></div>`).join('')}
+  </article>`).join('');
+  setBody($('#buyList'), out || `<div class="card"><p class="empty" style="margin:0">Сейчас докупать нечего. Если хотите взять товар на склад, добавьте артикул выше.</p></div>`);
+  const go = going();
+  setBody($('#goList'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), nd = round(x.lines.reduce((s, l) => s + l.need, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт., под отправления ${fmt(nd)}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">Принять</button><button class="btn ghost danger" type="button" data-cancel-pur="${esc(x.id)}">Отменить</button></div>`; }).join('') || '<p class="hint" style="margin:0">Ничего не едет.</p>');
+}
+
+function renderRecv() {
+  const pur = ui.recvId && PUR.get(ui.recvId);
+  if (ui.recvId && (!pur || pur.st !== 'go')) ui.recvId = '';
+  $('#recvHome').hidden = !!ui.recvId; $('#recvView').hidden = !ui.recvId;
+  if (!ui.recvId) {
+    const go = going();
+    setBody($('#recvGo'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), c = round(x.lines.reduce((s, l) => s + l.c, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт.${c ? ` · посчитано ${fmt(c)}` : ''}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">${c ? 'Продолжить приёмку' : 'Начать приёмку'}</button></div>`; }).join('') || '<p class="hint" style="margin:0">Нет закупок в пути. Закупка появится здесь, когда вы оформите её на вкладке «Закупка».</p>');
+    const done = [...PUR.values()].filter(x => x.st === 'done' && x.rep).sort((a, b) => b.doneAt - a.doneAt).slice(0, 20);
+    setBody($('#recvHist'), done.map(x => {
+      const r = x.rep, miss = round(r.ord - r.got), ex = (r.extra || []).reduce((s, e) => s + (+e[1] || 0), 0);
+      const bad = (r.rows || []).filter(row => +row[1] !== +row[2]);
+      return `<details class="rep"><summary><b>${esc(x.pav || '—')}</b><span>принято ${when(x.doneAt)} · заказано ${fmt(r.ord)}, пришло ${fmt(r.got)}</span>${miss > 0 ? `<span class="chip warn">не доложили ${fmt(miss)}</span>` : ''}${miss < 0 ? `<span class="chip warn">больше на ${fmt(-miss)}</span>` : ''}${ex ? `<span class="chip bad">не из заказа ${fmt(ex)}</span>` : ''}${(r.unc || []).length ? `<span class="chip bad">снова не хватает: ${fmt(r.unc.length)}</span>` : ''}</summary>
+        <p class="hint" style="margin:0 0 8px">В отправления ${fmt(r.toOrd)} шт., на склад ${fmt(r.toStock)} шт.</p>
+        ${bad.length ? `<div class="tw"><table class="t"><thead><tr><th>Артикул</th><th class="num">Заказано</th><th class="num">Пришло</th></tr></thead><tbody>${bad.map(row => `<tr><td class="art">${esc(row[0])}</td><td class="num">${fmt(row[1])}</td><td class="num strong">${fmt(row[2])}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint" style="margin:0">По заказанным артикулам всё сошлось.</p>'}
+        ${(r.extra || []).length ? `<p class="hint">Не из заказа: ${r.extra.map(e => `<code>${esc(e[0])}</code> × ${fmt(e[1])} (${e[2] === 'ret' ? 'вернуть' : 'на склад'})`).join(', ')}</p>` : ''}
+        ${(r.unc || []).length ? `<p class="hint">Снова не хватает для: ${esc(r.unc.slice(0, 50).join(', '))}${r.unc.length > 50 ? '…' : ''}</p>` : ''}
+      </details>`;
+    }).join('') || '<p class="hint" style="margin:0">Пока не было.</p>');
+    return;
+  }
+  const ord = round(pur.lines.reduce((s, l) => s + l.q, 0)), got = round(pur.lines.reduce((s, l) => s + l.c, 0));
+  $('#recvTitle').textContent = `Приёмка: ${pur.pav ? 'павильон ' + pur.pav : 'без павильона'}`;
+  $('#recvSub').textContent = `Заказано ${when(pur.at)} · ${fmt(ord)} шт. Берите шубу, находите её по фото и нажимайте «+» у размера с бирки.`;
+  $('#recvFill').style.width = Math.min(100, ord ? 100 * got / ord : 0) + '%';
+  $('#recvCount').innerHTML = `Посчитано <b>${fmt(got)}</b> из ${fmt(ord)}${pur.extra.length ? ` · не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}`;
+  const groups = new Map();
+  pur.lines.forEach((l, i) => { const pa = parseArt(l.a); let g = groups.get(pa.mkey); if (!g) groups.set(pa.mkey, g = {mkey: pa.mkey, model: pa.model, n: l.n, rows: []}); g.rows.push({l, i, size: pa.size}); });
+  let gs = [...groups.values()].sort((a, b) => coll.compare(a.model, b.model));
+  if (ui.recvQ) gs = gs.filter(g => matches(ui.recvQ, g.model, g.n, ...g.rows.map(r => r.l.a)));
+  setBody($('#recvModels'), gs.map(g => `<div class="card recv-model"><div class="rm-head">${thumb(g.mkey, 'lg', true)}<div>
+    <h4>${esc(shortModel(g.model, pur.pav))}</h4>${g.n ? `<span class="nm">${esc(g.n)}</span>` : ''}</div></div><div>
+    ${g.rows.sort((a, b) => bySize(a.size, b.size)).map(({l, i, size}) => `<div class="cnt ${l.c === l.q ? 'ok' : l.c < l.q ? (l.c ? 'less' : '') : 'more'}">
+      <span class="size">${esc(size || '—')}</span><span class="ord">${l.c === l.q ? 'всё пришло' : `заказано ${fmt(l.q)}`}</span>
+      <span class="step"><button type="button" data-inc="${i}" data-d="-1" aria-label="Минус один, размер ${esc(size)}">−</button><input class="in cin" data-cin="${i}" inputmode="numeric" value="${esc(qv(l.c))}" aria-label="Пришло, размер ${esc(size)}"><button type="button" class="pl" data-inc="${i}" data-d="1" aria-label="Плюс один, размер ${esc(size)}">+</button></span>
+    </div>`).join('')}
+  </div></div>`).join('') || '<div class="card"><p class="hint" style="margin:0">Ничего не найдено.</p></div>');
+  setBody($('#recvExtras'), pur.extra.map((e, i) => `<div class="retrow"><span class="art">${esc(e.a)}</span><span>× ${fmt(e.q)}</span><span class="chip ${e.to === 'ret' ? 'bad' : 'new'}">${e.to === 'ret' ? 'вернуть поставщику' : 'на склад'}</span><button class="btn ghost danger" type="button" data-unextra="${i}">Убрать</button></div>`).join(''));
+  const known = new Set(); for (const it of stock.items.values()) known.add(it.a); for (const l of pur.lines) known.add(l.a);
+  const dl = $('#artList'); const opts = [...known].slice(0, 3000).map(a => `<option value="${esc(a)}"></option>`).join(''); if (dl._h !== opts) { dl.innerHTML = opts; dl._h = opts; }
+  if (ui.focusInc) { const b = $(`#recvModels [data-inc="${ui.focusInc[0]}"][data-d="${ui.focusInc[1]}"]`); if (b) b.focus({preventScroll: true}); ui.focusInc = null; }
+}
+
+function renderStock() {
+  const items = [...stock.items.entries()];
+  $('#stSum').textContent = items.length ? `${cnt(items.length, W.art)} · ${fmt(round(items.reduce((s, [, it]) => s + Math.max(0, it.q), 0)))} шт.` : '';
+  $$('#stSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === ui.stView)));
+  $('#stSort').hidden = ui.stView !== 'models';
+  $('#stModels').hidden = ui.stView !== 'models'; $('#stFlat').hidden = ui.stView !== 'flat';
+  const idle = it => it.q > 0 ? daysSince(Math.max(it.in || 0, it.out || 0)) : null;
+  if (ui.stView === 'models') {
+    const models = new Map();
+    for (const [k, it] of items) {
+      if (!it.q) continue;
+      const pa = parseArt(it.a);
+      let m = models.get(pa.mkey); if (!m) models.set(pa.mkey, m = {mkey: pa.mkey, model: pa.model, pav: pa.pav, n: it.n, sizes: [], total: 0, idle: 0});
+      if (!m.n && it.n) m.n = it.n;
+      const d = idle(it);
+      m.sizes.push({k, size: pa.size, q: it.q, d}); m.total = round(m.total + it.q); if (d != null && d > m.idle) m.idle = d;
+    }
+    let list = [...models.values()];
+    if (ui.stQ) list = list.filter(m => matches(ui.stQ, m.model, m.n, ...m.sizes.map(s => stock.items.get(s.k).a)));
+    list.sort(ui.stSort === 'old' ? (a, b) => b.idle - a.idle : ui.stSort === 'big' ? (a, b) => b.total - a.total : (a, b) => coll.compare(a.pav || 'яяя', b.pav || 'яяя') || coll.compare(a.model, b.model));
+    const shown = list.slice(0, ui.stLimit);
+    setBody($('#stModels'), shown.map(m => `<div class="mrow">${thumb(m.mkey, 'md', true)}<div>
+      <div class="row" style="gap:8px">${m.pav ? `<span class="pavtag">${esc(m.pav)}</span>` : ''}<span class="art">${esc(shortModel(m.model, m.pav))}</span></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
+      <div class="szchips">${m.sizes.sort((a, b) => bySize(a.size, b.size)).map(s => `<span class="szc${s.q < 0 ? ' neg' : s.d >= 30 ? ' dead' : s.d >= 14 ? ' old' : ''}" title="${s.d != null ? `без продаж ${s.d} ${plural(s.d, W.day)}` : ''}">${esc(s.size || 'шт')} · ${fmt(s.q)}</span>`).join('')}</div>
+    </div><div class="tot">${fmt(m.total)}<small>${m.idle >= 14 ? `без продаж ${m.idle} ${plural(m.idle, W.day)}` : 'шт.'}</small></div></div>`).join('') || `<p class="empty">${items.length ? 'Ничего не найдено' : 'Склад пуст. Сделайте пересчёт ниже или загрузите остатки из файла.'}</p>`);
+    $('#stMore').hidden = list.length <= shown.length;
+    $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
+  } else {
+    const all = items.sort((a, b) => coll.compare(a[1].a, b[1].a));
+    const list = ui.stQ ? all.filter(([, it]) => matches(ui.stQ, it.a, it.n)) : all;
+    const shown = list.slice(0, ui.stLimit);
+    setBody($('#stBody'), shown.map(([k, it]) =>
+      `<tr data-k="${esc(k)}"${it.q <= 0 ? ' class="zero"' : ''}><td>${artCell(it.a, it.n)}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Остаток, ${esc(it.a)}"></td><td class="c"><button class="x" type="button" data-del title="Удалить со склада" aria-label="Удалить со склада: ${esc(it.a)}">×</button></td></tr>`
+    ).join('') || `<tr><td colspan="3" class="empty">${all.length ? 'Ничего не найдено' : 'Склад пуст.'}</td></tr>`);
+    $('#stMore').hidden = list.length <= shown.length;
+    $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
+  }
+}
+
+function renderRecount() {
   const all = [...draft.items.entries()].sort((a, b) => b[1].t - a[1].t);
-  const list = ui.rcQ ? all.filter(([k, it]) => matches(k, it, ui.rcQ)) : all;
+  const list = ui.rcQ ? all.filter(([, it]) => matches(ui.rcQ, it.a, it.n)) : all;
   $('#rcSum').textContent = all.length ? `${cnt(all.length, W.art)} · ${fmt(draft.total())} шт.` : '';
   const shown = list.slice(0, ui.rcLimit);
   setBody($('#rcBody'), shown.map(([k, it]) => {
     const st = stock.items.get(k);
-    const alias = st ? aliasNote(it.a, st.a) : '';
-    return `<tr data-k="${esc(k)}"><td>${artCell(it.a, it.n || (st && st.n), alias)}</td><td class="num">${st ? fmt(st.q) : '<span class="chip new">новый</span>'}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Принято, ${esc(it.a)}"></td><td class="c">${delBtn(it.a, 'Убрать из списка')}</td></tr>`;
-  }).join('') || `<tr><td colspan="4" class="empty">${all.length ? 'Ничего не найдено' : 'Список пуст. Отсканируйте первый товар или загрузите накладную.'}</td></tr>`);
+    return `<tr data-k="${esc(k)}"><td>${artCell(it.a, it.n || (st && st.n), st ? aliasNote(it.a, st.a) : '')}</td><td class="num">${st ? fmt(st.q) : '<span class="chip new">новый</span>'}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Посчитано, ${esc(it.a)}"></td><td class="c"><button class="x" type="button" data-del title="Убрать из списка" aria-label="Убрать из списка: ${esc(it.a)}">×</button></td></tr>`;
+  }).join('') || `<tr><td colspan="4" class="empty">${all.length ? 'Ничего не найдено' : 'Список пуст. Отсканируйте товар или загрузите файл.'}</td></tr>`);
   $('#rcMore').hidden = list.length <= shown.length;
   $('#rcMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
   ['#rcAdd', '#rcReplace', '#rcClear'].forEach(s => $(s).disabled = !all.length);
 }
 
-function renderStock() {
-  const all = [...stock.items.entries()].sort((a, b) => coll.compare(a[1].a, b[1].a));
-  const list = ui.stQ ? all.filter(([k, it]) => matches(k, it, ui.stQ)) : all;
-  $('#stSum').textContent = all.length ? `${cnt(all.length, W.art)} · ${fmt(stock.total())} шт.` : '';
-  const shown = list.slice(0, ui.stLimit);
-  setBody($('#stBody'), shown.map(([k, it]) =>
-    `<tr data-k="${esc(k)}"${it.q <= 0 ? ' class="zero"' : ''}><td>${artCell(it.a, it.n)}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Остаток, ${esc(it.a)}"></td><td class="c">${delBtn(it.a, 'Удалить со склада')}</td></tr>`
-  ).join('') || `<tr><td colspan="3" class="empty">${all.length ? 'Ничего не найдено' : 'Склад пуст. Проведите приёмку или загрузите остатки из файла.'}</td></tr>`);
-  $('#stMore').hidden = list.length <= shown.length;
-  $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
-}
-
-function renderOrders() {
-  const has = order.items.size > 0;
-  $('#orExample').hidden = has; $('#orTiles').hidden = !has; $('#orCard').hidden = !has; $('#orNew').hidden = !has;
-  const rows = has ? orderRows() : [];
-  const short = rows.filter(r => r.short > 0);
-  $('#bOr').hidden = !short.length; $('#bOr').textContent = fmt(short.length);
-  if (!has) { $('#orMeta').innerHTML = ''; return; }
-  const sum = f => round(rows.reduce((s, r) => s + f(r), 0));
-  const need = sum(r => r.need), shortQ = sum(r => r.short), fromStock = round(need - shortQ);
-  const okN = rows.length - short.length;
-  $('#tNeed').innerHTML = `${fmt(need)}<small>шт.</small>`; $('#tNeedS').textContent = cnt(rows.length, W.pos);
-  $('#tHave').innerHTML = `${fmt(fromStock)}<small>шт.</small>`; $('#tHaveS').textContent = `хватает полностью: ${cnt(okN, W.pos)}`;
-  $('#tShortK').textContent = `Докупить в ${S.supplier}`;
-  $('#tShort').innerHTML = `${fmt(shortQ)}<small>шт.</small>`; $('#tShortS').textContent = short.length ? cnt(short.length, W.pos) : 'всё есть на складе';
-  $('#orMeta').innerHTML = `<span>Загружено: <b>${esc(trunc(OM.files || 'заказ', 120))}</b>${OM.at ? ' · ' + when(OM.at) : ''}</span>` +
-    (OM.off ? `<span class="chip good">Списан со склада ${when(OM.off)}</span>` : '') +
-    (!OM.off && !stock.items.size ? `<span class="chip warn">Склад пуст — сначала проведите приёмку</span>` : '');
-  $('#orHaveH').textContent = OM.off ? 'Было на складе' : 'На складе';
-
-  const counts = {short: short.length, all: rows.length, ok: okN};
-  $$('.seg button').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.f === ui.orF)); b.textContent = `${{short: 'Докупить', all: 'Все', ok: 'Хватает'}[b.dataset.f]} · ${fmt(counts[b.dataset.f])}`; });
-  let list = ui.orF === 'short' ? short : ui.orF === 'ok' ? rows.filter(r => r.short <= 0) : rows;
-  if (ui.orQ) list = list.filter(r => matches(r.k, r, ui.orQ));
-  list = list.slice().sort((a, b) => (rank[a.status] - rank[b.status]) || coll.compare(a.a, b.a));
-  const shown = list.slice(0, ui.orLimit);
-  const chip = {ok: '<span class="chip good">хватает</span>', part: '<span class="chip warn">не хватает</span>', none: '<span class="chip bad">нет на складе</span>'};
-  setBody($('#orBody'), shown.map(r =>
-    `<tr><td>${artCell(r.a, r.n, aliasNote(r.a, r.alias))}</td><td class="num">${fmt(r.need)}</td><td class="num">${fmt(r.have)}</td><td class="num strong">${r.short > 0 ? fmt(r.short) : '—'}</td><td>${chip[r.status]}</td></tr>`
-  ).join('') || `<tr><td colspan="5" class="empty">${ui.orF === 'short' && !ui.orQ ? 'Всё есть на складе — докупать ничего не нужно.' : 'Ничего не найдено'}</td></tr>`);
-  $('#orMore').hidden = list.length <= shown.length;
-  $('#orMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
-  $('#orExport').textContent = `Скачать «Докупить» для ${S.supplier} (Excel)`;
-  $('#orExport').disabled = !short.length; $('#orCopy').disabled = !short.length;
-  $('#orOff').disabled = !!OM.off || !stock.items.size;
-  $('#orOff').textContent = OM.off ? 'Заказ уже списан' : 'Списать заказ со склада';
+function renderReturns() {
+  const by = new Map();
+  RET.forEach((r, i) => { (by.get(r.pav) || by.set(r.pav, []).get(r.pav)).push({...r, i}); });
+  $('#retSum').textContent = RET.length ? `${fmt(RET.reduce((s, r) => s + r.q, 0))} шт.` : '';
+  $('#retCopy').hidden = !RET.length;
+  setBody($('#retList'), [...by.entries()].sort((a, b) => coll.compare(a[0], b[0])).map(([pav, rs]) => `<div class="mt"><b>${esc(pavLabel(pav))}</b>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
 }
 
 function renderLog() {
-  setBody($('#log'), LOG.slice(0, 60).map(e => `<li><time>${when(e.t)}</time><span>${esc(e.x)}</span></li>`).join('') || '<li><time>—</time><span class="hint" style="margin:0">Пока ничего не происходило. Здесь появятся приёмки, пересчёты и списания.</span></li>');
+  setBody($('#log'), LOG.slice(0, 80).map(e => `<li><time>${when(e.t)}</time><span>${esc(e.x)}</span></li>`).join('') || '<li><time>—</time><span class="hint" style="margin:0">Пока ничего не происходило.</span></li>');
 }
 
 function renderSettings() {
-  $('#optLatin').checked = S.latin; $('#optZeros').checked = S.zeros; $('#optPunct').checked = S.punct;
+  $('#optLatin').checked = S.latin; $('#optZeros').checked = S.zeros; $('#optPunct').checked = S.punct; $('#optPav').checked = S.pav;
   if (document.activeElement !== $('#optSupplier')) $('#optSupplier').value = S.supplier;
   const note = {
-    db: 'Склад, списки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
+    db: 'Склад, отправления, закупки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
     local: 'Данные хранятся только в этом браузере на этом компьютере. Если очистить историю браузера, они пропадут, поэтому иногда скачивайте остатки в Excel.',
     memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
   };
@@ -1227,11 +1854,11 @@ function renderSettings() {
   renderTester();
 }
 function renderTester() {
-  const v = $('#testIn').value;
-  const k = normKey(v);
+  const v = $('#testIn').value, k = normKey(v), pa = parseArt(v);
   $('#testOut').textContent = v.trim() ? (k || '(пусто)') : '—';
   const st = k && stock.items.get(k);
-  $('#testMatch').innerHTML = !v.trim() ? '' : st ? `На складе есть: <b class="art">${esc(st.a)}</b> — ${fmt(st.q)} шт.` : 'На складе такого артикула нет.';
+  const parts = v.trim() ? `Павильон: ${pa.pav || '—'}, модель: ${pa.model || '—'}, размер: ${pa.size || '—'}. ` : '';
+  $('#testMatch').innerHTML = !v.trim() ? '' : esc(parts) + (st ? `На складе есть: <b class="art">${esc(st.a)}</b> — ${fmt(st.q)} шт.` : 'На складе такого артикула нет.');
 }
 
 function setTab(t) {
@@ -1256,14 +1883,190 @@ function toast(msg, ms = 3800) { const el = $('#toast'); el.textContent = msg; e
 
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-copy-pav],[data-add-size],[data-unadd],[data-returned]');
+  if (!t) return;
+  if (t.dataset.go) setTab(t.dataset.go);
+  else if (t.hasAttribute('data-commit')) askCommit('#dayConfirm');
+  else if (t.dataset.recv) { ui.recvId = t.dataset.recv; ui.recvQ = ''; $('#recvSearch').value = ''; setTab('recv'); render(); scrollTo({top: 0}); }
+  else if (t.dataset.cancelPur) {
+    const x = PUR.get(t.dataset.cancelPur); if (!x) return;
+    const box = t.closest('#pane-recv') ? '#recvGoConfirm' : '#goConfirm';
+    confirmIn(box, `Отменить закупку ${esc(x.pav || 'без павильона')} от ${when(x.at)}? Отправления, которые её ждут, снова попадут в нехватку.`, 'Отменить закупку', () => cancelPurchase(x.id), true);
+  } else if (t.hasAttribute('data-copy-pav')) copyBuy(t.dataset.copyPav);
+  else if (t.dataset.addSize) {
+    const inp = t.parentElement.querySelector('input'), size = inp.value.trim();
+    if (!size) { inp.focus(); return; }
+    const a = `${t.dataset.addSize}-${size}`, k = normKey(a);
+    const cur = PO.get(k);
+    PO.set(k, {a, n: cur ? cur.n : '', q: cur && cur.q != null ? cur.q : 1, add: true}); saveMeta('meta/po');
+    inp.value = ''; render();
+  } else if (t.dataset.unadd) { PO.delete(t.dataset.unadd); saveMeta('meta/po'); render(); }
+  else if (t.dataset.returned) {
+    const r = RET[+t.dataset.returned]; if (!r) return;
+    RET.splice(+t.dataset.returned, 1); saveMeta('meta/returns'); log(`Возвращено поставщику ${r.pav || ''}: ${r.a} × ${fmt(r.q)}`); render();
+  }
+});
 
+// day
+$$('#daySeg button').forEach(b => b.addEventListener('click', () => { ui.dayF = b.dataset.f; ui.dayLimit = 300; render(); }));
+$('#daySearch').addEventListener('input', e => { ui.dayQ = e.target.value.trim(); ui.dayLimit = 300; render(); });
+$('#dayMore').addEventListener('click', () => { ui.dayLimit += 500; render(); });
+$('#dayBody').addEventListener('click', e => {
+  if (!e.target.closest('[data-cancel]')) return;
+  const sid = e.target.closest('tr').dataset.sid;
+  const ls = [...lines.items.entries()].filter(([k, ln]) => (ln.s || k) === sid);
+  const back = round(ls.reduce((s, [, ln]) => s + ln.got, 0));
+  confirmIn('#dayConfirm', `Убрать отправление <b>${esc(sid)}</b> (например, покупатель отменил заказ)?${back ? ` Товар, уже списанный под него (${fmt(back)} шт.), вернётся на склад.` : ''}`, 'Убрать', () => cancelShipment(sid), true);
+});
+$('#dayClear').addEventListener('click', () => {
+  confirmIn('#dayConfirm', `Убрать все ${cnt(shipsOf(plan()).size, W.ship)} из программы? Склад и закупки не изменятся.`, 'Убрать все', () => { lines.clear(); log('Убраны все отправления'); }, true);
+});
+$('#dayExport').addEventListener('click', () => {
+  const p = plan(), rows = [];
+  const name = {ready: 'к сборке', stock: 'со склада (не списано)', wait: 'ждёт мешок', short: 'не хватает'};
+  for (const s of [...shipsOf(p).values()].sort((a, b) => (RANK[a.state] - RANK[b.state]) || coll.compare(a.sid, b.sid)))
+    for (const x of s.lines) rows.push([x.ln.s, x.ln.a, x.ln.n, x.ln.q, name[x.st], Object.keys(x.ln.w).map(id => { const pu = PUR.get(id); return pu ? `${pu.pav} ${dm(pu.at)}` : ''; }).join(', ')]);
+  saveTable(`Отправления ${DAYM.date || today()}`, [{name: 'Отправления', cols: [22, 28, 50, 6, 22, 16], rows: [['Отправление', 'Артикул', 'Наименование', 'Шт.', 'Статус', 'Закупка'], ...rows]}]);
+});
+
+// buy
+function askCommit(box) {
+  const p = plan(), rows = buyRows(p).filter(r => r.order > 0);
+  let take = 0; const tShips = new Set();
+  for (const [k, r] of p) if (r.take > 0) { take += r.take; const ln = lines.items.get(k); tShips.add(ln.s || k); }
+  const order = round(rows.reduce((s, r) => s + r.order, 0));
+  let forOrders = 0; for (const r of rows) forOrders += Math.min(r.need, r.order);
+  let notOrdered = 0; for (const r of buyRows(p)) notOrdered += Math.max(0, r.need - r.order);
+  const pavs = new Set(rows.map(r => r.pav)).size;
+  const parts = [];
+  if (take) parts.push(`Со склада спишется <b>${fmt(round(take))} шт.</b> под ${cnt(tShips.size, W.ship)}.`);
+  if (order) parts.push(`У поставщиков заказываем <b>${fmt(order)} шт.</b> ${inPav(pavs)}: ${fmt(round(forOrders))} шт. закроют отправления, ${fmt(round(order - forOrders))} шт. поедут на склад.`);
+  if (notOrdered) parts.push(`Не заказано ${fmt(round(notOrdered))} шт. — эти отправления останутся в нехватке.`);
+  if (!parts.length) { toast('Нечего оформлять'); return; }
+  confirmIn(box, parts.join(' '), order ? 'Оформить закупку' : 'Списать со склада', commit);
+}
+$('#buyCommit').addEventListener('click', () => askCommit('#buyConfirm'));
+$('#buyList').addEventListener('change', e => {
+  const t = e.target;
+  if (!t.dataset.ak) return;
+  const q = parseQty(t.value);
+  if (q == null || q < 0) { toast('Введите число'); t.value = ''; render(); return; }
+  const cur = PO.get(t.dataset.ak), row = buyRows(plan()).find(r => r.ak === t.dataset.ak);
+  if (!cur && !row) return;
+  PO.set(t.dataset.ak, {a: row ? row.a : cur.a, n: row ? row.n : (cur ? cur.n : ''), q, add: !!(cur && cur.add)});
+  saveMeta('meta/po'); render();
+});
+$('#buyList').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.sizeFor != null) { e.preventDefault(); e.target.nextElementSibling.click(); } });
+$('#addForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const a = $('#addArt').value.trim(), q = parseQty($('#addQty').value);
+  if (!a) { $('#addArt').focus(); return; }
+  if (q == null || q <= 0) { toast('Количество должно быть больше нуля'); return; }
+  const k = normKey(a); if (!k) return;
+  const cur = PO.get(k);
+  PO.set(k, {a: cur ? cur.a : a, n: cur ? cur.n : ((stock.items.get(k) || {}).n || ''), q: round((cur && cur.q != null ? cur.q : 0) + q), add: true});
+  saveMeta('meta/po'); $('#addArt').value = ''; $('#addQty').value = '1'; render();
+  toast(`Добавлено в закупку: ${a}`);
+});
+function buyText(onlyPav) {
+  const pavs = groupModels(buyRows(plan()).filter(r => r.order > 0)).filter(pv => onlyPav == null || pv.pav === onlyPav);
+  return pavs.map(pv => [`${pavLabel(pv.pav)} — ${today()}`, ...pv.list.map(m => {
+    const sizes = m.rows.filter(r => r.order > 0).map(r => `${r.size || 'шт'} — ${fmt(r.order)}`).join(', ');
+    return `${shortModel(m.model, pv.pav)}${m.n ? ` (${trunc(m.n, 40)})` : ''}: ${sizes}`;
+  }), `Итого: ${fmt(pv.order)} шт.`].join('\n')).join('\n\n');
+}
+function copyBuy(pav) { const t = buyText(pav); if (!t) { toast('Нечего копировать'); return; } copyText(t, 'Скопировано. Вставьте в WhatsApp или Telegram.'); }
+$('#buyCopy').addEventListener('click', () => copyBuy(null));
+$('#buyExport').addEventListener('click', () => {
+  const rows = [];
+  for (const pv of groupModels(buyRows(plan()).filter(r => r.order > 0))) for (const m of pv.list) for (const r of m.rows) rows.push([pv.pav, shortModel(m.model, pv.pav), r.size, r.a, r.n, r.need, r.order]);
+  saveTable(`Закупка ${S.supplier} ${today()}`, [{name: 'Закупка', cols: [10, 24, 8, 30, 44, 12, 10], rows: [['Павильон', 'Модель', 'Размер', 'Артикул', 'Наименование', 'Под заказы', 'Заказать'], ...rows]}]);
+});
+
+// receiving
+$('#recvBack').addEventListener('click', () => { ui.recvId = ''; render(); });
+$('#recvSearch').addEventListener('input', e => { ui.recvQ = e.target.value.trim(); render(); });
+$('#recvModels').addEventListener('click', e => {
+  const b = e.target.closest('[data-inc]'); if (!b) return;
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  const l = pur.lines[+b.dataset.inc]; if (!l) return;
+  l.c = Math.max(0, round(l.c + Number(b.dataset.d)));
+  ui.focusInc = [b.dataset.inc, b.dataset.d];
+  savePur(pur.id); render();
+});
+$('#recvModels').addEventListener('change', e => {
+  const t = e.target; if (t.dataset.cin == null) return;
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  const l = pur.lines[+t.dataset.cin], q = parseQty(t.value);
+  if (!l) return;
+  if (q == null || q < 0) { toast('Введите число'); t.value = qv(l.c); return; }
+  l.c = q; savePur(pur.id); render();
+});
+$('#exForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  const a = $('#exArt').value.trim(), q = parseQty($('#exQty').value), to = $('#exTo').value;
+  if (!a) { $('#exArt').focus(); return; }
+  if (q == null || q <= 0) { toast('Количество должно быть больше нуля'); return; }
+  const k = normKey(a), l = pur.lines.find(x => x.k === k);
+  if (l && to === 'stock') { l.c = round(l.c + q); toast('Этот артикул есть в заказе — добавил к нему'); }
+  else pur.extra.push({a, q, to});
+  savePur(pur.id); $('#exArt').value = ''; $('#exQty').value = '1'; render();
+});
+$('#recvExtras').addEventListener('click', e => {
+  const b = e.target.closest('[data-unextra]'); if (!b) return;
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  pur.extra.splice(+b.dataset.unextra, 1); savePur(pur.id); render();
+});
+$('#recvAsIs').addEventListener('click', () => {
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  confirmIn('#recvConfirm', 'Поставить по каждому размеру «пришло столько, сколько заказано»? Потом можно поправить отдельные размеры и провести приёмку.', 'Поставить как заявлено', () => { pur.lines.forEach(l => { l.c = l.q; }); savePur(pur.id); });
+});
+$('#recvFinish').addEventListener('click', () => {
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  const v = recvPreview(pur);
+  const diff = v.diff.slice(0, 12).map(l => `${esc(l.a)}: пришло ${fmt(l.c)} из ${fmt(l.q)}`).join('; ');
+  const html = `Пришло <b>${fmt(v.got)}</b> из ${fmt(v.ord)} шт.${v.diff.length ? ` Расхождения: ${diff}${v.diff.length > 12 ? '…' : ''}.` : ' Всё сошлось с заказом.'} В отправления уйдёт ${fmt(v.toOrd)} шт., на склад ${fmt(v.toStock)} шт.${pur.extra.some(e => e.to === 'ret') ? ` Вернуть поставщику: ${fmt(pur.extra.filter(e => e.to === 'ret').reduce((s, e) => s + e.q, 0))} шт.` : ''}${v.unc ? ` <b>${fmt(v.unc)} шт. не приехало под отправления</b> — они снова попадут в нехватку.` : ''}`;
+  confirmIn('#recvConfirm', html, 'Провести приёмку', () => { receive(pur); ui.recvId = ''; scrollTo({top: 0}); });
+});
+
+// stock
+$$('#stSeg button').forEach(b => b.addEventListener('click', () => { ui.stView = b.dataset.v; ui.stLimit = 200; render(); }));
+$('#stSort').addEventListener('change', e => { ui.stSort = e.target.value; render(); });
+$('#stSearch').addEventListener('input', e => { ui.stQ = e.target.value.trim(); ui.stLimit = 200; render(); });
+$('#stMore').addEventListener('click', () => { ui.stLimit += 500; render(); });
+function onQtyChange(pm, afterSet) {
+  return e => {
+    if (!e.target.matches('.qin')) return;
+    const k = e.target.closest('tr').dataset.k, it = pm.items.get(k);
+    if (!it) return;
+    const q = parseQty(e.target.value);
+    if (q == null) { toast('Введите число'); e.target.value = qv(it.q); return; }
+    const old = it.q; if (q === old) return;
+    it.q = q; pm.touch(k); if (afterSet) afterSet(it, old, q); render();
+  };
+}
+$('#stBody').addEventListener('change', onQtyChange(stock, (it, o, n) => { if (o <= 0 && n > 0) it.in = Date.now(); log(`Правка остатка ${it.a}: ${fmt(o)} → ${fmt(n)} шт.`); }));
+$('#stBody').addEventListener('click', e => {
+  if (!e.target.closest('[data-del]')) return;
+  const k = e.target.closest('tr').dataset.k, it = stock.items.get(k); if (!it) return;
+  confirmIn('#stConfirm', `Удалить со склада <b class="art">${esc(it.a)}</b> (${fmt(it.q)} шт.)?`, 'Удалить', () => { stock.remove(k); log(`Удалён со склада: ${it.a} (${fmt(it.q)} шт.)`); }, true);
+});
+$$('[data-export-stock]').forEach(b => b.addEventListener('click', () => exportStock()));
+$('#retCopy').addEventListener('click', () => {
+  const by = new Map(); for (const r of RET) (by.get(r.pav) || by.set(r.pav, []).get(r.pav)).push(r);
+  copyText([...by.entries()].map(([pav, rs]) => [pavLabel(pav) + ' — вернуть', ...rs.map(r => `${r.a} — ${fmt(r.q)} шт.`)].join('\n')).join('\n\n'), 'Список возвратов скопирован');
+});
+
+// recount
 $('#scanForm').addEventListener('submit', e => {
   e.preventDefault();
   const a = $('#scanArt').value.trim();
   if (!a) { $('#scanArt').focus(); return; }
   const q = parseQty($('#scanQty').value);
   if (q == null) { toast('Количество должно быть числом'); $('#scanQty').focus(); return; }
-  const k = draft.add(a, q, '', tick());
+  const k = draft.put({a, q, n: '', t: tick()});
   if (!k) { toast('В артикуле нет ни букв, ни цифр'); return; }
   const it = draft.items.get(k), st = stock.items.get(k);
   $('#scanInfo').innerHTML = `<b>${esc(it.a)}</b> ${q >= 0 ? '+' : ''}${fmt(q)} → в списке ${fmt(it.q)} шт. · ${st ? `на складе сейчас ${fmt(st.q)} шт.` : 'новый артикул, на складе его нет'}`;
@@ -1275,104 +2078,52 @@ $('#scanArt').addEventListener('paste', e => {
   const t = e.clipboardData && e.clipboardData.getData('text/plain');
   if (t && /\n/.test(t.trim())) { e.preventDefault(); fromText(t, 'receipt'); }
 });
-
-function onQtyChange(pm, afterSet) {
-  return e => {
-    if (!e.target.matches('.qin')) return;
-    const k = e.target.closest('tr').dataset.k, it = pm.items.get(k);
-    if (!it) return;
-    const q = parseQty(e.target.value);
-    if (q == null) { toast('Введите число'); e.target.value = qv(it.q); return; }
-    const old = it.q; if (q === old) return;
-    pm.setQty(k, q); if (afterSet) afterSet(it, old, q); render();
-  };
-}
 $('#rcBody').addEventListener('change', onQtyChange(draft));
-$('#stBody').addEventListener('change', onQtyChange(stock, (it, o, n) => log(`Правка остатка ${it.a}: ${fmt(o)} → ${fmt(n)} шт.`)));
 $('#rcBody').addEventListener('click', e => { if (!e.target.closest('[data-del]')) return; draft.remove(e.target.closest('tr').dataset.k); render(); });
-$('#stBody').addEventListener('click', e => {
-  if (!e.target.closest('[data-del]')) return;
-  const k = e.target.closest('tr').dataset.k, it = stock.items.get(k); if (!it) return;
-  confirmIn('#stConfirm', `Удалить со склада <b class="art">${esc(it.a)}</b> (${fmt(it.q)} шт.)?`, 'Удалить', () => { stock.remove(k); log(`Удалён со склада: ${it.a} (${fmt(it.q)} шт.)`); }, true);
-});
-document.addEventListener('focusout', e => { const s = e.target.closest && e.target.closest('[data-stale]'); if (s) setTimeout(render, 0); });
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && e.target.matches && e.target.matches('.qin')) { e.preventDefault(); e.target.blur(); }
-  if (e.key === 'Escape') { if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
-});
-
 $('#rcSearch').addEventListener('input', e => { ui.rcQ = e.target.value.trim(); ui.rcLimit = 200; render(); });
-$('#stSearch').addEventListener('input', e => { ui.stQ = e.target.value.trim(); ui.stLimit = 300; render(); });
-$('#orSearch').addEventListener('input', e => { ui.orQ = e.target.value.trim(); ui.orLimit = 300; render(); });
 $('#rcMore').addEventListener('click', () => { ui.rcLimit += 500; render(); });
-$('#stMore').addEventListener('click', () => { ui.stLimit += 500; render(); });
-$('#orMore').addEventListener('click', () => { ui.orLimit += 500; render(); });
-$$('.seg button').forEach(b => b.addEventListener('click', () => { ui.orF = b.dataset.f; ui.orLimit = 300; render(); }));
-
 $('#rcAdd').addEventListener('click', () => {
   const n = draft.items.size, q = draft.total();
-  confirmIn('#rcConfirm', `На склад добавится <b>${fmt(q)} шт.</b> по ${cnt(n, W.art)}. Список приёмки после этого очистится.`, 'Провести приёмку', () => {
-    for (const it of draft.items.values()) stock.add(it.a, it.q, it.n);
-    draft.clear(); $('#scanInfo').textContent = ''; log(`Приёмка: +${fmt(q)} шт., ${cnt(n, W.art)}`);
-    toast(`Приёмка проведена: +${fmt(q)} шт.`);
+  confirmIn('#rcConfirm', `На склад добавится <b>${fmt(q)} шт.</b> по ${cnt(n, W.art)}. Список после этого очистится.`, 'Добавить на склад', () => {
+    for (const it of draft.items.values()) stockAdd(it.a, it.q, it.n);
+    draft.clear(); $('#scanInfo').textContent = ''; log(`Ручной приход: +${fmt(q)} шт., ${cnt(n, W.art)}`);
+    toast(`На склад добавлено ${fmt(q)} шт.`);
   });
 });
 $('#rcReplace').addEventListener('click', () => {
   const n = draft.items.size, q = draft.total();
   confirmIn('#rcConfirm', `Сейчас на складе ${cnt(stock.items.size, W.art)}, ${fmt(stock.total())} шт. Склад станет точно таким, как этот список: <b>${cnt(n, W.art)}, ${fmt(q)} шт.</b> Артикулы, которых нет в списке, пропадут со склада.`, 'Заменить склад', () => {
     const b = [stock.items.size, stock.total()];
+    const old = new Map([...stock.items].map(([k, it]) => [k, it]));
     stock.clear();
-    for (const it of draft.items.values()) stock.add(it.a, it.q, it.n);
+    for (const it of draft.items.values()) { const k = stockAdd(it.a, it.q, it.n); const o = old.get(k); if (o && k) { const c = stock.items.get(k); c.in = o.in || c.in; c.out = o.out || 0; } }
     draft.clear(); $('#scanInfo').textContent = ''; log(`Полный пересчёт: ${cnt(n, W.art)}, ${fmt(q)} шт. (было ${fmt(b[0])} арт., ${fmt(b[1])} шт.)`);
     toast('Склад заменён результатами пересчёта');
   }, true);
 });
 $('#rcClear').addEventListener('click', () => {
-  confirmIn('#rcConfirm', `Удалить все ${cnt(draft.items.size, W.row)} из списка приёмки? Склад не изменится.`, 'Очистить список', () => { draft.clear(); $('#scanInfo').textContent = ''; }, true);
+  confirmIn('#rcConfirm', `Удалить все ${cnt(draft.items.size, W.row)} из списка пересчёта? Склад не изменится.`, 'Очистить список', () => { draft.clear(); $('#scanInfo').textContent = ''; }, true);
+});
+document.addEventListener('focusout', e => { const s = e.target.closest && e.target.closest('[data-stale]'); if (s) setTimeout(render, 0); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('.qin, .cin')) { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') { if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
 });
 
-$('#orExport').addEventListener('click', () => {
-  const rows = orderRows();
-  const short = rows.filter(r => r.short > 0).sort((a, b) => coll.compare(a.a, b.a));
-  const all = rows.slice().sort((a, b) => (rank[a.status] - rank[b.status]) || coll.compare(a.a, b.a));
-  saveTable(`Заказ ${S.supplier} ${today()}`, [
-    {name: 'Докупить', cols: [5, 20, 50, 14], rows: [['№', 'Артикул', 'Наименование', 'Количество, шт.'], ...short.map((r, i) => [i + 1, r.a, r.n, r.short])]},
-    {name: 'Сравнение', cols: [20, 50, 11, 15, 11], rows: [['Артикул', 'Наименование', 'Заказано', OM.off ? 'Было на складе' : 'На складе', 'Докупить'], ...all.map(r => [r.a, r.n, r.need, r.have, r.short])]},
-  ]);
-});
-$('#orCopy').addEventListener('click', () => {
-  const short = orderRows().filter(r => r.short > 0).sort((a, b) => coll.compare(a.a, b.a));
-  const text = ['Артикул\tНаименование\tКол-во, шт.', ...short.map(r => `${r.a}\t${r.n.replace(/[\t\n]/g, ' ')}\t${qv(r.short)}`)].join('\n');
-  copyText(text, `Скопировано: ${cnt(short.length, W.pos)}. Вставьте в Excel или в сообщение.`);
-});
-$('#orOff').addEventListener('click', () => {
-  const rows = orderRows();
-  const take = round(rows.reduce((s, r) => s + Math.min(Math.max(0, r.have), r.need), 0));
-  confirmIn('#orConfirm', `Со склада спишется <b>${fmt(take)} шт.</b> — всё, что есть в наличии по этому заказу. Недостающее останется в списке «Докупить». Делайте это, когда заказ собран и отгружен.`, 'Списать', writeOff);
-});
-$('#orNew').addEventListener('click', () => {
-  confirmIn('#orTopConfirm', 'Убрать текущий заказ? Склад не изменится.', 'Убрать заказ', () => { order.clear(); OM = {files: '', at: 0, off: 0}; saveMeta('meta/order'); }, true);
-});
-
-$$('[data-export-stock]').forEach(b => b.addEventListener('click', exportStock));
+// settings
 $('#stClear').addEventListener('click', () => {
   confirmIn('#setConfirm', `Удалить со склада все ${cnt(stock.items.size, W.art)} (${fmt(stock.total())} шт.)? Сначала лучше скачать остатки в Excel.`, 'Очистить склад', () => { stock.clear(); log('Склад очищен'); toast('Склад очищен'); }, true);
 });
-
 ['latin', 'zeros', 'punct'].forEach(k => {
   const id = '#opt' + k[0].toUpperCase() + k.slice(1);
-  $(id).addEventListener('change', e => {
-    S = {...S, [k]: e.target.checked};
-    maps.forEach(m => { m.rekey(); m.touchAll(); });
-    saveMeta('meta/settings'); log('Изменены правила сравнения артикулов');
-    renderTester(); render();
-  });
+  $(id).addEventListener('change', e => { S = {...S, [k]: e.target.checked}; rekeyAll(true); saveMeta('meta/settings'); log('Изменены правила сравнения артикулов'); renderTester(); render(); });
 });
+$('#optPav').addEventListener('change', e => { S = {...S, pav: e.target.checked}; artCache.clear(); saveMeta('meta/settings'); renderTester(); render(); });
 $('#optSupplier').addEventListener('change', e => { const v = e.target.value.trim(); S = {...S, supplier: v || DEF.supplier}; e.target.value = S.supplier; saveMeta('meta/settings'); render(); });
 $('#testIn').addEventListener('input', renderTester);
 
 // import
-let fileTarget = 'receipt';
+let fileTarget = 'orders';
 $$('[data-import]').forEach(b => b.addEventListener('click', () => { fileTarget = b.dataset.import; $('#fileIn').value = ''; $('#fileIn').click(); }));
 $$('[data-paste]').forEach(b => b.addEventListener('click', () => openPaste(b.dataset.paste)));
 $('#fileIn').addEventListener('change', () => { const fl = [...$('#fileIn').files]; if (fl.length) loadFiles(fileTarget, fl); });
@@ -1389,48 +2140,48 @@ $('#impText').addEventListener('input', debounce(() => { const t = $('#impText')
 $('#impSheet').addEventListener('change', e => { IMP.sheet = +e.target.value; IMP.m = detect(curRows()); renderImport(); });
 $('#impHeader').addEventListener('change', e => {
   const h = +e.target.value, rows = curRows();
-  if (h < 0) { IMP.m = {header: -1, art: -1, qty: -1, name: -1}; guess(rows, IMP.m); if (IMP.m.art < 0) IMP.m.art = 0; }
-  else { const d = detect(rows.slice(h)); IMP.m = {header: h, art: d.header === 0 ? d.art : IMP.m.art, qty: d.header === 0 ? d.qty : IMP.m.qty, name: d.header === 0 ? d.name : IMP.m.name}; }
+  if (h < 0) { IMP.m = {header: -1, art: -1, qty: -1, name: -1, ship: -1}; guess(rows, IMP.m); if (IMP.m.art < 0) IMP.m.art = 0; }
+  else { const d = detect(rows.slice(h)); const ok = d.header === 0; IMP.m = {header: h, art: ok ? d.art : IMP.m.art, qty: ok ? d.qty : IMP.m.qty, name: ok ? d.name : IMP.m.name, ship: ok ? d.ship : IMP.m.ship}; }
   renderImport();
 });
 $('#impArt').addEventListener('change', e => { IMP.m.art = +e.target.value; renderImport(); });
 $('#impQty').addEventListener('change', e => { IMP.m.qty = +e.target.value; renderImport(); });
 $('#impName').addEventListener('change', e => { IMP.m.name = +e.target.value; renderImport(); });
+$('#impShip').addEventListener('change', e => { IMP.m.ship = +e.target.value; renderImport(); });
 $('#impModes').addEventListener('change', e => { if (e.target.name === 'impMode') { IMP.mode = e.target.value; renderImport(); } });
 $('#impApply').addEventListener('click', applyImport);
-['#impX', '#impCancel'].forEach(s => $(s).addEventListener('click', () => closeModal('#imp')));
+const dropPdfs = () => { for (const f of IMP.files) if (f.pdf) f.pdf.destroy().catch(() => {}); IMP.files = []; };
+['#impX', '#impCancel'].forEach(s => $(s).addEventListener('click', () => { dropPdfs(); closeModal('#imp'); }));
 ['#cpyX', '#cpyClose'].forEach(s => $(s).addEventListener('click', () => closeModal('#cpy')));
-$('#imp').addEventListener('mousedown', e => { if (e.target.id === 'imp') closeModal('#imp'); });
+$('#imp').addEventListener('mousedown', e => { if (e.target.id === 'imp') { dropPdfs(); closeModal('#imp'); } });
 $('#cpy').addEventListener('mousedown', e => { if (e.target.id === 'cpy') closeModal('#cpy'); });
 
-// paste anywhere on a tab = import
+const tabTarget = () => ui.tab === 'stock' ? 'stock' : 'orders';
 document.addEventListener('paste', e => {
-  if (!$('#imp').hidden || !$('#cpy').hidden || ui.tab === 'settings') return;
+  if (!$('#imp').hidden || !$('#cpy').hidden || !['day', 'stock'].includes(ui.tab)) return;
   const ae = document.activeElement;
   if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
   const t = e.clipboardData && e.clipboardData.getData('text/plain');
   if (!t || !/[\t\n]/.test(t.trim())) return;
-  e.preventDefault(); fromText(t, ui.tab);
+  e.preventDefault(); fromText(t, tabTarget());
 });
-// drag & drop files
 let dragN = 0;
 const hasFiles = e => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
-const dropText = {receipt: 'Отпустите файл — строки попадут в список приёмки', stock: 'Отпустите файл, чтобы загрузить остатки', orders: 'Отпустите файл, чтобы загрузить заказы', settings: 'Отпустите файл — строки попадут в список приёмки'};
-document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = dropText[ui.tab]; $('#drop').hidden = false; });
+document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = tabTarget() === 'stock' ? 'Отпустите файл, чтобы загрузить остатки' : 'Отпустите файл, чтобы загрузить лист подбора'; $('#drop').hidden = false; });
 document.addEventListener('dragleave', e => { if (!hasFiles(e)) return; dragN = Math.max(0, dragN - 1); if (!dragN) $('#drop').hidden = true; });
 document.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
 document.addEventListener('drop', e => {
   if (!hasFiles(e)) return;
   e.preventDefault(); dragN = 0; $('#drop').hidden = true;
-  const fl = [...e.dataTransfer.files]; if (fl.length) loadFiles(ui.tab === 'settings' ? 'receipt' : ui.tab, fl);
+  const fl = [...e.dataTransfer.files]; if (fl.length) loadFiles(tabTarget(), fl);
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { maps.forEach(m => { if (m.dirty.size) m.flush(); }); } });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') maps.forEach(m => { if (m.dirty.size) m.flush(); }); });
 
 /* ---------- start ---------- */
 async function start() {
   document.body.classList.add('loading');
   const saved = lsGet('sklad/tab');
-  setTab(['receipt', 'stock', 'orders', 'settings'].includes(saved) ? saved : 'receipt');
+  setTab(['day', 'buy', 'recv', 'stock', 'settings'].includes(saved) ? saved : 'day');
   renderSettings(); render();
   let db = null;
   if (inViewer) {
