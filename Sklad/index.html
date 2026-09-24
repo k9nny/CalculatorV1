@@ -303,7 +303,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
     <section class="pane stack" id="pane-orders" role="tabpanel" aria-labelledby="t-orders" hidden>
       <div class="card">
         <h2>Заказы → что докупить</h2>
-        <p class="hint">Загрузите выгрузку заказов. Одинаковые артикулы сложатся, программа сравнит их с остатками и покажет, чего не хватает. Можно выбрать сразу несколько файлов.</p>
+        <p class="hint">Загрузите лист подбора Озона (PDF) или выгрузку заказов из Excel. Одинаковые артикулы сложатся, программа сравнит их с остатками и покажет, чего не хватает. Можно выбрать сразу несколько файлов.</p>
         <div class="row mt">
           <button class="btn primary" type="button" data-import="orders">Загрузить заказы</button>
           <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
@@ -390,7 +390,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
   </main>
 </div>
 
-<input type="file" id="fileIn" multiple accept=".xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.txt,.tsv" hidden>
+<input type="file" id="fileIn" multiple accept=".pdf,.xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.txt,.tsv" hidden>
 
 <div class="modal" id="imp" role="dialog" aria-modal="true" aria-labelledby="impTitle" hidden>
   <div class="sheet">
@@ -452,7 +452,7 @@ const fmt = n => nf.format(n || 0);
 const qv = n => String(n).replace('.', ',');
 const coll = new Intl.Collator('ru', {numeric: true, sensitivity: 'base'});
 const plural = (n, f) => { const a = Math.abs(Math.trunc(n)) % 100, b = a % 10; return f[(a > 10 && a < 20) ? 2 : b === 1 ? 0 : (b >= 2 && b <= 4) ? 1 : 2]; };
-const W = {art: ['артикул', 'артикула', 'артикулов'], row: ['строка', 'строки', 'строк'], file: ['файл', 'файла', 'файлов'], pos: ['позиция', 'позиции', 'позиций']};
+const W = {ship: ['отправление', 'отправления', 'отправлений'], art: ['артикул', 'артикула', 'артикулов'], row: ['строка', 'строки', 'строк'], file: ['файл', 'файла', 'файлов'], pos: ['позиция', 'позиции', 'позиций']};
 const cnt = (n, w) => `${fmt(n)} ${plural(n, w)}`;
 const trunc = (s, n) => { s = String(s ?? ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 const range = n => Array.from({length: n}, (_, i) => i);
@@ -732,12 +732,93 @@ function sheetRows(ws) {
   for (let r = 0; r < sparse.length; r++) { const src = sparse[r] || [], row = []; for (let c = 0; c < src.length; c++) row.push(src[c] ?? ''); rows.push(row); }
   return rows;
 }
+/* ---------- Ozon picking list (PDF) ---------- */
+const PDFJS = ['https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/'];
+const loadScript = src => new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); });
+let pdfP = null;
+function ensurePDF() {
+  if (pdfP) return pdfP;
+  pdfP = (async () => {
+    for (const base of PDFJS) {
+      if (!window.pdfjsLib) { try { await loadScript(base + 'pdf.min.js'); } catch { continue; } }
+      if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js'; return window.pdfjsLib; }
+    }
+    throw new Error('Не загрузился модуль для чтения PDF. Проверьте интернет и попробуйте ещё раз.');
+  })();
+  pdfP.catch(() => { pdfP = null; });
+  return pdfP;
+}
+// header of the table: the line with "Артикул"; labels wrapped onto two lines ("Кол-" / "во") are glued per column
+function pdfHeader(items) {
+  const art = items.find(i => /^артикул$/i.test(i.s));
+  if (!art) return null;
+  const hi = items.filter(i => Math.abs(i.y - art.y) <= 16);
+  const list = [];
+  for (const it of hi) { const c = list.find(l => Math.abs(l.x - it.x) < 3); if (c) c.parts.push(it); else list.push({x: it.x, parts: [it]}); }
+  list.sort((a, b) => a.x - b.x);
+  for (const c of list) c.s = c.parts.sort((a, b) => b.y - a.y).reduce((t, p) => t + (t && !t.endsWith('-') ? ' ' : '') + p.s, '');
+  const idx = rx => list.findIndex(c => rx.test(c.s));
+  const h = {list, y: Math.min(...hi.map(i => i.y)), art: idx(/^артикул/i), qty: idx(/^кол/i), name: idx(/^товар|наимен/i), ship: idx(/отправлен|^номер/i), num: idx(/^№/)};
+  if (h.qty < 0) return null;
+  // rows are found by the "№" column: a short number never wraps
+  h.anchor = h.num >= 0 ? h.num : h.ship >= 0 ? h.ship : h.qty;
+  h.anchorRx = h.num >= 0 || h.ship < 0 ? /^\d+$/ : /^\d{4,}[-\d]*$/;
+  return h;
+}
+async function readPdf(buf, name, onPage) {
+  const lib = await ensurePDF();
+  let doc;
+  try { doc = await lib.getDocument({data: new Uint8Array(buf), isEvalSupported: false}).promise; }
+  catch { throw new Error(`«${name}» не получилось открыть как PDF.`); }
+  let h = null, head = '', anyText = false;
+  const rows = [], ships = new Set();
+  for (let p = 1; p <= doc.numPages; p++) {
+    onPage(p, doc.numPages);
+    const page = await doc.getPage(p);
+    const tc = await page.getTextContent();
+    page.cleanup();
+    const items = tc.items.filter(i => i.str && i.str.trim()).map(i => ({s: i.str.trim(), x: i.transform[4], y: i.transform[5]}));
+    if (items.length) anyText = true;
+    if (p <= 2) head += ' ' + items.map(i => i.s).join(' ');
+    const ph = pdfHeader(items);
+    let top = Infinity;
+    if (ph) { h = ph; top = ph.y - 1; }
+    if (!h) continue;
+    const colOf = x => { let c = -1; for (let i = 0; i < h.list.length; i++) if (x >= h.list[i].x - 3) c = i; return c; };
+    const body = items.filter(i => i.y < top).map(i => ({...i, c: colOf(i.x)}));
+    const anchors = body.filter(i => i.c === h.anchor && h.anchorRx.test(i.s)).sort((a, b) => b.y - a.y);
+    if (!anchors.length) continue;
+    const gaps = anchors.slice(1).map((a, i) => anchors[i].y - a.y).sort((a, b) => a - b);
+    const gap = gaps.length ? gaps[gaps.length >> 1] : 60;
+    const cells = anchors.map(() => ({}));
+    for (const it of body) {
+      let best = -1, bd = Infinity;
+      anchors.forEach((a, i) => { const d = Math.abs(a.y - it.y); if (d < bd) { bd = d; best = i; } });
+      if (best < 0 || bd > gap * 0.55) continue;
+      (cells[best][it.c] || (cells[best][it.c] = [])).push(it);
+    }
+    // wrapped lines of one cell are glued back: the article without spaces, the name with spaces
+    const txt = (cell, c, sep) => c < 0 ? '' : (cell[c] || []).slice().sort((a, b) => (Math.round(b.y / 2) - Math.round(a.y / 2)) || (a.x - b.x)).map(i => i.s).join(sep).replace(/\s+/g, ' ').trim();
+    cells.forEach(cell => {
+      const ship = txt(cell, h.ship, ''), art = txt(cell, h.art, '');
+      if (!ship && !art) return;
+      if (ship) ships.add(ship);
+      rows.push([ship, txt(cell, h.name, ' '), art, txt(cell, h.qty, '')]);
+    });
+  }
+  if (!anyText) throw new Error(`«${name}»: в PDF нет текста, это картинка. Скачайте лист подбора из кабинета Озона заново.`);
+  if (!rows.length) throw new Error(`«${name}»: не нашлась таблица с колонками «Артикул» и «Кол-во». Это точно лист подбора Озона?`);
+  const m = head.match(/Количество отправлений:?\s*(\d+)/i), d = head.match(/Дата:?\s*(\d{2}\.\d{2}\.\d{4})/i), w = head.match(/Склад:?\s*(.+?)\s+Служба/i);
+  return {name, info: {expected: m ? +m[1] : null, date: d ? d[1] : '', wh: w ? w[1].trim() : '', ships: ships.size},
+    sheets: [{name: 'Лист подбора', rows: [['Номер отправления', 'Товар', 'Артикул', 'Кол-во'], ...rows]}]};
+}
 async function readFiles(list) {
   const out = [];
   for (const f of list) {
     const ext = (f.name.split('.').pop() || '').toLowerCase();
     if (ext === 'mxl') throw new Error(`«${f.name}»: формат 1С (.mxl) не читается. В 1С откройте таблицу и сохраните её как Excel (.xlsx).`);
     const buf = await f.arrayBuffer();
+    if (ext === 'pdf') { out.push(await readPdf(buf, f.name, (p, n) => toast(`Читаю PDF «${trunc(f.name, 32)}»: страница ${p} из ${n}`, 60000))); continue; }
     if (['csv', 'txt', 'tsv'].includes(ext)) { out.push({name: f.name, sheets: [{name: 'CSV', rows: parseDelimited(decodeText(buf))}]}); continue; }
     await ensureXLSX();
     let wb;
@@ -901,7 +982,16 @@ function renderImport() {
 
   // stats
   const s = extractAll();
-  let h = `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b>${s.lines.length > s.uniq ? ' Повторяющиеся артикулы сложатся.' : ''}</div>`;
+  let h = '';
+  const pdfs = IMP.files.filter(f => f.info);
+  if (pdfs.length) {
+    const exp = pdfs.every(f => f.info.expected) ? pdfs.reduce((a, f) => a + f.info.expected, 0) : 0;
+    const got = pdfs.reduce((a, f) => a + f.info.ships, 0);
+    const i0 = pdfs[0].info, where = [i0.date, i0.wh ? 'склад ' + i0.wh : ''].filter(Boolean).join(', ');
+    h += `<div>Лист подбора Озона${where ? ` (${esc(where)})` : ''}: прочитано <b>${cnt(got, W.ship)}</b>${exp ? ` из ${fmt(exp)} указанных в листе` : ''}.${exp && got === exp ? ' <span class="chip good">всё сошлось</span>' : ''}</div>`;
+    if (exp && got !== exp) h += `<div class="warnline">В листе указано ${cnt(exp, W.ship)}, а прочитано ${fmt(got)}. Возможно, часть строк не распозналась: сверьте итог с листом или загрузите выгрузку заказов в Excel.</div>`;
+  }
+  h += `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b>${s.lines.length > s.uniq ? ' Повторяющиеся артикулы сложатся.' : ''}</div>`;
   if (s.noArt) h += `<div>Пропущено ${cnt(s.noArt, W.row)} без артикула.</div>`;
   if (s.badQty) h += `<div class="warnline">${cnt(s.badQty, W.row)} без числа в колонке «Количество» — они пропущены. Если в файле каждая строка — это 1 штука, выберите «Нет колонки — каждая строка = 1 шт.».</div>`;
   if (s.sci) h += `<div class="warnline">${cnt(s.sci, W.art)} выглядят как «4,6E+12»: Excel сократил длинные номера, и точные цифры потеряны. Возьмите исходный файл выгрузки или задайте колонке формат «Текстовый» до вставки данных.</div>`;
