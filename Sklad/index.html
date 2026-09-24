@@ -1,0 +1,1358 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Склад и дозаказ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@700;800&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+:root{
+  --bg:#E9ECEE; --surface:#FFFFFF; --surface-2:#F3F5F6; --ink:#15191E; --muted:#56606A; --line:#D2D7DC;
+  --accent:#FFC20E; --accent-edge:#DDA600; --accent-ink:#15191E; --accent-soft:#FFF3C7;
+  --bad:#B3342A; --bad-soft:#FBE6E3; --good:#22704A; --good-soft:#E0F1E7; --warn:#9A5400; --warn-soft:#FCEBD6;
+  --focus:#1D5FD1; --hazard:#15191E; --scrim:rgba(12,14,17,.55);
+  --r:10px;
+  --f-ui:"Golos Text","Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --f-display:"Unbounded","Golos Text","Arial Black",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111316; --surface:#1A1E22; --surface-2:#22272C; --ink:#E6E9EC; --muted:#9BA4AD; --line:#30373E;
+    --accent:#FFC20E; --accent-edge:#FFC20E; --accent-ink:#15191E; --accent-soft:#3A3112;
+    --bad:#FF7F72; --bad-soft:#3B1E1B; --good:#5FCB91; --good-soft:#15301F; --warn:#F2A64B; --warn-soft:#37270F;
+    --focus:#80A8FF; --scrim:rgba(0,0,0,.65);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111316; --surface:#1A1E22; --surface-2:#22272C; --ink:#E6E9EC; --muted:#9BA4AD; --line:#30373E;
+  --accent:#FFC20E; --accent-edge:#FFC20E; --accent-ink:#15191E; --accent-soft:#3A3112;
+  --bad:#FF7F72; --bad-soft:#3B1E1B; --good:#5FCB91; --good-soft:#15301F; --warn:#F2A64B; --warn-soft:#37270F;
+  --focus:#80A8FF; --scrim:rgba(0,0,0,.65);
+  color-scheme:dark;
+}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-ui)}
+body.noscroll{overflow:hidden}
+.app{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:14px 72px}
+@media (min-width:760px){.app{padding-inline:28px}}
+
+/* header */
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 32px;padding-block:6px 14px}
+.brand{margin-right:auto;min-width:0}
+.logo{font:800 30px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.tagline{color:var(--muted);font-size:13px;margin-top:7px;letter-spacing:.05em}
+.kpi{display:flex;flex-direction:column;gap:2px}
+.kpi .num{font:700 24px/1.05 var(--f-mono);font-variant-numeric:tabular-nums}
+.kpi .lbl{font-size:12px;color:var(--muted)}
+.sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);max-width:260px}
+@media (max-width:560px){.brand{flex-basis:100%}.top{gap:10px 24px}.sync{flex-basis:100%}}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.sync[data-s="ok"] i{background:var(--good)}
+.sync[data-s="busy"] i,.sync[data-s="wait"] i{background:var(--accent-edge)}
+.sync[data-s="err"] i{background:var(--bad)}
+.sync[data-s="err"]{color:var(--bad)}
+.stripe{height:8px;border-radius:2px;background:repeating-linear-gradient(-45deg,var(--accent) 0 12px,var(--hazard) 12px 24px)}
+
+/* tabs */
+.tabs{display:flex;gap:2px;margin-block:12px 18px;overflow-x:auto;border-bottom:1px solid var(--line);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:none;color:var(--muted);font:600 15px/1 var(--f-ui);padding:13px 14px 14px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent-edge)}
+.badge{font:700 11px/1 var(--f-mono);background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 7px;color:var(--ink)}
+.badge.hot{background:var(--accent);border-color:var(--accent-edge);color:var(--accent-ink)}
+
+/* layout pieces */
+.stack{display:grid;gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+@media (max-width:560px){.card{padding:14px}}
+h2{font:700 19px/1.25 var(--f-ui);margin:0;text-wrap:balance}
+h3{font:600 16px/1.3 var(--f-ui);margin:0}
+.hint{color:var(--muted);margin:6px 0 0;font-size:14px;max-width:70ch}
+.small{font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.mt{margin-top:14px}
+.steps{margin:14px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;counter-reset:s}
+.steps li{counter-increment:s;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px 10px 44px;position:relative;font-size:14px}
+.steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:22px;height:22px;border-radius:4px;background:var(--hazard);color:var(--accent);font:700 13px/22px var(--f-mono);text-align:center}
+.steps b{display:block}
+
+/* form controls */
+.fld{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);font-weight:500;letter-spacing:.02em;min-width:0}
+.in{font:16px/1.3 var(--f-ui);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0;width:100%}
+select.in{padding-right:8px}
+.in.mono{font-family:var(--f-mono)}
+.in.big{font:500 20px/1.2 var(--f-mono);padding:12px 14px}
+.in:focus{outline:none;border-color:var(--focus);box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+.scan{display:grid;grid-template-columns:1fr 120px auto;gap:10px;align-items:end;margin-top:16px}
+@media (max-width:560px){.scan{grid-template-columns:1fr 92px}.scan .btn{grid-column:1/-1}}
+.scaninfo{min-height:22px;margin-top:10px;font-size:14px;color:var(--muted)}
+.scaninfo b{font-family:var(--f-mono);color:var(--ink)}
+
+.btn{appearance:none;font:600 14px/1.2 var(--f-ui);color:var(--ink);background:var(--surface-2);border:1.5px solid var(--line);border-radius:8px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;text-align:left}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent-edge);color:var(--accent-ink)}
+.btn.primary:hover{border-color:var(--hazard)}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.ghost:hover{border-color:var(--line)}
+.btn.danger{color:var(--bad)}
+.btn.solid-danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn:focus-visible,.tab:focus-visible,.seg button:focus-visible,.x:focus-visible,.mode:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+
+/* lists and tables */
+.lhead{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin-bottom:12px}
+.lhead .sum{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.lhead .search{margin-left:auto;width:min(300px,100%)}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:8px;max-height:70vh;overflow-y:auto}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+.t th{text-align:left;font:600 11.5px/1.2 var(--f-ui);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);background:var(--surface-2);padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;z-index:1}
+.t th.num{text-align:right}
+.t td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.t tbody tr:last-child td{border-bottom:0}
+.t .num{text-align:right;font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.t .strong{font-weight:700}
+.t td.c{width:44px;text-align:center;padding-inline:4px}
+.art{font-family:var(--f-mono);font-weight:700;word-break:break-all}
+.nm{display:block;color:var(--muted);font-size:13px;margin-top:2px;max-width:52ch}
+.alias{display:block;font-size:12px;color:var(--muted);margin-top:2px}
+.alias code{font-family:var(--f-mono)}
+tr.zero td>*:not(input){opacity:.55}
+tr.flash td{animation:flash 1.4s ease-out}
+@keyframes flash{from{background:var(--accent-soft)}to{background:transparent}}
+@media (prefers-reduced-motion:reduce){tr.flash td{animation:none;background:var(--accent-soft)}}
+.qin{width:96px;text-align:right;font:500 15px/1 var(--f-mono);padding:7px 9px;margin-left:auto;display:block}
+.x{appearance:none;border:1px solid transparent;background:none;color:var(--muted);font:400 20px/1 var(--f-ui);width:34px;height:34px;border-radius:6px;cursor:pointer}
+.x:hover{color:var(--bad);border-color:var(--line)}
+.empty{padding:30px 16px;text-align:center;color:var(--muted)}
+.more{margin-top:10px}
+.chip{display:inline-flex;align-items:center;font:600 12px/1 var(--f-ui);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.chip.bad{background:var(--bad-soft);color:var(--bad)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.new{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.confirm{margin-top:12px;border:1.5px solid var(--ink);border-radius:8px;padding:14px;background:var(--surface-2);display:grid;gap:12px}
+.confirm p{margin:0;max-width:72ch}
+
+/* orders */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.tiles{grid-template-columns:1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.tile .k{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600}
+.tile .v{font:700 30px/1.05 var(--f-display);font-variant-numeric:tabular-nums}
+.tile .v small{font:600 15px var(--f-ui);margin-left:6px}
+.tile .s{font-size:14px;color:var(--muted)}
+.tile.hot{background:var(--accent);border-color:var(--accent-edge);color:var(--accent-ink)}
+.tile.hot .k,.tile.hot .s{color:var(--accent-ink);opacity:.78}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:8px;overflow:hidden;flex-wrap:wrap}
+.seg button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 13px/1 var(--f-ui);padding:11px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.ometa{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:12px;font-size:14px;color:var(--muted)}
+.example{margin-top:14px}
+.example .t{opacity:.8}
+.example .lab{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px;color:var(--muted)}
+
+/* log */
+.log{list-style:none;margin:10px 0 0;padding:0;display:grid}
+.log li{display:grid;grid-template-columns:104px 1fr;gap:12px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.log li:last-child{border-bottom:0}
+.log time{font:12.5px/1.6 var(--f-mono);color:var(--muted)}
+
+/* settings */
+.opt{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.opt input{width:20px;height:20px;accent-color:var(--ink);margin:2px 0 0;flex:none}
+.opt b{display:block;font-weight:600}
+.opt span{color:var(--muted);font-size:14px}
+code.k{font-family:var(--f-mono);background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 5px;font-size:13px;color:var(--ink)}
+.tester{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end;margin-top:16px}
+@media (max-width:560px){.tester{grid-template-columns:1fr}}
+.keyout{font:700 16px/1.3 var(--f-mono);padding:11px 12px;background:var(--surface-2);border-radius:8px;border:1.5px dashed var(--line);min-height:46px;word-break:break-all}
+
+/* modal */
+.modal{position:fixed;inset:0;z-index:50;background:var(--scrim);display:flex;align-items:flex-start;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px calc(env(safe-area-inset-bottom,0px) + 16px);overflow-y:auto}
+.sheet{background:var(--surface);color:var(--ink);border-radius:12px;width:100%;max-width:980px;border:1px solid var(--line);box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;margin-block:auto}
+.sheet>header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.sheet>header h2{margin-right:auto}
+.sbody{padding:16px 18px;display:grid;gap:14px;min-width:0}
+.sheet>footer{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface);border-radius:0 0 12px 12px;position:sticky;bottom:0}
+.mapgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.prev{max-height:300px}
+.prev th,.prev td{font-size:13px;white-space:nowrap}
+.prev th em{display:block;font-style:normal;color:var(--accent-ink);background:var(--accent);border-radius:4px;padding:3px 6px;margin-bottom:5px;width:max-content;text-transform:none;letter-spacing:0}
+.prev td.sel{background:var(--accent-soft)}
+.prev .rn{color:var(--muted);font-family:var(--f-mono);width:1%}
+.stats{font-size:14px;display:grid;gap:6px;background:var(--surface-2);border-radius:8px;padding:12px 14px}
+.stats b{font-variant-numeric:tabular-nums}
+.warnline{color:var(--warn)}
+.modes{border:0;padding:0;margin:0;display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.mode{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--line);border-radius:8px;padding:11px 12px;cursor:pointer}
+.mode:has(input:checked){border-color:var(--ink);background:var(--surface-2)}
+.mode input{margin:3px 0 0;accent-color:var(--ink);flex:none}
+.mode b{display:block}
+.mode span{color:var(--muted);font-size:13px}
+textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
+.cpytext{min-height:220px;font:13px/1.45 var(--f-mono)}
+
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 16px;border-radius:8px;font-weight:500;z-index:70;width:max-content;max-width:calc(100% - 32px);box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.drop{position:fixed;inset:12px;border:3px dashed var(--accent-edge);border-radius:16px;background:color-mix(in srgb,var(--bg) 88%,transparent);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font:700 20px/1.3 var(--f-ui);z-index:40;pointer-events:none}
+.loading .needs-data{opacity:.5;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">Склад</div>
+      <div class="tagline">приёмка · остатки · дозаказ</div>
+    </div>
+    <div class="kpi"><span class="num" id="kArt">0</span><span class="lbl" id="kArtL">артикулов в наличии</span></div>
+    <div class="kpi"><span class="num" id="kQty">0</span><span class="lbl">штук на складе</span></div>
+    <div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div>
+  </header>
+  <div class="stripe" aria-hidden="true"></div>
+
+  <nav class="tabs" role="tablist" aria-label="Разделы">
+    <button class="tab" role="tab" id="t-receipt" data-tab="receipt" aria-selected="true">Приёмка <span class="badge" id="bRc" hidden></span></button>
+    <button class="tab" role="tab" id="t-stock" data-tab="stock" aria-selected="false">Склад</button>
+    <button class="tab" role="tab" id="t-orders" data-tab="orders" aria-selected="false">Заказы и дозаказ <span class="badge hot" id="bOr" hidden></span></button>
+    <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false">Настройки</button>
+  </nav>
+
+  <main class="needs-data">
+    <!-- ПРИЁМКА -->
+    <section class="pane stack" id="pane-receipt" role="tabpanel" aria-labelledby="t-receipt">
+      <div class="card">
+        <h2>Приёмка и пересчёт</h2>
+        <p class="hint">Введите артикул и количество или просканируйте штрихкод — сканер сам нажмёт Enter. Одинаковые артикулы складываются. На склад товар попадёт, когда вы проведёте список.</p>
+        <ol class="steps" id="howto" hidden>
+          <li><b>Примите товар</b>Посчитайте всё, что есть, и нажмите «Это полный пересчёт».</li>
+          <li><b>Загрузите заказы</b>Во вкладке «Заказы» выберите выгрузку из Excel.</li>
+          <li><b>Скачайте «Докупить»</b>Готовый список того, чего не хватает, для ТЦ Москва.</li>
+        </ol>
+        <form class="scan" id="scanForm" autocomplete="off">
+          <label class="fld">Артикул или штрихкод<input class="in big" id="scanArt" spellcheck="false" autocapitalize="characters" enterkeyhint="done"></label>
+          <label class="fld">Кол-во, шт.<input class="in big" id="scanQty" inputmode="decimal" value="1"></label>
+          <button class="btn primary" type="submit">Добавить</button>
+        </form>
+        <div class="scaninfo" id="scanInfo" aria-live="polite"></div>
+        <div class="row mt">
+          <button class="btn" type="button" data-import="receipt">Загрузить накладную (Excel, CSV)</button>
+          <button class="btn" type="button" data-paste="receipt">Вставить из Excel</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="lhead">
+          <h3>Список приёмки</h3>
+          <span class="sum" id="rcSum"></span>
+          <input class="in search" id="rcSearch" type="search" placeholder="Поиск в списке" aria-label="Поиск в списке приёмки">
+        </div>
+        <div class="tw">
+          <table class="t">
+            <thead><tr><th>Товар</th><th class="num">Сейчас на складе</th><th class="num">Принято</th><th><span class="sr" hidden>Удалить</span></th></tr></thead>
+            <tbody id="rcBody"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost more" id="rcMore" type="button" hidden>Показать ещё</button>
+        <div class="actions">
+          <button class="btn primary" id="rcAdd" type="button">Добавить на склад</button>
+          <button class="btn" id="rcReplace" type="button">Это полный пересчёт — заменить склад</button>
+          <button class="btn ghost danger" id="rcClear" type="button">Очистить список</button>
+        </div>
+        <div class="confirm" id="rcConfirm" hidden></div>
+      </div>
+    </section>
+
+    <!-- СКЛАД -->
+    <section class="pane stack" id="pane-stock" role="tabpanel" aria-labelledby="t-stock" hidden>
+      <div class="card">
+        <div class="lhead">
+          <h2>Остатки на складе</h2>
+          <span class="sum" id="stSum"></span>
+          <input class="in search" id="stSearch" type="search" placeholder="Поиск по артикулу или названию" aria-label="Поиск по складу">
+        </div>
+        <div class="row" style="margin-bottom:14px">
+          <button class="btn" type="button" data-import="stock">Загрузить остатки из файла</button>
+          <button class="btn" type="button" data-paste="stock">Вставить из Excel</button>
+          <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
+        </div>
+        <div class="tw">
+          <table class="t">
+            <thead><tr><th>Товар</th><th class="num">Остаток, шт.</th><th><span hidden>Удалить</span></th></tr></thead>
+            <tbody id="stBody"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost more" id="stMore" type="button" hidden>Показать ещё</button>
+        <div class="confirm" id="stConfirm" hidden></div>
+      </div>
+      <div class="card">
+        <h3>Журнал операций</h3>
+        <ol class="log" id="log"></ol>
+      </div>
+    </section>
+
+    <!-- ЗАКАЗЫ -->
+    <section class="pane stack" id="pane-orders" role="tabpanel" aria-labelledby="t-orders" hidden>
+      <div class="card">
+        <h2>Заказы → что докупить</h2>
+        <p class="hint">Загрузите выгрузку заказов. Одинаковые артикулы сложатся, программа сравнит их с остатками и покажет, чего не хватает. Можно выбрать сразу несколько файлов.</p>
+        <div class="row mt">
+          <button class="btn primary" type="button" data-import="orders">Загрузить заказы</button>
+          <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
+          <button class="btn ghost danger" type="button" id="orNew" hidden>Новый заказ</button>
+        </div>
+        <div class="ometa" id="orMeta"></div>
+        <div class="confirm" id="orTopConfirm" hidden></div>
+        <div class="example" id="orExample">
+          <div class="lab"><span class="chip new">Пример</span>Так выглядит результат после загрузки заказов</div>
+          <div class="tw">
+            <table class="t">
+              <thead><tr><th>Товар</th><th class="num">Заказано</th><th class="num">На складе</th><th class="num">Докупить</th><th>Статус</th></tr></thead>
+              <tbody>
+                <tr><td><span class="art">77019</span><span class="nm">Подушка декоративная 40×40</span></td><td class="num">6</td><td class="num">0</td><td class="num strong">6</td><td><span class="chip bad">нет на складе</span></td></tr>
+                <tr><td><span class="art">A-4471</span><span class="nm">Плед флисовый серый</span></td><td class="num">8</td><td class="num">3</td><td class="num strong">5</td><td><span class="chip warn">не хватает</span></td></tr>
+                <tr><td><span class="art">00123</span><span class="nm">Кружка белая 350 мл</span></td><td class="num">12</td><td class="num">20</td><td class="num">—</td><td><span class="chip good">хватает</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="tiles" id="orTiles" hidden>
+        <div class="tile"><span class="k">В заказе</span><span class="v" id="tNeed">0</span><span class="s" id="tNeedS"></span></div>
+        <div class="tile"><span class="k">Есть на складе</span><span class="v" id="tHave">0</span><span class="s" id="tHaveS"></span></div>
+        <div class="tile hot"><span class="k" id="tShortK">Докупить</span><span class="v" id="tShort">0</span><span class="s" id="tShortS"></span></div>
+      </div>
+
+      <div class="card" id="orCard" hidden>
+        <div class="lhead">
+          <div class="seg" role="group" aria-label="Фильтр">
+            <button type="button" data-f="short" aria-pressed="true">Докупить</button>
+            <button type="button" data-f="all" aria-pressed="false">Все</button>
+            <button type="button" data-f="ok" aria-pressed="false">Хватает</button>
+          </div>
+          <input class="in search" id="orSearch" type="search" placeholder="Поиск по заказу" aria-label="Поиск по заказу">
+        </div>
+        <div class="tw">
+          <table class="t">
+            <thead><tr><th>Товар</th><th class="num">Заказано</th><th class="num" id="orHaveH">На складе</th><th class="num">Докупить</th><th>Статус</th></tr></thead>
+            <tbody id="orBody"></tbody>
+          </table>
+        </div>
+        <button class="btn ghost more" id="orMore" type="button" hidden>Показать ещё</button>
+        <div class="actions">
+          <button class="btn primary" type="button" id="orExport">Скачать список «Докупить» (Excel)</button>
+          <button class="btn" type="button" id="orCopy">Копировать список</button>
+          <button class="btn" type="button" id="orOff">Списать заказ со склада</button>
+        </div>
+        <div class="confirm" id="orConfirm" hidden></div>
+      </div>
+    </section>
+
+    <!-- НАСТРОЙКИ -->
+    <section class="pane stack" id="pane-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
+      <div class="card">
+        <h2>Как сравнивать артикулы</h2>
+        <p class="hint">Один и тот же товар в разных файлах бывает записан по-разному. Эти правила помогают понять, что это один артикул. Большие и маленькие буквы не различаются никогда.</p>
+        <label class="opt"><input type="checkbox" id="optLatin"><div><b>Русские и английские буквы — одно и то же</b><span>Похожие буквы <code class="k">А В Е К М Н О Р С Т У Х</code> считаются одинаковыми: <code class="k">АВ-12</code> на русском = <code class="k">AB-12</code> на английском.</span></div></label>
+        <label class="opt"><input type="checkbox" id="optZeros"><div><b>Не учитывать нули в начале</b><span>Excel часто убирает нули: <code class="k">00123</code> превращается в <code class="k">123</code>. С этим правилом они совпадут.</span></div></label>
+        <label class="opt"><input type="checkbox" id="optPunct"><div><b>Не учитывать пробелы, дефисы, точки и слэши</b><span><code class="k">AB-123</code>, <code class="k">AB 123</code> и <code class="k">AB123</code> — один артикул.</span></div></label>
+        <p class="hint small">Если включить правило, совпавшие по нему артикулы на складе объединятся и их количество сложится. Выключение правила обратно их не разделит.</p>
+        <div class="tester">
+          <label class="fld">Проверить артикул<input class="in mono" id="testIn" placeholder="например, 00АВ-123" spellcheck="false"></label>
+          <div class="fld">Программа видит его как<div class="keyout" id="testOut">—</div></div>
+        </div>
+        <p class="hint" id="testMatch"></p>
+      </div>
+      <div class="card">
+        <h2>Поставщик</h2>
+        <p class="hint">Где вы докупаете недостающий товар. Название попадёт в заголовок и имя файла.</p>
+        <label class="fld mt" style="max-width:420px">Поставщик<input class="in" id="optSupplier"></label>
+      </div>
+      <div class="card">
+        <h2>Данные</h2>
+        <p class="hint" id="storeNote"></p>
+        <div class="row mt">
+          <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
+          <button class="btn danger" type="button" id="stClear">Очистить склад</button>
+        </div>
+        <div class="confirm" id="setConfirm" hidden></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<input type="file" id="fileIn" multiple accept=".xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.txt,.tsv" hidden>
+
+<div class="modal" id="imp" role="dialog" aria-modal="true" aria-labelledby="impTitle" hidden>
+  <div class="sheet">
+    <header><h2 id="impTitle">Загрузка</h2><button class="x" type="button" id="impX" aria-label="Закрыть">×</button></header>
+    <div class="sbody">
+      <div id="impPasteBox" hidden>
+        <label class="fld">Скопируйте в Excel нужные строки вместе с заголовками и вставьте сюда (Ctrl+V)
+          <textarea class="in paste" id="impText" spellcheck="false"></textarea>
+        </label>
+      </div>
+      <div id="impMapBox" class="stack" hidden>
+        <div id="impFiles" class="small"></div>
+        <div class="mapgrid">
+          <label class="fld" id="impSheetF">Лист<select class="in" id="impSheet"></select></label>
+          <label class="fld">Строка с заголовками<select class="in" id="impHeader"></select></label>
+          <label class="fld">Колонка «Артикул»<select class="in" id="impArt"></select></label>
+          <label class="fld">Колонка «Количество»<select class="in" id="impQty"></select></label>
+          <label class="fld">Колонка «Наименование»<select class="in" id="impName"></select></label>
+        </div>
+        <div class="tw prev"><table class="t" id="impPrev"></table></div>
+        <div class="stats" id="impStats"></div>
+        <fieldset class="modes" id="impModes"></fieldset>
+      </div>
+    </div>
+    <footer>
+      <button class="btn" type="button" id="impCancel">Отмена</button>
+      <button class="btn primary" type="button" id="impApply" hidden>Загрузить</button>
+    </footer>
+  </div>
+</div>
+
+<div class="modal" id="cpy" role="dialog" aria-modal="true" aria-labelledby="cpyTitle" hidden>
+  <div class="sheet" style="max-width:640px">
+    <header><h2 id="cpyTitle">Скопируйте список</h2><button class="x" type="button" id="cpyX" aria-label="Закрыть">×</button></header>
+    <div class="sbody">
+      <p class="hint" style="margin:0">Текст уже выделен — нажмите Ctrl+C (на телефоне: «Копировать»), затем вставьте в Excel или в сообщение.</p>
+      <textarea class="in cpytext" id="cpyText" readonly></textarea>
+    </div>
+    <footer><button class="btn" type="button" id="cpyClose">Готово</button></footer>
+  </div>
+</div>
+
+<div class="drop" id="drop" hidden>Отпустите файл, чтобы загрузить</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" id="xlsxLib" async></script>
+<script>
+(() => {
+'use strict';
+
+/* ---------- helpers ---------- */
+const NB = 16;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const round = n => Math.round(n * 1000) / 1000;
+const nf = new Intl.NumberFormat('ru-RU', {maximumFractionDigits: 3});
+const fmt = n => nf.format(n || 0);
+const qv = n => String(n).replace('.', ',');
+const coll = new Intl.Collator('ru', {numeric: true, sensitivity: 'base'});
+const plural = (n, f) => { const a = Math.abs(Math.trunc(n)) % 100, b = a % 10; return f[(a > 10 && a < 20) ? 2 : b === 1 ? 0 : (b >= 2 && b <= 4) ? 1 : 2]; };
+const W = {art: ['артикул', 'артикула', 'артикулов'], row: ['строка', 'строки', 'строк'], file: ['файл', 'файла', 'файлов'], pos: ['позиция', 'позиции', 'позиций']};
+const cnt = (n, w) => `${fmt(n)} ${plural(n, w)}`;
+const trunc = (s, n) => { s = String(s ?? ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
+const range = n => Array.from({length: n}, (_, i) => i);
+const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+const when = t => { const d = new Date(t); const p = x => String(x).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+
+/* ---------- article normalisation ---------- */
+const DEF = {latin: true, zeros: true, punct: true, supplier: 'ТЦ Москва'};
+let S = {...DEF};
+const CYR = {'А':'A','В':'B','Е':'E','Ё':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','У':'Y','Х':'X'};
+function normKey(raw, s = S) {
+  let t = String(raw ?? '').normalize('NFKC')
+    .replace(/[​-‍⁠﻿]/g, '')
+    .replace(/[  -   　]/g, ' ')
+    .replace(/[‐-―−]/g, '-')
+    .trim().toUpperCase();
+  if (s.latin) t = t.replace(/[АВЕЁКМНОРСТУХ]/g, c => CYR[c]);
+  t = s.punct ? t.replace(/[\s\-_.,\/\\]+/g, '') : t.replace(/\s+/g, ' ');
+  if (s.zeros) t = t.replace(/^0+(?=\d)/, '');
+  return t;
+}
+function parseQty(v) {
+  if (v == null) return null;
+  let s = String(v).replace(/[\s  ]/g, '').replace(/(шт|pcs|pc)\.?$/i, '');
+  if (!s) return null;
+  s = s.replace(',', '.');
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  const n = parseFloat(s);
+  return isFinite(n) ? round(n) : null;
+}
+function hash(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193); } return h >>> 0; }
+let SEQ = 0;
+const tick = () => (SEQ = Math.max(SEQ + 1, Date.now()));
+
+/* ---------- storage ---------- */
+let Backend = null, DL = null;
+const ready = {stock: false, receipt: false, order: false, settings: false, log: false, om: false};
+
+function dbBackend(db) {
+  const retry = async fn => { try { return await fn(); } catch (e) { if (e && e.code === 'unavailable') { await new Promise(r => setTimeout(r, 400 + Math.random() * 800)); return fn(); } throw e; } };
+  const fail = e => syncFail(e);
+  return {
+    kind: 'db',
+    set: (p, data) => retry(() => db.doc(p).set(data)),
+    watchColl(name, cb) {
+      db.collection(name).onSnapshot(s => cb(s.docs.filter(d => d.exists).map(d => ({id: d.id, data: d.data()})), s.metadata.fromCache), fail);
+    },
+    watchDoc(p, cb) { db.doc(p).onSnapshot(d => cb(d.exists ? d.data() : null), fail); },
+  };
+}
+function localBackend() {
+  let ls = null;
+  try { ls = window.localStorage; ls.setItem('sklad/_t', '1'); ls.removeItem('sklad/_t'); } catch { ls = null; }
+  const mem = new Map();
+  const read = p => { try { const s = ls ? ls.getItem('sklad/' + p) : mem.get(p); return s ? JSON.parse(s) : null; } catch { return null; } };
+  return {
+    kind: ls ? 'local' : 'memory',
+    async set(p, data) { const s = JSON.stringify(data); if (ls) ls.setItem('sklad/' + p, s); else mem.set(p, s); },
+    watchColl(name, cb) {
+      const load = () => { const docs = []; for (let b = 0; b < NB; b++) { const d = read(`${name}/b${b}`); if (d) docs.push({id: 'b' + b, data: d}); } cb(docs, false); };
+      setTimeout(load, 0);
+      addEventListener('storage', e => { if (e.key && e.key.startsWith(`sklad/${name}/`)) load(); });
+    },
+    watchDoc(p, cb) {
+      setTimeout(() => cb(read(p)), 0);
+      addEventListener('storage', e => { if (e.key === 'sklad/' + p) cb(read(p)); });
+    },
+  };
+}
+
+class PMap {
+  constructor(name) { this.name = name; this.items = new Map(); this.dirty = new Set(); this.inflight = new Set(); this.timer = 0; this.busy = false; this.again = false; this.fails = 0; this.seen = []; }
+  bucket(k) { return hash(k) % NB; }
+  touch(k) { this.dirty.add(this.bucket(k)); this.schedule(); }
+  touchAll() { for (let b = 0; b < NB; b++) this.dirty.add(b); this.schedule(); }
+  schedule(ms = 450) { clearTimeout(this.timer); setSync('busy'); this.timer = setTimeout(() => this.flush(), ms); }
+  merge(it) {
+    const k = normKey(it.a); if (!k) return null;
+    const cur = this.items.get(k);
+    if (cur) { cur.q = round(cur.q + it.q); if (!cur.n && it.n) cur.n = it.n; if (cur.s == null && it.s != null) cur.s = it.s; cur.t = Math.max(cur.t, it.t || 0); }
+    else this.items.set(k, {a: it.a, q: round(it.q), n: it.n || '', s: it.s ?? null, t: it.t || 0});
+    return k;
+  }
+  add(a, q, n, t) {
+    a = String(a ?? '').trim(); const k = normKey(a); if (!k) return null;
+    const cur = this.items.get(k);
+    if (cur) { cur.q = round(cur.q + q); if (!cur.n && n) cur.n = n; if (t) cur.t = t; }
+    else this.items.set(k, {a, q: round(q), n: n || '', s: null, t: t || tick()});
+    this.touch(k); return k;
+  }
+  setQty(k, q) { const it = this.items.get(k); if (it) { it.q = round(q); this.touch(k); } }
+  remove(k) { if (this.items.delete(k)) this.touch(k); }
+  clear() { this.items.clear(); this.touchAll(); }
+  rekey() { const all = [...this.items.values()]; this.items.clear(); for (const it of all) this.merge(it); }
+  total() { let s = 0; for (const it of this.items.values()) s += it.q; return round(s); }
+  applyRemote(docs) {
+    let changed = false;
+    for (const d of docs) {
+      const b = Number(String(d.id).slice(1));
+      if (!Number.isInteger(b) || b < 0 || b >= NB) continue;
+      if (this.dirty.has(b) || this.inflight.has(b) || d.data === this.seen[b]) continue;
+      this.seen[b] = d.data;
+      for (const k of [...this.items.keys()]) if (this.bucket(k) === b) this.items.delete(k);
+      const rows = d.data && Array.isArray(d.data.items) ? d.data.items : [];
+      for (const r of rows) {
+        if (!Array.isArray(r)) continue;
+        const it = {a: String(r[0] ?? ''), q: Number(r[1]) || 0, n: r[2] ? String(r[2]) : '', s: r[3] == null ? null : Number(r[3]), t: Number(r[4]) || 0};
+        this.merge(it); if (it.t > SEQ) SEQ = it.t;
+      }
+      changed = true;
+    }
+    return changed;
+  }
+  async flush() {
+    clearTimeout(this.timer);
+    if (this.busy) { this.again = true; return; }
+    if (!Backend || !ready[this.name]) { this.schedule(800); return; }
+    this.busy = true;
+    try {
+      while (this.dirty.size) {
+        const bs = [...this.dirty]; this.dirty.clear();
+        bs.forEach(b => this.inflight.add(b));
+        const arrs = new Map(bs.map(b => [b, []]));
+        for (const [k, it] of this.items) { const arr = arrs.get(this.bucket(k)); if (arr) arr.push([it.a, it.q, it.n, it.s, it.t]); }
+        for (let i = 0; i < bs.length; i++) {
+          try { await Backend.set(`${this.name}/b${bs[i]}`, {items: arrs.get(bs[i]), at: Date.now()}); }
+          catch (e) { for (let j = i; j < bs.length; j++) { this.dirty.add(bs[j]); this.inflight.delete(bs[j]); } throw e; }
+          this.inflight.delete(bs[i]);
+        }
+      }
+      this.fails = 0;
+    } catch (e) {
+      this.fails++; syncFail(e);
+      clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), Math.min(60000, 4000 * 2 ** this.fails));
+    } finally {
+      this.busy = false;
+      if (this.again) { this.again = false; if (this.dirty.size) this.flush(); }
+      if (!this.fails) syncDone();
+    }
+  }
+}
+const stock = new PMap('stock'), draft = new PMap('receipt'), order = new PMap('order');
+const maps = [stock, draft, order];
+
+let LOG = [];
+let OM = {files: '', at: 0, off: 0};
+const META = {'meta/settings': () => S, 'meta/log': () => ({entries: LOG}), 'meta/order': () => OM};
+const metaSt = {};
+function saveMeta(p) { const st = metaSt[p] || (metaSt[p] = {}); st.dirty = true; clearTimeout(st.timer); setSync('busy'); st.timer = setTimeout(() => flushMeta(p), 300); }
+async function flushMeta(p) {
+  const st = metaSt[p];
+  if (st.busy) { st.again = true; return; }
+  if (!Backend) { st.timer = setTimeout(() => flushMeta(p), 800); return; }
+  st.busy = true;
+  let ok = true;
+  try { while (st.dirty) { st.dirty = false; await Backend.set(p, JSON.parse(JSON.stringify(META[p]()))); } }
+  catch (e) { ok = false; st.dirty = true; syncFail(e); st.timer = setTimeout(() => flushMeta(p), 10000); }
+  finally { st.busy = false; if (st.again) { st.again = false; if (st.dirty) flushMeta(p); } if (ok) syncDone(); }
+}
+const metaPending = p => { const st = metaSt[p]; return !!(st && (st.dirty || st.busy)); };
+function log(x) { LOG.unshift({t: Date.now(), x}); if (LOG.length > 200) LOG.length = 200; saveMeta('meta/log'); }
+
+function setSync(s, text) {
+  const el = $('#sync'); el.dataset.s = s;
+  const kind = Backend && Backend.kind;
+  $('span', el).textContent = text || ({busy: 'Сохранение…', wait: 'Загрузка…', ok: kind === 'db' ? 'Сохранено' : kind === 'local' ? 'Сохранено в этом браузере' : 'Данные не сохраняются'})[s] || '';
+}
+const anyPending = () => maps.some(m => m.busy || m.dirty.size) || Object.keys(metaSt).some(metaPending);
+function syncDone() { if (anyPending()) return; if (Backend && Backend.kind === 'memory') setSync('err', 'Данные не сохраняются'); else setSync('ok'); }
+function syncFail(e) {
+  const c = e && e.code;
+  const why = c === 'quota_exceeded' ? 'закончилось место' : c === 'invalid_argument' ? 'нет прав на запись или слишком большой список'
+    : (c === 'revoked' || c === 'not_granted') ? 'нет доступа' : (e && e.name === 'QuotaExceededError') ? 'память браузера заполнена' : 'нет связи, повторю попытку';
+  setSync('err', 'Не сохранено: ' + why);
+}
+
+function subscribe() {
+  const onColl = (m) => (docs, fromCache) => {
+    const ch = m.applyRemote(docs);
+    if (!ready[m.name] && !fromCache) { ready[m.name] = true; checkReady(); }
+    if (ch) render();
+  };
+  Backend.watchColl('stock', onColl(stock));
+  Backend.watchColl('receipt', onColl(draft));
+  Backend.watchColl('order', onColl(order));
+  const first = k => { if (!ready[k]) { ready[k] = true; checkReady(); } };
+  Backend.watchDoc('meta/settings', d => {
+    first('settings');
+    if (!d || metaPending('meta/settings')) return;
+    const ns = {...DEF};
+    for (const k of ['latin', 'zeros', 'punct']) if (typeof d[k] === 'boolean') ns[k] = d[k];
+    if (typeof d.supplier === 'string' && d.supplier.trim()) ns.supplier = d.supplier;
+    const rekey = ns.latin !== S.latin || ns.zeros !== S.zeros || ns.punct !== S.punct;
+    S = ns; if (rekey) maps.forEach(m => m.rekey());
+    renderSettings(); render();
+  });
+  Backend.watchDoc('meta/log', d => { first('log'); if (d && Array.isArray(d.entries) && !metaPending('meta/log')) { LOG = d.entries.slice(0, 200); render(); } });
+  Backend.watchDoc('meta/order', d => { first('om'); if (d && !metaPending('meta/order')) { OM = {files: String(d.files || ''), at: +d.at || 0, off: +d.off || 0}; render(); } });
+  // if the store keeps answering from cache, stop waiting after a while
+  setTimeout(() => { for (const k in ready) ready[k] = true; checkReady(); }, 9000);
+}
+function checkReady() {
+  if (Object.values(ready).every(Boolean)) { document.body.classList.remove('loading'); syncDone(); render(); }
+}
+
+/* ---------- file reading ---------- */
+let xlsxP = null;
+function ensureXLSX() {
+  if (window.XLSX) return Promise.resolve();
+  if (xlsxP) return xlsxP;
+  xlsxP = new Promise((res, rej) => {
+    let done = false;
+    const fallback = () => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+      s.onload = () => window.XLSX ? res() : rej(); s.onerror = rej;
+      document.head.appendChild(s);
+    };
+    if (document.readyState === 'complete') { fallback(); return; }
+    const go = ok => { if (done) return; done = true; clearTimeout(t); (ok && window.XLSX) ? res() : fallback(); };
+    const t = setTimeout(() => go(false), 12000);
+    $('#xlsxLib').addEventListener('load', () => go(true));
+    $('#xlsxLib').addEventListener('error', () => go(false));
+    addEventListener('load', () => go(true));
+  }).catch(() => { xlsxP = null; throw new Error('Не загрузился модуль для Excel. Проверьте интернет или сохраните файл как CSV.'); });
+  return xlsxP;
+}
+function decodeText(buf) {
+  const u8 = new Uint8Array(buf);
+  if (u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder('utf-16le').decode(u8);
+  if (u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder('utf-16be').decode(u8);
+  try { return new TextDecoder('utf-8', {fatal: true}).decode(u8).replace(/^﻿/, ''); }
+  catch { return new TextDecoder('windows-1251').decode(u8); }
+}
+function parseDelimited(text) {
+  const head = text.slice(0, 20000);
+  const d = head.includes('\t') ? '\t' : head.includes(';') ? ';' : ',';
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += ch; }
+    else if (ch === '"' && f.trim() === '') { q = true; f = ''; }
+    else if (ch === d) { row.push(f.trim()); f = ''; }
+    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(f.trim()); rows.push(row); row = []; f = ''; }
+    else f += ch;
+  }
+  if (f !== '' || row.length) { row.push(f.trim()); rows.push(row); }
+  while (rows.length && rows[rows.length - 1].every(v => v === '')) rows.pop();
+  return rows;
+}
+function cellText(c) {
+  if (!c || c.v == null) return '';
+  if (c.t === 'n') {
+    const w = String(c.w ?? '').trim();
+    if (/^0\d+$/.test(w)) return w;             // leading zeros kept by a cell format like 00000
+    return String(c.v);                          // full digits, never 4.6E+12
+  }
+  if (c.t === 'b') return c.v ? 'ИСТИНА' : 'ЛОЖЬ';
+  if (c.t === 'e') return '';
+  if (c.t === 'd') return String(c.w ?? c.v);
+  return String(c.v).trim();
+}
+function sheetRows(ws) {
+  if (!ws) return [];
+  const sparse = [];
+  for (const addr in ws) {
+    if (addr[0] === '!') continue;
+    const {r, c} = XLSX.utils.decode_cell(addr);
+    if (c > 60 || r > 200000) continue;
+    const v = cellText(ws[addr]);
+    if (v !== '') (sparse[r] || (sparse[r] = []))[c] = v;
+  }
+  const rows = [];
+  for (let r = 0; r < sparse.length; r++) { const src = sparse[r] || [], row = []; for (let c = 0; c < src.length; c++) row.push(src[c] ?? ''); rows.push(row); }
+  return rows;
+}
+async function readFiles(list) {
+  const out = [];
+  for (const f of list) {
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    if (ext === 'mxl') throw new Error(`«${f.name}»: формат 1С (.mxl) не читается. В 1С откройте таблицу и сохраните её как Excel (.xlsx).`);
+    const buf = await f.arrayBuffer();
+    if (['csv', 'txt', 'tsv'].includes(ext)) { out.push({name: f.name, sheets: [{name: 'CSV', rows: parseDelimited(decodeText(buf))}]}); continue; }
+    await ensureXLSX();
+    let wb;
+    try { wb = XLSX.read(new Uint8Array(buf), {type: 'array', cellText: true, cellDates: false}); }
+    catch { throw new Error(`«${f.name}» не получилось открыть. Сохраните его в Excel как .xlsx и попробуйте ещё раз.`); }
+    out.push({name: f.name, sheets: wb.SheetNames.map(n => ({name: n, rows: sheetRows(wb.Sheets[n])}))});
+  }
+  return out;
+}
+
+/* ---------- column detection ---------- */
+const RX = {
+  art1: /артикул\s*(продавц|поставщ|товар|пост)|vendor\s*code|seller\s*sku/i,
+  art2: /артикул|^арт(\.|\s|$)/i,
+  art3: /код\s*товара|^код$|^sku$|article/i,
+  art4: /штрих|баркод|barcode|^ean/i,
+  qty1: /кол-?во|количеств|^qty|quantity|^шт\.?$|^кол\./i,
+  qty2: /остат|в наличии|наличие|^факт|^заказ(ано)?$|^итого\s*шт/i,
+  name: /наименован|назван|номенклатур|^товар$|описан|^name$|product/i,
+};
+const artRx = [RX.art1, RX.art2, RX.art3, RX.art4];
+function detect(rows) {
+  const lim = Math.min(rows.length, 30);
+  const has = (r, rxs) => (rows[r] || []).some(v => v && v.length < 60 && rxs.some(rx => rx.test(v)));
+  let header = -1;
+  for (let r = 0; r < lim && header < 0; r++) if (has(r, artRx)) header = r;
+  for (let r = 0; r < lim && header < 0; r++) if (has(r, [RX.qty1])) header = r;
+  const m = {header, art: -1, qty: -1, name: -1};
+  if (header >= 0) {
+    const h = (rows[header] || []).map(v => String(v || ''));
+    const find = (rx, not = []) => h.findIndex((v, i) => !not.includes(i) && v.length < 80 && rx.test(v));
+    for (const rx of artRx) { const i = find(rx); if (i >= 0) { m.art = i; break; } }
+    for (const rx of [RX.qty1, RX.qty2]) { const i = find(rx, [m.art]); if (i >= 0) { m.qty = i; break; } }
+    m.name = find(RX.name, [m.art, m.qty]);
+  }
+  if (header < 0 || m.art < 0) guess(rows, m);
+  if (m.art < 0) m.art = 0;
+  return m;
+}
+function guess(rows, m) {
+  const sample = rows.slice(m.header + 1, m.header + 81).filter(r => r && r.some(v => v !== ''));
+  if (!sample.length) return;
+  const ncol = Math.min(40, Math.max(...sample.map(r => r.length)));
+  const st = range(ncol).map(c => {
+    let fill = 0, num = 0, small = 0, len = 0, letters = 0;
+    for (const r of sample) {
+      const v = String(r[c] ?? '').trim(); if (!v) continue;
+      fill++; len += v.length; if (/[a-zа-яё]/i.test(v)) letters++;
+      const q = parseQty(v); if (q != null) { num++; if (Number.isInteger(q) && Math.abs(q) <= 100000) small++; }
+    }
+    return {c, fill: fill / sample.length, num: fill ? num / fill : 0, small: fill ? small / fill : 0, len: fill ? len / fill : 0, letters: fill ? letters / fill : 0};
+  });
+  if (m.art < 0) { const a = st.find(s => s.fill >= .6 && !(s.small >= .9 && s.len <= 3)); m.art = a ? a.c : 0; }
+  if (m.header < 0 && m.qty < 0) { const q = st.filter(s => s.c !== m.art && s.fill >= .6 && s.small >= .9 && s.len <= 6); if (q.length) m.qty = q[q.length - 1].c; }
+  if (m.name < 0) { const n = st.filter(s => s.c !== m.art && s.c !== m.qty && s.letters > .6 && s.len > 8).sort((a, b) => b.len - a.len)[0]; if (n) m.name = n.c; }
+}
+const colName = c => { let s = ''; c++; while (c) { const r = (c - 1) % 26; s = String.fromCharCode(65 + r) + s; c = Math.floor((c - 1) / 26); } return s; };
+
+function extract(rows, m) {
+  const res = {lines: [], noArt: 0, badQty: 0, sci: 0};
+  const hdrArt = m.header >= 0 ? String((rows[m.header] || [])[m.art] ?? '').trim() : null;
+  for (let r = m.header + 1; r < rows.length; r++) {
+    const row = rows[r] || [];
+    const a = String(row[m.art] ?? '').trim();
+    if (!a) { if (row.some(v => v !== '')) res.noArt++; continue; }
+    if (hdrArt && a === hdrArt) continue;
+    if (/^(итог|всего|total)/i.test(a)) continue;
+    let q = 1;
+    if (m.qty >= 0) { q = parseQty(row[m.qty]); if (q == null) { res.badQty++; continue; } }
+    if (/^\d([.,]\d+)?e\+?\d+$/i.test(a)) res.sci++;
+    const n = m.name >= 0 ? trunc(String(row[m.name] ?? '').trim(), 160) : '';
+    res.lines.push({a, q, n});
+  }
+  return res;
+}
+
+/* ---------- import dialog ---------- */
+const IMP = {target: 'receipt', files: [], sheet: 0, m: null, mode: 'add'};
+const TITLES = {receipt: 'Загрузка в список приёмки', stock: 'Загрузка остатков склада', orders: 'Загрузка заказов'};
+const MODES = {
+  stock: [
+    {v: 'add', b: 'Добавить к остаткам', s: 'Приход товара: количества прибавятся к тому, что уже есть на складе.'},
+    {v: 'replace', b: 'Заменить весь склад', s: 'Полный пересчёт: склад станет точно таким, как в файле. Артикулы, которых нет в файле, исчезнут.'},
+  ],
+  orders: [
+    {v: 'replace', b: 'Новый заказ', s: 'Текущий заказ заменится этим файлом.'},
+    {v: 'add', b: 'Добавить к текущему заказу', s: 'Строки прибавятся к уже загруженному заказу.'},
+  ],
+};
+const curRows = (f = IMP.files[0], si = IMP.sheet) => { const sh = f.sheets[Math.min(si, f.sheets.length - 1)]; return sh ? sh.rows : []; };
+
+function showModal(id) { const el = $(id); el._back = document.activeElement; el.hidden = false; document.body.classList.add('noscroll'); }
+function closeModal(id) { const el = $(id); if (el.hidden) return; el.hidden = true; if ($('#imp').hidden && $('#cpy').hidden) document.body.classList.remove('noscroll'); if (el._back && el._back.focus) el._back.focus(); }
+
+function openImport(target, files) {
+  IMP.target = target; IMP.files = files;
+  IMP.sheet = Math.max(0, files[0].sheets.findIndex(s => s.rows.length > 0));
+  IMP.m = detect(curRows());
+  IMP.mode = target === 'stock' ? (stock.items.size ? 'add' : 'replace') : 'replace';
+  $('#impTitle').textContent = TITLES[target];
+  $('#impPasteBox').hidden = true; $('#impMapBox').hidden = false; $('#impApply').hidden = false;
+  if ($('#imp').hidden) showModal('#imp');
+  renderImport();
+  $('#impArt').focus();
+}
+function openPaste(target) {
+  IMP.target = target; IMP.files = [];
+  $('#impTitle').textContent = TITLES[target];
+  $('#impPasteBox').hidden = false; $('#impMapBox').hidden = true; $('#impApply').hidden = true;
+  $('#impText').value = '';
+  showModal('#imp'); $('#impText').focus();
+}
+function fromText(t, target) {
+  const rows = parseDelimited(t);
+  if (!rows.length) return;
+  openImport(target, [{name: 'вставка из Excel', sheets: [{name: 'Вставка', rows}]}]);
+}
+function extractAll() {
+  const m = IMP.m, total = {lines: [], noArt: 0, badQty: 0, sci: 0, mismatch: false};
+  const h0 = m.header >= 0 ? String((curRows()[m.header] || [])[m.art] ?? '') : null;
+  IMP.files.forEach((f, i) => {
+    const rows = curRows(f);
+    if (i && h0 !== null && String((rows[m.header] || [])[m.art] ?? '') !== h0) total.mismatch = true;
+    const r = extract(rows, m);
+    total.lines.push(...r.lines); total.noArt += r.noArt; total.badQty += r.badQty; total.sci += r.sci;
+  });
+  const keys = new Set(); let sum = 0;
+  for (const l of total.lines) { const k = normKey(l.a); if (k) keys.add(k); sum += l.q; }
+  total.uniq = keys.size; total.sum = round(sum);
+  return total;
+}
+function renderImport() {
+  const f0 = IMP.files[0], rows = curRows(), m = IMP.m;
+  const names = IMP.files.map(f => f.name);
+  $('#impFiles').innerHTML = IMP.files.length > 1
+    ? `<b>${cnt(IMP.files.length, W.file)}:</b> ${esc(names.join(', '))}. Колонки выбираются по первому файлу и применяются ко всем.`
+    : `Файл: <b>${esc(names[0])}</b>`;
+  $('#impSheetF').hidden = f0.sheets.length < 2;
+  $('#impSheet').innerHTML = f0.sheets.map((s, i) => `<option value="${i}"${i === IMP.sheet ? ' selected' : ''}>${esc(s.name)} — ${cnt(s.rows.length, W.row)}</option>`).join('');
+  const summary = r => trunc((rows[r] || []).filter(v => v !== '').slice(0, 4).join(' | '), 60) || '(пусто)';
+  $('#impHeader').innerHTML = `<option value="-1">Нет заголовков</option>` + range(Math.min(rows.length, 30)).map(r => `<option value="${r}">Строка ${r + 1}: ${esc(summary(r))}</option>`).join('');
+  $('#impHeader').value = String(m.header);
+  const probe = rows.slice(Math.max(0, m.header), Math.max(0, m.header) + 60);
+  const ncol = Math.max(1, Math.min(40, Math.max(0, ...probe.map(r => (r || []).length))));
+  const hdr = m.header >= 0 ? rows[m.header] || [] : [];
+  const sampleVal = c => { for (let r = m.header + 1; r < Math.min(rows.length, m.header + 60); r++) { const v = (rows[r] || [])[c]; if (v) return v; } return ''; };
+  const label = c => { const h = String(hdr[c] ?? '').trim(); const ex = sampleVal(c); return colName(c) + (h ? ' — ' + trunc(h, 40) : ex ? ` (например, ${trunc(ex, 24)})` : ''); };
+  const opts = range(ncol).map(c => `<option value="${c}">${esc(label(c))}</option>`).join('');
+  $('#impArt').innerHTML = opts; $('#impArt').value = String(m.art);
+  $('#impQty').innerHTML = `<option value="-1">Нет колонки — каждая строка = 1 шт.</option>` + opts; $('#impQty').value = String(m.qty);
+  $('#impName').innerHTML = `<option value="-1">Не загружать</option>` + opts; $('#impName').value = String(m.name);
+
+  // preview
+  const data = [];
+  for (let r = m.header + 1; r < rows.length && data.length < 7; r++) if ((rows[r] || []).some(v => v !== '')) data.push(r);
+  const tag = c => c === m.art ? '<em>Артикул</em>' : c === m.qty ? '<em>Кол-во</em>' : c === m.name ? '<em>Наименование</em>' : '';
+  const sel = c => (c === m.art || c === m.qty || c === m.name) ? ' class="sel"' : '';
+  $('#impPrev').innerHTML =
+    `<thead><tr><th class="rn">#</th>${range(ncol).map(c => `<th>${tag(c)}${colName(c)}${hdr[c] ? ' · ' + esc(trunc(hdr[c], 28)) : ''}</th>`).join('')}</tr></thead>` +
+    `<tbody>${data.map(r => `<tr><td class="rn">${r + 1}</td>${range(ncol).map(c => `<td${sel(c)}>${esc(trunc((rows[r] || [])[c] ?? '', 40))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${ncol + 1}" class="empty">Под заголовком нет строк</td></tr>`}</tbody>`;
+
+  // stats
+  const s = extractAll();
+  let h = `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b>${s.lines.length > s.uniq ? ' Повторяющиеся артикулы сложатся.' : ''}</div>`;
+  if (s.noArt) h += `<div>Пропущено ${cnt(s.noArt, W.row)} без артикула.</div>`;
+  if (s.badQty) h += `<div class="warnline">${cnt(s.badQty, W.row)} без числа в колонке «Количество» — они пропущены. Если в файле каждая строка — это 1 штука, выберите «Нет колонки — каждая строка = 1 шт.».</div>`;
+  if (s.sci) h += `<div class="warnline">${cnt(s.sci, W.art)} выглядят как «4,6E+12»: Excel сократил длинные номера, и точные цифры потеряны. Возьмите исходный файл выгрузки или задайте колонке формат «Текстовый» до вставки данных.</div>`;
+  if (s.mismatch) h += `<div class="warnline">В некоторых файлах колонки стоят не так, как в первом. Такие файлы лучше загрузить отдельно.</div>`;
+  if (!s.lines.length) h += `<div class="warnline">Не нашлось ни одной строки с артикулом. Проверьте, какая колонка выбрана как «Артикул», и строку с заголовками.</div>`;
+  $('#impStats').innerHTML = h;
+
+  // modes
+  let modes = MODES[IMP.target] || [];
+  if (IMP.target === 'orders' && (!order.items.size || OM.off)) modes = modes.filter(x => x.v === 'replace');
+  if (!modes.some(x => x.v === IMP.mode) && modes.length) IMP.mode = modes[0].v;
+  $('#impModes').hidden = modes.length < 2;
+  $('#impModes').innerHTML = modes.length < 2 ? '' : `<legend class="fld" style="margin-bottom:8px">Что сделать</legend>` + modes.map(x =>
+    `<label class="mode"><input type="radio" name="impMode" value="${x.v}"${x.v === IMP.mode ? ' checked' : ''}><div><b>${x.b}</b><span>${x.s}</span></div></label>`).join('');
+  const lbl = IMP.target === 'receipt' ? 'Добавить в список приёмки'
+    : IMP.target === 'stock' ? (IMP.mode === 'replace' ? 'Заменить склад' : 'Добавить на склад')
+    : 'Сравнить со складом';
+  $('#impApply').textContent = lbl;
+  $('#impApply').disabled = !s.lines.length;
+}
+function applyImport() {
+  const s = extractAll();
+  if (!s.lines.length) return;
+  const src = IMP.files.map(f => f.name).join(', ');
+  const t = IMP.target, mode = IMP.mode;
+  if (t === 'receipt') {
+    for (const l of s.lines) draft.add(l.a, l.q, l.n, tick());
+    toast(`В список приёмки добавлено: ${cnt(s.uniq, W.art)}, ${fmt(s.sum)} шт.`);
+  } else if (t === 'stock') {
+    const b = [stock.items.size, stock.total()];
+    if (mode === 'replace') stock.clear();
+    for (const l of s.lines) stock.add(l.a, l.q, l.n);
+    if (mode === 'replace') log(`Полный пересчёт из «${src}»: ${cnt(stock.items.size, W.art)}, ${fmt(stock.total())} шт. (было ${fmt(b[0])} арт., ${fmt(b[1])} шт.)`);
+    else log(`Приход из «${src}»: +${fmt(s.sum)} шт., ${cnt(s.uniq, W.art)}`);
+    toast(mode === 'replace' ? 'Склад заменён данными из файла' : `На склад добавлено ${fmt(s.sum)} шт.`);
+  } else {
+    if (mode === 'replace' || OM.off) { order.clear(); OM = {files: src, at: Date.now(), off: 0}; }
+    else OM.files = OM.files ? `${OM.files}, ${src}` : src;
+    for (const l of s.lines) order.add(l.a, l.q, l.n);
+    saveMeta('meta/order');
+    log(`Загружен заказ «${src}»: ${cnt(order.items.size, W.art)}, ${fmt(order.total())} шт.`);
+    ui.orF = 'short'; ui.orLimit = 300; setTab('orders');
+  }
+  closeModal('#imp'); render();
+}
+
+/* ---------- export ---------- */
+const safeName = s => s.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim();
+const today = () => new Date().toLocaleDateString('ru-RU');
+function csvCell(v) {
+  if (typeof v === 'number') return qv(v);
+  v = String(v ?? '');
+  if (/^0\d+$/.test(v)) return `="${v}"`;
+  return /[;"\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+async function saveTable(base, sheets) {
+  let data, ext;
+  try {
+    await ensureXLSX();
+    const wb = XLSX.utils.book_new();
+    for (const s of sheets) { const ws = XLSX.utils.aoa_to_sheet(s.rows); ws['!cols'] = s.cols.map(w => ({wch: w})); XLSX.utils.book_append_sheet(wb, ws, s.name.slice(0, 31)); }
+    data = new Uint8Array(XLSX.write(wb, {bookType: 'xlsx', type: 'array', compression: true})); ext = 'xlsx';
+  } catch {
+    data = '﻿' + sheets[0].rows.map(r => r.map(csvCell).join(';')).join('\r\n'); ext = 'csv';
+  }
+  const name = `${safeName(base)}.${ext}`;
+  if (DL) {
+    try { await DL.save({filename: name, data}); toast('Файл сохранён: ' + name); }
+    catch (e) {
+      const c = e && e.code;
+      if (c === 'declined') return;
+      toast(c === 'rate_limited' ? 'Подождите пару секунд и нажмите ещё раз' : 'Не получилось сохранить файл. Нажмите «Копировать» и вставьте список в Excel.');
+    }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([data], {type: ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8'}));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  if (inViewer) toast('Если файл не скачался, нажмите «Копировать» и вставьте список в Excel.');
+}
+function exportStock() {
+  const items = [...stock.items.values()].sort((a, b) => coll.compare(a.a, b.a));
+  if (!items.length) { toast('Склад пуст — выгружать нечего'); return; }
+  saveTable(`Остатки ${today()}`, [{name: 'Остатки', cols: [20, 50, 12], rows: [['Артикул', 'Наименование', 'Остаток, шт.'], ...items.map(it => [it.a, it.n, it.q])]}]);
+}
+async function copyText(text, ok) {
+  try { await navigator.clipboard.writeText(text); toast(ok); }
+  catch { $('#cpyText').value = text; showModal('#cpy'); const ta = $('#cpyText'); ta.focus(); ta.select(); }
+}
+
+/* ---------- orders ---------- */
+function orderRows() {
+  const off = !!OM.off, rows = [];
+  for (const [k, it] of order.items) {
+    const st = stock.items.get(k);
+    const have = off ? (it.s ?? 0) : (st ? st.q : 0);
+    const short = round(Math.max(0, it.q - Math.max(0, have)));
+    const status = short <= 0 ? 'ok' : have <= 0 ? 'none' : 'part';
+    rows.push({k, a: it.a, n: it.n || (st && st.n) || '', need: it.q, have, short, status, alias: st && st.a !== it.a ? st.a : ''});
+  }
+  return rows;
+}
+const rank = {none: 0, part: 1, ok: 2};
+function writeOff() {
+  let total = 0, arts = 0;
+  for (const [k, it] of order.items) {
+    const st = stock.items.get(k);
+    it.s = st ? st.q : 0;
+    const take = round(Math.min(Math.max(0, st ? st.q : 0), it.q));
+    if (take > 0) { st.q = round(st.q - take); stock.touch(k); total = round(total + take); arts++; }
+  }
+  order.touchAll(); OM.off = Date.now(); saveMeta('meta/order');
+  log(`Списан заказ со склада: −${fmt(total)} шт., ${cnt(arts, W.art)}`);
+  toast(`Со склада списано ${fmt(total)} шт.`);
+}
+
+/* ---------- UI state & render ---------- */
+const ui = {tab: 'receipt', rcQ: '', stQ: '', orQ: '', orF: 'short', rcLimit: 200, stLimit: 300, orLimit: 300, flash: null};
+let raf = 0;
+function render() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); }
+function setBody(el, html) {
+  const ae = document.activeElement;
+  if (ae && ae.tagName === 'INPUT' && el.contains(ae)) { el.dataset.stale = '1'; return; }
+  if (el._h !== html) { el.innerHTML = html; el._h = html; }
+  delete el.dataset.stale;
+}
+const matches = (k, it, q) => { if (!q) return true; const nk = normKey(q); return (nk && k.includes(nk)) || String(it.n || '').toLowerCase().includes(q.toLowerCase()) || String(it.a).toLowerCase().includes(q.toLowerCase()); };
+const hasCyr = s => /[а-яё]/i.test(s), hasLat = s => /[a-z]/i.test(s);
+function aliasNote(mine, theirs) {
+  if (!theirs || theirs === mine) return '';
+  const lat = x => x.toUpperCase().replace(/[АВЕЁКМНОРСТУХ]/g, c => CYR[c]);
+  let t = `на складе как <code>${esc(theirs)}</code>`;
+  if (lat(mine) === lat(theirs) && mine.toUpperCase() !== theirs.toUpperCase()) {
+    if (hasCyr(mine) && !hasCyr(theirs)) t = 'здесь русские буквы, на складе — английские';
+    else if (hasCyr(theirs) && !hasCyr(mine) && hasLat(mine)) t = 'здесь английские буквы, на складе — русские';
+    else t = `на складе как <code>${esc(theirs)}</code> (разные русские и английские буквы)`;
+  }
+  return `<span class="alias">${t}</span>`;
+}
+const artCell = (a, n, extra = '') => `<span class="art">${esc(a)}</span>${n ? `<span class="nm">${esc(n)}</span>` : ''}${extra}`;
+const delBtn = (a, title) => `<button class="x" type="button" data-del title="${title}" aria-label="${title}: ${esc(a)}">×</button>`;
+
+function renderAll() {
+  // header
+  let pos = 0, qty = 0;
+  for (const it of stock.items.values()) if (it.q > 0) { pos++; qty += it.q; }
+  $('#kArt').textContent = fmt(pos);
+  $('#kArtL').textContent = plural(pos, ['артикул в наличии', 'артикула в наличии', 'артикулов в наличии']);
+  $('#kQty').textContent = fmt(round(qty));
+  $('#bRc').hidden = !draft.items.size; $('#bRc').textContent = fmt(draft.items.size);
+  $('#howto').hidden = stock.items.size > 0;
+  renderReceipt(); renderStock(); renderOrders(); renderLog();
+  if (ui.flash) { const tr = $(`#rcBody tr[data-k="${CSS.escape(ui.flash)}"]`); if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } ui.flash = null; }
+}
+
+function renderReceipt() {
+  const all = [...draft.items.entries()].sort((a, b) => b[1].t - a[1].t);
+  const list = ui.rcQ ? all.filter(([k, it]) => matches(k, it, ui.rcQ)) : all;
+  $('#rcSum').textContent = all.length ? `${cnt(all.length, W.art)} · ${fmt(draft.total())} шт.` : '';
+  const shown = list.slice(0, ui.rcLimit);
+  setBody($('#rcBody'), shown.map(([k, it]) => {
+    const st = stock.items.get(k);
+    const alias = st ? aliasNote(it.a, st.a) : '';
+    return `<tr data-k="${esc(k)}"><td>${artCell(it.a, it.n || (st && st.n), alias)}</td><td class="num">${st ? fmt(st.q) : '<span class="chip new">новый</span>'}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Принято, ${esc(it.a)}"></td><td class="c">${delBtn(it.a, 'Убрать из списка')}</td></tr>`;
+  }).join('') || `<tr><td colspan="4" class="empty">${all.length ? 'Ничего не найдено' : 'Список пуст. Отсканируйте первый товар или загрузите накладную.'}</td></tr>`);
+  $('#rcMore').hidden = list.length <= shown.length;
+  $('#rcMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
+  ['#rcAdd', '#rcReplace', '#rcClear'].forEach(s => $(s).disabled = !all.length);
+}
+
+function renderStock() {
+  const all = [...stock.items.entries()].sort((a, b) => coll.compare(a[1].a, b[1].a));
+  const list = ui.stQ ? all.filter(([k, it]) => matches(k, it, ui.stQ)) : all;
+  $('#stSum').textContent = all.length ? `${cnt(all.length, W.art)} · ${fmt(stock.total())} шт.` : '';
+  const shown = list.slice(0, ui.stLimit);
+  setBody($('#stBody'), shown.map(([k, it]) =>
+    `<tr data-k="${esc(k)}"${it.q <= 0 ? ' class="zero"' : ''}><td>${artCell(it.a, it.n)}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Остаток, ${esc(it.a)}"></td><td class="c">${delBtn(it.a, 'Удалить со склада')}</td></tr>`
+  ).join('') || `<tr><td colspan="3" class="empty">${all.length ? 'Ничего не найдено' : 'Склад пуст. Проведите приёмку или загрузите остатки из файла.'}</td></tr>`);
+  $('#stMore').hidden = list.length <= shown.length;
+  $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
+}
+
+function renderOrders() {
+  const has = order.items.size > 0;
+  $('#orExample').hidden = has; $('#orTiles').hidden = !has; $('#orCard').hidden = !has; $('#orNew').hidden = !has;
+  const rows = has ? orderRows() : [];
+  const short = rows.filter(r => r.short > 0);
+  $('#bOr').hidden = !short.length; $('#bOr').textContent = fmt(short.length);
+  if (!has) { $('#orMeta').innerHTML = ''; return; }
+  const sum = f => round(rows.reduce((s, r) => s + f(r), 0));
+  const need = sum(r => r.need), shortQ = sum(r => r.short), fromStock = round(need - shortQ);
+  const okN = rows.length - short.length;
+  $('#tNeed').innerHTML = `${fmt(need)}<small>шт.</small>`; $('#tNeedS').textContent = cnt(rows.length, W.pos);
+  $('#tHave').innerHTML = `${fmt(fromStock)}<small>шт.</small>`; $('#tHaveS').textContent = `хватает полностью: ${cnt(okN, W.pos)}`;
+  $('#tShortK').textContent = `Докупить в ${S.supplier}`;
+  $('#tShort').innerHTML = `${fmt(shortQ)}<small>шт.</small>`; $('#tShortS').textContent = short.length ? cnt(short.length, W.pos) : 'всё есть на складе';
+  $('#orMeta').innerHTML = `<span>Загружено: <b>${esc(trunc(OM.files || 'заказ', 120))}</b>${OM.at ? ' · ' + when(OM.at) : ''}</span>` +
+    (OM.off ? `<span class="chip good">Списан со склада ${when(OM.off)}</span>` : '') +
+    (!OM.off && !stock.items.size ? `<span class="chip warn">Склад пуст — сначала проведите приёмку</span>` : '');
+  $('#orHaveH').textContent = OM.off ? 'Было на складе' : 'На складе';
+
+  const counts = {short: short.length, all: rows.length, ok: okN};
+  $$('.seg button').forEach(b => { b.setAttribute('aria-pressed', String(b.dataset.f === ui.orF)); b.textContent = `${{short: 'Докупить', all: 'Все', ok: 'Хватает'}[b.dataset.f]} · ${fmt(counts[b.dataset.f])}`; });
+  let list = ui.orF === 'short' ? short : ui.orF === 'ok' ? rows.filter(r => r.short <= 0) : rows;
+  if (ui.orQ) list = list.filter(r => matches(r.k, r, ui.orQ));
+  list = list.slice().sort((a, b) => (rank[a.status] - rank[b.status]) || coll.compare(a.a, b.a));
+  const shown = list.slice(0, ui.orLimit);
+  const chip = {ok: '<span class="chip good">хватает</span>', part: '<span class="chip warn">не хватает</span>', none: '<span class="chip bad">нет на складе</span>'};
+  setBody($('#orBody'), shown.map(r =>
+    `<tr><td>${artCell(r.a, r.n, aliasNote(r.a, r.alias))}</td><td class="num">${fmt(r.need)}</td><td class="num">${fmt(r.have)}</td><td class="num strong">${r.short > 0 ? fmt(r.short) : '—'}</td><td>${chip[r.status]}</td></tr>`
+  ).join('') || `<tr><td colspan="5" class="empty">${ui.orF === 'short' && !ui.orQ ? 'Всё есть на складе — докупать ничего не нужно.' : 'Ничего не найдено'}</td></tr>`);
+  $('#orMore').hidden = list.length <= shown.length;
+  $('#orMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
+  $('#orExport').textContent = `Скачать «Докупить» для ${S.supplier} (Excel)`;
+  $('#orExport').disabled = !short.length; $('#orCopy').disabled = !short.length;
+  $('#orOff').disabled = !!OM.off || !stock.items.size;
+  $('#orOff').textContent = OM.off ? 'Заказ уже списан' : 'Списать заказ со склада';
+}
+
+function renderLog() {
+  setBody($('#log'), LOG.slice(0, 60).map(e => `<li><time>${when(e.t)}</time><span>${esc(e.x)}</span></li>`).join('') || '<li><time>—</time><span class="hint" style="margin:0">Пока ничего не происходило. Здесь появятся приёмки, пересчёты и списания.</span></li>');
+}
+
+function renderSettings() {
+  $('#optLatin').checked = S.latin; $('#optZeros').checked = S.zeros; $('#optPunct').checked = S.punct;
+  if (document.activeElement !== $('#optSupplier')) $('#optSupplier').value = S.supplier;
+  const note = {
+    db: 'Склад, списки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
+    local: 'Данные хранятся только в этом браузере на этом компьютере. Если очистить историю браузера, они пропадут, поэтому иногда скачивайте остатки в Excel.',
+    memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
+  };
+  $('#storeNote').textContent = Backend ? note[Backend.kind] : 'Подключение к хранилищу…';
+  renderTester();
+}
+function renderTester() {
+  const v = $('#testIn').value;
+  const k = normKey(v);
+  $('#testOut').textContent = v.trim() ? (k || '(пусто)') : '—';
+  const st = k && stock.items.get(k);
+  $('#testMatch').innerHTML = !v.trim() ? '' : st ? `На складе есть: <b class="art">${esc(st.a)}</b> — ${fmt(st.q)} шт.` : 'На складе такого артикула нет.';
+}
+
+function setTab(t) {
+  ui.tab = t;
+  $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+  $$('.pane').forEach(p => p.hidden = p.id !== 'pane-' + t);
+  lsSet('sklad/tab', t);
+  if (t === 'settings') renderSettings();
+}
+
+/* ---------- confirm & toast ---------- */
+function confirmIn(box, html, okLabel, onOk, danger) {
+  const el = $(box);
+  el.innerHTML = `<p>${html}</p><div class="row"><button class="btn ${danger ? 'solid-danger' : 'primary'}" type="button" data-ok>${okLabel}</button><button class="btn" type="button" data-no>Отмена</button></div>`;
+  el.hidden = false;
+  $('[data-ok]', el).onclick = () => { el.hidden = true; onOk(); render(); };
+  $('[data-no]', el).onclick = () => { el.hidden = true; };
+  $('[data-ok]', el).focus();
+}
+let toastT = 0;
+function toast(msg, ms = 3800) { const el = $('#toast'); el.textContent = msg; el.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => el.hidden = true, ms); }
+
+/* ---------- events ---------- */
+$$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
+
+$('#scanForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const a = $('#scanArt').value.trim();
+  if (!a) { $('#scanArt').focus(); return; }
+  const q = parseQty($('#scanQty').value);
+  if (q == null) { toast('Количество должно быть числом'); $('#scanQty').focus(); return; }
+  const k = draft.add(a, q, '', tick());
+  if (!k) { toast('В артикуле нет ни букв, ни цифр'); return; }
+  const it = draft.items.get(k), st = stock.items.get(k);
+  $('#scanInfo').innerHTML = `<b>${esc(it.a)}</b> ${q >= 0 ? '+' : ''}${fmt(q)} → в списке ${fmt(it.q)} шт. · ${st ? `на складе сейчас ${fmt(st.q)} шт.` : 'новый артикул, на складе его нет'}`;
+  $('#scanArt').value = ''; $('#scanQty').value = '1'; $('#scanArt').focus();
+  ui.flash = k; ui.rcQ = ''; $('#rcSearch').value = '';
+  render();
+});
+$('#scanArt').addEventListener('paste', e => {
+  const t = e.clipboardData && e.clipboardData.getData('text/plain');
+  if (t && /\n/.test(t.trim())) { e.preventDefault(); fromText(t, 'receipt'); }
+});
+
+function onQtyChange(pm, afterSet) {
+  return e => {
+    if (!e.target.matches('.qin')) return;
+    const k = e.target.closest('tr').dataset.k, it = pm.items.get(k);
+    if (!it) return;
+    const q = parseQty(e.target.value);
+    if (q == null) { toast('Введите число'); e.target.value = qv(it.q); return; }
+    const old = it.q; if (q === old) return;
+    pm.setQty(k, q); if (afterSet) afterSet(it, old, q); render();
+  };
+}
+$('#rcBody').addEventListener('change', onQtyChange(draft));
+$('#stBody').addEventListener('change', onQtyChange(stock, (it, o, n) => log(`Правка остатка ${it.a}: ${fmt(o)} → ${fmt(n)} шт.`)));
+$('#rcBody').addEventListener('click', e => { if (!e.target.closest('[data-del]')) return; draft.remove(e.target.closest('tr').dataset.k); render(); });
+$('#stBody').addEventListener('click', e => {
+  if (!e.target.closest('[data-del]')) return;
+  const k = e.target.closest('tr').dataset.k, it = stock.items.get(k); if (!it) return;
+  confirmIn('#stConfirm', `Удалить со склада <b class="art">${esc(it.a)}</b> (${fmt(it.q)} шт.)?`, 'Удалить', () => { stock.remove(k); log(`Удалён со склада: ${it.a} (${fmt(it.q)} шт.)`); }, true);
+});
+document.addEventListener('focusout', e => { const s = e.target.closest && e.target.closest('[data-stale]'); if (s) setTimeout(render, 0); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.matches && e.target.matches('.qin')) { e.preventDefault(); e.target.blur(); }
+  if (e.key === 'Escape') { if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
+});
+
+$('#rcSearch').addEventListener('input', e => { ui.rcQ = e.target.value.trim(); ui.rcLimit = 200; render(); });
+$('#stSearch').addEventListener('input', e => { ui.stQ = e.target.value.trim(); ui.stLimit = 300; render(); });
+$('#orSearch').addEventListener('input', e => { ui.orQ = e.target.value.trim(); ui.orLimit = 300; render(); });
+$('#rcMore').addEventListener('click', () => { ui.rcLimit += 500; render(); });
+$('#stMore').addEventListener('click', () => { ui.stLimit += 500; render(); });
+$('#orMore').addEventListener('click', () => { ui.orLimit += 500; render(); });
+$$('.seg button').forEach(b => b.addEventListener('click', () => { ui.orF = b.dataset.f; ui.orLimit = 300; render(); }));
+
+$('#rcAdd').addEventListener('click', () => {
+  const n = draft.items.size, q = draft.total();
+  confirmIn('#rcConfirm', `На склад добавится <b>${fmt(q)} шт.</b> по ${cnt(n, W.art)}. Список приёмки после этого очистится.`, 'Провести приёмку', () => {
+    for (const it of draft.items.values()) stock.add(it.a, it.q, it.n);
+    draft.clear(); $('#scanInfo').textContent = ''; log(`Приёмка: +${fmt(q)} шт., ${cnt(n, W.art)}`);
+    toast(`Приёмка проведена: +${fmt(q)} шт.`);
+  });
+});
+$('#rcReplace').addEventListener('click', () => {
+  const n = draft.items.size, q = draft.total();
+  confirmIn('#rcConfirm', `Сейчас на складе ${cnt(stock.items.size, W.art)}, ${fmt(stock.total())} шт. Склад станет точно таким, как этот список: <b>${cnt(n, W.art)}, ${fmt(q)} шт.</b> Артикулы, которых нет в списке, пропадут со склада.`, 'Заменить склад', () => {
+    const b = [stock.items.size, stock.total()];
+    stock.clear();
+    for (const it of draft.items.values()) stock.add(it.a, it.q, it.n);
+    draft.clear(); $('#scanInfo').textContent = ''; log(`Полный пересчёт: ${cnt(n, W.art)}, ${fmt(q)} шт. (было ${fmt(b[0])} арт., ${fmt(b[1])} шт.)`);
+    toast('Склад заменён результатами пересчёта');
+  }, true);
+});
+$('#rcClear').addEventListener('click', () => {
+  confirmIn('#rcConfirm', `Удалить все ${cnt(draft.items.size, W.row)} из списка приёмки? Склад не изменится.`, 'Очистить список', () => { draft.clear(); $('#scanInfo').textContent = ''; }, true);
+});
+
+$('#orExport').addEventListener('click', () => {
+  const rows = orderRows();
+  const short = rows.filter(r => r.short > 0).sort((a, b) => coll.compare(a.a, b.a));
+  const all = rows.slice().sort((a, b) => (rank[a.status] - rank[b.status]) || coll.compare(a.a, b.a));
+  saveTable(`Заказ ${S.supplier} ${today()}`, [
+    {name: 'Докупить', cols: [5, 20, 50, 14], rows: [['№', 'Артикул', 'Наименование', 'Количество, шт.'], ...short.map((r, i) => [i + 1, r.a, r.n, r.short])]},
+    {name: 'Сравнение', cols: [20, 50, 11, 15, 11], rows: [['Артикул', 'Наименование', 'Заказано', OM.off ? 'Было на складе' : 'На складе', 'Докупить'], ...all.map(r => [r.a, r.n, r.need, r.have, r.short])]},
+  ]);
+});
+$('#orCopy').addEventListener('click', () => {
+  const short = orderRows().filter(r => r.short > 0).sort((a, b) => coll.compare(a.a, b.a));
+  const text = ['Артикул\tНаименование\tКол-во, шт.', ...short.map(r => `${r.a}\t${r.n.replace(/[\t\n]/g, ' ')}\t${qv(r.short)}`)].join('\n');
+  copyText(text, `Скопировано: ${cnt(short.length, W.pos)}. Вставьте в Excel или в сообщение.`);
+});
+$('#orOff').addEventListener('click', () => {
+  const rows = orderRows();
+  const take = round(rows.reduce((s, r) => s + Math.min(Math.max(0, r.have), r.need), 0));
+  confirmIn('#orConfirm', `Со склада спишется <b>${fmt(take)} шт.</b> — всё, что есть в наличии по этому заказу. Недостающее останется в списке «Докупить». Делайте это, когда заказ собран и отгружен.`, 'Списать', writeOff);
+});
+$('#orNew').addEventListener('click', () => {
+  confirmIn('#orTopConfirm', 'Убрать текущий заказ? Склад не изменится.', 'Убрать заказ', () => { order.clear(); OM = {files: '', at: 0, off: 0}; saveMeta('meta/order'); }, true);
+});
+
+$$('[data-export-stock]').forEach(b => b.addEventListener('click', exportStock));
+$('#stClear').addEventListener('click', () => {
+  confirmIn('#setConfirm', `Удалить со склада все ${cnt(stock.items.size, W.art)} (${fmt(stock.total())} шт.)? Сначала лучше скачать остатки в Excel.`, 'Очистить склад', () => { stock.clear(); log('Склад очищен'); toast('Склад очищен'); }, true);
+});
+
+['latin', 'zeros', 'punct'].forEach(k => {
+  const id = '#opt' + k[0].toUpperCase() + k.slice(1);
+  $(id).addEventListener('change', e => {
+    S = {...S, [k]: e.target.checked};
+    maps.forEach(m => { m.rekey(); m.touchAll(); });
+    saveMeta('meta/settings'); log('Изменены правила сравнения артикулов');
+    renderTester(); render();
+  });
+});
+$('#optSupplier').addEventListener('change', e => { const v = e.target.value.trim(); S = {...S, supplier: v || DEF.supplier}; e.target.value = S.supplier; saveMeta('meta/settings'); render(); });
+$('#testIn').addEventListener('input', renderTester);
+
+// import
+let fileTarget = 'receipt';
+$$('[data-import]').forEach(b => b.addEventListener('click', () => { fileTarget = b.dataset.import; $('#fileIn').value = ''; $('#fileIn').click(); }));
+$$('[data-paste]').forEach(b => b.addEventListener('click', () => openPaste(b.dataset.paste)));
+$('#fileIn').addEventListener('change', () => { const fl = [...$('#fileIn').files]; if (fl.length) loadFiles(fileTarget, fl); });
+async function loadFiles(target, list) {
+  toast('Читаю файл…', 8000);
+  try {
+    const files = (await readFiles(list)).filter(f => f.sheets.some(s => s.rows.length));
+    $('#toast').hidden = true;
+    if (!files.length) { toast('В файле не нашлось данных'); return; }
+    openImport(target, files);
+  } catch (e) { toast((e && e.message) || 'Не получилось прочитать файл', 7000); }
+}
+$('#impText').addEventListener('input', debounce(() => { const t = $('#impText').value; if (t.trim()) fromText(t, IMP.target); }, 300));
+$('#impSheet').addEventListener('change', e => { IMP.sheet = +e.target.value; IMP.m = detect(curRows()); renderImport(); });
+$('#impHeader').addEventListener('change', e => {
+  const h = +e.target.value, rows = curRows();
+  if (h < 0) { IMP.m = {header: -1, art: -1, qty: -1, name: -1}; guess(rows, IMP.m); if (IMP.m.art < 0) IMP.m.art = 0; }
+  else { const d = detect(rows.slice(h)); IMP.m = {header: h, art: d.header === 0 ? d.art : IMP.m.art, qty: d.header === 0 ? d.qty : IMP.m.qty, name: d.header === 0 ? d.name : IMP.m.name}; }
+  renderImport();
+});
+$('#impArt').addEventListener('change', e => { IMP.m.art = +e.target.value; renderImport(); });
+$('#impQty').addEventListener('change', e => { IMP.m.qty = +e.target.value; renderImport(); });
+$('#impName').addEventListener('change', e => { IMP.m.name = +e.target.value; renderImport(); });
+$('#impModes').addEventListener('change', e => { if (e.target.name === 'impMode') { IMP.mode = e.target.value; renderImport(); } });
+$('#impApply').addEventListener('click', applyImport);
+['#impX', '#impCancel'].forEach(s => $(s).addEventListener('click', () => closeModal('#imp')));
+['#cpyX', '#cpyClose'].forEach(s => $(s).addEventListener('click', () => closeModal('#cpy')));
+$('#imp').addEventListener('mousedown', e => { if (e.target.id === 'imp') closeModal('#imp'); });
+$('#cpy').addEventListener('mousedown', e => { if (e.target.id === 'cpy') closeModal('#cpy'); });
+
+// paste anywhere on a tab = import
+document.addEventListener('paste', e => {
+  if (!$('#imp').hidden || !$('#cpy').hidden || ui.tab === 'settings') return;
+  const ae = document.activeElement;
+  if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+  const t = e.clipboardData && e.clipboardData.getData('text/plain');
+  if (!t || !/[\t\n]/.test(t.trim())) return;
+  e.preventDefault(); fromText(t, ui.tab);
+});
+// drag & drop files
+let dragN = 0;
+const hasFiles = e => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+const dropText = {receipt: 'Отпустите файл — строки попадут в список приёмки', stock: 'Отпустите файл, чтобы загрузить остатки', orders: 'Отпустите файл, чтобы загрузить заказы', settings: 'Отпустите файл — строки попадут в список приёмки'};
+document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = dropText[ui.tab]; $('#drop').hidden = false; });
+document.addEventListener('dragleave', e => { if (!hasFiles(e)) return; dragN = Math.max(0, dragN - 1); if (!dragN) $('#drop').hidden = true; });
+document.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
+document.addEventListener('drop', e => {
+  if (!hasFiles(e)) return;
+  e.preventDefault(); dragN = 0; $('#drop').hidden = true;
+  const fl = [...e.dataTransfer.files]; if (fl.length) loadFiles(ui.tab === 'settings' ? 'receipt' : ui.tab, fl);
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') { maps.forEach(m => { if (m.dirty.size) m.flush(); }); } });
+
+/* ---------- start ---------- */
+async function start() {
+  document.body.classList.add('loading');
+  const saved = lsGet('sklad/tab');
+  setTab(['receipt', 'stock', 'orders', 'settings'].includes(saved) ? saved : 'receipt');
+  renderSettings(); render();
+  let db = null;
+  if (inViewer) {
+    setSync('wait', 'Подключение…');
+    const use = n => window.claude.use(n).catch(() => null);
+    [db, DL] = await Promise.all([use('db'), use('downloads')]);
+  }
+  Backend = db ? dbBackend(db) : localBackend();
+  subscribe(); renderSettings();
+}
+start();
+})();
+</script>
+</body>
+</html>
