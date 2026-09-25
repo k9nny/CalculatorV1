@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Склад и дозаказ</title>
+<title>ULTIMATE SHOP СКЛАД</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@700;800&display=swap">
@@ -46,7 +46,9 @@ body.noscroll{overflow:hidden}
 /* header */
 .top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 32px;padding-block:6px 14px}
 .brand{margin-right:auto;min-width:0}
-.logo{font:800 30px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.logo{font:800 30px/1.05 var(--f-display);text-transform:uppercase;letter-spacing:.02em;display:flex;flex-wrap:wrap;gap:0 .35em}
+.logo span{color:var(--muted)}
+@media (max-width:560px){.logo{font-size:22px}}
 .tagline{color:var(--muted);font-size:13px;margin-top:7px;letter-spacing:.05em}
 .kpi{display:flex;flex-direction:column;gap:2px}
 .kpi .num{font:700 24px/1.05 var(--f-mono);font-variant-numeric:tabular-nums}
@@ -311,7 +313,7 @@ a.btn{text-decoration:none}
 <div class="app">
   <header class="top">
     <div class="brand">
-      <div class="logo">Склад</div>
+      <div class="logo">Ultimate Shop <span>Склад</span></div>
       <div class="tagline">лист подбора · закупка · приёмка</div>
     </div>
     <div class="kpi"><span class="num" id="kQty">0</span><span class="lbl">штук на складе</span></div>
