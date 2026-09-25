@@ -1019,7 +1019,7 @@ function ensurePDF() {
 function pdfHeader(items) {
   const art = items.find(i => /^артикул$/i.test(i.s));
   if (!art) return null;
-  const hi = items.filter(i => Math.abs(i.y - art.y) <= 16);
+  const hi = items.filter(i => Math.abs(i.y - art.y) <= 16 && !/^[\d\s-]+$/.test(i.s));
   const list = [];
   for (const it of hi) { const c = list.find(l => Math.abs(l.x - it.x) < 3); if (c) c.parts.push(it); else list.push({x: it.x, parts: [it]}); }
   list.sort((a, b) => a.x - b.x);
@@ -1038,23 +1038,34 @@ async function readPdf(buf, name, onPage) {
   try { doc = await lib.getDocument({data: new Uint8Array(buf), isEvalSupported: false}).promise; }
   catch { throw new Error(`«${name}» не получилось открыть как PDF.`); }
   let h = null, head = '', anyText = false;
-  const rows = [], boxes = [], ships = new Set();
+  const rows = [], boxes = [], ships = new Set(), nums = [], pages = [], sample = [];
   for (let p = 1; p <= doc.numPages; p++) {
     onPage(p, doc.numPages);
     const page = await doc.getPage(p);
     const tc = await page.getTextContent();
     page.cleanup();
-    const items = tc.items.filter(i => i.str && i.str.trim()).map(i => ({s: i.str.trim(), x: i.transform[4], y: i.transform[5]}));
+    const items = tc.items.filter(i => i.str && i.str.trim()).map(i => ({s: i.str.trim(), x: i.transform[4], y: i.transform[5], fs: Math.abs(i.transform[3]) || i.height || 10}));
     if (items.length) anyText = true;
     if (p <= 2) head += ' ' + items.map(i => i.s).join(' ');
     const ph = pdfHeader(items);
     let top = Infinity;
     if (ph) { h = ph; top = ph.y - 1; }
-    if (!h) continue;
-    const colOf = x => { let c = -1; for (let i = 0; i < h.list.length; i++) if (x >= h.list[i].x - 3) c = i; return c; };
+    const keep = () => { if (sample.length < 2) sample.push({p, items: items.slice(0, 220).map(i => [i.s.slice(0, 40), Math.round(i.x), Math.round(i.y)])}); };
+    if (!h) { pages.push({p, hdr: false, anchors: 0}); if (items.length) keep(); continue; }
+    // a column starts a little before its header: centred numbers stick out to the left
+    const bounds = h.list.map((c, i) => i ? Math.max((h.list[i - 1].x + c.x) / 2, c.x - 14) : -Infinity);
+    const colOf = x => { let c = 0; for (let i = 1; i < bounds.length; i++) if (x >= bounds[i]) c = i; return c; };
     const body = items.filter(i => i.y < top).map(i => ({...i, c: colOf(i.x)}));
-    const anchors = body.filter(i => i.c === h.anchor && h.anchorRx.test(i.s)).sort((a, b) => b.y - a.y);
-    if (!anchors.length) continue;
+    // a number too wide for the narrow "№" column wraps onto the next line ("10" / "0"): glue such lines back
+    const col = body.filter(i => i.c === h.anchor).sort((a, b) => b.y - a.y);
+    const fss = col.map(i => i.fs).sort((a, b) => a - b);
+    const near = Math.min(22, Math.max(8, (fss.length ? fss[fss.length >> 1] : 10) * 1.45));   // lines of one cell are closer than 1.45 × font size
+    const groups = [];
+    for (const it of col) { const g = groups[groups.length - 1]; if (g && g.last - it.y < near) { g.parts.push(it); g.last = it.y; } else groups.push({parts: [it], last: it.y}); }
+    const anchors = groups.map(g => ({s: g.parts.map(x => x.s).join(''), y: g.parts.reduce((t, x) => t + x.y, 0) / g.parts.length})).filter(a => h.anchorRx.test(a.s));
+    pages.push({p, hdr: !!ph, anchors: anchors.length});
+    if (!anchors.length) { if (items.length) keep(); continue; }
+    if (h.anchor === h.num) for (const a of anchors) nums.push(+a.s);
     const gaps = anchors.slice(1).map((a, i) => anchors[i].y - a.y).sort((a, b) => a - b);
     const gap = gaps.length ? gaps[gaps.length >> 1] : 60;
     const cells = anchors.map(() => ({}));
@@ -1079,7 +1090,8 @@ async function readPdf(buf, name, onPage) {
   if (!anyText) throw new Error(`«${name}»: в PDF нет текста, это картинка. Скачайте лист подбора из кабинета Озона заново.`);
   if (!rows.length) throw new Error(`«${name}»: не нашлась таблица с колонками «Артикул» и «Кол-во». Это точно лист подбора Озона?`);
   const m = head.match(/Количество отправлений:?\s*(\d+)/i), d = head.match(/Дата:?\s*(\d{2}\.\d{2}\.\d{4})/i), w = head.match(/Склад:?\s*(.+?)\s+Служба/i);
-  return {name, pdf: doc, boxes, info: {expected: m ? +m[1] : null, date: d ? d[1] : '', wh: w ? w[1].trim() : '', ships: ships.size},
+  if (!sample.length || sample[0].p !== 1) sample.unshift({p: 0, header: h ? h.list.map(c => [c.s.slice(0, 30), Math.round(c.x)]) : null});
+  return {name, pdf: doc, boxes, info: {expected: m ? +m[1] : null, date: d ? d[1] : '', wh: w ? w[1].trim() : '', ships: ships.size, nums, pages, sample},
     sheets: [{name: 'Лист подбора', rows: [['Номер отправления', 'Товар', 'Артикул', 'Кол-во'], ...rows]}]};
 }
 // product photos: the picking list already has them, so they are cut out of the rendered pages
@@ -1263,6 +1275,19 @@ function fromText(t, target) {
   if (!rows.length) return;
   openImport(target, [{name: 'вставка из Excel', sheets: [{name: 'Вставка', rows}]}]);
 }
+// [1,2,3,7,8,10] → "1–3, 7–8, 10"
+function ranges(ns) {
+  const out = []; let a = null, b = null;
+  for (const n of [...new Set(ns)].sort((x, y) => x - y)) { if (a !== null && n === b + 1) b = n; else { if (a !== null) out.push(a === b ? `${a}` : `${a}–${b}`); a = b = n; } }
+  if (a !== null) out.push(a === b ? `${a}` : `${a}–${b}`);
+  return out.length > 12 ? out.slice(0, 12).join(', ') + '…' : out.join(', ');
+}
+function missingRanges(nums, expected) {
+  if (!nums || !nums.length) return '';
+  const have = new Set(nums), top = Math.max(expected || 0, ...nums), miss = [];
+  for (let n = 1; n <= top && miss.length < 20000; n++) if (!have.has(n)) miss.push(n);
+  return miss.length ? ranges(miss) : '';
+}
 function extractAll() {
   const m = IMP.m, total = {lines: [], byFile: [], noArt: 0, badQty: 0, sci: 0, mismatch: false};
   const h0 = m.header >= 0 ? String((curRows()[m.header] || [])[m.art] ?? '') : null;
@@ -1316,7 +1341,14 @@ function renderImport() {
     const got = pdfs.reduce((a, f) => a + f.info.ships, 0);
     const i0 = pdfs[0].info, where = [i0.date, i0.wh ? 'склад ' + i0.wh : ''].filter(Boolean).join(', ');
     h += `<div>Лист подбора Озона${where ? ` (${esc(where)})` : ''}: прочитано <b>${cnt(got, W.ship)}</b>${exp ? ` из ${fmt(exp)} указанных в листе` : ''}.${exp && got === exp ? ' <span class="chip good">всё сошлось</span>' : ''}</div>`;
-    if (exp && got !== exp) h += `<div class="warnline">В листе указано ${cnt(exp, W.ship)}, а прочитано ${fmt(got)}. Возможно, часть строк не распозналась: сверьте итог с листом или загрузите выгрузку отправлений в Excel.</div>`;
+    if (exp && got !== exp) {
+      h += `<div class="warnline">В листе указано ${cnt(exp, W.ship)}, а прочитано ${fmt(got)}. Возможно, часть строк не распозналась: сверьте итог с листом или загрузите выгрузку отправлений в Excel.</div>`;
+      const miss = missingRanges(pdfs[0].info.nums, exp);
+      if (miss) h += `<div class="warnline">Не прочитаны строки №: ${esc(miss)}.</div>`;
+      const empty = pdfs[0].info.pages.filter(x => !x.anchors).map(x => x.p);
+      if (empty.length) h += `<div class="warnline">Страницы, где не нашлось ни одной строки: ${esc(ranges(empty))}.</div>`;
+      saveDoc('debug/pdf', () => ({at: Date.now(), file: pdfs[0].name, expected: exp, got, pages: pdfs[0].info.pages, sample: pdfs[0].info.sample}), 50);
+    }
   }
   h += `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b></div>`;
   if (isOrders) {
