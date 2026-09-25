@@ -6,7 +6,7 @@
 <title>ULTIMATE SHOP СКЛАД</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Tenor+Sans&display=swap">
 <style>
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
@@ -307,30 +307,211 @@ a.btn{text-decoration:none}
 .why{font-size:13px;color:var(--muted);margin-top:4px}
 .why b{color:var(--ink);font-weight:600}
 .pavtag{font:700 11px/1 var(--f-mono);padding:4px 6px;border-radius:4px;background:var(--hazard);color:var(--accent)}
+
+/* ===== v3: premium look — graphite, champagne gold, sidebar ===== */
+:root{
+  --bg:#F1F2F4; --surface:#FFFFFF; --surface-2:#F6F7F9; --ink:#121317; --muted:#656B74; --line:#E1E4E8;
+  --accent:#121317; --accent-edge:#121317; --accent-ink:#FFFFFF; --accent-soft:#F5EFE3;
+  --gold:#B08A3E; --gold-ink:#86672A; --gold-on-accent:#D9B76E; --bar:#6B717A; --bar-now:#B08A3E;
+  --side:#111215; --side-2:#1B1D21; --side-ink:#ECEDEF; --side-muted:#8E939C; --side-line:#25282D; --side-gold:#D9B76E;
+  --good:#1F7A4D; --good-soft:#E3F2EA; --warn:#98590A; --warn-soft:#FBEFDD; --bad:#B4372D; --bad-soft:#FBE7E4;
+  --seg-good:#2E8A5C; --seg-warn:#D08A1E; --seg-bad:#C9463A;
+  --focus:#2F62D8; --hazard:#121317; --scrim:rgba(10,11,13,.55);
+  --shadow:0 1px 2px rgba(17,19,23,.05),0 12px 30px -18px rgba(17,19,23,.22);
+  --r:14px;
+  --f-display:"Tenor Sans","Golos Text","Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C0D0F; --surface:#15171A; --surface-2:#1C1F23; --ink:#ECEDEF; --muted:#9BA0A9; --line:#272B31;
+    --accent:#ECEDEF; --accent-edge:#ECEDEF; --accent-ink:#111215; --accent-soft:#2A2518;
+    --gold:#E0BC70; --gold-ink:#E0BC70; --gold-on-accent:#86672A; --bar:#6A7079; --bar-now:#E0BC70;
+    --side:#08090B; --side-2:#15171A; --side-line:#1E2125;
+    --good:#5FCB91; --good-soft:#15301F; --warn:#F2A64B; --warn-soft:#37270F; --bad:#FF8074; --bad-soft:#3B1E1B;
+    --seg-good:#3FA877; --seg-warn:#E0A040; --seg-bad:#E0645A;
+    --focus:#80A8FF; --scrim:rgba(0,0,0,.65);
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -18px rgba(0,0,0,.7);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C0D0F; --surface:#15171A; --surface-2:#1C1F23; --ink:#ECEDEF; --muted:#9BA0A9; --line:#272B31;
+  --accent:#ECEDEF; --accent-edge:#ECEDEF; --accent-ink:#111215; --accent-soft:#2A2518;
+  --gold:#E0BC70; --gold-ink:#E0BC70; --gold-on-accent:#86672A; --bar:#6A7079; --bar-now:#E0BC70;
+  --side:#08090B; --side-2:#15171A; --side-line:#1E2125;
+  --good:#5FCB91; --good-soft:#15301F; --warn:#F2A64B; --warn-soft:#37270F; --bad:#FF8074; --bad-soft:#3B1E1B;
+  --seg-good:#3FA877; --seg-warn:#E0A040; --seg-bad:#E0645A;
+  --focus:#80A8FF; --scrim:rgba(0,0,0,.65);
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -18px rgba(0,0,0,.7);
+  color-scheme:dark;
+}
+body{background:var(--bg);font-size:15px}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.shell{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+.side{background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;gap:26px;padding:24px 14px;position:sticky;top:env(safe-area-inset-top,0px);height:100vh;overflow-y:auto;z-index:20}
+.side .brand{display:flex;gap:12px;align-items:center;padding:2px 8px;margin:0;min-width:0}
+.mark{width:40px;height:40px;border-radius:11px;background:linear-gradient(140deg,#EACF95 0%,#B08A3E 100%);color:#16171A;display:grid;place-items:center;font:400 15px/1 var(--f-display);letter-spacing:.08em;flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.side .logo{display:block;font:400 15px/1.15 var(--f-display);letter-spacing:.16em;text-transform:uppercase;color:var(--side-ink);white-space:nowrap}
+.side .logo span{display:block;color:var(--side-gold);font-size:10.5px;letter-spacing:.42em;margin-top:6px}
+.side .tabs{display:flex;flex-direction:column;gap:2px;border:0;margin:0;overflow:visible}
+.side .tab{color:var(--side-muted);padding:11px 12px;border:0;border-radius:10px;font:500 14.5px/1.2 var(--f-ui);gap:12px;justify-content:flex-start;margin:0;width:100%;transition:background .15s,color .15s}
+.side .tab:hover{color:var(--side-ink);background:var(--side-2)}
+.side .tab[aria-selected="true"]{color:var(--side-ink);background:var(--side-2)}
+.side .tab[aria-selected="true"] .ic{color:var(--side-gold)}
+.side .tab .badge{margin-left:auto;background:var(--side-2);border:1px solid var(--side-line);color:var(--side-ink);font:600 11px/1 var(--f-ui);padding:4px 7px}
+.side .tab .badge.hot{background:var(--side-gold);border-color:transparent;color:#16171A}
+.side-foot{margin-top:auto;padding:14px 10px 2px;border-top:1px solid var(--side-line)}
+.side .sync{color:var(--side-muted);max-width:none}
+.app{max-width:1200px;width:100%;margin:0;padding-inline:36px;padding-block:28px 72px;min-width:0}
+.top{display:flex;align-items:flex-end;gap:16px 28px;flex-wrap:wrap;padding-block:0 22px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+.top .title{margin-right:auto;min-width:0}
+.eyebrow{font:500 12px/1 var(--f-ui);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.top h1{font:400 34px/1.1 var(--f-display);letter-spacing:.06em;margin:10px 0 0;text-transform:uppercase}
+.kpis{display:flex;gap:10px;flex-wrap:wrap}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:128px;box-shadow:var(--shadow);gap:3px}
+.kpi .num{font:600 22px/1.1 var(--f-ui)}
+.kpi .lbl{font-size:12px;color:var(--muted)}
+.stripe{display:none}
+.card{border-radius:var(--r);box-shadow:var(--shadow);border-color:var(--line);padding:22px}
+h2{font:600 18px/1.3 var(--f-ui)}
+h3{font:600 16px/1.3 var(--f-ui)}
+.hint{color:var(--muted)}
+.tile{border-radius:var(--r);box-shadow:var(--shadow);border-color:var(--line);padding:18px 20px;gap:8px}
+.tile .k{font-size:11px;letter-spacing:.14em}
+.tile .v{font:600 32px/1.05 var(--f-ui);letter-spacing:-.01em}
+.tile .v small{font:500 14px var(--f-ui);color:var(--muted)}
+.tile.hot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tile.hot .k{color:var(--gold-on-accent);opacity:1}
+.tile.hot .s,.tile.hot .v small{color:var(--accent-ink);opacity:.72}
+.btn{border-radius:10px;border-width:1px;background:var(--surface);transition:background .15s,border-color .15s,opacity .15s}
+.btn:hover{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{opacity:.88;border-color:var(--accent)}
+.btn.ghost{background:transparent}
+.btn .ic{width:17px;height:17px}
+.btn.wa{background:var(--good);border-color:var(--good);color:var(--surface)}
+.in{border-width:1px;border-radius:10px}
+.in:focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 12%,transparent)}
+.seg{border-radius:11px;padding:3px;background:var(--surface-2);border:1px solid var(--line);gap:2px}
+.seg button{border-radius:8px;padding:9px 12px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08),0 0 0 1px var(--line)}
+.tw{border-radius:12px;border-color:var(--line)}
+.t th{background:var(--surface-2);font-size:10.5px;letter-spacing:.12em}
+.t tbody tr:hover td{background:var(--surface-2)}
+.chip{gap:6px;padding:5px 9px 5px 8px}
+.chip.good::before,.chip.warn::before,.chip.bad::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.badge.hot{background:var(--gold);color:#16171A;border-color:transparent}
+.fill{background:var(--gold)}
+.steps li{border-radius:12px;background:var(--surface);box-shadow:var(--shadow)}
+.steps li::before{background:var(--ink);color:var(--surface);border-radius:6px;font-family:var(--f-ui)}
+.pavtag{background:var(--ink);color:var(--surface)}
+.pav{border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.pav>header{background:var(--surface-2)}
+.pav>header h3{font:400 16px/1.2 var(--f-display);letter-spacing:.12em;text-transform:uppercase}
+.go{border-width:1px;border-radius:12px;background:var(--surface)}
+.go b{font:400 15px var(--f-display);letter-spacing:.1em}
+details.rep{border-width:1px;border-radius:12px}
+details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
+.notice{border-radius:var(--r);border-width:1px;border-color:color-mix(in srgb,var(--gold) 55%,transparent);background:var(--accent-soft)}
+.confirm{border-radius:12px;border-width:1px}
+.mode,.opt input{border-width:1px}
+.mode{border-radius:12px}
+.sheet{border-radius:18px}
+.toast{border-radius:12px;padding:13px 18px;box-shadow:0 12px 40px -12px rgba(0,0,0,.45)}
+.ph{border-radius:8px}
+.step button{border-width:1px;border-radius:12px}
+.pane{animation:paneIn .2s ease-out}
+@keyframes paneIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.pane{animation:none}}
+/* day: share of shipments by state */
+.stack>*,.card,.pane,main{min-width:0}
+.daybar{padding:16px 20px;display:grid;gap:12px}
+.segbar{display:flex;gap:2px;height:12px;border-radius:6px;overflow:hidden;background:var(--surface-2)}
+.segbar span{min-width:4px}
+.segleg{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--muted)}
+.segleg b{color:var(--ink);font-variant-numeric:tabular-nums}
+.segleg i{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:0}
+/* analysis chart */
+.chart{position:relative;margin-top:6px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .grid{stroke:var(--line);stroke-width:1}
+.chart .tick{fill:var(--muted);font:11px var(--f-ui);font-variant-numeric:tabular-nums}
+.chart .val{fill:var(--ink);font:600 12px var(--f-ui)}
+.chart .b{fill:var(--bar)}
+.chart .b.now{fill:var(--bar-now)}
+.chart .b.dim{opacity:.35}
+.chart .hit{fill:transparent;cursor:crosshair}
+.ctip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);padding:7px 10px;border-radius:8px;font:500 12.5px/1.3 var(--f-ui);white-space:nowrap;transform:translate(-50%,calc(-100% - 10px));box-shadow:0 8px 24px -10px rgba(0,0,0,.5)}
+.ctip b{font-weight:700}
+@media (max-width:1023px){
+  .shell{display:block}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;flex-direction:row;align-items:center;gap:12px;padding:10px 16px;overflow:visible}
+  .side .brand{flex-basis:auto;padding:0}
+  .mark{width:34px;height:34px;border-radius:9px;font-size:13px}
+  .side .logo{font-size:13px}
+  .side .logo span{font-size:9.5px;margin-top:4px}
+  .side-foot{margin:0 0 0 auto;border:0;padding:0;min-width:0}
+  .side .sync{flex-basis:auto;max-width:150px;overflow:hidden;white-space:nowrap}
+  .side .sync span{overflow:hidden;text-overflow:ellipsis}
+  .side .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;flex-direction:row;background:var(--side);padding:6px 6px calc(env(safe-area-inset-bottom,0px) + 6px);border-top:1px solid var(--side-line);overflow-x:auto;scrollbar-width:none}
+  .side .tab{flex:1 0 62px;flex-direction:column;gap:4px;font-size:11px;padding:8px 2px 6px;justify-content:center;position:relative;text-align:center}
+  .side .tab .ic{width:21px;height:21px}
+  .side .tab .badge{position:absolute;top:2px;left:calc(50% + 6px);margin:0;padding:2px 5px;font-size:10px}
+  .app{padding-inline:16px;padding-block:18px calc(env(safe-area-inset-bottom,0px) + 96px)}
+  .top{padding-bottom:16px;margin-bottom:16px}
+  .top h1{font-size:26px}
+  .kpis{width:100%}
+  .kpi{min-width:0;flex:1 1 0;padding:9px 12px}
+  .kpi .num{font-size:18px}
+  .toast{bottom:calc(env(safe-area-inset-bottom,0px) + 84px)}
+  .sticky-actions{bottom:calc(env(safe-area-inset-bottom,0px) + 72px)}
+}
+@media (max-width:560px){.card{padding:16px}.tile{padding:14px 16px}.tile .v{font-size:26px}.side .sync span{display:none}}
+@media (max-width:460px){.tiles.four{grid-template-columns:1fr 1fr;gap:10px}.tile{padding:12px 14px;gap:5px}.tile .v{font-size:24px}.tile .k{font-size:10px;letter-spacing:.1em}.tile .s{font-size:12.5px}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-day" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M8 2.5v4M16 2.5v4M3.5 10h17M8 14h3M8 17h6"/></symbol>
+  <symbol id="i-buy" viewBox="0 0 24 24"><path d="M3 3.5h2.2l2.3 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 1.9-1.4L21.5 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/></symbol>
+  <symbol id="i-recv" viewBox="0 0 24 24"><path d="M21 7.5 12 3 3 7.5v9L12 21l9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></symbol>
+  <symbol id="i-stock" viewBox="0 0 24 24"><path d="M3 21V9l9-5.5L21 9v12"/><path d="M7 21v-8.5h10V21M7 16.5h10"/></symbol>
+  <symbol id="i-an" viewBox="0 0 24 24"><path d="M3.5 3.5v17h17"/><path d="M8 16.5v-4M12.5 16.5V8.5M17 16.5v-6.5"/></symbol>
+  <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></symbol>
+  <symbol id="i-wa" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.2-4.2A8.5 8.5 0 1 1 20.5 12z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 20.5h15"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M14 3.5H6.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V9z"/><path d="M14 3.5V9h5.5M12 17.5v-6M9.5 14l2.5-2.5 2.5 2.5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></symbol>
+</defs></svg>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <div class="mark" aria-hidden="true">US</div>
+      <div class="logo">Ultimate Shop <span>Склад</span></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Разделы">
+      <button class="tab" role="tab" id="t-day" data-tab="day" aria-selected="true"><svg class="ic"><use href="#i-day"/></svg><span class="tl">День</span> <span class="badge hot" id="bDay" hidden></span></button>
+      <button class="tab" role="tab" id="t-buy" data-tab="buy" aria-selected="false"><svg class="ic"><use href="#i-buy"/></svg><span class="tl">Закупка</span> <span class="badge" id="bBuy" hidden></span></button>
+      <button class="tab" role="tab" id="t-recv" data-tab="recv" aria-selected="false"><svg class="ic"><use href="#i-recv"/></svg><span class="tl">Приёмка</span> <span class="badge" id="bRecv" hidden></span></button>
+      <button class="tab" role="tab" id="t-stock" data-tab="stock" aria-selected="false"><svg class="ic"><use href="#i-stock"/></svg><span class="tl">Склад</span></button>
+      <button class="tab" role="tab" id="t-an" data-tab="an" aria-selected="false"><svg class="ic"><use href="#i-an"/></svg><span class="tl">Анализ</span></button>
+      <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false"><svg class="ic"><use href="#i-set"/></svg><span class="tl">Настройки</span></button>
+    </nav>
+    <div class="side-foot"><div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div></div>
+  </aside>
 <div class="app">
   <header class="top">
-    <div class="brand">
-      <div class="logo">Ultimate Shop <span>Склад</span></div>
-      <div class="tagline">лист подбора · закупка · приёмка</div>
+    <div class="title">
+      <div class="eyebrow" id="pageDate"></div>
+      <h1 id="pageTitle">День</h1>
     </div>
-    <div class="kpi"><span class="num" id="kQty">0</span><span class="lbl">штук на складе</span></div>
-    <div class="kpi"><span class="num" id="kGo">0</span><span class="lbl">штук едет</span></div>
-    <div class="kpi"><span class="num" id="kShort">0</span><span class="lbl">штук не хватает</span></div>
-    <div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div>
+    <div class="kpis">
+      <div class="kpi"><span class="num" id="kQty">0</span><span class="lbl">штук на складе</span></div>
+      <div class="kpi"><span class="num" id="kGo">0</span><span class="lbl">штук едет</span></div>
+      <div class="kpi"><span class="num" id="kShort">0</span><span class="lbl">штук не хватает</span></div>
+    </div>
   </header>
-  <div class="stripe" aria-hidden="true"></div>
-
-  <nav class="tabs" role="tablist" aria-label="Разделы">
-    <button class="tab" role="tab" id="t-day" data-tab="day" aria-selected="true">День <span class="badge hot" id="bDay" hidden></span></button>
-    <button class="tab" role="tab" id="t-buy" data-tab="buy" aria-selected="false">Закупка <span class="badge" id="bBuy" hidden></span></button>
-    <button class="tab" role="tab" id="t-recv" data-tab="recv" aria-selected="false">Приёмка <span class="badge" id="bRecv" hidden></span></button>
-    <button class="tab" role="tab" id="t-stock" data-tab="stock" aria-selected="false">Склад</button>
-    <button class="tab" role="tab" id="t-an" data-tab="an" aria-selected="false">Анализ</button>
-    <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false">Настройки</button>
-  </nav>
 
   <main class="needs-data">
     <!-- ДЕНЬ -->
@@ -339,7 +520,7 @@ a.btn{text-decoration:none}
         <h2>Лист подбора</h2>
         <p class="hint">Загрузите лист подбора Озона (PDF) или выгрузку отправлений из Excel. Товар со склада достаётся сначала отправлениям с прошлых дней, потом новым. Отправления, которые уже есть в программе, не задвоятся.</p>
         <div class="row mt">
-          <button class="btn primary" type="button" data-import="orders">Загрузить лист подбора</button>
+          <button class="btn primary" type="button" data-import="orders"><svg class="ic"><use href="#i-up"/></svg>Загрузить лист подбора</button>
           <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
         </div>
         <div class="ometa" id="dayMeta"></div>
@@ -355,6 +536,10 @@ a.btn{text-decoration:none}
         <div class="tile"><span class="k">Можно собирать</span><span class="v" id="tPick">0</span><span class="s" id="tPickS"></span></div>
         <div class="tile"><span class="k">Ждут мешок</span><span class="v" id="tWait">0</span><span class="s" id="tWaitS"></span></div>
         <div class="tile hot"><span class="k">Не хватает</span><span class="v" id="tShort">0</span><span class="s" id="tShortS"></span></div>
+      </div>
+      <div class="card daybar" id="dayBar" hidden>
+        <div class="segbar" id="segbar" role="img"></div>
+        <div class="segleg" id="segleg"></div>
       </div>
       <div class="notice" id="dayPending" hidden></div>
       <div class="card" id="dayCard" hidden>
@@ -375,7 +560,7 @@ a.btn{text-decoration:none}
         </div>
         <button class="btn ghost more" id="dayMore" type="button" hidden>Показать ещё</button>
         <div class="actions">
-          <button class="btn" type="button" id="dayExport">Скачать статусы отправлений (Excel)</button>
+          <button class="btn" type="button" id="dayExport"><svg class="ic"><use href="#i-dl"/></svg>Скачать статусы отправлений (Excel)</button>
           <button class="btn ghost danger" type="button" id="dayClear">Убрать все отправления</button>
         </div>
         <div class="confirm" id="dayConfirm" hidden></div>
@@ -394,8 +579,8 @@ a.btn{text-decoration:none}
         </form>
         <div class="actions">
           <button class="btn primary" type="button" id="buyCommit">Оформить закупку</button>
-          <button class="btn" type="button" id="buyCopy">Скопировать для WhatsApp</button>
-          <button class="btn" type="button" id="buyExport">Скачать Excel</button>
+          <button class="btn" type="button" id="buyCopy"><svg class="ic"><use href="#i-copy"/></svg>Скопировать для WhatsApp</button>
+          <button class="btn" type="button" id="buyExport"><svg class="ic"><use href="#i-dl"/></svg>Скачать Excel</button>
         </div>
         <div class="confirm" id="buyConfirm" hidden></div>
       </div>
@@ -481,7 +666,7 @@ a.btn{text-decoration:none}
         <div class="row mt">
           <button class="btn" type="button" data-import="stock">Загрузить остатки из файла</button>
           <button class="btn" type="button" data-paste="stock">Вставить из Excel</button>
-          <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
+          <button class="btn" type="button" data-export-stock><svg class="ic"><use href="#i-dl"/></svg>Скачать остатки (Excel)</button>
         </div>
         <div class="confirm" id="stConfirm" hidden></div>
       </div>
@@ -558,6 +743,11 @@ a.btn{text-decoration:none}
         <div class="tile hot"><span class="k">Закупить впрок</span><span class="v" id="aBuy">0</span><span class="s" id="aBuyS"></span></div>
       </div>
       <div class="card">
+        <div class="lhead"><h3>Продажи по дням</h3><span class="sum" id="chartSum"></span></div>
+        <div class="chart" id="salesChart"></div>
+        <details class="small mt" id="chartTable"><summary>Таблица по дням</summary><div class="tw mt"><table class="t"><thead><tr><th>День</th><th class="num">Продано, шт.</th></tr></thead><tbody id="chartRows"></tbody></table></div></details>
+      </div>
+      <div class="card">
         <div class="lhead"><h3>Закупить впрок</h3><span class="sum" id="anBuySum"></span><button class="btn primary" type="button" id="anBuyAll">Добавить всё в закупку</button></div>
         <p class="hint small" style="margin:0 0 10px">Сколько взять сверх сегодняшних заказов, чтобы товар был на складе на выбранное число дней и заказы собирались день в день. Считается по продажам в день минус то, что уже лежит и едет.</p>
         <div id="anBuy"></div>
@@ -627,8 +817,8 @@ a.btn{text-decoration:none}
         <h2>Данные</h2>
         <p class="hint" id="storeNote"></p>
         <div class="row mt">
-          <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
-          <button class="btn" type="button" id="bkSave">Скачать резервную копию</button>
+          <button class="btn" type="button" data-export-stock><svg class="ic"><use href="#i-dl"/></svg>Скачать остатки (Excel)</button>
+          <button class="btn" type="button" id="bkSave"><svg class="ic"><use href="#i-dl"/></svg>Скачать резервную копию</button>
           <button class="btn" type="button" id="bkLoad">Восстановить из копии</button>
           <button class="btn danger" type="button" id="stClear">Очистить склад</button>
         </div>
@@ -637,6 +827,7 @@ a.btn{text-decoration:none}
       </div>
     </section>
   </main>
+</div>
 </div>
 
 <input type="file" id="fileIn" multiple accept=".pdf,.xlsx,.xls,.xlsm,.xlsb,.ods,.csv,.txt,.tsv" hidden>
@@ -719,7 +910,7 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch { return null
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-25.5';
+const APP_VERSION = '2026-09-25.6';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -2040,8 +2231,52 @@ function addSuggest(list) {
   toast(`В закупку добавлено ${fmt(q)} шт. Посмотрите вкладку «Закупка».`);
 }
 const rateTxt = r => r >= 1 ? `${nf.format(Math.round(r * 10) / 10)} в день` : r > 0 ? `1 за ${Math.max(1, Math.round(1 / r))} дн.` : 'нет продаж';
+const niceStep = max => { const raw = max / 4, mag = 10 ** Math.floor(Math.log10(raw || 1)); return [1, 2, 5, 10].map(m => m * mag).find(st => st >= raw) || mag * 10; };
+function renderSalesChart(A) {
+  const box = $('#salesChart');
+  if (!A.days) { box.innerHTML = '<p class="hint" style="margin:0">Появится, когда будет история продаж.</p>'; $('#chartSum').textContent = ''; $('#chartTable').hidden = true; return; }
+  const end = A.last > isoToday() ? A.last : isoToday(), N = 30;
+  const days = range(N).map(i => isoAdd(end, i - N + 1));
+  const vals = days.map(iso => { const d = HIST.get(iso); let t = 0; if (d) for (const v of d.values()) t += v[1]; return round(t); });
+  const CW = Math.max(300, Math.round(box.clientWidth || 640)), H = 200, L = 34, R = 6, T = 18, B = 26;
+  const max = Math.max(1, ...vals), step = niceStep(max), top = Math.ceil(max / step) * step;
+  const band = (CW - L - R) / N, bw = Math.max(3, Math.min(24, band - 2));
+  const y = v => T + (H - T - B) * (1 - v / top);
+  let g = '';
+  for (let v = 0; v <= top + 1e-9; v += step) g += `<line class="grid" x1="${L}" x2="${CW - R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}"/><text class="tick" x="${L - 8}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end">${fmt(v)}</text>`;
+  let bars = '', hits = '', labels = '';
+  let nowI = N - 1; while (nowI > 0 && !vals[nowI]) nowI--;   // the latest day with sales is the one in gold
+  vals.forEach((v, i) => {
+    const x = L + i * band + (band - bw) / 2, y0 = y(0);
+    if (v > 0) {
+      const yy = y(v), r = Math.min(4, bw / 2, y0 - yy);
+      bars += `<path class="b${i === nowI ? ' now' : ''}" data-i="${i}" d="M${x.toFixed(1)},${y0.toFixed(1)}V${(yy + r).toFixed(1)}Q${x.toFixed(1)},${yy.toFixed(1)} ${(x + r).toFixed(1)},${yy.toFixed(1)}H${(x + bw - r).toFixed(1)}Q${(x + bw).toFixed(1)},${yy.toFixed(1)} ${(x + bw).toFixed(1)},${(yy + r).toFixed(1)}V${y0.toFixed(1)}Z"/>`;
+    }
+    hits += `<rect class="hit" data-i="${i}" x="${(L + i * band).toFixed(1)}" y="${T}" width="${band.toFixed(1)}" height="${H - T - B}"/>`;
+    if ((N - 1 - i) % 5 === 0) labels += `<text class="tick" x="${(x + bw / 2).toFixed(1)}" y="${H - 8}" text-anchor="middle">${isoRu(days[i]).slice(0, 5)}</text>`;
+  });
+  const last = vals[nowI], lx = L + nowI * band + band / 2;
+  if (last > 0) labels += `<text class="val" x="${lx.toFixed(1)}" y="${(y(last) - 6).toFixed(1)}" text-anchor="middle">${fmt(last)}</text>`;
+  box.innerHTML = `<svg viewBox="0 0 ${CW} ${H}" role="img" aria-label="Продажи по дням за последние ${N} дней">${g}${bars}${labels}${hits}</svg><div class="ctip" hidden></div>`;
+  box._data = {days, vals, band, L, W: CW};
+  const sum = vals.reduce((a, b) => a + b, 0), best = Math.max(...vals);
+  $('#chartSum').textContent = `${fmt(sum)} шт. за ${N} ${plural(N, W.day)} · лучший день ${fmt(best)} шт.`;
+  $('#chartTable').hidden = false;
+  $('#chartRows').innerHTML = days.map((iso, i) => `<tr><td>${isoRu(iso)}</td><td class="num">${HIST.has(iso) ? fmt(vals[i]) : '—'}</td></tr>`).reverse().join('');
+}
+function chartHover(e) {
+  const box = $('#salesChart'), d = box._data, t = e.target.closest && e.target.closest('.hit');
+  const tip = $('.ctip', box);
+  $$('.b', box).forEach(b => b.classList.toggle('dim', !!t && b.dataset.i !== (t && t.dataset.i)));
+  if (!t || !d || !tip) { if (tip) tip.hidden = true; return; }
+  const i = +t.dataset.i, svg = $('svg', box), k = svg.getBoundingClientRect().width / d.W;
+  tip.innerHTML = `${isoRu(d.days[i])} · <b>${HIST.has(d.days[i]) ? fmt(d.vals[i]) + ' шт.' : 'нет данных'}</b>`;
+  tip.style.left = `${(d.L + i * d.band + d.band / 2) * k}px`; tip.style.top = `${Math.max(12, 18 * k)}px`;
+  tip.hidden = false;
+}
 function renderAn(p) {
   const A = analyze(), has = A.days > 0;
+  renderSalesChart(A);
   $('#anEmpty').hidden = has || HIST === null;
   $('#anCover').textContent = HIST === null ? 'Загружаю историю…' : has ? `История: ${cnt(A.days, W.day)}, с ${isoRu(A.first)} по ${isoRu(A.last)}` : '';
   for (const [id, k] of [['#anDays', 'anDays'], ['#anLead', 'anLead'], ['#anWin', 'anWin'], ['#anDead', 'deadDays']]) if (document.activeElement !== $(id)) $(id).value = S[k];
@@ -2189,6 +2424,12 @@ function renderDay(p, ships) {
   $('#tPick').textContent = fmt(c.pick); $('#tPickS').textContent = c.stockPend ? `ещё не списано со склада: ${fmt(c.stockPend)}` : 'товар отложен';
   $('#tWait').textContent = fmt(c.wait); $('#tWaitS').textContent = `закупок в пути: ${fmt(going().length)}`;
   $('#tShort').textContent = fmt(c.short); $('#tShortS').textContent = c.short ? `${fmt(round(shortQ))} шт. — оформите закупку` : 'всё закрыто';
+  $('#dayBar').hidden = !all.length;
+  const parts = [['pick', 'Можно собирать', 'var(--seg-good)'], ['wait', 'Ждут мешок', 'var(--seg-warn)'], ['short', 'Не хватает', 'var(--seg-bad)']].filter(x => c[x[0]]);
+  const pct = n => Math.round(100 * n / Math.max(1, all.length));
+  $('#segbar').innerHTML = parts.map(([k, , col]) => `<span style="flex:${c[k]} 1 0;background:${col}"></span>`).join('');
+  $('#segbar').setAttribute('aria-label', parts.map(([k, t]) => `${t}: ${c[k]}`).join(', '));
+  $('#segleg').innerHTML = parts.map(([k, t, col]) => `<span><i style="background:${col}"></i>${t} <b>${fmt(c[k])}</b> · ${pct(c[k])}%</span>`).join('');
   const pend = $('#dayPending');
   pend.hidden = !pendQ;
   if (pendQ) pend.innerHTML = `<p>Под ${cnt(c.stockPend, W.ship)} есть товар на складе (${fmt(round(pendQ))} шт.), но он ещё не списан. Он спишется, когда вы оформите закупку${shortQ ? '' : ' или нажмёте «Списать со склада»'}.</p>` +
@@ -2349,7 +2590,7 @@ function supHead(pv) {
   const money = pv.list.reduce((a, m) => a + m.rows.reduce((b, r) => b + r.order * priceOf(r.a), 0), 0);
   return `<span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.${money ? ` · ≈ ${rub(money)}` : ''}</span>
     <span class="supinfo${who ? '' : ' none'}">${who ? esc(who) : 'поставщик не указан'}</span>${sent ? `<span class="chip good">отправлено ${when(sent)}</span>` : ''}
-    <span class="row">${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener" data-wa="${esc(pv.pav)}">WhatsApp</a>` : ''}<button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button><button class="btn ghost" type="button" data-edit-sup="${esc(pv.pav)}">${who ? 'Изменить' : 'Указать поставщика'}</button></span>`;
+    <span class="row">${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener" data-wa="${esc(pv.pav)}"><svg class="ic"><use href="#i-wa"/></svg>WhatsApp</a>` : ''}<button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button><button class="btn ghost" type="button" data-edit-sup="${esc(pv.pav)}">${who ? 'Изменить' : 'Указать поставщика'}</button></span>`;
 }
 function supForm(pav) {
   const sup = SUP.get(pav) || {name: '', phone: ''};
@@ -2367,14 +2608,14 @@ function setSupplier(pav, name, phone) {
 }
 function renderSuppliers() {
   const pavs = knownPavs();
-  setBody($('#supList'), pavs.map(pav => { const sup = SUP.get(pav) || {name: '', phone: ''}, link = waLink(sup.phone, ''); return `<tr data-sup-pav="${esc(pav)}"><td><span class="pavtag">${esc(pav)}</span></td><td><input class="in" data-f="name" value="${esc(sup.name)}" placeholder="имя" aria-label="Поставщик павильона ${esc(pav)}"></td><td><input class="in" data-f="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00" aria-label="WhatsApp павильона ${esc(pav)}"></td><td>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener">Чат</a>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="4" class="hint">Павильоны появятся здесь, когда в программе будут товары или заказы. Можно добавить павильон вручную ниже.</td></tr>');
+  setBody($('#supList'), pavs.map(pav => { const sup = SUP.get(pav) || {name: '', phone: ''}, link = waLink(sup.phone, ''); return `<tr data-sup-pav="${esc(pav)}"><td><span class="pavtag">${esc(pav)}</span></td><td><input class="in" data-f="name" value="${esc(sup.name)}" placeholder="имя" aria-label="Поставщик павильона ${esc(pav)}"></td><td><input class="in" data-f="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00" aria-label="WhatsApp павильона ${esc(pav)}"></td><td>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>Чат</a>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="4" class="hint">Павильоны появятся здесь, когда в программе будут товары или заказы. Можно добавить павильон вручную ниже.</td></tr>');
 }
 function renderReturns() {
   const by = new Map();
   RET.forEach((r, i) => { (by.get(r.pav) || by.set(r.pav, []).get(r.pav)).push({...r, i}); });
   $('#retSum').textContent = RET.length ? `${fmt(RET.reduce((s, r) => s + r.q, 0))} шт.` : '';
   $('#retCopy').hidden = !RET.length;
-  setBody($('#retList'), [...by.entries()].sort((a, b) => coll.compare(a[0], b[0])).map(([pav, rs]) => { const link = waLink((SUP.get(pav) || {}).phone, [`Возврат · ${pavLabel(pav)}`, ...rs.map(r => `${r.a} — ${fmt(r.q)} шт.`)].join('\n')); return `<div class="mt"><div class="row"><b>${esc(pavLabel(pav))}</b>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`; }).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
+  setBody($('#retList'), [...by.entries()].sort((a, b) => coll.compare(a[0], b[0])).map(([pav, rs]) => { const link = waLink((SUP.get(pav) || {}).phone, [`Возврат · ${pavLabel(pav)}`, ...rs.map(r => `${r.a} — ${fmt(r.q)} шт.`)].join('\n')); return `<div class="mt"><div class="row"><b>${esc(pavLabel(pav))}</b>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>WhatsApp</a>` : ''}</div>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`; }).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
 }
 
 function renderLog() {
@@ -2405,9 +2646,12 @@ function renderTester() {
   $('#testMatch').innerHTML = !v.trim() ? '' : esc(parts) + (st ? `На складе есть: <b class="art">${esc(st.a)}</b> — ${fmt(st.q)} шт.` : 'На складе такого артикула нет.');
 }
 
+const TAB_TITLE = {day: 'День', buy: 'Закупка', recv: 'Приёмка', stock: 'Склад', an: 'Анализ', settings: 'Настройки'};
 function setTab(t) {
   if (ui.tab !== t) diag('tab', t);
   ui.tab = t;
+  $('#pageTitle').textContent = TAB_TITLE[t] || '';
+  $('#pageDate').textContent = new Date().toLocaleDateString('ru-RU', {weekday: 'long', day: 'numeric', month: 'long'});
   if (t === 'an') { if (HIST === null) loadHist(); render(); }
   $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   $$('.pane').forEach(p => p.hidden = p.id !== 'pane-' + t);
@@ -2757,6 +3001,9 @@ $('#anForm').addEventListener('change', e => {
 });
 $('#anForm').addEventListener('submit', e => e.preventDefault());
 $('#anReload').addEventListener('click', () => { HIST = null; loadHist(); render(); });
+$('#salesChart').addEventListener('pointermove', chartHover);
+$('#salesChart').addEventListener('pointerleave', () => chartHover({target: document.body}));
+addEventListener('resize', debounce(() => { if (ui.tab === 'an') render(); }, 200));
 $('#anBuyAll').addEventListener('click', () => { if (ui.lastSug && ui.lastSug.length) { addSuggest(ui.lastSug); render(); } });
 $('#anBuy').addEventListener('click', e => { const b = e.target.closest('[data-an-add]'); if (!b || !ui.lastSug) return; const list = ui.lastSug.filter(x => x.pav === b.dataset.anAdd); if (list.length) { addSuggest(list); render(); } });
 $('#optPrice').addEventListener('change', e => { S = {...S, price: e.target.checked}; saveMeta('meta/settings'); render(); });
