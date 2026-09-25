@@ -533,6 +533,12 @@ details.rep[open] summary{margin-bottom:10px}
         <label class="fld mt" style="max-width:420px">Поставщик<input class="in" id="optSupplier"></label>
       </div>
       <div class="card">
+        <h2>Служебный журнал</h2>
+        <p class="hint">Технические записи для Claude: ошибки, загрузки файлов, проведённые операции, скорость работы и устройство. Claude читает их сам, когда вы просите разобраться, что происходит. Здесь последние записи с этого устройства.</p>
+        <ol class="log" id="diagList"></ol>
+        <button class="btn mt" type="button" id="diagCopy">Скопировать журнал</button>
+      </div>
+      <div class="card">
         <h2>Данные</h2>
         <p class="hint" id="storeNote"></p>
         <div class="row mt">
@@ -623,6 +629,9 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch { return null
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
+const APP_VERSION = '2026-09-25.3';
+const T0 = performance.now();
+const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
 /* ---------- article normalisation ---------- */
 const DEF = {latin: true, zeros: true, punct: true, pav: true, supplier: 'ТЦ Москва'};
@@ -695,6 +704,7 @@ function dbBackend(db) {
     kind: 'db',
     set: (p, data) => retry(() => db.doc(p).set(data)),
     del: p => retry(() => db.doc(p).delete()),
+    async get(p) { const d = await retry(() => db.doc(p).get()); return d.exists ? d.data() : null; },
     watchColl(name, cb) { db.collection(name).onSnapshot(s => cb(docs(s), s.metadata.fromCache), fail); },
     watchQuery(name, q, cb) {
       let r = db.collection(name);
@@ -722,6 +732,7 @@ function localBackend() {
     kind: ls ? 'local' : 'memory',
     async set(p, data) { const s = JSON.stringify(data); if (ls) ls.setItem('sklad/' + p, s); else mem.set(p, s); },
     async del(p) { if (ls) ls.removeItem('sklad/' + p); else mem.delete(p); },
+    async get(p) { return read(p); },
     watchColl(name, cb) { const load = () => cb(list(name), false); setTimeout(load, 0); onStore(name + '/', load); },
     watchQuery(name, q, cb) {
       const load = () => {
@@ -844,7 +855,45 @@ async function flushDoc(path) {
 }
 const docPending = p => { const st = docSt[p]; return !!(st && (st.dirty || st.busy)); };
 const saveMeta = p => saveDoc(p, META[p]);
-function log(x) { LOG.unshift({t: Date.now(), x}); if (LOG.length > 300) LOG.length = 300; saveMeta('meta/log'); }
+function log(x) { LOG.unshift({t: Date.now(), x}); if (LOG.length > 300) LOG.length = 300; saveMeta('meta/log'); diag('op', x); }
+
+/* ---------- service log for Claude: errors, files, operations, speed, device ----------
+   One document per device and day: diag/d20260925-<device>. It never disturbs work: every failure here is swallowed. */
+const DIAG = {buf: [], events: [], id: '', timer: 0, busy: false, last: {}};
+const ymd = () => { const d = new Date(); return `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}`; };
+function diag(type, text, data, throttleKey) {
+  try {
+    if (throttleKey) { const now = Date.now(); if (DIAG.last[throttleKey] && now - DIAG.last[throttleKey] < 60000) return; DIAG.last[throttleKey] = now; }
+    const e = [Date.now(), type, String(text ?? '').slice(0, 300)];
+    if (data !== undefined) { let j = JSON.stringify(data); if (j && j.length > 2000) j = j.slice(0, 2000) + '…'; e.push(j); }
+    DIAG.buf.push(e);
+    if (DIAG.buf.length > 400) DIAG.buf.splice(0, DIAG.buf.length - 400);
+    clearTimeout(DIAG.timer); DIAG.timer = setTimeout(flushDiag, type === 'error' ? 1500 : 6000);
+  } catch {}
+}
+async function flushDiag() {
+  if (DIAG.busy || !Backend || !allReady()) { if (DIAG.buf.length) { clearTimeout(DIAG.timer); DIAG.timer = setTimeout(flushDiag, 4000); } return; }
+  if (!DIAG.buf.length) return;
+  DIAG.busy = true;
+  const id = `d${ymd()}-${DEV}`, add = DIAG.buf.splice(0);
+  try {
+    if (DIAG.id !== id) { const old = await Backend.get('diag/' + id).catch(() => null); DIAG.events = old && Array.isArray(old.events) ? old.events : []; DIAG.id = id; }
+    DIAG.events.push(...add);
+    while (DIAG.events.length > 1 && (DIAG.events.length > 900 || JSON.stringify(DIAG.events).length > 110000)) DIAG.events.splice(0, Math.max(1, Math.ceil(DIAG.events.length / 10)));
+    await Backend.set('diag/' + id, {dev: DEV, ver: APP_VERSION, ua: navigator.userAgent.slice(0, 200), at: Date.now(), events: DIAG.events});
+  } catch { DIAG.buf.unshift(...add.slice(-200)); clearTimeout(DIAG.timer); DIAG.timer = setTimeout(flushDiag, 30000); }
+  finally { DIAG.busy = false; }
+}
+addEventListener('error', e => diag('error', e.message || 'error', {at: `${String(e.filename || '').split('/').pop()}:${e.lineno}:${e.colno}`, stack: String((e.error && e.error.stack) || '').slice(0, 900)}));
+addEventListener('unhandledrejection', e => { const r = e.reason; diag('error', 'promise: ' + String((r && (r.message || r.code)) || r).slice(0, 200), {stack: String((r && r.stack) || '').slice(0, 900)}); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushDiag(); });
+function checkData() {
+  let neg = 0, over = 0, orphan = 0;
+  for (const it of stock.items.values()) if (it.q < 0) neg++;
+  const goIds = new Set([...PUR.values()].filter(x => x.st === 'go').map(x => x.id));
+  for (const ln of lines.items.values()) { if (ln.got > ln.q) over++; for (const id of Object.keys(ln.w)) if (!goIds.has(id)) orphan++; }
+  return {neg, over, orphan};
+}
 
 // purchases: one document each
 const purToDoc = p => ({id: p.id, at: p.at, pav: p.pav, st: p.st, lines: p.lines.map(l => [l.a, l.n, l.q, l.need, l.c]), extra: p.extra.map(e => [e.a, e.q, e.to]), rep: p.rep || null, doneAt: p.doneAt || 0});
@@ -866,6 +915,7 @@ function syncFail(e) {
   const why = c === 'quota_exceeded' ? 'закончилось место' : c === 'invalid_argument' ? 'нет прав на запись или слишком большой список'
     : (c === 'revoked' || c === 'not_granted') ? 'нет доступа' : (e && e.name === 'QuotaExceededError') ? 'память браузера заполнена' : 'нет связи, повторю попытку';
   setSync('err', 'Не сохранено: ' + why);
+  diag('save-fail', why, {code: c || (e && e.name) || '', msg: String((e && e.message) || '').slice(0, 200)}, 'savefail');
 }
 
 function setPhoto(mk, url) {
@@ -926,7 +976,16 @@ function subscribe() {
   });
   setTimeout(() => { for (const k in ready) ready[k] = true; checkReady(); }, 9000);
 }
-function checkReady() { if (allReady()) { document.body.classList.remove('loading'); syncDone(); render(); } }
+let started = false;
+function checkReady() {
+  if (!allReady()) return;
+  document.body.classList.remove('loading'); syncDone(); render();
+  if (started) return;
+  started = true;
+  const chk = checkData();
+  diag('start', `v${APP_VERSION} ${Backend.kind}`, {ua: navigator.userAgent.slice(0, 200), scr: [screen.width, screen.height, devicePixelRatio], vp: [innerWidth, innerHeight], loadMs: Math.round(performance.now() - T0), stock: stock.items.size, lines: lines.items.size, going: [...PUR.values()].filter(x => x.st === 'go').length, photos: PHOTO.size, check: chk});
+  if (chk.neg || chk.over || chk.orphan) diag('check', 'странные данные', chk);
+}
 function rekeyAll(save) {
   artCache.clear();
   maps.forEach(m => { m.rekey(); if (save) m.touchAll(); });
@@ -1135,10 +1194,11 @@ async function readPdf(buf, name, onPage) {
 // product photos: the picking list already has them, so they are cut out of the rendered pages
 let photoJob = Promise.resolve();
 function queuePhotos(files, linesByFile) {
-  photoJob = photoJob.then(() => extractPhotos(files, linesByFile)).catch(e => { console.warn('photos', e); $('#photoStatus').hidden = true; });
+  photoJob = photoJob.then(() => extractPhotos(files, linesByFile)).catch(e => { diag('error', 'photos: ' + String((e && e.message) || e).slice(0, 200), {stack: String((e && e.stack) || '').slice(0, 900)}); $('#photoStatus').hidden = true; });
 }
 async function extractPhotos(files, linesByFile) {
-  const el = $('#photoStatus');
+  const el = $('#photoStatus'), t0 = performance.now();
+  let wanted = 0, made = 0;
   for (let fi = 0; fi < files.length; fi++) {
     const f = files[fi];
     if (!f.pdf) continue;
@@ -1151,7 +1211,7 @@ async function extractPhotos(files, linesByFile) {
       (need.get(box.p) || need.set(box.p, []).get(box.p)).push({mk, box});
     }
     const pages = [...need.keys()].sort((a, b) => a - b);
-    let done = 0;
+    let done = 0; wanted += chosen.size;
     for (const p of pages) {
       el.hidden = false; el.textContent = `Собираю фото моделей из листа: ${fmt(done)} из ${fmt(chosen.size)}`;
       const page = await f.pdf.getPage(p);
@@ -1180,7 +1240,7 @@ async function extractPhotos(files, linesByFile) {
         const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(cw * r)); out.height = Math.max(1, Math.round(ch * r));
         out.getContext('2d').drawImage(cv, sx + x0, sy + y0, cw, ch, 0, 0, out.width, out.height);
         const url = out.toDataURL('image/jpeg', 0.72);
-        setPhoto(mk, url);
+        setPhoto(mk, url); made++;
         saveDoc('photo/' + photoDocId(mk), () => ({k: mk, img: url}), 60);
       }
       page.cleanup();
@@ -1189,6 +1249,7 @@ async function extractPhotos(files, linesByFile) {
     try { await f.pdf.destroy(); } catch {}
   }
   el.hidden = true;
+  diag('photos', `${made} из ${wanted}`, {ms: Math.round(performance.now() - t0), total: PHOTO.size});
 }
 async function readFiles(list) {
   const out = [];
@@ -1414,6 +1475,8 @@ function applyImport() {
   if (!s.lines.length) return;
   const src = IMP.files.map(f => f.name).join(', ');
   const t = IMP.target, mode = IMP.mode;
+  const hdr = IMP.m.header >= 0 ? (curRows()[IMP.m.header] || []).slice(0, 12).map(v => String(v).slice(0, 30)) : null;
+  diag('import', `${t} ${src}`.slice(0, 200), {mode, m: IMP.m, hdr, lines: s.lines.length, uniq: s.uniq, sum: s.sum, noArt: s.noArt, badQty: s.badQty, sci: s.sci, mismatch: s.mismatch});
   if (t === 'receipt') {
     for (const l of s.lines) draft.put({a: l.a, q: l.q, n: l.n, t: tick()});
     toast(`В список пересчёта добавлено: ${cnt(s.uniq, W.art)}, ${fmt(s.sum)} шт.`);
@@ -1458,9 +1521,10 @@ async function saveTable(base, sheets) {
   }
   const name = `${safeName(base)}.${ext}`;
   if (DL) {
-    try { await DL.save({filename: name, data}); toast('Файл сохранён: ' + name); }
+    try { await DL.save({filename: name, data}); toast('Файл сохранён: ' + name); diag('export', name, 'saved'); }
     catch (e) {
       const c = e && e.code;
+      diag('export', name, {code: c || '', msg: String((e && e.message) || '').slice(0, 200)});
       if (c === 'declined') return;
       toast(c === 'rate_limited' ? 'Подождите пару секунд и нажмите ещё раз' : 'Не получилось сохранить файл. Нажмите «Копировать» и вставьте список в Excel.');
     }
@@ -1469,6 +1533,7 @@ async function saveTable(base, sheets) {
   const url = URL.createObjectURL(new Blob([data], {type: ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8'}));
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+  diag('export', name, inViewer ? 'link-in-viewer' : 'link');
   if (inViewer) toast('Если файл не скачался, нажмите «Копировать» и вставьте список в Excel.');
 }
 function exportStock() {
@@ -1477,8 +1542,8 @@ function exportStock() {
   saveTable(`Остатки ${today()}`, [{name: 'Остатки', cols: [20, 50, 12], rows: [['Артикул', 'Наименование', 'Остаток, шт.'], ...items.map(it => [it.a, it.n, it.q])]}]);
 }
 async function copyText(text, ok) {
-  try { await navigator.clipboard.writeText(text); toast(ok); }
-  catch { $('#cpyText').value = text; showModal('#cpy'); const ta = $('#cpyText'); ta.focus(); ta.select(); }
+  try { await navigator.clipboard.writeText(text); toast(ok); diag('copy', 'ok', text.length); }
+  catch { diag('copy', 'fallback', text.length); $('#cpyText').value = text; showModal('#cpy'); const ta = $('#cpyText'); ta.focus(); ta.select(); }
 }
 /* ---------- the day: orders, stock, purchases ---------- */
 function stockAdd(a, q, n) {
@@ -1593,6 +1658,7 @@ function loadList(inLines, info) {
   saveDoc('hist/' + hid, () => hist, 50);
   const old = [...lines.items.values()].filter(ln => ln.d < day && ln.got < ln.q).length;
   log(`Лист подбора ${DAYM.date}: ${cnt(ships || inLines.length, ships ? W.ship : W.row)}, новых строк ${fmt(added)}${dup ? `, уже были ${fmt(dup)}` : ''}${old ? `; с прошлых дней ждут ${fmt(old)}` : ''}`);
+  diag('list', DAYM.date, {added, dup, ships, expected: info.expected || 0, old, total: lines.items.size, stock: stock.items.size});
   toast(`Лист загружен: ${cnt(added, W.row)}${dup ? `, ${fmt(dup)} уже были в программе` : ''}`);
 }
 
@@ -1635,6 +1701,7 @@ function commit() {
   const forOrders = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.need, 0), 0);
   if (taken) log(`Списано со склада под отправления: ${fmt(taken)} шт., ${cnt(takenShips.size, W.ship)}`);
   if (made.length) log(`Закупка у поставщиков: ${fmt(ordered)} шт. ${inPav(made.length)} (${made.map(x => x.pav || 'без павильона').join(', ')}); под заказы ${fmt(forOrders)}, на склад ${fmt(round(ordered - forOrders))}`);
+  diag('commit', '', {taken, ships: takenShips.size, pur: made.map(x => [x.pav, round(x.lines.reduce((a, l) => a + l.q, 0)), round(x.lines.reduce((a, l) => a + l.need, 0)), x.lines.length])});
   toast(made.length ? `Закупка оформлена: ${fmt(ordered)} шт.${taken ? `, со склада списано ${fmt(taken)} шт.` : ''}` : `Со склада списано ${fmt(taken)} шт.`);
 }
 
@@ -1679,6 +1746,7 @@ function receive(pur) {
   pur.st = 'done'; pur.doneAt = now; pur.rep = rep; savePur(pur.id, 50);
   const miss = round(rep.ord - rep.got);
   log(`Приёмка ${pur.pav || 'без павильона'} от ${dm(pur.at)}: заказано ${fmt(rep.ord)}, пришло ${fmt(rep.got)}${pur.extra.length ? `, не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}; в отправления ${fmt(rep.toOrd)}, на склад ${fmt(rep.toStock)}${rep.unc.length ? `; снова не хватает: ${cnt(rep.unc.length, W.ship)}` : ''}`);
+  diag('receive', pur.pav, {id: pur.id, ord: rep.ord, got: rep.got, toOrd: rep.toOrd, toStock: rep.toStock, unc: rep.unc.length, extra: pur.extra.length, lines: pur.lines.length});
   toast(miss > 0 ? `Приёмка проведена. Не доложили ${fmt(miss)} шт.` : 'Приёмка проведена');
 }
 function cancelPurchase(id) {
@@ -1723,6 +1791,12 @@ function aliasNote(mine, theirs) {
 const going = () => [...PUR.values()].filter(p => p.st === 'go').sort((a, b) => b.at - a.at);
 
 function renderAll() {
+  const t0 = performance.now();
+  renderAllInner();
+  const ms = Math.round(performance.now() - t0);
+  if (ms > 250) diag('slow', 'render', {ms, tab: ui.tab, lines: lines.items.size, stock: stock.items.size}, 'slow');
+}
+function renderAllInner() {
   const p = plan();
   let qty = 0; for (const it of stock.items.values()) if (it.q > 0) qty += it.q;
   let goQ = 0; const go = going(); for (const x of go) for (const l of x.lines) goQ += l.q;
@@ -1921,7 +1995,12 @@ function renderSettings() {
     memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
   };
   $('#storeNote').textContent = Backend ? note[Backend.kind] : 'Подключение к хранилищу…';
-  renderTester();
+  renderTester(); renderDiag();
+}
+const diagAll = () => [...DIAG.events, ...DIAG.buf];
+function renderDiag() {
+  const ev = diagAll().slice(-40).reverse();
+  $('#diagList').innerHTML = ev.map(e => `<li><time>${when(e[0])}</time><span><b>${esc(e[1])}</b> ${esc(e[2])}</span></li>`).join('') || '<li><time>—</time><span class="hint" style="margin:0">Записей пока нет.</span></li>';
 }
 function renderTester() {
   const v = $('#testIn').value, k = normKey(v), pa = parseArt(v);
@@ -1932,6 +2011,7 @@ function renderTester() {
 }
 
 function setTab(t) {
+  if (ui.tab !== t) diag('tab', t);
   ui.tab = t;
   $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   $$('.pane').forEach(p => p.hidden = p.id !== 'pane-' + t);
@@ -2191,6 +2271,7 @@ $('#stClear').addEventListener('click', () => {
 $('#optPav').addEventListener('change', e => { S = {...S, pav: e.target.checked}; artCache.clear(); saveMeta('meta/settings'); renderTester(); render(); });
 $('#optSupplier').addEventListener('change', e => { const v = e.target.value.trim(); S = {...S, supplier: v || DEF.supplier}; e.target.value = S.supplier; saveMeta('meta/settings'); render(); });
 $('#testIn').addEventListener('input', renderTester);
+$('#diagCopy').addEventListener('click', () => copyText(`Склад v${APP_VERSION}, устройство ${DEV}\n` + diagAll().map(e => `${when(e[0])} ${e[1]} ${e[2]}${e[3] ? ' ' + e[3] : ''}`).join('\n'), 'Служебный журнал скопирован'));
 
 // import
 let fileTarget = 'orders';
@@ -2199,12 +2280,15 @@ $$('[data-paste]').forEach(b => b.addEventListener('click', () => openPaste(b.da
 $('#fileIn').addEventListener('change', () => { const fl = [...$('#fileIn').files]; if (fl.length) loadFiles(fileTarget, fl); });
 async function loadFiles(target, list) {
   toast('Читаю файл…', 8000);
+  const t0 = performance.now(), names = list.map(f => f.name).join(', ').slice(0, 200);
   try {
-    const files = (await readFiles(list)).filter(f => f.sheets.some(s => s.rows.length));
+    const all = await readFiles(list);
+    diag('file', names, {target, ms: Math.round(performance.now() - t0), size: list.map(f => f.size), files: all.map(f => ({sheets: f.sheets.map(x => x.rows.length), pdf: f.info ? {expected: f.info.expected, ships: f.info.ships, pages: f.info.pages.length, empty: f.info.pages.filter(x => !x.anchors).length} : undefined}))});
+    const files = all.filter(f => f.sheets.some(s => s.rows.length));
     $('#toast').hidden = true;
     if (!files.length) { toast('В файле не нашлось данных'); return; }
     openImport(target, files);
-  } catch (e) { toast((e && e.message) || 'Не получилось прочитать файл', 7000); }
+  } catch (e) { diag('file-error', String((e && e.message) || e).slice(0, 300), {target, names, ms: Math.round(performance.now() - t0), stack: String((e && e.stack) || '').slice(0, 600)}); toast((e && e.message) || 'Не получилось прочитать файл', 7000); }
 }
 $('#impText').addEventListener('input', debounce(() => { const t = $('#impText').value; if (t.trim()) fromText(t, IMP.target); }, 300));
 $('#impSheet').addEventListener('change', e => { IMP.sheet = +e.target.value; IMP.m = detect(curRows()); renderImport(); });
