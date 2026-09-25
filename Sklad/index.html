@@ -296,6 +296,14 @@ a.btn{text-decoration:none}
 .suptab th{font:600 11px/1.2 var(--f-ui);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:4px 8px 6px 0}
 .suptab .in{padding:8px 10px;font-size:15px}
 .suptab{width:100%;border-collapse:collapse}
+.anparams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:760px}
+@media (max-width:640px){.anparams{grid-template-columns:1fr 1fr}}
+.arow{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.arow:last-child{border-bottom:0}
+.arow .tot{font:700 16px var(--f-mono);text-align:right;white-space:nowrap}
+.arow .tot small{display:block;font:500 12px var(--f-ui);color:var(--muted)}
+.why{font-size:13px;color:var(--muted);margin-top:4px}
+.why b{color:var(--ink);font-weight:600}
 .pavtag{font:700 11px/1 var(--f-mono);padding:4px 6px;border-radius:4px;background:var(--hazard);color:var(--accent)}
 </style>
 </head>
@@ -318,6 +326,7 @@ a.btn{text-decoration:none}
     <button class="tab" role="tab" id="t-buy" data-tab="buy" aria-selected="false">Закупка <span class="badge" id="bBuy" hidden></span></button>
     <button class="tab" role="tab" id="t-recv" data-tab="recv" aria-selected="false">Приёмка <span class="badge" id="bRecv" hidden></span></button>
     <button class="tab" role="tab" id="t-stock" data-tab="stock" aria-selected="false">Склад</button>
+    <button class="tab" role="tab" id="t-an" data-tab="an" aria-selected="false">Анализ</button>
     <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false">Настройки</button>
   </nav>
 
@@ -466,7 +475,7 @@ a.btn{text-decoration:none}
           </table>
         </div>
         <button class="btn ghost more" id="stMore" type="button" hidden>Показать ещё</button>
-        <p class="hint small">Жёлтый размер лежит без продаж 14 дней и дольше, красный — 30 дней и дольше.</p>
+        <p class="hint small" id="stLegend"></p>
         <div class="row mt">
           <button class="btn" type="button" data-import="stock">Загрузить остатки из файла</button>
           <button class="btn" type="button" data-paste="stock">Вставить из Excel</button>
@@ -520,10 +529,61 @@ a.btn{text-decoration:none}
       </div>
     </section>
 
+    <!-- АНАЛИЗ -->
+    <section class="pane stack" id="pane-an" role="tabpanel" aria-labelledby="t-an" hidden>
+      <div class="card">
+        <div class="lhead"><h2>Анализ продаж</h2><span class="sum" id="anCover"></span></div>
+        <p class="hint">Продажи считаются по загруженным листам подбора и по выгрузке заказов из Озона. Отсюда подсказки: что закупить впрок, что залежалось, где поменять цену.</p>
+        <form class="anparams mt" id="anForm" autocomplete="off">
+          <label class="fld">Закупать впрок на, дней<input class="in" id="anDays" inputmode="numeric"></label>
+          <label class="fld">Мешок едет, дней<input class="in" id="anLead" inputmode="numeric"></label>
+          <label class="fld">Считать продажи за, дней<input class="in" id="anWin" inputmode="numeric"></label>
+          <label class="fld">Залежалось после, дней<input class="in" id="anDead" inputmode="numeric"></label>
+        </form>
+        <div class="row mt">
+          <button class="btn" type="button" data-import="history">Загрузить историю продаж из Озона</button>
+          <button class="btn ghost" type="button" id="anReload">Пересчитать</button>
+        </div>
+      </div>
+      <div class="card" id="anEmpty" hidden>
+        <h3>Пока нет истории продаж</h3>
+        <p class="hint">Её можно набрать двумя способами: каждый день загружать лист подбора на вкладке «День» (история копится сама) или сразу загрузить выгрузку заказов из кабинета Озона за 1–3 месяца кнопкой выше. Нужны колонки с датой заказа, артикулом и количеством; колонка статуса поможет не считать отменённые заказы.</p>
+      </div>
+      <div class="tiles four" id="anTiles">
+        <div class="tile"><span class="k">Продаётся в день</span><span class="v" id="aSale">0</span><span class="s" id="aSaleS"></span></div>
+        <div class="tile"><span class="k">На складе</span><span class="v" id="aStock">0</span><span class="s" id="aStockS"></span></div>
+        <div class="tile"><span class="k">Залежалось</span><span class="v" id="aDead">0</span><span class="s" id="aDeadS"></span></div>
+        <div class="tile hot"><span class="k">Закупить впрок</span><span class="v" id="aBuy">0</span><span class="s" id="aBuyS"></span></div>
+      </div>
+      <div class="card">
+        <div class="lhead"><h3>Закупить впрок</h3><span class="sum" id="anBuySum"></span><button class="btn primary" type="button" id="anBuyAll">Добавить всё в закупку</button></div>
+        <p class="hint small" style="margin:0 0 10px">Сколько взять сверх сегодняшних заказов, чтобы товар был на складе на выбранное число дней и заказы собирались день в день. Считается по продажам в день минус то, что уже лежит и едет.</p>
+        <div id="anBuy"></div>
+      </div>
+      <div class="card">
+        <div class="lhead"><h3>Залежалось — стоит снизить цену</h3><span class="sum" id="anDeadSum"></span></div>
+        <div id="anDeadList"></div>
+      </div>
+      <div class="card">
+        <div class="lhead"><h3>Продаётся хорошо, а на складе нет — можно поднять цену</h3></div>
+        <div id="anHot"></div>
+      </div>
+      <div class="card">
+        <h3>Размеры на складе</h3>
+        <p class="hint small" style="margin:6px 0 10px">На сколько дней хватит каждого размера при нынешних продажах. Так видно перекос: например, 40-го лежит на полгода, а 44-го на день.</p>
+        <div class="tw"><table class="t"><thead><tr><th>Размер</th><th class="num">На складе</th><th class="num">Продаётся в день</th><th class="num">Хватит на</th><th></th></tr></thead><tbody id="anSizes"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>Поставщики: насколько точно привозят</h3>
+        <div class="tw mt"><table class="t"><thead><tr><th>Павильон</th><th class="num">Приёмок</th><th class="num">Заказано</th><th class="num">Пришло</th><th class="num">Не доложили</th><th class="num">Лишнее и чужое</th></tr></thead><tbody id="anSup"></tbody></table></div>
+      </div>
+    </section>
+
     <!-- НАСТРОЙКИ -->
     <section class="pane stack" id="pane-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
       <div class="card">
         <h2>Как читать артикул</h2>
+        <label class="opt"><input type="checkbox" id="optPrice"><div><b>Число в артикуле — закупочная цена</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> цена — <code class="k">1900</code>. По ней программа считает, сколько денег нужно на закупку, сколько стоит склад и сколько денег лежит в залежавшемся товаре. Если число означает что-то другое, выключите.</span></div></label>
         <label class="opt"><input type="checkbox" id="optPav"><div><b>Первая часть артикула — павильон</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> павильон — <code class="k">A04</code>. По нему закупка делится на части. Последняя часть, если это размер (<code class="k">42</code>, <code class="k">3XL</code>), всегда считается размером.</span></div></label>
       </div>
       <div class="card">
@@ -566,8 +626,11 @@ a.btn{text-decoration:none}
         <p class="hint" id="storeNote"></p>
         <div class="row mt">
           <button class="btn" type="button" data-export-stock>Скачать остатки (Excel)</button>
+          <button class="btn" type="button" id="bkSave">Скачать резервную копию</button>
+          <button class="btn" type="button" id="bkLoad">Восстановить из копии</button>
           <button class="btn danger" type="button" id="stClear">Очистить склад</button>
         </div>
+        <input type="file" id="bkFile" accept=".json,application/json" hidden>
         <div class="confirm" id="setConfirm" hidden></div>
       </div>
     </section>
@@ -594,6 +657,8 @@ a.btn{text-decoration:none}
           <label class="fld">Колонка «Количество»<select class="in" id="impQty"></select></label>
           <label class="fld">Колонка «Наименование»<select class="in" id="impName"></select></label>
           <label class="fld" id="impShipF">Колонка «Номер отправления»<select class="in" id="impShip"></select></label>
+          <label class="fld" id="impDateF">Колонка «Дата заказа»<select class="in" id="impDate"></select></label>
+          <label class="fld" id="impStatF">Колонка «Статус»<select class="in" id="impStat"></select></label>
         </div>
         <p class="hint small" style="margin:0">Ниже первые строки файла — только чтобы проверить, правильно ли найдены колонки. Загрузятся все строки.</p>
         <div class="tw prev"><table class="t" id="impPrev"></table></div>
@@ -652,12 +717,13 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch { return null
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-25.4';
+const APP_VERSION = '2026-09-25.5';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
 /* ---------- article normalisation ---------- */
-const DEF = {latin: true, zeros: true, punct: true, pav: true, supplier: 'ТЦ Москва'};
+const DEF = {latin: true, zeros: true, punct: true, pav: true, price: true, supplier: 'ТЦ Москва', anDays: 3, anLead: 1, anWin: 14, deadDays: 30};
+const NUMS = {anDays: [1, 30], anLead: [0, 14], anWin: [3, 90], deadDays: [7, 180]};
 let S = {...DEF};
 const CYR = {'А':'A','В':'B','Е':'E','Ё':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','У':'Y','Х':'X'};
 const latinUp = s => String(s ?? '').toUpperCase().replace(/[АВЕЁКМНОРСТУХ]/g, c => CYR[c]);
@@ -698,7 +764,9 @@ function parseArt(a) {
   if (parts.length > 1 && SIZE_RX.test(latinUp(parts[parts.length - 1]).replace(/\s+/g, ''))) { size = parts.pop().trim(); model = parts.join('-'); }
   const pn = pavParts(parts);
   const pav = pn ? latinUp(parts.slice(0, pn).join('-')).replace(/\s+/g, '') : '';
-  r = {model, size, pav, mkey: normKey(model)};
+  let price = 0;
+  for (const seg of parts.slice(pn)) { const t = seg.trim(); if (/^\d{3,5}$/.test(t) && +t >= 300 && +t <= 50000) price = +t; }
+  r = {model, size, pav, price, mkey: normKey(model)};
   if (artCache.size > 20000) artCache.clear();
   artCache.set(ck, r);
   return r;
@@ -713,10 +781,12 @@ const SZR = {XXS: 0, XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, '2XL': 6, XXXL: 7, 
 function sizeRank(sz) { const u = latinUp(sz).replace(/\s+/g, ''); if (u in SZR) return SZR[u]; const n = parseFloat(u); return isFinite(n) ? 100 + n : 1000; }
 const bySize = (a, b) => (sizeRank(a) - sizeRank(b)) || coll.compare(a, b);
 const pavLabel = p => p ? `Павильон ${p}` : 'Без павильона';
+const priceOf = a => S.price ? parseArt(a).price : 0;
+const rub = n => `${nf.format(Math.round(n))} ₽`;
 
 /* ---------- storage ---------- */
 let Backend = null, DL = null;
-const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false, sup: false};
+const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false, sup: false, supst: false};
 const allReady = () => Object.values(ready).every(Boolean);
 
 function dbBackend(db) {
@@ -737,6 +807,13 @@ function dbBackend(db) {
       r.onSnapshot(s => cb(docs(s), s.metadata.fromCache), fail);
     },
     watchDoc(p, cb) { db.doc(p).onSnapshot(d => cb(d.exists ? d.data() : null), fail); },
+    async query(name, q) {
+      let r = db.collection(name);
+      for (const w of q.where ? (Array.isArray(q.where[0]) ? q.where : [q.where]) : []) r = r.where(...w);
+      if (q.order) r = r.orderBy(...q.order);
+      if (q.limit) r = r.limit(q.limit);
+      return docs(await retry(() => r.get()));
+    },
   };
 }
 function localBackend() {
@@ -768,6 +845,13 @@ function localBackend() {
       setTimeout(load, 0); onStore(name + '/', load);
     },
     watchDoc(p, cb) { setTimeout(() => cb(read(p)), 0); onStore(p, () => cb(read(p))); },
+    async query(name, q) {
+      const ops = {'==': (a, b) => a === b, '>=': (a, b) => a >= b, '<=': (a, b) => a <= b, '<': (a, b) => a < b, '>': (a, b) => a > b};
+      let d = list(name);
+      for (const [f, op, v] of q.where ? (Array.isArray(q.where[0]) ? q.where : [q.where]) : []) d = d.filter(x => ops[op](x.data[f], v));
+      if (q.order) { const [f, dir] = q.order; d.sort((a, b) => ((a.data[f] > b.data[f]) - (a.data[f] < b.data[f])) * (dir === 'desc' ? -1 : 1)); }
+      return q.limit ? d.slice(0, q.limit) : d;
+    },
   };
 }
 
@@ -856,6 +940,7 @@ let LOG = [], DAYM = {date: '', file: '', at: 0, expected: 0, ships: 0}, RET = [
 let PO = new Map();               // order draft: article key → {a, n, q (null = as needed), add}
 let SENT = new Map();             // pavilion → when its order was sent to the supplier
 const SUP = new Map();            // pavilion → {name, phone}
+const SUPSTAT = new Map();        // pavilion → {n receipts, ord, got, short, extra, last}
 const PUR = new Map();            // purchases by id
 const PHOTO = new Map();          // model key → data URL
 const photoUrl = new Map();       // model key → blob URL for <img>
@@ -865,6 +950,7 @@ const META = {
   'meta/day': () => DAYM,
   'meta/po': () => ({items: [...PO.values()].map(e => [e.a, e.n, e.q, !!e.add]), sent: [...SENT]}),
   'meta/suppliers': () => ({items: [...SUP].map(([pav, x]) => [pav, x.name, x.phone])}),
+  'meta/supstats': () => ({items: [...SUPSTAT].map(([pav, x]) => [pav, x.n, x.ord, x.got, x.short, x.extra, x.last])}),
   'meta/returns': () => ({items: RET.map(r => [r.a, r.q, r.pav, r.at])}),
 };
 const docSt = {};
@@ -913,6 +999,19 @@ async function flushDiag() {
 addEventListener('error', e => diag('error', e.message || 'error', {at: `${String(e.filename || '').split('/').pop()}:${e.lineno}:${e.colno}`, stack: String((e.error && e.error.stack) || '').slice(0, 900)}));
 addEventListener('unhandledrejection', e => { const r = e.reason; diag('error', 'promise: ' + String((r && (r.message || r.code)) || r).slice(0, 200), {stack: String((r && r.stack) || '').slice(0, 900)}); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushDiag(); });
+async function cleanup() {
+  if (!Backend || Backend.kind === 'memory') return;
+  let n = 0;
+  try {
+    const old = await Backend.query('purch', {where: ['st', '==', 'done'], order: ['doneAt', 'asc'], limit: 40});
+    for (const d of old) if ((Number(d.data.doneAt) || 0) < Date.now() - 90 * DAYMS) { await Backend.del('purch/' + d.id); PUR.delete(d.id); n++; }
+    const od = await Backend.query('diag', {where: ['at', '<', Date.now() - 45 * DAYMS], limit: 40});
+    for (const d of od) { await Backend.del('diag/' + d.id); n++; }
+    const oh = await Backend.query('hist', {where: ['at', '<', Date.now() - 400 * DAYMS], limit: 40});
+    for (const d of oh) { await Backend.del('hist/' + d.id); n++; }
+    if (n) diag('cleanup', `удалено старых записей: ${n}`);
+  } catch (e) { diag('error', 'cleanup: ' + String((e && (e.message || e.code)) || e).slice(0, 200)); }
+}
 function checkData() {
   let neg = 0, over = 0, orphan = 0;
   for (const it of stock.items.values()) if (it.q < 0) neg++;
@@ -979,7 +1078,8 @@ function subscribe() {
     first('settings');
     if (!d || docPending('meta/settings')) return;
     const ns = {...DEF};
-    for (const k of ['latin', 'zeros', 'punct', 'pav']) if (typeof d[k] === 'boolean') ns[k] = d[k];
+    for (const k of ['latin', 'zeros', 'punct', 'pav', 'price']) if (typeof d[k] === 'boolean') ns[k] = d[k];
+    for (const [k, [lo, hi]] of Object.entries(NUMS)) if (Number.isFinite(+d[k])) ns[k] = Math.min(hi, Math.max(lo, Math.round(+d[k])));
     if (typeof d.supplier === 'string' && d.supplier.trim()) ns.supplier = d.supplier;
     const rekey = ns.latin !== S.latin || ns.zeros !== S.zeros || ns.punct !== S.punct;
     S = ns; artCache.clear(); if (rekey) rekeyAll(false);
@@ -993,6 +1093,13 @@ function subscribe() {
     PO = new Map();
     for (const r of Array.isArray(d.items) ? d.items : []) { const a = String(r[0] ?? ''), k = normKey(a); if (k) PO.set(k, {a, n: r[1] ? String(r[1]) : '', q: r[2] == null ? null : Number(r[2]) || 0, add: !!r[3]}); }
     SENT = new Map((Array.isArray(d.sent) ? d.sent : []).filter(x => Array.isArray(x)).map(x => [String(x[0] ?? ''), Number(x[1]) || 0]));
+    render();
+  });
+  Backend.watchDoc('meta/supstats', d => {
+    first('supst');
+    if (!d || docPending('meta/supstats')) return;
+    SUPSTAT.clear();
+    for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) SUPSTAT.set(String(r[0] ?? ''), {n: +r[1] || 0, ord: +r[2] || 0, got: +r[3] || 0, short: +r[4] || 0, extra: +r[5] || 0, last: +r[6] || 0});
     render();
   });
   Backend.watchDoc('meta/suppliers', d => {
@@ -1019,6 +1126,8 @@ function checkReady() {
   const chk = checkData();
   diag('start', `v${APP_VERSION} ${Backend.kind}`, {ua: navigator.userAgent.slice(0, 200), scr: [screen.width, screen.height, devicePixelRatio], vp: [innerWidth, innerHeight], loadMs: Math.round(performance.now() - T0), stock: stock.items.size, lines: lines.items.size, going: [...PUR.values()].filter(x => x.st === 'go').length, photos: PHOTO.size, check: chk});
   if (chk.neg || chk.over || chk.orphan) diag('check', 'странные данные', chk);
+  if (ui.tab === 'an') loadHist();
+  setTimeout(cleanup, 8000);
 }
 function rekeyAll(save) {
   artCache.clear();
@@ -1312,6 +1421,9 @@ const RX = {
   qty2: /остат|в наличии|наличие|^факт|^заказ(ано)?$|^итого\s*шт/i,
   name: /наименован|назван|номенклатур|^товар$|описан|^name$|product/i,
   ship: /номер\s*отправлен|отправлени|posting|номер\s*заказа|^заказ\s*№|№\s*заказа/i,
+  date1: /принят\s*в\s*обработку|дата\s*заказа|дата\s*создания|created|order\s*date/i,
+  date2: /дата|date/i,
+  status: /^статус|status/i,
 };
 const artRx = [RX.art1, RX.art2, RX.art3, RX.art4];
 function detect(rows) {
@@ -1320,7 +1432,7 @@ function detect(rows) {
   let header = -1;
   for (let r = 0; r < lim && header < 0; r++) if (has(r, artRx)) header = r;
   for (let r = 0; r < lim && header < 0; r++) if (has(r, [RX.qty1])) header = r;
-  const m = {header, art: -1, qty: -1, name: -1, ship: -1};
+  const m = {header, art: -1, qty: -1, name: -1, ship: -1, date: -1, status: -1};
   if (header >= 0) {
     const h = (rows[header] || []).map(v => String(v || ''));
     const find = (rx, not = []) => h.findIndex((v, i) => !not.includes(i) && v.length < 80 && rx.test(v));
@@ -1328,6 +1440,8 @@ function detect(rows) {
     for (const rx of [RX.qty1, RX.qty2]) { const i = find(rx, [m.art]); if (i >= 0) { m.qty = i; break; } }
     m.name = find(RX.name, [m.art, m.qty]);
     m.ship = find(RX.ship, [m.art, m.qty, m.name]);
+    m.date = find(RX.date1, [m.art, m.qty, m.name]); if (m.date < 0) m.date = find(RX.date2, [m.art, m.qty, m.name]);
+    m.status = find(RX.status, [m.art, m.qty, m.name, m.date]);
   }
   if (header < 0 || m.art < 0) guess(rows, m);
   if (m.art < 0) m.art = 0;
@@ -1366,14 +1480,18 @@ function extract(rows, m) {
     if (/^\d([.,]\d+)?e\+?\d+$/i.test(a)) res.sci++;
     const n = m.name >= 0 ? trunc(String(row[m.name] ?? '').trim(), 160) : '';
     const s = m.ship >= 0 ? String(row[m.ship] ?? '').trim() : '';
-    res.lines.push({a, q, n, s, r});
+    const line = {a, q, n, s, r};
+    if (m.date >= 0) line.dt = parseDay(row[m.date]);
+    if (m.status >= 0) line.st = String(row[m.status] ?? '').trim();
+    res.lines.push(line);
   }
   return res;
 }
 
 /* ---------- import dialog ---------- */
 const IMP = {target: 'orders', files: [], sheet: 0, m: null, mode: 'add'};
-const TITLES = {orders: 'Загрузка листа подбора', receipt: 'Загрузка в список пересчёта', stock: 'Загрузка остатков склада'};
+const TITLES = {orders: 'Загрузка листа подбора', receipt: 'Загрузка в список пересчёта', stock: 'Загрузка остатков склада', history: 'Загрузка истории продаж'};
+const CANCEL_RX = /отмен|cancel/i;
 const MODES = {
   stock: [
     {v: 'add', b: 'Добавить к остаткам', s: 'Приход товара: количества прибавятся к тому, что уже есть на складе.'},
@@ -1458,10 +1576,14 @@ function renderImport() {
   $('#impName').innerHTML = `<option value="-1">Не загружать</option>` + opts; $('#impName').value = String(m.name);
   $('#impShipF').hidden = !isOrders;
   $('#impShip').innerHTML = `<option value="-1">Нет колонки</option>` + opts; $('#impShip').value = String(m.ship);
+  const isHist = IMP.target === 'history';
+  $('#impDateF').hidden = !isHist; $('#impStatF').hidden = !isHist;
+  $('#impDate').innerHTML = `<option value="-1">Нет колонки</option>` + opts; $('#impDate').value = String(m.date);
+  $('#impStat').innerHTML = `<option value="-1">Нет колонки</option>` + opts; $('#impStat').value = String(m.status);
 
   const data = [];
   for (let r = m.header + 1; r < rows.length && data.length < 7; r++) if ((rows[r] || []).some(v => v !== '')) data.push(r);
-  const role = c => c === m.art ? 'Артикул' : c === m.qty ? 'Кол-во' : c === m.name ? 'Наименование' : (isOrders && c === m.ship) ? 'Отправление' : '';
+  const role = c => c === m.art ? 'Артикул' : c === m.qty ? 'Кол-во' : c === m.name ? 'Наименование' : (isOrders && c === m.ship) ? 'Отправление' : (isHist && c === m.date) ? 'Дата' : (isHist && c === m.status) ? 'Статус' : '';
   $('#impPrev').innerHTML =
     `<thead><tr><th class="rn">#</th>${range(ncol).map(c => `<th>${role(c) ? `<em>${role(c)}</em>` : ''}${colName(c)}${hdr[c] ? ' · ' + esc(trunc(hdr[c], 28)) : ''}</th>`).join('')}</tr></thead>` +
     `<tbody>${data.map(r => `<tr><td class="rn">${r + 1}</td>${range(ncol).map(c => `<td${role(c) ? ' class="sel"' : ''}>${esc(trunc((rows[r] || [])[c] ?? '', 40))}</td>`).join('')}</tr>`).join('') || `<tr><td colspan="${ncol + 1}" class="empty">Под заголовком нет строк</td></tr>`}</tbody>`;
@@ -1489,6 +1611,13 @@ function renderImport() {
     if (known) h += `<div>${cnt(known, W.row)} уже есть в программе — они не задвоятся.</div>`;
     if (m.ship < 0) h += `<div class="warnline">Нет колонки с номером отправления: при повторной загрузке того же листа строки задвоятся.</div>`;
   }
+  if (isHist) {
+    const dated = s.lines.filter(l => l.dt), canc = dated.filter(l => l.st && CANCEL_RX.test(l.st)).length;
+    const days = [...new Set(dated.map(l => l.dt))].sort();
+    if (m.date < 0) h += `<div class="warnline">Выберите колонку с датой заказа — без неё продажи не разложить по дням.</div>`;
+    else h += `<div>Даты: <b>${days.length ? `${isoRu(days[0])} — ${isoRu(days[days.length - 1])}` : 'не распознаны'}</b>, ${cnt(days.length, W.day)}.${canc ? ` Отменённые заказы (${fmt(canc)}) не считаются.` : ''}${s.lines.length - dated.length ? ` Без даты: ${cnt(s.lines.length - dated.length, W.row)} — пропущены.` : ''}</div>`;
+    if (days.length) h += `<div class="hint" style="margin:0">Дни из этого файла заменят то, что уже сохранено за эти же дни.</div>`;
+  }
   if (s.noArt) h += `<div>Пропущено ${cnt(s.noArt, W.row)} без артикула.</div>`;
   if (s.badQty) h += `<div class="warnline">${cnt(s.badQty, W.row)} без числа в колонке «Количество» — они пропущены. Если в файле каждая строка — это 1 штука, выберите «Нет колонки — каждая строка = 1 шт.».</div>`;
   if (s.sci) h += `<div class="warnline">${cnt(s.sci, W.art)} выглядят как «4,6E+12»: Excel сократил длинные номера, и точные цифры потеряны. Возьмите исходный файл выгрузки или задайте колонке формат «Текстовый» до вставки данных.</div>`;
@@ -1501,8 +1630,8 @@ function renderImport() {
   $('#impModes').hidden = modes.length < 2;
   $('#impModes').innerHTML = modes.length < 2 ? '' : `<legend class="fld" style="margin-bottom:8px">Что сделать</legend>` + modes.map(x =>
     `<label class="mode"><input type="radio" name="impMode" value="${x.v}"${x.v === IMP.mode ? ' checked' : ''}><div><b>${x.b}</b><span>${x.s}</span></div></label>`).join('');
-  $('#impApply').textContent = isOrders ? 'Загрузить лист' : IMP.target === 'receipt' ? 'Добавить в список' : IMP.mode === 'replace' ? 'Заменить склад' : 'Добавить на склад';
-  $('#impApply').disabled = !s.lines.length;
+  $('#impApply').textContent = isHist ? 'Загрузить историю' : isOrders ? 'Загрузить лист' : IMP.target === 'receipt' ? 'Добавить в список' : IMP.mode === 'replace' ? 'Заменить склад' : 'Добавить на склад';
+  $('#impApply').disabled = isHist ? !s.lines.some(l => l.dt) : !s.lines.length;
 }
 function applyImport() {
   const s = extractAll();
@@ -1511,7 +1640,27 @@ function applyImport() {
   const t = IMP.target, mode = IMP.mode;
   const hdr = IMP.m.header >= 0 ? (curRows()[IMP.m.header] || []).slice(0, 12).map(v => String(v).slice(0, 30)) : null;
   diag('import', `${t} ${src}`.slice(0, 200), {mode, m: IMP.m, hdr, lines: s.lines.length, uniq: s.uniq, sum: s.sum, noArt: s.noArt, badQty: s.badQty, sci: s.sci, mismatch: s.mismatch});
-  if (t === 'receipt') {
+  if (t === 'history') {
+    const byDay = new Map();
+    let canc = 0;
+    for (const l of s.lines) {
+      if (!l.dt) continue;
+      if (l.st && CANCEL_RX.test(l.st)) { canc++; continue; }
+      const day = byDay.get(l.dt) || byDay.set(l.dt, new Map()).get(l.dt), k = normKey(l.a);
+      const e = day.get(k); if (e) e[1] = round(e[1] + l.q); else day.set(k, [l.a, l.q]);
+    }
+    const isos = [...byDay.keys()].sort();
+    isos.forEach((iso, i) => {
+      const day = byDay.get(iso), doc = {date: isoRu(iso), at: new Date(iso + 'T12:00:00').getTime(), src: 'ozon', file: src, items: [...day.values()]};
+      saveDoc('hist/d' + iso, () => doc, 80 + i * 150);
+      if (HIST) HIST.set(iso, new Map([...day].map(([k, v]) => [k, v])));
+    });
+    const tot = round(isos.reduce((a, iso) => a + [...byDay.get(iso).values()].reduce((b, v) => b + v[1], 0), 0));
+    log(`Загружена история продаж «${src}»: ${cnt(isos.length, W.day)}${isos.length ? ` (${isoRu(isos[0])} — ${isoRu(isos[isos.length - 1])})` : ''}, ${fmt(tot)} шт.${canc ? `, отменённых не считали: ${fmt(canc)}` : ''}`);
+    toast(`История загружена: ${cnt(isos.length, W.day)}, ${fmt(tot)} шт.`);
+    setTab('an');
+    if (HIST === null) setTimeout(loadHist, 80 + isos.length * 150 + 800);
+  } else if (t === 'receipt') {
     for (const l of s.lines) draft.put({a: l.a, q: l.q, n: l.n, t: tick()});
     toast(`В список пересчёта добавлено: ${cnt(s.uniq, W.art)}, ${fmt(s.sum)} шт.`);
   } else if (t === 'stock') {
@@ -1690,6 +1839,7 @@ function loadList(inLines, info) {
   const hid = yy ? `d${yy}-${mm}-${dd}` : 'd' + new Date().toISOString().slice(0, 10);
   const hist = {date: DAYM.date, file: info.file, at: day, ships, items: [...agg.values()]};
   saveDoc('hist/' + hid, () => hist, 50);
+  if (HIST) { const day = new Map(); for (const [a, q] of agg.values()) day.set(normKey(a), [a, q]); HIST.set(hid.slice(1), day); }
   const old = [...lines.items.values()].filter(ln => ln.d < day && ln.got < ln.q).length;
   log(`Лист подбора ${DAYM.date}: ${cnt(ships || inLines.length, ships ? W.ship : W.row)}, новых строк ${fmt(added)}${dup ? `, уже были ${fmt(dup)}` : ''}${old ? `; с прошлых дней ждут ${fmt(old)}` : ''}`);
   diag('list', DAYM.date, {added, dup, ships, expected: info.expected || 0, old, total: lines.items.size, stock: stock.items.size});
@@ -1778,6 +1928,11 @@ function receive(pur) {
     else { RET.push({a: e.a, q: e.q, pav: pur.pav, at: now}); saveMeta('meta/returns'); }
   }
   pur.st = 'done'; pur.doneAt = now; pur.rep = rep; savePur(pur.id, 50);
+  const ss = SUPSTAT.get(pur.pav) || {n: 0, ord: 0, got: 0, short: 0, extra: 0, last: 0};
+  ss.n++; ss.ord = round(ss.ord + rep.ord); ss.got = round(ss.got + rep.got); ss.last = now;
+  for (const l of pur.lines) { ss.short = round(ss.short + Math.max(0, l.q - l.c)); ss.extra = round(ss.extra + Math.max(0, l.c - l.q)); }
+  for (const e of pur.extra) ss.extra = round(ss.extra + e.q);
+  SUPSTAT.set(pur.pav, ss); saveMeta('meta/supstats');
   const miss = round(rep.ord - rep.got);
   log(`Приёмка ${pur.pav || 'без павильона'} от ${dm(pur.at)}: заказано ${fmt(rep.ord)}, пришло ${fmt(rep.got)}${pur.extra.length ? `, не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}; в отправления ${fmt(rep.toOrd)}, на склад ${fmt(rep.toStock)}${rep.unc.length ? `; снова не хватает: ${cnt(rep.unc.length, W.ship)}` : ''}`);
   diag('receive', pur.pav, {id: pur.id, ord: rep.ord, got: rep.got, toOrd: rep.toOrd, toStock: rep.toStock, unc: rep.unc.length, extra: pur.extra.length, lines: pur.lines.length});
@@ -1799,8 +1954,161 @@ function cancelShipment(sid) {
   log(`Убрано отправление ${sid}${back ? `: ${fmt(back)} шт. вернулись на склад` : ''}`);
 }
 
+/* ---------- sales analysis ---------- */
+let HIST = null, histBusy = false;
+const isoOf = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
+const isoToday = () => isoOf(new Date());
+const isoAdd = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoOf(d); };
+const isoDiff = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / DAYMS);
+const isoRu = iso => iso.split('-').reverse().join('.');
+const canonSize = sz => { const u = latinUp(sz).replace(/\s+/g, ''); return ({XXL: '2XL', XXXL: '3XL', XXXXL: '4XL'})[u] || u || '—'; };
+function parseDay(v) {
+  const t = String(v ?? '').trim();
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[1]}-${p2(m[2])}-${p2(m[3])}`;
+  m = t.match(/^(\d{1,2})[./](\d{1,2})[./](\d{2,4})/);
+  if (m) { let y = +m[3]; if (y < 100) y += 2000; return `${y}-${p2(m[2])}-${p2(m[1])}`; }
+  if (/^\d{5}(\.\d+)?$/.test(t)) { const n = parseFloat(t); if (n > 30000 && n < 80000) return new Date(Math.round((n - 25569) * DAYMS)).toISOString().slice(0, 10); }
+  return null;
+}
+async function loadHist() {
+  if (!Backend || histBusy || !allReady()) return;
+  histBusy = true;
+  try {
+    const docs = await Backend.query('hist', {where: ['at', '>=', Date.now() - 120 * DAYMS]});
+    const m = new Map();
+    for (const d of docs) {
+      const iso = String(d.id).slice(1);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) continue;
+      const day = new Map();
+      for (const r of Array.isArray(d.data.items) ? d.data.items : []) { if (!Array.isArray(r)) continue; const k = normKey(r[0]); if (!k) continue; const e = day.get(k); if (e) e[1] += Number(r[1]) || 0; else day.set(k, [String(r[0]), Number(r[1]) || 0]); }
+      m.set(iso, day);
+    }
+    HIST = m;
+    diag('hist', `${m.size} дн.`);
+  } catch (e) { diag('error', 'hist: ' + String((e && (e.message || e.code)) || e).slice(0, 200)); if (!HIST) HIST = new Map(); }
+  finally { histBusy = false; render(); }
+}
+// sales per article over the chosen window; recent week weighs more
+function analyze() {
+  const A = {days: 0, first: '', last: '', effW: 1, eff7: 1, arts: new Map(), total7: 0};
+  if (!HIST || !HIST.size) return A;
+  const days = [...HIST.keys()].sort();
+  A.days = days.length; A.first = days[0]; A.last = days[days.length - 1];
+  const end = A.last > isoToday() ? A.last : isoToday();
+  const startW = isoAdd(end, -(S.anWin - 1)), start7 = isoAdd(end, -6), span = isoDiff(A.first, end) + 1;
+  A.effW = Math.max(1, Math.min(S.anWin, span)); A.eff7 = Math.max(1, Math.min(7, span));
+  for (const [iso, day] of HIST) {
+    if (iso < startW || iso > end) continue;
+    for (const [k, [a, q]] of day) { let e = A.arts.get(k); if (!e) A.arts.set(k, e = {k, a, sold: 0, sold7: 0}); e.sold += q; if (iso >= start7) { e.sold7 += q; A.total7 += q; } }
+  }
+  for (const e of A.arts.values()) e.rate = 0.6 * (e.sold7 / A.eff7) + 0.4 * (e.sold / A.effW);
+  return A;
+}
+function names() {
+  const m = new Map();
+  for (const [k, it] of stock.items) if (it.n) m.set(k, it.n);
+  for (const ln of lines.items.values()) if (ln.n) { const k = normKey(ln.a); if (!m.has(k)) m.set(k, ln.n); }
+  return m;
+}
+function suggestions(p, A) {
+  const takes = new Map();
+  for (const [k, r] of p) if (r.take > 0) { const ak = normKey(lines.items.get(k).a); takes.set(ak, (takes.get(ak) || 0) + r.take); }
+  const transit = new Map();
+  for (const x of going()) for (const l of x.lines) { const sur = l.q - l.need; if (sur > 0) transit.set(l.k, (transit.get(l.k) || 0) + sur); }
+  const extra = new Map();
+  for (const r of buyRows(p)) { const ex = r.order - r.need; if (ex > 0) extra.set(r.ak, ex); }
+  const H = S.anDays + S.anLead, nm = names(), out = [];
+  for (const e of A.arts.values()) {
+    if (e.rate * H < 0.5) continue;
+    const st = stock.items.get(e.k);
+    const have = Math.max(0, (st ? st.q : 0) - (takes.get(e.k) || 0)) + (transit.get(e.k) || 0) + (extra.get(e.k) || 0);
+    const want = Math.max(1, Math.round(e.rate * H)), sug = want - have;
+    if (sug < 1) continue;
+    const a = (st && st.a) || e.a;
+    out.push({ak: e.k, a, n: nm.get(e.k) || '', rate: e.rate, have, want, need: 0, order: sug, add: false, ...parseArt(a)});
+  }
+  return out;
+}
+function addSuggest(list) {
+  const now = new Map(buyRows(plan()).map(r => [r.ak, r]));
+  let q = 0;
+  for (const x of list) { const cur = now.get(x.ak), po = PO.get(x.ak); PO.set(x.ak, {a: x.a, n: x.n || (po && po.n) || '', q: round((cur ? cur.order : 0) + x.order), add: true}); q += x.order; }
+  saveMeta('meta/po'); log(`Добавлено в закупку впрок: ${fmt(q)} шт., ${cnt(list.length, W.art)}`);
+  toast(`В закупку добавлено ${fmt(q)} шт. Посмотрите вкладку «Закупка».`);
+}
+const rateTxt = r => r >= 1 ? `${nf.format(Math.round(r * 10) / 10)} в день` : r > 0 ? `1 за ${Math.max(1, Math.round(1 / r))} дн.` : 'нет продаж';
+function renderAn(p) {
+  const A = analyze(), has = A.days > 0;
+  $('#anEmpty').hidden = has || HIST === null;
+  $('#anCover').textContent = HIST === null ? 'Загружаю историю…' : has ? `История: ${cnt(A.days, W.day)}, с ${isoRu(A.first)} по ${isoRu(A.last)}` : '';
+  for (const [id, k] of [['#anDays', 'anDays'], ['#anLead', 'anLead'], ['#anWin', 'anWin'], ['#anDead', 'deadDays']]) if (document.activeElement !== $(id)) $(id).value = S[k];
+  // tiles
+  let stQ = 0, stM = 0, deadQ = 0, deadM = 0;
+  for (const it of stock.items.values()) {
+    if (it.q <= 0) continue;
+    const pr = priceOf(it.a); stQ += it.q; stM += it.q * pr;
+    const idle = daysSince(Math.max(it.in || 0, it.out || 0));
+    if ((idle != null && idle >= S.deadDays) || (has && A.effW >= 7 && !A.arts.has(normKey(it.a)))) { deadQ += it.q; deadM += it.q * pr; }
+  }
+  const sug = has ? suggestions(p, A) : [];
+  const sugQ = sug.reduce((s, x) => s + x.order, 0), sugM = sug.reduce((s, x) => s + x.order * priceOf(x.a), 0);
+  $('#aSale').textContent = has ? nf.format(Math.round(A.total7 / A.eff7 * 10) / 10) : '—'; $('#aSaleS').textContent = has ? `шт. в среднем за ${cnt(A.eff7, W.day)}` : 'нет истории';
+  $('#aStock').textContent = fmt(round(stQ)); $('#aStockS').textContent = stM ? `≈ ${rub(stM)} по закупке` : 'шт.';
+  $('#aDead').textContent = fmt(round(deadQ)); $('#aDeadS').textContent = `не продаётся${deadM ? ` · ≈ ${rub(deadM)}` : ''}`;
+  $('#aBuy').textContent = fmt(sugQ); $('#aBuyS').textContent = `на ${cnt(S.anDays, W.day)}${sugM ? ` · ≈ ${rub(sugM)}` : ''}`;
+  // buy ahead
+  const pavs = groupModels(sug);
+  $('#anBuyAll').disabled = !sug.length;
+  $('#anBuySum').textContent = sug.length ? `${fmt(sugQ)} шт. · ${cnt(sug.length, W.art)}` : '';
+  setBody($('#anBuy'), pavs.map(pv => `<div class="mt"><div class="row"><b>${esc(pavLabel(pv.pav))}</b><span class="sum">взять ${fmt(pv.order)} шт.${S.price ? ` · ≈ ${rub(pv.list.reduce((s, m) => s + m.rows.reduce((a, r) => a + r.order * priceOf(r.a), 0), 0))}` : ''}</span><button class="btn" type="button" data-an-add="${esc(pv.pav)}">В закупку</button></div>
+    ${pv.list.map(m => `<div class="arow">${thumb(m.mkey, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="why">${m.rows.map(r => `<b>${esc(r.size || 'шт')}</b>: продаётся ${rateTxt(r.rate)}, есть ${fmt(r.have)}, взять ${fmt(r.order)}`).join(' · ')}</div></div><div class="tot">${fmt(m.rows.reduce((s, r) => s + r.order, 0))}<small>шт.</small></div></div>`).join('')}</div>`).join('') || `<p class="hint" style="margin:0">${has ? 'Сейчас впрок докупать нечего: того, что лежит и едет, хватает.' : 'Появится, когда будет история продаж.'}</p>`);
+  // stale stock
+  const dead = [];
+  for (const [k, it] of stock.items) {
+    if (it.q <= 0) continue;
+    const idle = daysSince(Math.max(it.in || 0, it.out || 0)), e = A.arts.get(k), rate = e ? e.rate : 0;
+    const cover = rate > 0 ? it.q / rate : Infinity;
+    const old = idle != null && idle >= oldDays(), tooMuch = has && rate > 0 && cover > Math.max(60, S.deadDays * 2);
+    const noSales = has && A.effW >= 7 && rate === 0;   // the history shows no sale at all, even if the stock was just recounted
+    if (old || tooMuch || noSales) dead.push({k, it, idle, rate, cover, noSales, pa: parseArt(it.a)});
+  }
+  const dm2 = new Map();
+  for (const d of dead) { let g = dm2.get(d.pa.mkey); if (!g) dm2.set(d.pa.mkey, g = {mkey: d.pa.mkey, model: d.pa.model, pav: d.pa.pav, n: d.it.n, rows: [], q: 0, money: 0, idle: 0, noSales: false}); g.rows.push(d); g.q += d.it.q; g.money += d.it.q * priceOf(d.it.a); g.idle = Math.max(g.idle, d.idle || 0); if (d.noSales) g.noSales = true; }
+  const dl = [...dm2.values()].sort((a, b) => (b.money - a.money) || (b.q * b.idle - a.q * a.idle)).slice(0, 60);
+  const deadMoney = dead.reduce((s, d) => s + d.it.q * priceOf(d.it.a), 0);
+  $('#anDeadSum').textContent = dead.length ? `${fmt(dead.reduce((s, d) => s + d.it.q, 0))} шт.${deadMoney ? ` · ≈ ${rub(deadMoney)}` : ''}` : '';
+  setBody($('#anDeadList'), dl.map(g => {
+    const worst = g.idle >= S.deadDays ? `не продаётся ${g.idle} ${plural(g.idle, W.day)} — снизить цену` : g.noSales ? `за ${A.effW} ${plural(A.effW, W.day)} ни одной продажи — снизить цену` : g.idle >= oldDays() ? `без продаж ${g.idle} ${plural(g.idle, W.day)} — присмотреться к цене` : 'запаса слишком много — не докупать, можно снизить цену';
+    return `<div class="arow">${thumb(g.mkey, 'sm', true)}<div>${g.pav ? `<span class="pavtag">${esc(g.pav)}</span> ` : ''}<span class="art">${esc(shortModel(g.model))}</span>${g.n ? `<span class="nm">${esc(g.n)}</span>` : ''}<div class="why"><b>${esc(worst)}</b></div><div class="szchips">${g.rows.sort((a, b) => bySize(a.pa.size, b.pa.size)).map(d => `<span class="szc${d.idle >= S.deadDays || d.noSales ? ' dead' : d.idle >= oldDays() ? ' old' : ''}">${esc(d.pa.size || 'шт')} · ${fmt(d.it.q)}${d.noSales ? ' · 0 продаж' : d.idle ? ` · ${d.idle} дн.` : ''}${Number.isFinite(d.cover) && d.cover > 60 ? ` · на ${Math.round(d.cover)} дн.` : ''}</span>`).join('')}</div></div><div class="tot">${fmt(g.q)}<small>${g.money ? '≈ ' + rub(g.money) : 'шт.'}</small></div></div>`;
+  }).join('') || '<p class="hint" style="margin:0">Залежавшегося товара нет.</p>');
+  // selling well but missing
+  const sh = shortage(p), nm = names(), hot = [];
+  for (const e of A.arts.values()) {
+    if (e.rate < 0.5) continue;
+    const st = stock.items.get(e.k), q = st ? Math.max(0, st.q) : 0, need = (sh.get(e.k) || {}).need || 0;
+    if (!need && q > e.rate * Math.max(1, S.anLead)) continue;
+    hot.push({e, q, need, pa: parseArt((st && st.a) || e.a), n: nm.get(e.k) || ''});
+  }
+  hot.sort((a, b) => b.e.rate - a.e.rate);
+  setBody($('#anHot'), hot.slice(0, 40).map(h => `<div class="arow">${thumb(h.pa.mkey, 'sm', true)}<div><span class="art">${esc(h.e.a)}</span>${h.n ? `<span class="nm">${esc(h.n)}</span>` : ''}<div class="why">продаётся <b>${rateTxt(h.e.rate)}</b>, на складе ${fmt(h.q)}${h.need ? `, сейчас не хватает ${fmt(h.need)}` : ''} — закупить больше или поднять цену</div></div><div class="tot">${nf.format(Math.round(h.e.rate * 10) / 10)}<small>в день</small></div></div>`).join('') || `<p class="hint" style="margin:0">${has ? 'Таких товаров нет.' : 'Появится, когда будет история продаж.'}</p>`);
+  // sizes
+  const sz = new Map();
+  const bucket = k => sz.get(k) || sz.set(k, {q: 0, rate: 0}).get(k);
+  for (const it of stock.items.values()) if (it.q > 0) bucket(canonSize(parseArt(it.a).size)).q += it.q;
+  for (const e of A.arts.values()) bucket(canonSize(parseArt(e.a).size)).rate += e.rate;
+  setBody($('#anSizes'), [...sz.entries()].filter(([, v]) => v.q > 0 || v.rate > 0).sort((a, b) => bySize(a[0], b[0])).map(([size, v]) => {
+    const cover = v.rate > 0 ? v.q / v.rate : Infinity;
+    const flag = !has ? '' : v.rate === 0 ? '<span class="chip bad">не продаётся</span>' : cover > 60 ? '<span class="chip bad">слишком много</span>' : cover < S.anDays ? '<span class="chip warn">мало</span>' : '';
+    return `<tr><td class="size art">${esc(size)}</td><td class="num">${fmt(v.q)}</td><td class="num">${has ? nf.format(Math.round(v.rate * 10) / 10) : '—'}</td><td class="num">${!has ? '—' : Number.isFinite(cover) ? `${Math.round(cover)} дн.` : '∞'}</td><td>${flag}</td></tr>`;
+  }).join('') || '<tr><td colspan="5" class="empty">Склад пуст.</td></tr>');
+  // suppliers
+  setBody($('#anSup'), [...SUPSTAT.entries()].sort((a, b) => b[1].n - a[1].n).map(([pav, x]) => `<tr><td><span class="pavtag">${esc(pav || '—')}</span>${SUP.get(pav) && SUP.get(pav).name ? ` ${esc(SUP.get(pav).name)}` : ''}</td><td class="num">${fmt(x.n)}</td><td class="num">${fmt(x.ord)}</td><td class="num">${fmt(x.got)}</td><td class="num">${x.short ? `<span class="chip warn">${fmt(x.short)} · ${Math.round(100 * x.short / Math.max(1, x.ord))}%</span>` : '0'}</td><td class="num">${x.extra ? `<span class="chip bad">${fmt(x.extra)}</span>` : '0'}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Появится после первых приёмок.</td></tr>');
+  ui.lastSug = sug;
+}
+
 /* ---------- UI state & render ---------- */
-const ui = {editSup: null, tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', stView: 'models', stSort: 'pav', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
+const ui = {lastDiff: null, lastSug: null, editSup: null, tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', stView: 'models', stSort: 'pav', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
 let raf = 0;
 function render() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); }
 function setBody(el, html) {
@@ -1861,6 +2169,7 @@ function renderAllInner() {
   $('#bRecv').hidden = !go.length; $('#bRecv').textContent = fmt(go.length);
   renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog();
   if (ui.tab === 'settings') renderSuppliers();
+  if (ui.tab === 'an') renderAn(p);
   if (ui.flash) { const tr = $(`#rcBody tr[data-k="${CSS.escape(ui.flash)}"]`); if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } ui.flash = null; }
 }
 
@@ -1912,7 +2221,8 @@ function renderBuy(p, rows) {
   let pendQ = 0; for (const r of p.values()) pendQ += r.take;
   $('#buyTitle').textContent = `Закупка в ${S.supplier}`;
   const toSend = pavs.filter(pv => pv.order > 0), sentN = toSend.filter(pv => SENT.has(pv.pav)).length;
-  $('#buySum').textContent = rows.length ? `не хватает ${fmt(need)} шт. · в закупке ${fmt(order)} шт., из них на склад ${fmt(round(order - forOrders))}${toSend.length ? ` · отправлено поставщикам ${fmt(sentN)} из ${fmt(toSend.length)}` : ''}` : '';
+  const money = rows.reduce((a, r) => a + r.order * priceOf(r.a), 0);
+  $('#buySum').textContent = rows.length ? `не хватает ${fmt(need)} шт. · в закупке ${fmt(order)} шт., из них на склад ${fmt(round(order - forOrders))}${money ? ` · ≈ ${rub(money)}` : ''}${toSend.length ? ` · отправлено поставщикам ${fmt(sentN)} из ${fmt(toSend.length)}` : ''}` : '';
   const cm = $('#buyCommit');
   cm.disabled = !(order > 0 || pendQ > 0);
   cm.textContent = order > 0 ? 'Оформить закупку' : pendQ > 0 ? 'Списать со склада (докупать нечего)' : 'Оформить закупку';
@@ -1975,7 +2285,9 @@ function renderRecv() {
   if (ui.focusInc) { const b = $(`#recvModels [data-inc="${ui.focusInc[0]}"][data-d="${ui.focusInc[1]}"]`); if (b) b.focus({preventScroll: true}); ui.focusInc = null; }
 }
 
+const oldDays = () => Math.max(3, Math.round(S.deadDays / 2));
 function renderStock() {
+  $('#stLegend').textContent = `Жёлтый размер лежит без продаж ${oldDays()} дней и дольше, красный — ${S.deadDays} дней и дольше.`;
   const items = [...stock.items.entries()];
   $('#stSum').textContent = items.length ? `${cnt(items.length, W.art)} · ${fmt(round(items.reduce((s, [, it]) => s + Math.max(0, it.q), 0)))} шт.` : '';
   $$('#stSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === ui.stView)));
@@ -1998,8 +2310,8 @@ function renderStock() {
     const shown = list.slice(0, ui.stLimit);
     setBody($('#stModels'), shown.map(m => `<div class="mrow">${thumb(m.mkey, 'md', true)}<div>
       <div class="row" style="gap:8px">${m.pav ? `<span class="pavtag">${esc(m.pav)}</span>` : ''}<span class="art">${esc(shortModel(m.model, m.pav))}</span></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
-      <div class="szchips">${m.sizes.sort((a, b) => bySize(a.size, b.size)).map(s => `<span class="szc${s.q < 0 ? ' neg' : s.d >= 30 ? ' dead' : s.d >= 14 ? ' old' : ''}" title="${s.d != null ? `без продаж ${s.d} ${plural(s.d, W.day)}` : ''}">${esc(s.size || 'шт')} · ${fmt(s.q)}</span>`).join('')}</div>
-    </div><div class="tot">${fmt(m.total)}<small>${m.idle >= 14 ? `без продаж ${m.idle} ${plural(m.idle, W.day)}` : 'шт.'}</small></div></div>`).join('') || `<p class="empty">${items.length ? 'Ничего не найдено' : 'Склад пуст. Сделайте пересчёт ниже или загрузите остатки из файла.'}</p>`);
+      <div class="szchips">${m.sizes.sort((a, b) => bySize(a.size, b.size)).map(s => `<span class="szc${s.q < 0 ? ' neg' : s.d >= S.deadDays ? ' dead' : s.d >= oldDays() ? ' old' : ''}" title="${s.d != null ? `без продаж ${s.d} ${plural(s.d, W.day)}` : ''}">${esc(s.size || 'шт')} · ${fmt(s.q)}</span>`).join('')}</div>
+    </div><div class="tot">${fmt(m.total)}<small>${m.idle >= oldDays() ? `без продаж ${m.idle} ${plural(m.idle, W.day)}` : 'шт.'}</small></div></div>`).join('') || `<p class="empty">${items.length ? 'Ничего не найдено' : 'Склад пуст. Сделайте пересчёт ниже или загрузите остатки из файла.'}</p>`);
     $('#stMore').hidden = list.length <= shown.length;
     $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
   } else {
@@ -2032,7 +2344,8 @@ function supHead(pv) {
   const sup = SUP.get(pv.pav) || {name: '', phone: ''}, sent = SENT.get(pv.pav);
   const link = pv.order > 0 ? waLink(sup.phone, pavText(pv)) : '';
   const who = [sup.name, sup.phone].filter(Boolean).join(' · ');
-  return `<span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.</span>
+  const money = pv.list.reduce((a, m) => a + m.rows.reduce((b, r) => b + r.order * priceOf(r.a), 0), 0);
+  return `<span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.${money ? ` · ≈ ${rub(money)}` : ''}</span>
     <span class="supinfo${who ? '' : ' none'}">${who ? esc(who) : 'поставщик не указан'}</span>${sent ? `<span class="chip good">отправлено ${when(sent)}</span>` : ''}
     <span class="row">${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener" data-wa="${esc(pv.pav)}">WhatsApp</a>` : ''}<button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button><button class="btn ghost" type="button" data-edit-sup="${esc(pv.pav)}">${who ? 'Изменить' : 'Указать поставщика'}</button></span>`;
 }
@@ -2067,7 +2380,7 @@ function renderLog() {
 }
 
 function renderSettings() {
-  $('#optLatin').checked = S.latin; $('#optZeros').checked = S.zeros; $('#optPunct').checked = S.punct; $('#optPav').checked = S.pav;
+  $('#optLatin').checked = S.latin; $('#optZeros').checked = S.zeros; $('#optPunct').checked = S.punct; $('#optPav').checked = S.pav; $('#optPrice').checked = S.price;
   if (document.activeElement !== $('#optSupplier')) $('#optSupplier').value = S.supplier;
   const note = {
     db: 'Склад, отправления, закупки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
@@ -2093,6 +2406,7 @@ function renderTester() {
 function setTab(t) {
   if (ui.tab !== t) diag('tab', t);
   ui.tab = t;
+  if (t === 'an') { if (HIST === null) loadHist(); render(); }
   $$('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   $$('.pane').forEach(p => p.hidden = p.id !== 'pane-' + t);
   lsSet('sklad/tab', t);
@@ -2231,8 +2545,8 @@ function copyBuy(pav) { const t = buyText(pav); if (!t) { toast('Нечего к
 $('#buyCopy').addEventListener('click', () => copyBuy(null));
 $('#buyExport').addEventListener('click', () => {
   const rows = [];
-  for (const pv of groupModels(buyRows(plan()).filter(r => r.order > 0))) for (const m of pv.list) for (const r of m.rows) rows.push([pv.pav, shortModel(m.model, pv.pav), r.size, r.a, r.n, r.need, r.order]);
-  saveTable(`Закупка ${S.supplier} ${today()}`, [{name: 'Закупка', cols: [10, 24, 8, 30, 44, 12, 10], rows: [['Павильон', 'Модель', 'Размер', 'Артикул', 'Наименование', 'Под заказы', 'Заказать'], ...rows]}]);
+  for (const pv of groupModels(buyRows(plan()).filter(r => r.order > 0))) for (const m of pv.list) for (const r of m.rows) { const pr = priceOf(r.a); rows.push([pv.pav, shortModel(m.model, pv.pav), r.size, r.a, r.n, r.need, r.order, pr || '', pr ? pr * r.order : '']); }
+  saveTable(`Закупка ${S.supplier} ${today()}`, [{name: 'Закупка', cols: [10, 24, 8, 30, 44, 12, 10, 10, 12], rows: [['Павильон', 'Модель', 'Размер', 'Артикул', 'Наименование', 'Под заказы', 'Заказать', 'Цена', 'Сумма'], ...rows]}]);
 });
 
 // receiving
@@ -2341,9 +2655,27 @@ $('#rcAdd').addEventListener('click', () => {
     toast(`На склад добавлено ${fmt(q)} шт.`);
   });
 });
+function recountDiff() {
+  const out = []; let lack = 0, extra = 0, money = 0;
+  for (const k of new Set([...stock.items.keys(), ...draft.items.keys()])) {
+    const st = stock.items.get(k), dr = draft.items.get(k);
+    const was = st ? Math.max(0, st.q) : 0, now = dr ? dr.q : 0;
+    if (was === now) continue;
+    const a = (dr || st).a;
+    out.push({a, n: (st && st.n) || (dr && dr.n) || '', was, now});
+    if (now < was) { lack = round(lack + was - now); money += (was - now) * priceOf(a); } else extra = round(extra + now - was);
+  }
+  out.sort((x, y) => Math.abs(y.now - y.was) - Math.abs(x.now - x.was));
+  return {out, lack, extra, money};
+}
 $('#rcReplace').addEventListener('click', () => {
-  const n = draft.items.size, q = draft.total();
-  confirmIn('#rcConfirm', `Сейчас на складе ${cnt(stock.items.size, W.art)}, ${fmt(stock.total())} шт. Склад станет точно таким, как этот список: <b>${cnt(n, W.art)}, ${fmt(q)} шт.</b> Артикулы, которых нет в списке, пропадут со склада.`, 'Заменить склад', () => {
+  const n = draft.items.size, q = draft.total(), df = recountDiff();
+  ui.lastDiff = df;
+  const top = df.out.slice(0, 8).map(d => `<code>${esc(d.a)}</code>: было ${fmt(d.was)}, посчитано ${fmt(d.now)}`).join('; ');
+  const diffHtml = df.out.length ? ` Расхождения с программой: <b>недостача ${fmt(df.lack)} шт.${df.money ? ` (≈ ${rub(df.money)})` : ''}, излишек ${fmt(df.extra)} шт.</b> ${top}${df.out.length > 8 ? '…' : ''} <button class="btn" type="button" data-diff-export>Скачать все расхождения</button>` : ' Расхождений с программой нет.';
+  confirmIn('#rcConfirm', `Сейчас на складе ${cnt(stock.items.size, W.art)}, ${fmt(stock.total())} шт. Склад станет точно таким, как этот список: <b>${cnt(n, W.art)}, ${fmt(q)} шт.</b> Артикулы, которых нет в списке, пропадут со склада.${diffHtml}`, 'Заменить склад', () => {
+    if (df.out.length) log(`Расхождения при пересчёте: недостача ${fmt(df.lack)} шт., излишек ${fmt(df.extra)} шт., артикулов ${fmt(df.out.length)}`);
+    diag('recount', '', {lack: df.lack, extra: df.extra, arts: df.out.length, money: Math.round(df.money)});
     const b = [stock.items.size, stock.total()];
     const old = new Map([...stock.items].map(([k, it]) => [k, it]));
     stock.clear();
@@ -2351,6 +2683,10 @@ $('#rcReplace').addEventListener('click', () => {
     draft.clear(); $('#scanInfo').textContent = ''; log(`Полный пересчёт: ${cnt(n, W.art)}, ${fmt(q)} шт. (было ${fmt(b[0])} арт., ${fmt(b[1])} шт.)`);
     toast('Склад заменён результатами пересчёта');
   }, true);
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('[data-diff-export]') || !ui.lastDiff) return;
+  saveTable(`Расхождения пересчёта ${today()}`, [{name: 'Расхождения', cols: [30, 44, 12, 12, 12], rows: [['Артикул', 'Наименование', 'Было в программе', 'Посчитано', 'Разница'], ...ui.lastDiff.out.map(d => [d.a, d.n, d.was, d.now, round(d.now - d.was)])]}]);
 });
 $('#rcClear').addEventListener('click', () => {
   confirmIn('#rcConfirm', `Удалить все ${cnt(draft.items.size, W.row)} из списка пересчёта? Склад не изменится.`, 'Очистить список', () => { draft.clear(); $('#scanInfo').textContent = ''; }, true);
@@ -2362,6 +2698,43 @@ document.addEventListener('keydown', e => {
 });
 
 // settings
+// full backup: everything the program keeps, in one JSON file
+function backupData() {
+  return {app: 'sklad', ver: APP_VERSION, at: Date.now(),
+    stock: [...stock.items.values()].map(stock.o.pack), receipt: [...draft.items.values()].map(draft.o.pack), lines: [...lines.items.values()].map(lines.o.pack),
+    purch: [...PUR.values()].map(purToDoc), meta: Object.fromEntries(Object.keys(META).map(k => [k, JSON.parse(JSON.stringify(META[k]()))]))};
+}
+$('#bkSave').addEventListener('click', async () => {
+  const d = new Date(), name = `Склад копия ${today()} ${p2(d.getHours())}-${p2(d.getMinutes())}.json`, data = JSON.stringify(backupData());
+  diag('backup', 'save', data.length);
+  if (DL) { try { await DL.save({filename: name, data}); toast('Копия сохранена: ' + name); } catch (e) { if (!e || e.code !== 'declined') toast('Не получилось сохранить копию'); } return; }
+  const url = URL.createObjectURL(new Blob([data], {type: 'application/json'})), a = document.createElement('a');
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 5000);
+});
+$('#bkLoad').addEventListener('click', () => { $('#bkFile').value = ''; $('#bkFile').click(); });
+$('#bkFile').addEventListener('change', async () => {
+  const f = $('#bkFile').files[0]; if (!f) return;
+  let b;
+  try { b = JSON.parse(await f.text()); if (!b || b.app !== 'sklad' || !Array.isArray(b.stock)) throw 0; }
+  catch { toast('Это не резервная копия программы «Склад»'); return; }
+  confirmIn('#setConfirm', `Восстановить данные из копии от ${when(b.at)}? Сейчас в программе ${cnt(stock.items.size, W.art)} на складе и ${cnt(lines.items.size, W.row)} отправлений — они заменятся данными из копии.`, 'Восстановить', () => {
+    stock.items.clear(); for (const r of b.stock) stock.quiet(stock.o.unpack(r)); stock.touchAll();
+    draft.items.clear(); for (const r of b.receipt || []) draft.quiet(draft.o.unpack(r)); draft.touchAll();
+    lines.items.clear(); for (const r of b.lines || []) lines.quiet(lines.o.unpack(r)); lines.touchAll();
+    for (const id of [...PUR.keys()]) if (PUR.get(id).st === 'go' && !(b.purch || []).some(x => x.id === id)) { PUR.delete(id); savePur(id, 50); }
+    (b.purch || []).forEach((x, i) => { PUR.set(x.id, docToPur(x.id, x)); savePur(x.id, 80 + i * 60); });
+    const m = b.meta || {};
+    if (m['meta/settings']) { const ns = {...DEF}; for (const [k, v] of Object.entries(m['meta/settings'])) if (k in DEF && typeof v === typeof DEF[k]) ns[k] = v; S = ns; artCache.clear(); saveMeta('meta/settings'); }
+    if (m['meta/po']) { PO = new Map(); for (const r of m['meta/po'].items || []) { const k = normKey(r[0]); if (k) PO.set(k, {a: String(r[0]), n: r[1] || '', q: r[2] == null ? null : +r[2] || 0, add: !!r[3]}); } SENT = new Map(m['meta/po'].sent || []); saveMeta('meta/po'); }
+    if (m['meta/returns']) { RET = (m['meta/returns'].items || []).map(r => ({a: String(r[0] ?? ''), q: +r[1] || 0, pav: String(r[2] || ''), at: +r[3] || 0})); saveMeta('meta/returns'); }
+    if (m['meta/suppliers']) { SUP.clear(); for (const r of m['meta/suppliers'].items || []) SUP.set(String(r[0] ?? ''), {name: String(r[1] || ''), phone: String(r[2] || '')}); saveMeta('meta/suppliers'); }
+    if (m['meta/supstats']) { SUPSTAT.clear(); for (const r of m['meta/supstats'].items || []) SUPSTAT.set(String(r[0] ?? ''), {n: +r[1] || 0, ord: +r[2] || 0, got: +r[3] || 0, short: +r[4] || 0, extra: +r[5] || 0, last: +r[6] || 0}); saveMeta('meta/supstats'); }
+    if (m['meta/day']) { DAYM = {...DAYM, ...m['meta/day']}; saveMeta('meta/day'); }
+    log(`Данные восстановлены из копии от ${when(b.at)}`);
+    diag('backup', 'restore', {at: b.at, stock: b.stock.length, lines: (b.lines || []).length, purch: (b.purch || []).length});
+    toast('Данные восстановлены');
+  }, true);
+});
 $('#stClear').addEventListener('click', () => {
   confirmIn('#setConfirm', `Удалить со склада все ${cnt(stock.items.size, W.art)} (${fmt(stock.total())} шт.)? Сначала лучше скачать остатки в Excel.`, 'Очистить склад', () => { stock.clear(); log('Склад очищен'); toast('Склад очищен'); }, true);
 });
@@ -2372,6 +2745,19 @@ $('#stClear').addEventListener('click', () => {
 $('#optPav').addEventListener('change', e => { S = {...S, pav: e.target.checked}; artCache.clear(); saveMeta('meta/settings'); renderTester(); render(); });
 $('#optSupplier').addEventListener('change', e => { const v = e.target.value.trim(); S = {...S, supplier: v || DEF.supplier}; e.target.value = S.supplier; saveMeta('meta/settings'); render(); });
 $('#testIn').addEventListener('input', renderTester);
+$('#anForm').addEventListener('change', e => {
+  const map = {anDays: 'anDays', anLead: 'anLead', anWin: 'anWin', anDead: 'deadDays'}, k = map[e.target.id];
+  if (!k) return;
+  const [lo, hi] = NUMS[k], v = parseInt(e.target.value, 10);
+  if (!Number.isFinite(v)) { e.target.value = S[k]; return; }
+  S = {...S, [k]: Math.min(hi, Math.max(lo, v))}; e.target.value = S[k];
+  saveMeta('meta/settings'); render();
+});
+$('#anForm').addEventListener('submit', e => e.preventDefault());
+$('#anReload').addEventListener('click', () => { HIST = null; loadHist(); render(); });
+$('#anBuyAll').addEventListener('click', () => { if (ui.lastSug && ui.lastSug.length) { addSuggest(ui.lastSug); render(); } });
+$('#anBuy').addEventListener('click', e => { const b = e.target.closest('[data-an-add]'); if (!b || !ui.lastSug) return; const list = ui.lastSug.filter(x => x.pav === b.dataset.anAdd); if (list.length) { addSuggest(list); render(); } });
+$('#optPrice').addEventListener('change', e => { S = {...S, price: e.target.checked}; saveMeta('meta/settings'); render(); });
 $('#diagCopy').addEventListener('click', () => copyText(`Склад v${APP_VERSION}, устройство ${DEV}\n` + diagAll().map(e => `${when(e[0])} ${e[1]} ${e[2]}${e[3] ? ' ' + e[3] : ''}`).join('\n'), 'Служебный журнал скопирован'));
 
 // import
@@ -2395,14 +2781,16 @@ $('#impText').addEventListener('input', debounce(() => { const t = $('#impText')
 $('#impSheet').addEventListener('change', e => { IMP.sheet = +e.target.value; IMP.m = detect(curRows()); renderImport(); });
 $('#impHeader').addEventListener('change', e => {
   const h = +e.target.value, rows = curRows();
-  if (h < 0) { IMP.m = {header: -1, art: -1, qty: -1, name: -1, ship: -1}; guess(rows, IMP.m); if (IMP.m.art < 0) IMP.m.art = 0; }
-  else { const d = detect(rows.slice(h)); const ok = d.header === 0; IMP.m = {header: h, art: ok ? d.art : IMP.m.art, qty: ok ? d.qty : IMP.m.qty, name: ok ? d.name : IMP.m.name, ship: ok ? d.ship : IMP.m.ship}; }
+  if (h < 0) { IMP.m = {header: -1, art: -1, qty: -1, name: -1, ship: -1, date: -1, status: -1}; guess(rows, IMP.m); if (IMP.m.art < 0) IMP.m.art = 0; }
+  else { const d = detect(rows.slice(h)); const ok = d.header === 0; IMP.m = ok ? {...d, header: h} : {...IMP.m, header: h}; }
   renderImport();
 });
 $('#impArt').addEventListener('change', e => { IMP.m.art = +e.target.value; renderImport(); });
 $('#impQty').addEventListener('change', e => { IMP.m.qty = +e.target.value; renderImport(); });
 $('#impName').addEventListener('change', e => { IMP.m.name = +e.target.value; renderImport(); });
 $('#impShip').addEventListener('change', e => { IMP.m.ship = +e.target.value; renderImport(); });
+$('#impDate').addEventListener('change', e => { IMP.m.date = +e.target.value; renderImport(); });
+$('#impStat').addEventListener('change', e => { IMP.m.status = +e.target.value; renderImport(); });
 $('#impModes').addEventListener('change', e => { if (e.target.name === 'impMode') { IMP.mode = e.target.value; renderImport(); } });
 $('#impApply').addEventListener('click', applyImport);
 const dropPdfs = () => { for (const f of IMP.files) if (f.pdf) f.pdf.destroy().catch(() => {}); IMP.files = []; };
@@ -2411,9 +2799,9 @@ const dropPdfs = () => { for (const f of IMP.files) if (f.pdf) f.pdf.destroy().c
 $('#imp').addEventListener('mousedown', e => { if (e.target.id === 'imp') { dropPdfs(); closeModal('#imp'); } });
 $('#cpy').addEventListener('mousedown', e => { if (e.target.id === 'cpy') closeModal('#cpy'); });
 
-const tabTarget = () => ui.tab === 'stock' ? 'stock' : 'orders';
+const tabTarget = () => ui.tab === 'stock' ? 'stock' : ui.tab === 'an' ? 'history' : 'orders';
 document.addEventListener('paste', e => {
-  if (!$('#imp').hidden || !$('#cpy').hidden || !['day', 'stock'].includes(ui.tab)) return;
+  if (!$('#imp').hidden || !$('#cpy').hidden || !['day', 'stock', 'an'].includes(ui.tab)) return;
   const ae = document.activeElement;
   if (ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
   const t = e.clipboardData && e.clipboardData.getData('text/plain');
@@ -2422,7 +2810,7 @@ document.addEventListener('paste', e => {
 });
 let dragN = 0;
 const hasFiles = e => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
-document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = tabTarget() === 'stock' ? 'Отпустите файл, чтобы загрузить остатки' : 'Отпустите файл, чтобы загрузить лист подбора'; $('#drop').hidden = false; });
+document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = {stock: 'Отпустите файл, чтобы загрузить остатки', history: 'Отпустите файл, чтобы загрузить историю продаж', orders: 'Отпустите файл, чтобы загрузить лист подбора'}[tabTarget()]; $('#drop').hidden = false; });
 document.addEventListener('dragleave', e => { if (!hasFiles(e)) return; dragN = Math.max(0, dragN - 1); if (!dragN) $('#drop').hidden = true; });
 document.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
 document.addEventListener('drop', e => {
@@ -2436,7 +2824,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 async function start() {
   document.body.classList.add('loading');
   const saved = lsGet('sklad/tab');
-  setTab(['day', 'buy', 'recv', 'stock', 'settings'].includes(saved) ? saved : 'day');
+  setTab(['day', 'buy', 'recv', 'stock', 'an', 'settings'].includes(saved) ? saved : 'day');
   renderSettings(); render();
   let db = null;
   if (inViewer) {
