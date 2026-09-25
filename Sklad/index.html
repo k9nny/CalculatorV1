@@ -663,13 +663,19 @@ function parseArt(a) {
   const parts = s.split('-');
   let size = '', model = s;
   if (parts.length > 1 && SIZE_RX.test(latinUp(parts[parts.length - 1]).replace(/\s+/g, ''))) { size = parts.pop().trim(); model = parts.join('-'); }
-  const pav = S.pav && s.includes('-') ? s.split('-')[0].trim() : '';
+  const pn = pavParts(parts);
+  const pav = pn ? latinUp(parts.slice(0, pn).join('-')).replace(/\s+/g, '') : '';
   r = {model, size, pav, mkey: normKey(model)};
   if (artCache.size > 20000) artCache.clear();
   artCache.set(ck, r);
   return r;
 }
-const shortModel = (model, pav) => pav && model.startsWith(pav + '-') ? model.slice(pav.length + 1) : model;
+function pavParts(parts) {
+  if (!S.pav || parts.length < 2) return 0;
+  return /^[A-Za-zА-Яа-яЁё]$/.test(parts[0].trim()) && /^\d+$/.test(parts[1].trim()) && parts.length > 2 ? 2 : 1;
+}
+// model without the pavilion: A04-LM9-Ser-1900 → LM9-Ser-1900
+const shortModel = model => { const parts = String(model).split('-'), pn = pavParts(parts); return pn && parts.length > pn ? parts.slice(pn).join('-') : model; };
 const SZR = {XXS: 0, XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, '2XL': 6, XXXL: 7, '3XL': 7, '4XL': 8, XXXXL: 8, '5XL': 9, '6XL': 10};
 function sizeRank(sz) { const u = latinUp(sz).replace(/\s+/g, ''); if (u in SZR) return SZR[u]; const n = parseFloat(u); return isFinite(n) ? 100 + n : 1000; }
 const bySize = (a, b) => (sizeRank(a) - sizeRank(b)) || coll.compare(a, b);
@@ -1055,7 +1061,15 @@ async function readPdf(buf, name, onPage) {
     // a column starts a little before its header: centred numbers stick out to the left
     const bounds = h.list.map((c, i) => i ? Math.max((h.list[i - 1].x + c.x) / 2, c.x - 14) : -Infinity);
     const colOf = x => { let c = 0; for (let i = 1; i < bounds.length; i++) if (x >= bounds[i]) c = i; return c; };
-    const body = items.filter(i => i.y < top).map(i => ({...i, c: colOf(i.x)}));
+    const body = [];
+    for (const i of items) {
+      if (i.y >= top) continue;
+      const c = colOf(i.x);
+      // from row 100 on the list writes the row number and the shipment number as one piece of text: "104 52407554-0437-1"
+      const m = c === h.num && h.list[c + 1] && /^(\d+)\s+(\S.*)$/.exec(i.s);
+      if (m) { body.push({...i, s: m[1], c}); body.push({...i, s: m[2], x: h.list[c + 1].x, c: c + 1}); }
+      else body.push({...i, c});
+    }
     // a number too wide for the narrow "№" column wraps onto the next line ("10" / "0"): glue such lines back
     const col = body.filter(i => i.c === h.anchor).sort((a, b) => b.y - a.y);
     const fss = col.map(i => i.fs).sort((a, b) => a - b);
