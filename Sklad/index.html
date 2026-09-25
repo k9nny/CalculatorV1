@@ -444,6 +444,28 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 .chart .hit{fill:transparent;cursor:crosshair}
 .ctip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);padding:7px 10px;border-radius:8px;font:500 12.5px/1.3 var(--f-ui);white-space:nowrap;transform:translate(-50%,calc(-100% - 10px));box-shadow:0 8px 24px -10px rgba(0,0,0,.5)}
 .ctip b{font-weight:700}
+/* pavilion picker */
+.pavpick{scroll-margin-top:16px}
+.pavpick .lhead{margin-bottom:12px}
+.pp-nav{display:flex;gap:8px;align-items:center}
+.pp-nav select{flex:1;min-width:0;font-weight:600}
+.btn.ico{padding-inline:0;width:44px;justify-content:center;font-size:18px}
+.ppchips{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.ppc{appearance:none;cursor:pointer;text-align:left;position:relative;display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;transition:border-color .15s,background .15s}
+.ppc b{font:600 14px/1.2 var(--f-mono);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:18px}
+.ppc span{font-size:12.5px;color:var(--muted)}
+.ppc .ic{position:absolute;top:9px;right:9px;width:16px;height:16px;color:var(--good);stroke-width:2.4}
+.ppc:hover{border-color:var(--ink)}
+.ppc.zero{opacity:.55}
+.ppc.all b{font-family:var(--f-ui)}
+.ppc[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ppc[aria-pressed="true"] span{color:inherit;opacity:.72}
+.ppc[aria-pressed="true"] .ic{color:inherit}
+.ppc:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.pv-nav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface-2)}
+@media (min-width:1024px){.pp-nav{display:none}}
+@media (max-width:1023px){.ppchips{display:none}.pavpick{scroll-margin-top:72px}}
+@media (max-width:560px){.pv-nav{padding:12px 14px}.pv-nav .btn{flex:1 1 auto;justify-content:center}}
 @media (max-width:1023px){
   .shell{display:block}
   .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;flex-direction:row;align-items:center;gap:12px;padding:10px 16px;overflow:visible}
@@ -473,6 +495,7 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-day" viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="17.5" rx="2.5"/><rect x="8.5" y="2.5" width="7" height="3.5" rx="1.2"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
   <symbol id="i-buy" viewBox="0 0 24 24"><path d="M3 3.5h2.2l2.3 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 1.9-1.4L21.5 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/></symbol>
   <symbol id="i-recv" viewBox="0 0 24 24"><path d="M21 7.5 12 3 3 7.5v9L12 21l9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/></symbol>
@@ -584,6 +607,11 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
         </div>
         <div class="confirm" id="buyConfirm" hidden></div>
       </div>
+      <div class="card pavpick" id="pavPick" hidden>
+        <div class="lhead"><h3>Павильоны</h3><span class="sum" id="ppSum"></span></div>
+        <div class="pp-nav"><button class="btn ico" type="button" data-pav-step="-1" aria-label="Предыдущий павильон">←</button><select class="in" id="ppSel" aria-label="Павильон"></select><button class="btn ico" type="button" data-pav-step="1" aria-label="Следующий павильон">→</button></div>
+        <div class="ppchips" id="ppChips" role="group" aria-label="Выбор павильона"></div>
+      </div>
       <div class="stack" id="buyList"></div>
       <div class="card">
         <h3>Едут от поставщиков</h3>
@@ -648,6 +676,7 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
             <button type="button" data-v="models" aria-pressed="true">По моделям</button>
             <button type="button" data-v="flat" aria-pressed="false">По артикулам</button>
           </div>
+          <select class="in sortsel" id="stPav" aria-label="Павильон"></select>
           <select class="in sortsel" id="stSort" aria-label="Сортировка">
             <option value="pav">По павильонам</option>
             <option value="old">Дольше всего без продаж</option>
@@ -910,7 +939,7 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch { return null
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-25.7';
+const APP_VERSION = '2026-09-25.8';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -919,6 +948,9 @@ const DEF = {latin: true, zeros: true, punct: true, pav: true, price: true, supp
 const NUMS = {anDays: [1, 30], anLead: [0, 14], anWin: [3, 90], deadDays: [7, 180]};
 let S = {...DEF};
 const CYR = {'А':'A','В':'B','Е':'E','Ё':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','У':'Y','Х':'X'};
+// pavilions are stored with Latin look-alikes; sort them as the Russian letters they are (А, Б, В, Г…)
+const LAT2CYR = {A: 'А', B: 'В', E: 'Е', K: 'К', M: 'М', H: 'Н', O: 'О', P: 'Р', C: 'С', T: 'Т', Y: 'У', X: 'Х'};
+const byPav = (a, b) => coll.compare(a ? a.replace(/[ABEKMHOPCTYX]/g, c => LAT2CYR[c]) : 'яяя', b ? b.replace(/[ABEKMHOPCTYX]/g, c => LAT2CYR[c]) : 'яяя');
 const latinUp = s => String(s ?? '').toUpperCase().replace(/[АВЕЁКМНОРСТУХ]/g, c => CYR[c]);
 function normKey(raw, s = S) {
   let t = String(raw ?? '').normalize('NFKC')
@@ -2001,7 +2033,7 @@ function groupModels(rows) {
     if (!m.n && r.n) m.n = r.n;
     m.rows.push(r); pv.need = round(pv.need + r.need); pv.order = round(pv.order + r.order);
   }
-  const list = [...pavs.values()].sort((a, b) => coll.compare(a.pav || 'яяя', b.pav || 'яяя'));
+  const list = [...pavs.values()].sort((a, b) => byPav(a.pav, b.pav));
   for (const pv of list) { pv.list = [...pv.models.values()].sort((a, b) => coll.compare(a.model, b.model)); pv.list.forEach(m => m.rows.sort((a, b) => bySize(a.size, b.size))); }
   return list;
 }
@@ -2345,7 +2377,7 @@ function renderAn(p) {
 }
 
 /* ---------- UI state & render ---------- */
-const ui = {lastDiff: null, lastSug: null, editSup: null, tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', stView: 'models', stSort: 'pav', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
+const ui = {lastDiff: null, lastSug: null, editSup: null, tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', buyPav: null, stView: 'models', stSort: 'pav', stPav: '*', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
 let raf = 0;
 function render() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); }
 function setBody(el, html) {
@@ -2383,7 +2415,7 @@ function knownPavs() {
   for (const x of PUR.values()) set.add(x.pav);
   for (const r of RET) set.add(r.pav);
   set.delete('');
-  return [...set].sort((a, b) => coll.compare(a, b));
+  return [...set].sort(byPav);
 }
 
 function renderAll() {
@@ -2470,7 +2502,28 @@ function renderBuy(p, rows) {
   cm.disabled = !(order > 0 || pendQ > 0);
   cm.textContent = order > 0 ? 'Оформить закупку' : pendQ > 0 ? 'Списать со склада (докупать нечего)' : 'Оформить закупку';
   $('#buyCopy').disabled = !(order > 0); $('#buyExport').disabled = !(order > 0);
-  const out = pavs.map(pv => `<article class="pav" data-pav="${esc(pv.pav)}">
+  const keys = pavs.map(pv => pv.pav), many = pavs.length > 1;
+  if (ui.buyPav !== '*' && !keys.includes(ui.buyPav)) ui.buyPav = (pavs.find(pv => pv.order > 0 && !SENT.has(pv.pav)) || pavs[0] || {}).pav;
+  const cur = many && ui.buyPav !== '*' ? keys.indexOf(ui.buyPav) : -1;
+  $('#pavPick').hidden = !many;
+  if (many) {
+    const pn = pv => pv.pav || 'без павильона';
+    $('#ppSum').textContent = toSend.length ? `отправлено ${fmt(sentN)} из ${fmt(toSend.length)}` : cnt(pavs.length, W.pav);
+    const opts = pavs.map(pv => `<option value="${esc(pv.pav)}">${esc(pn(pv))} — ${fmt(pv.order)} шт.${SENT.has(pv.pav) ? ' ✓ отправлено' : ''}</option>`).join('') + '<option value="*">Все павильоны списком</option>';
+    const sel = $('#ppSel'); if (sel._h !== opts) { sel.innerHTML = opts; sel._h = opts; }
+    sel.value = ui.buyPav;
+    $$('#pavPick [data-pav-step]').forEach(b => { const d = +b.dataset.pavStep; b.disabled = cur >= 0 && (cur + d < 0 || cur + d >= keys.length); });
+    setBody($('#ppChips'), pavs.map(pv => `<button type="button" class="ppc${pv.order > 0 ? '' : ' zero'}${SENT.has(pv.pav) ? ' sent' : ''}" data-pick-pav="${esc(pv.pav)}" aria-pressed="${pv.pav === ui.buyPav}"><b>${esc(pn(pv))}</b><span>${fmt(pv.order)} шт.</span>${SENT.has(pv.pav) ? '<svg class="ic" aria-label="отправлено"><use href="#i-ok"/></svg>' : ''}</button>`).join('') +
+      `<button type="button" class="ppc all" data-pick-pav="*" aria-pressed="${ui.buyPav === '*'}"><b>Все</b><span>списком</span></button>`);
+  }
+  const pavNav = pv => {
+    if (cur < 0) return '';
+    const i = keys.indexOf(pv.pav), prev = pavs[i - 1], next = pavs[i + 1];
+    const later = next || pavs.find(x => x.order > 0 && !SENT.has(x.pav) && x !== pv && x !== prev);
+    const lbl = x => esc(x.pav || 'без павильона');
+    return `<footer class="pv-nav">${prev ? `<button class="btn ghost" type="button" data-pick-pav="${esc(prev.pav)}" data-scroll>← ${lbl(prev)}</button>` : '<span></span>'}${later ? `<button class="btn" type="button" data-pick-pav="${esc(later.pav)}" data-scroll>${next ? 'Следующий' : 'Не отправлен'}: ${lbl(later)} →</button>` : ''}</footer>`;
+  };
+  const out = (cur < 0 ? pavs : [pavs[cur]]).map(pv => `<article class="pav" data-pav="${esc(pv.pav)}">
     <header><h3>${esc(pavLabel(pv.pav))}</h3>${supHead(pv)}</header>
     ${ui.editSup === pv.pav ? supForm(pv.pav) : ''}
     ${pv.list.map(m => `<div class="model">${thumb(m.mkey, 'md', true)}<div>
@@ -2480,6 +2533,7 @@ function renderBuy(p, rows) {
       </tbody></table>
       <div class="plus"><input class="in" data-size-for="${esc(m.model)}" placeholder="размер" aria-label="Добавить размер к ${esc(m.model)}"><button class="btn" type="button" data-add-size="${esc(m.model)}">+ размер</button></div>
     </div></div>`).join('')}
+    ${pavNav(pv)}
   </article>`).join('');
   setBody($('#buyList'), out || `<div class="card"><p class="empty" style="margin:0">Сейчас докупать нечего. Если хотите взять товар на склад, добавьте артикул выше.</p></div>`);
   const go = going();
@@ -2537,6 +2591,12 @@ function renderStock() {
   $('#stSort').hidden = ui.stView !== 'models';
   $('#stModels').hidden = ui.stView !== 'models'; $('#stFlat').hidden = ui.stView !== 'flat';
   const idle = it => it.q > 0 ? daysSince(Math.max(it.in || 0, it.out || 0)) : null;
+  const spav = new Map(); for (const [, it] of items) if (it.q > 0) { const pv = parseArt(it.a).pav; spav.set(pv, round((spav.get(pv) || 0) + it.q)); }
+  if (ui.stPav !== '*' && !spav.has(ui.stPav)) ui.stPav = '*';
+  const sopts = '<option value="*">Все павильоны</option>' + [...spav.keys()].sort(byPav).map(pv => `<option value="${esc(pv)}">${esc(pv || 'Без павильона')} — ${fmt(spav.get(pv))} шт.</option>`).join('');
+  const ssel = $('#stPav'); if (ssel._h !== sopts) { ssel.innerHTML = sopts; ssel._h = sopts; }
+  ssel.value = ui.stPav; ssel.hidden = spav.size < 2;
+  const inPav = a => ui.stPav === '*' || parseArt(a).pav === ui.stPav;
   if (ui.stView === 'models') {
     const models = new Map();
     for (const [k, it] of items) {
@@ -2548,8 +2608,9 @@ function renderStock() {
       m.sizes.push({k, size: pa.size, q: it.q, d}); m.total = round(m.total + it.q); if (d != null && d > m.idle) m.idle = d;
     }
     let list = [...models.values()];
+    if (ui.stPav !== '*') list = list.filter(m => m.pav === ui.stPav);
     if (ui.stQ) list = list.filter(m => matches(ui.stQ, m.model, m.n, ...m.sizes.map(s => stock.items.get(s.k).a)));
-    list.sort(ui.stSort === 'old' ? (a, b) => b.idle - a.idle : ui.stSort === 'big' ? (a, b) => b.total - a.total : (a, b) => coll.compare(a.pav || 'яяя', b.pav || 'яяя') || coll.compare(a.model, b.model));
+    list.sort(ui.stSort === 'old' ? (a, b) => b.idle - a.idle : ui.stSort === 'big' ? (a, b) => b.total - a.total : (a, b) => byPav(a.pav, b.pav) || coll.compare(a.model, b.model));
     const shown = list.slice(0, ui.stLimit);
     setBody($('#stModels'), shown.map(m => `<div class="mrow">${thumb(m.mkey, 'md', true)}<div>
       <div class="row" style="gap:8px">${m.pav ? `<span class="pavtag">${esc(m.pav)}</span>` : ''}<span class="art">${esc(shortModel(m.model, m.pav))}</span></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
@@ -2559,7 +2620,7 @@ function renderStock() {
     $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
   } else {
     const all = items.sort((a, b) => coll.compare(a[1].a, b[1].a));
-    const list = ui.stQ ? all.filter(([, it]) => matches(ui.stQ, it.a, it.n)) : all;
+    const list = all.filter(([, it]) => inPav(it.a) && (!ui.stQ || matches(ui.stQ, it.a, it.n)));
     const shown = list.slice(0, ui.stLimit);
     setBody($('#stBody'), shown.map(([k, it]) =>
       `<tr data-k="${esc(k)}"${it.q <= 0 ? ' class="zero"' : ''}><td>${artCell(it.a, it.n)}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Остаток, ${esc(it.a)}"></td><td class="c"><button class="x" type="button" data-del title="Удалить со склада" aria-label="Удалить со склада: ${esc(it.a)}">×</button></td></tr>`
@@ -2615,7 +2676,7 @@ function renderReturns() {
   RET.forEach((r, i) => { (by.get(r.pav) || by.set(r.pav, []).get(r.pav)).push({...r, i}); });
   $('#retSum').textContent = RET.length ? `${fmt(RET.reduce((s, r) => s + r.q, 0))} шт.` : '';
   $('#retCopy').hidden = !RET.length;
-  setBody($('#retList'), [...by.entries()].sort((a, b) => coll.compare(a[0], b[0])).map(([pav, rs]) => { const link = waLink((SUP.get(pav) || {}).phone, [`Возврат · ${pavLabel(pav)}`, ...rs.map(r => `${r.a} — ${fmt(r.q)} шт.`)].join('\n')); return `<div class="mt"><div class="row"><b>${esc(pavLabel(pav))}</b>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>WhatsApp</a>` : ''}</div>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`; }).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
+  setBody($('#retList'), [...by.entries()].sort((a, b) => byPav(a[0], b[0])).map(([pav, rs]) => { const link = waLink((SUP.get(pav) || {}).phone, [`Возврат · ${pavLabel(pav)}`, ...rs.map(r => `${r.a} — ${fmt(r.q)} шт.`)].join('\n')); return `<div class="mt"><div class="row"><b>${esc(pavLabel(pav))}</b>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>WhatsApp</a>` : ''}</div>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`; }).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
 }
 
 function renderLog() {
@@ -2674,8 +2735,18 @@ function toast(msg, ms = 3800) { const el = $('#toast'); el.textContent = msg; e
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-copy-pav],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel]');
+  const t = e.target.closest('[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-copy-pav],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel]');
   if (!t) return;
+  if (t.hasAttribute('data-pick-pav') || t.dataset.pavStep) {
+    if (t.dataset.pavStep) {
+      const keys = groupModels(buyRows(plan())).map(pv => pv.pav), i = keys.indexOf(ui.buyPav);
+      const j = i < 0 ? 0 : i + +t.dataset.pavStep; if (j < 0 || j >= keys.length) return;
+      ui.buyPav = keys[j];
+    } else ui.buyPav = t.dataset.pickPav;
+    ui.editSup = null; render();
+    if (t.hasAttribute('data-scroll')) $('#pavPick').scrollIntoView({block: 'start', behavior: 'smooth'});
+    return;
+  }
   if (t.hasAttribute('data-wa')) {
     // the link opens WhatsApp by itself; here the pavilion is only marked as sent
     SENT.set(t.dataset.wa, Date.now()); saveMeta('meta/po'); diag('wa', t.dataset.wa);
@@ -2780,6 +2851,7 @@ $('#addForm').addEventListener('submit', e => {
   const k = normKey(a); if (!k) return;
   const cur = PO.get(k);
   PO.set(k, {a: cur ? cur.a : a, n: cur ? cur.n : ((stock.items.get(k) || {}).n || ''), q: round((cur && cur.q != null ? cur.q : 0) + q), add: true});
+  ui.buyPav = parseArt(cur ? cur.a : a).pav;
   saveMeta('meta/po'); $('#addArt').value = ''; $('#addQty').value = '1'; render();
   toast(`Добавлено в закупку: ${a}`);
 });
@@ -2845,6 +2917,8 @@ $('#recvFinish').addEventListener('click', () => {
 // stock
 $$('#stSeg button').forEach(b => b.addEventListener('click', () => { ui.stView = b.dataset.v; ui.stLimit = 200; render(); }));
 $('#stSort').addEventListener('change', e => { ui.stSort = e.target.value; render(); });
+$('#stPav').addEventListener('change', e => { ui.stPav = e.target.value; ui.stLimit = 200; render(); });
+$('#ppSel').addEventListener('change', e => { ui.buyPav = e.target.value; ui.editSup = null; render(); });
 $('#stSearch').addEventListener('input', e => { ui.stQ = e.target.value.trim(); ui.stLimit = 200; render(); });
 $('#stMore').addEventListener('click', () => { ui.stLimit += 500; render(); });
 function onQtyChange(pm, afterSet) {
@@ -3005,7 +3079,7 @@ $('#salesChart').addEventListener('pointermove', chartHover);
 $('#salesChart').addEventListener('pointerleave', () => chartHover({target: document.body}));
 addEventListener('resize', debounce(() => { if (ui.tab === 'an') render(); }, 200));
 $('#anBuyAll').addEventListener('click', () => { if (ui.lastSug && ui.lastSug.length) { addSuggest(ui.lastSug); render(); } });
-$('#anBuy').addEventListener('click', e => { const b = e.target.closest('[data-an-add]'); if (!b || !ui.lastSug) return; const list = ui.lastSug.filter(x => x.pav === b.dataset.anAdd); if (list.length) { addSuggest(list); render(); } });
+$('#anBuy').addEventListener('click', e => { const b = e.target.closest('[data-an-add]'); if (!b || !ui.lastSug) return; const list = ui.lastSug.filter(x => x.pav === b.dataset.anAdd); if (list.length) { addSuggest(list); ui.buyPav = b.dataset.anAdd; render(); } });
 $('#optPrice').addEventListener('change', e => { S = {...S, price: e.target.checked}; saveMeta('meta/settings'); render(); });
 $('#diagCopy').addEventListener('click', () => copyText(`Склад v${APP_VERSION}, устройство ${DEV}\n` + diagAll().map(e => `${when(e[0])} ${e[1]} ${e[2]}${e[3] ? ' ' + e[3] : ''}`).join('\n'), 'Служебный журнал скопирован'));
 
