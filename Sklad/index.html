@@ -284,6 +284,18 @@ details.rep[open] summary{margin-bottom:10px}
 .retrow{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
 .retrow:last-child{border-bottom:0}
 .retrow .btn{min-height:36px;padding:7px 10px;font-size:13px;margin-left:auto}
+a.btn{text-decoration:none}
+.btn.wa{background:var(--good);border-color:var(--good);color:var(--surface)}
+.btn.wa:hover{filter:brightness(1.08)}
+.supinfo{font-size:14px}
+.supinfo.none{color:var(--muted)}
+.pav>header .row{gap:6px}
+.supform{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+@media (max-width:640px){.supform{grid-template-columns:1fr 1fr}.supform .btn{grid-column:auto}}
+.suptab td{padding:6px 8px 6px 0;border-top:1px solid var(--line);vertical-align:middle}
+.suptab th{font:600 11px/1.2 var(--f-ui);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;padding:4px 8px 6px 0}
+.suptab .in{padding:8px 10px;font-size:15px}
+.suptab{width:100%;border-collapse:collapse}
 .pavtag{font:700 11px/1 var(--f-mono);padding:4px 6px;border-radius:4px;background:var(--hazard);color:var(--accent)}
 </style>
 </head>
@@ -533,6 +545,17 @@ details.rep[open] summary{margin-bottom:10px}
         <label class="fld mt" style="max-width:420px">Поставщик<input class="in" id="optSupplier"></label>
       </div>
       <div class="card">
+        <h2>Поставщики в WhatsApp</h2>
+        <p class="hint">У каждого павильона свой поставщик. Впишите имя и номер WhatsApp: тогда на вкладке «Закупка» у павильона появится кнопка «WhatsApp» — она откроет чат с этим поставщиком, где уже вписан его заказ.</p>
+        <div class="tw mt"><table class="suptab"><thead><tr><th>Павильон</th><th>Поставщик</th><th>WhatsApp</th><th></th></tr></thead><tbody id="supList"></tbody></table></div>
+        <form class="addrow ex" id="supAdd" autocomplete="off" style="grid-template-columns:120px 1fr 1fr auto">
+          <label class="fld">Павильон<input class="in mono" id="supPav" placeholder="A04"></label>
+          <label class="fld">Поставщик<input class="in" id="supName" placeholder="имя"></label>
+          <label class="fld">WhatsApp<input class="in" id="supPhone" type="tel" inputmode="tel" placeholder="+7 900 000-00-00"></label>
+          <button class="btn" type="submit">Добавить</button>
+        </form>
+      </div>
+      <div class="card">
         <h2>Служебный журнал</h2>
         <p class="hint">Технические записи для Claude: ошибки, загрузки файлов, проведённые операции, скорость работы и устройство. Claude читает их сам, когда вы просите разобраться, что происходит. Здесь последние записи с этого устройства.</p>
         <ol class="log" id="diagList"></ol>
@@ -629,7 +652,7 @@ const lsGet = k => { try { return localStorage.getItem(k); } catch { return null
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-25.3';
+const APP_VERSION = '2026-09-25.4';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -693,7 +716,7 @@ const pavLabel = p => p ? `Павильон ${p}` : 'Без павильона';
 
 /* ---------- storage ---------- */
 let Backend = null, DL = null;
-const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false};
+const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false, sup: false};
 const allReady = () => Object.values(ready).every(Boolean);
 
 function dbBackend(db) {
@@ -831,6 +854,8 @@ const wsum = ln => { let s = 0; for (const v of Object.values(ln.w)) s += v; ret
 
 let LOG = [], DAYM = {date: '', file: '', at: 0, expected: 0, ships: 0}, RET = [];
 let PO = new Map();               // order draft: article key → {a, n, q (null = as needed), add}
+let SENT = new Map();             // pavilion → when its order was sent to the supplier
+const SUP = new Map();            // pavilion → {name, phone}
 const PUR = new Map();            // purchases by id
 const PHOTO = new Map();          // model key → data URL
 const photoUrl = new Map();       // model key → blob URL for <img>
@@ -838,7 +863,8 @@ const META = {
   'meta/settings': () => S,
   'meta/log': () => ({entries: LOG}),
   'meta/day': () => DAYM,
-  'meta/po': () => ({items: [...PO.values()].map(e => [e.a, e.n, e.q, !!e.add])}),
+  'meta/po': () => ({items: [...PO.values()].map(e => [e.a, e.n, e.q, !!e.add]), sent: [...SENT]}),
+  'meta/suppliers': () => ({items: [...SUP].map(([pav, x]) => [pav, x.name, x.phone])}),
   'meta/returns': () => ({items: RET.map(r => [r.a, r.q, r.pav, r.at])}),
 };
 const docSt = {};
@@ -966,6 +992,14 @@ function subscribe() {
     if (!d || docPending('meta/po')) return;
     PO = new Map();
     for (const r of Array.isArray(d.items) ? d.items : []) { const a = String(r[0] ?? ''), k = normKey(a); if (k) PO.set(k, {a, n: r[1] ? String(r[1]) : '', q: r[2] == null ? null : Number(r[2]) || 0, add: !!r[3]}); }
+    SENT = new Map((Array.isArray(d.sent) ? d.sent : []).filter(x => Array.isArray(x)).map(x => [String(x[0] ?? ''), Number(x[1]) || 0]));
+    render();
+  });
+  Backend.watchDoc('meta/suppliers', d => {
+    first('sup');
+    if (!d || docPending('meta/suppliers')) return;
+    SUP.clear();
+    for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) SUP.set(String(r[0] ?? ''), {name: String(r[1] || ''), phone: String(r[2] || '')});
     render();
   });
   Backend.watchDoc('meta/returns', d => {
@@ -1696,7 +1730,7 @@ function commit() {
     }
     PUR.set(id, pur); savePur(id, 50); made.push(pur);
   }
-  PO = new Map(); saveMeta('meta/po');
+  PO = new Map(); SENT = new Map(); saveMeta('meta/po');
   const ordered = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.q, 0), 0);
   const forOrders = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.need, 0), 0);
   if (taken) log(`Списано со склада под отправления: ${fmt(taken)} шт., ${cnt(takenShips.size, W.ship)}`);
@@ -1766,7 +1800,7 @@ function cancelShipment(sid) {
 }
 
 /* ---------- UI state & render ---------- */
-const ui = {tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', stView: 'models', stSort: 'pav', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
+const ui = {editSup: null, tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', stView: 'models', stSort: 'pav', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
 let raf = 0;
 function render() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); }
 function setBody(el, html) {
@@ -1789,6 +1823,23 @@ function aliasNote(mine, theirs) {
   return `<span class="alias">${t}</span>`;
 }
 const going = () => [...PUR.values()].filter(p => p.st === 'go').sort((a, b) => b.at - a.at);
+// the order for one pavilion as a message: "LM9-Ser-1900 (Экошуба …): 42 — 10, 44 — 15"
+function pavText(pv) {
+  const models = pv.list.map(m => ({m, rows: m.rows.filter(r => r.order > 0)})).filter(x => x.rows.length);
+  const total = round(models.reduce((s, x) => s + x.rows.reduce((a, r) => a + r.order, 0), 0));
+  return [`Заказ ${today()} · ${pavLabel(pv.pav)}`, ...models.map(({m, rows}) => `${shortModel(m.model)}${m.n ? ` (${trunc(m.n, 40)})` : ''}: ${rows.map(r => `${r.size || 'шт'} — ${fmt(r.order)}`).join(', ')}`), `Итого: ${fmt(total)} шт.`].join('\n');
+}
+const waDigits = ph => { let d = String(ph || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '8') d = '7' + d.slice(1); if (d.length === 10) d = '7' + d; return d.length >= 10 ? d : ''; };
+const waLink = (ph, text) => { const d = waDigits(ph); return d ? `https://wa.me/${d}${text ? '?text=' + encodeURIComponent(text) : ''}` : ''; };
+function knownPavs() {
+  const set = new Set(SUP.keys());
+  for (const it of stock.items.values()) set.add(parseArt(it.a).pav);
+  for (const ln of lines.items.values()) set.add(parseArt(ln.a).pav);
+  for (const x of PUR.values()) set.add(x.pav);
+  for (const r of RET) set.add(r.pav);
+  set.delete('');
+  return [...set].sort((a, b) => coll.compare(a, b));
+}
 
 function renderAll() {
   const t0 = performance.now();
@@ -1809,6 +1860,7 @@ function renderAllInner() {
   $('#bBuy').hidden = !rows.length; $('#bBuy').textContent = fmt(rows.length);
   $('#bRecv').hidden = !go.length; $('#bRecv').textContent = fmt(go.length);
   renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog();
+  if (ui.tab === 'settings') renderSuppliers();
   if (ui.flash) { const tr = $(`#rcBody tr[data-k="${CSS.escape(ui.flash)}"]`); if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } ui.flash = null; }
 }
 
@@ -1859,13 +1911,15 @@ function renderBuy(p, rows) {
   let forOrders = 0; for (const r of rows) forOrders += Math.min(r.need, r.order);
   let pendQ = 0; for (const r of p.values()) pendQ += r.take;
   $('#buyTitle').textContent = `Закупка в ${S.supplier}`;
-  $('#buySum').textContent = rows.length ? `не хватает ${fmt(need)} шт. · в закупке ${fmt(order)} шт., из них на склад ${fmt(round(order - forOrders))}` : '';
+  const toSend = pavs.filter(pv => pv.order > 0), sentN = toSend.filter(pv => SENT.has(pv.pav)).length;
+  $('#buySum').textContent = rows.length ? `не хватает ${fmt(need)} шт. · в закупке ${fmt(order)} шт., из них на склад ${fmt(round(order - forOrders))}${toSend.length ? ` · отправлено поставщикам ${fmt(sentN)} из ${fmt(toSend.length)}` : ''}` : '';
   const cm = $('#buyCommit');
   cm.disabled = !(order > 0 || pendQ > 0);
   cm.textContent = order > 0 ? 'Оформить закупку' : pendQ > 0 ? 'Списать со склада (докупать нечего)' : 'Оформить закупку';
   $('#buyCopy').disabled = !(order > 0); $('#buyExport').disabled = !(order > 0);
   const out = pavs.map(pv => `<article class="pav" data-pav="${esc(pv.pav)}">
-    <header><h3>${esc(pavLabel(pv.pav))}</h3><span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.</span><button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button></header>
+    <header><h3>${esc(pavLabel(pv.pav))}</h3>${supHead(pv)}</header>
+    ${ui.editSup === pv.pav ? supForm(pv.pav) : ''}
     ${pv.list.map(m => `<div class="model">${thumb(m.mkey, 'md', true)}<div>
       <h4>${esc(shortModel(m.model, pv.pav))}</h4>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
       <table class="sz"><thead><tr><th>Размер</th><th class="num">Нужно</th><th class="num">Заказать</th><th></th></tr></thead><tbody>
@@ -1974,12 +2028,38 @@ function renderRecount() {
   ['#rcAdd', '#rcReplace', '#rcClear'].forEach(s => $(s).disabled = !all.length);
 }
 
+function supHead(pv) {
+  const sup = SUP.get(pv.pav) || {name: '', phone: ''}, sent = SENT.get(pv.pav);
+  const link = pv.order > 0 ? waLink(sup.phone, pavText(pv)) : '';
+  const who = [sup.name, sup.phone].filter(Boolean).join(' · ');
+  return `<span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.</span>
+    <span class="supinfo${who ? '' : ' none'}">${who ? esc(who) : 'поставщик не указан'}</span>${sent ? `<span class="chip good">отправлено ${when(sent)}</span>` : ''}
+    <span class="row">${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener" data-wa="${esc(pv.pav)}">WhatsApp</a>` : ''}<button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button><button class="btn ghost" type="button" data-edit-sup="${esc(pv.pav)}">${who ? 'Изменить' : 'Указать поставщика'}</button></span>`;
+}
+function supForm(pav) {
+  const sup = SUP.get(pav) || {name: '', phone: ''};
+  return `<form class="supform" data-sup-form="${esc(pav)}" autocomplete="off">
+    <label class="fld">Поставщик<input class="in" name="name" value="${esc(sup.name)}" placeholder="имя"></label>
+    <label class="fld">WhatsApp<input class="in" name="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00"></label>
+    <button class="btn primary" type="submit">Сохранить</button><button class="btn ghost" type="button" data-sup-cancel>Отмена</button>
+  </form>`;
+}
+function setSupplier(pav, name, phone) {
+  name = String(name || '').trim(); phone = String(phone || '').trim();
+  if (!name && !phone) SUP.delete(pav); else SUP.set(pav, {name, phone});
+  saveMeta('meta/suppliers');
+  if (phone && !waDigits(phone)) toast('Номер похож на неполный: нужен номер вместе с кодом, например +7 900 000-00-00');
+}
+function renderSuppliers() {
+  const pavs = knownPavs();
+  setBody($('#supList'), pavs.map(pav => { const sup = SUP.get(pav) || {name: '', phone: ''}, link = waLink(sup.phone, ''); return `<tr data-sup-pav="${esc(pav)}"><td><span class="pavtag">${esc(pav)}</span></td><td><input class="in" data-f="name" value="${esc(sup.name)}" placeholder="имя" aria-label="Поставщик павильона ${esc(pav)}"></td><td><input class="in" data-f="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00" aria-label="WhatsApp павильона ${esc(pav)}"></td><td>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener">Чат</a>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="4" class="hint">Павильоны появятся здесь, когда в программе будут товары или заказы. Можно добавить павильон вручную ниже.</td></tr>');
+}
 function renderReturns() {
   const by = new Map();
   RET.forEach((r, i) => { (by.get(r.pav) || by.set(r.pav, []).get(r.pav)).push({...r, i}); });
   $('#retSum').textContent = RET.length ? `${fmt(RET.reduce((s, r) => s + r.q, 0))} шт.` : '';
   $('#retCopy').hidden = !RET.length;
-  setBody($('#retList'), [...by.entries()].sort((a, b) => coll.compare(a[0], b[0])).map(([pav, rs]) => `<div class="mt"><b>${esc(pavLabel(pav))}</b>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
+  setBody($('#retList'), [...by.entries()].sort((a, b) => coll.compare(a[0], b[0])).map(([pav, rs]) => { const link = waLink((SUP.get(pav) || {}).phone, [`Возврат · ${pavLabel(pav)}`, ...rs.map(r => `${r.a} — ${fmt(r.q)} шт.`)].join('\n')); return `<div class="mt"><div class="row"><b>${esc(pavLabel(pav))}</b>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}</div>${rs.map(r => `<div class="retrow"><span class="art">${esc(r.a)}</span><span>× ${fmt(r.q)}</span><span class="hint" style="margin:0">с ${dm(r.at)}</span><button class="btn" type="button" data-returned="${r.i}">Вернули</button></div>`).join('')}</div>`; }).join('') || '<p class="hint" style="margin:0">Возвращать нечего.</p>');
 }
 
 function renderLog() {
@@ -1995,7 +2075,7 @@ function renderSettings() {
     memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
   };
   $('#storeNote').textContent = Backend ? note[Backend.kind] : 'Подключение к хранилищу…';
-  renderTester(); renderDiag();
+  renderTester(); renderDiag(); renderSuppliers();
 }
 const diagAll = () => [...DIAG.events, ...DIAG.buf];
 function renderDiag() {
@@ -2034,8 +2114,15 @@ function toast(msg, ms = 3800) { const el = $('#toast'); el.textContent = msg; e
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-copy-pav],[data-add-size],[data-unadd],[data-returned]');
+  const t = e.target.closest('[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-copy-pav],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel]');
   if (!t) return;
+  if (t.hasAttribute('data-wa')) {
+    // the link opens WhatsApp by itself; here the pavilion is only marked as sent
+    SENT.set(t.dataset.wa, Date.now()); saveMeta('meta/po'); diag('wa', t.dataset.wa);
+    setTimeout(render, 300); return;
+  }
+  if (t.hasAttribute('data-edit-sup')) { ui.editSup = ui.editSup === t.dataset.editSup ? null : t.dataset.editSup; render(); setTimeout(() => { const f = $(`#buyList form[data-sup-form="${CSS.escape(t.dataset.editSup)}"] input`); if (f) f.focus(); }, 50); return; }
+  if (t.hasAttribute('data-sup-cancel')) { ui.editSup = null; render(); return; }
   if (t.dataset.go) setTab(t.dataset.go);
   else if (t.hasAttribute('data-commit')) askCommit('#dayConfirm');
   else if (t.dataset.recv) { ui.recvId = t.dataset.recv; ui.recvQ = ''; $('#recvSearch').value = ''; setTab('recv'); render(); scrollTo({top: 0}); }
@@ -2107,6 +2194,23 @@ $('#buyList').addEventListener('change', e => {
   PO.set(t.dataset.ak, {a: row ? row.a : cur.a, n: row ? row.n : (cur ? cur.n : ''), q, add: !!(cur && cur.add)});
   saveMeta('meta/po'); render();
 });
+$('#buyList').addEventListener('submit', e => {
+  const f = e.target.closest('[data-sup-form]'); if (!f) return;
+  e.preventDefault();
+  setSupplier(f.dataset.supForm, f.elements.name.value, f.elements.phone.value);
+  ui.editSup = null; document.activeElement.blur(); render();
+});
+$('#supList').addEventListener('change', e => {
+  const tr = e.target.closest('tr[data-sup-pav]'); if (!tr) return;
+  setSupplier(tr.dataset.supPav, $('[data-f="name"]', tr).value, $('[data-f="phone"]', tr).value); render();
+});
+$('#supAdd').addEventListener('submit', e => {
+  e.preventDefault();
+  const pav = latinUp($('#supPav').value).replace(/\s+/g, '');
+  if (!pav) { $('#supPav').focus(); return; }
+  setSupplier(pav, $('#supName').value, $('#supPhone').value);
+  $('#supPav').value = ''; $('#supName').value = ''; $('#supPhone').value = ''; renderSuppliers();
+});
 $('#buyList').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset.sizeFor != null) { e.preventDefault(); e.target.nextElementSibling.click(); } });
 $('#addForm').addEventListener('submit', e => {
   e.preventDefault();
@@ -2121,10 +2225,7 @@ $('#addForm').addEventListener('submit', e => {
 });
 function buyText(onlyPav) {
   const pavs = groupModels(buyRows(plan()).filter(r => r.order > 0)).filter(pv => onlyPav == null || pv.pav === onlyPav);
-  return pavs.map(pv => [`${pavLabel(pv.pav)} — ${today()}`, ...pv.list.map(m => {
-    const sizes = m.rows.filter(r => r.order > 0).map(r => `${r.size || 'шт'} — ${fmt(r.order)}`).join(', ');
-    return `${shortModel(m.model, pv.pav)}${m.n ? ` (${trunc(m.n, 40)})` : ''}: ${sizes}`;
-  }), `Итого: ${fmt(pv.order)} шт.`].join('\n')).join('\n\n');
+  return pavs.map(pavText).join('\n\n');
 }
 function copyBuy(pav) { const t = buyText(pav); if (!t) { toast('Нечего копировать'); return; } copyText(t, 'Скопировано. Вставьте в WhatsApp или Telegram.'); }
 $('#buyCopy').addEventListener('click', () => copyBuy(null));
