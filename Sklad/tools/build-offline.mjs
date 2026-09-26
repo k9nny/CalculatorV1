@@ -1,5 +1,6 @@
-// Builds dist/2. ULTIMATE SHOP СКЛАД.html: the app with pdf.js, SheetJS and the fonts inside,
-// so the file opens from a disk and works without internet.
+// Builds dist/ULTIMATE SHOP СКЛАД.html: the app with pdf.js, SheetJS and the fonts inside, so the file
+// opens from a disk and works without internet, and dist/ULTIMATE SHOP СКЛАД — установить.cmd: one file
+// for Windows that carries the app and installs it with a desktop shortcut.
 // Run: cd Sklad/tools && npm install && npm run build   (or NODE_MODULES=/path/to/node_modules node build-offline.mjs)
 import fs from 'node:fs';
 import path from 'node:path';
@@ -70,25 +71,26 @@ swap('<body>\n', `<body>
 </div></div></noscript>
 `);
 
-const out = path.join(root, 'dist', '2. ULTIMATE SHOP СКЛАД.html');
+const out = path.join(root, 'dist', 'ULTIMATE SHOP СКЛАД.html');
 fs.mkdirSync(path.dirname(out), {recursive: true});
 fs.writeFileSync(out, html);
 console.log(`${out}: ${(fs.statSync(out).size / 1024 / 1024).toFixed(2)} MB, ${faces.length} font faces`);
 
-// the shortcut maker: a .cmd whose PowerShell part (tools/shortcut.ps1) comes after the marker line;
-// cmd runs only the first lines and never reads past «exit /b»
-const ps = fs.readFileSync(path.join(here, 'shortcut.ps1'), 'utf8').replace('__ICON__', fs.readFileSync(path.join(here, 'icon.ico')).toString('base64'));
-const cmd = [
+// the installer: cmd runs only its first lines and never reads past «exit /b»; they start PowerShell,
+// which runs the script between the PS and HTML marker lines (tools/install.ps1); the app follows the HTML marker unchanged
+const ps = fs.readFileSync(path.join(here, 'install.ps1'), 'utf8').replace('__ICON__', fs.readFileSync(path.join(here, 'icon.ico')).toString('base64'));
+const head = [
   '@echo off',
-  'rem ULTIMATE SHOP SKLAD: creates a desktop shortcut for the warehouse program.',
-  'rem Everything it does is written below in plain text: it finds "2. ULTIMATE SHOP ... .html"',
-  'rem next to this file, in Downloads or on the Desktop, copies it to the local application data folder,',
-  'rem writes an icon and creates shortcuts on the Desktop and in the Start menu. Nothing is downloaded.',
-  'powershell -NoProfile -Command "$t=[IO.File]::ReadAllText(\'%~f0\',[Text.Encoding]::UTF8); & ([scriptblock]::Create($t.Substring($t.IndexOf(\'#\'+\'#PS\'+\'#\'+\'#\')+6))) \'%~dp0\'"',
+  'rem ULTIMATE SHOP СКЛАД: установка программы для склада.',
+  'rem Откройте этот файл двойным щелчком. Он положит программу в папку AppData\\Local\\UltimateShopSklad,',
+  'rem создаст ярлык на рабочем столе и в меню «Пуск» и откроет программу. В интернет ничего не отправляет.',
+  'rem Ниже обычным текстом записано всё, что он делает, а после строки с меткой HTML лежит сама программа.',
+  'powershell -NoProfile -Command "$t=[IO.File]::ReadAllText(\'%~f0\',[Text.Encoding]::UTF8); $a=$t.IndexOf(\'#\'+\'#PS\'+\'#\'+\'#\')+6; $b=$t.IndexOf(\'#\'+\'#HTML\'+\'#\'+\'#\'); & ([scriptblock]::Create($t.Substring($a,$b-$a))) \'%~f0\'"',
   'exit /b',
   '##PS##',
   ps.replace(/\r?\n/g, '\r\n'),
+  '##HTML##',
 ].join('\r\n');
-const outCmd = path.join(root, 'dist', '3. Создать ярлык на рабочем столе.cmd');
-fs.writeFileSync(outCmd, cmd);
-console.log(`${outCmd}: ${(fs.statSync(outCmd).size / 1024).toFixed(0)} KB`);
+const outCmd = path.join(root, 'dist', 'ULTIMATE SHOP СКЛАД — установить.cmd');
+fs.writeFileSync(outCmd, head + '\n' + html);
+console.log(`${outCmd}: ${(fs.statSync(outCmd).size / 1024 / 1024).toFixed(2)} MB`);
