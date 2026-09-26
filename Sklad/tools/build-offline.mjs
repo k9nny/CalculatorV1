@@ -74,3 +74,21 @@ const out = path.join(root, 'dist', '2. ULTIMATE SHOP СКЛАД.html');
 fs.mkdirSync(path.dirname(out), {recursive: true});
 fs.writeFileSync(out, html);
 console.log(`${out}: ${(fs.statSync(out).size / 1024 / 1024).toFixed(2)} MB, ${faces.length} font faces`);
+
+// the shortcut maker: a .cmd whose PowerShell part (tools/shortcut.ps1) comes after the marker line;
+// cmd runs only the first lines and never reads past «exit /b»
+const ps = fs.readFileSync(path.join(here, 'shortcut.ps1'), 'utf8').replace('__ICON__', fs.readFileSync(path.join(here, 'icon.ico')).toString('base64'));
+const cmd = [
+  '@echo off',
+  'rem ULTIMATE SHOP SKLAD: creates a desktop shortcut for the warehouse program.',
+  'rem Everything it does is written below in plain text: it finds "2. ULTIMATE SHOP ... .html"',
+  'rem next to this file, in Downloads or on the Desktop, copies it to the local application data folder,',
+  'rem writes an icon and creates shortcuts on the Desktop and in the Start menu. Nothing is downloaded.',
+  'powershell -NoProfile -Command "$t=[IO.File]::ReadAllText(\'%~f0\',[Text.Encoding]::UTF8); & ([scriptblock]::Create($t.Substring($t.IndexOf(\'#\'+\'#PS\'+\'#\'+\'#\')+6))) \'%~dp0\'"',
+  'exit /b',
+  '##PS##',
+  ps.replace(/\r?\n/g, '\r\n'),
+].join('\r\n');
+const outCmd = path.join(root, 'dist', '3. Создать ярлык на рабочем столе.cmd');
+fs.writeFileSync(outCmd, cmd);
+console.log(`${outCmd}: ${(fs.statSync(outCmd).size / 1024).toFixed(0)} KB`);
