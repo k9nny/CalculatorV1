@@ -711,6 +711,7 @@ body[data-tab="home"] .top .kpis{display:none}
 .hbuy .ok{color:var(--good);width:16px;height:16px}
 .hbuy .no{width:8px;height:8px;border-radius:50%;background:var(--line);justify-self:center}
 .hempty{color:var(--muted);font-size:14px;margin:auto 0;display:flex;align-items:center;gap:10px}
+.hbuy li.hempty,.htop li.hempty{display:flex}
 .hempty .ic{color:var(--good);width:22px;height:22px}
 /* sizes */
 .hsizes{display:flex;align-items:flex-end;gap:8px;height:118px;margin-top:auto}
@@ -1444,7 +1445,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-26.3';
+const APP_VERSION = '2026-09-26.4';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -1950,6 +1951,7 @@ let pdfP = null;
 function ensurePDF() {
   if (pdfP) return pdfP;
   pdfP = (async () => {
+    if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions.workerSrc) return window.pdfjsLib;
     for (const base of PDFJS) {
       if (!window.pdfjsLib) { try { await loadScript(base + 'pdf.min.js'); } catch { continue; } }
       if (window.pdfjsLib) { window.pdfjsLib.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.js'; return window.pdfjsLib; }
@@ -3273,7 +3275,7 @@ function renderSettings() {
   if (document.activeElement !== $('#optSupplier')) $('#optSupplier').value = S.supplier;
   const note = {
     db: 'Склад, отправления, закупки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
-    local: 'Данные хранятся только в этом браузере на этом компьютере. Если очистить историю браузера, они пропадут, поэтому иногда скачивайте остатки в Excel.',
+    local: 'Данные хранятся только в этом браузере на этом компьютере. Если очистить историю браузера, они пропадут, поэтому раз в неделю нажимайте «Скачать резервную копию».',
     memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
   };
   $('#storeNote').textContent = Backend ? note[Backend.kind] : 'Подключение к хранилищу…';
@@ -4375,7 +4377,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { pl
 
 /* ---------- tour: a guided walk through one working day ---------- */
 const TOUR = [
-  {h: 'Добро пожаловать в ULTIMATE SHOP СКЛАД', t: 'Покажем за минуту, как идёт рабочий день: утром заказы, потом закупка в ТЦ Москва, приёмка мешков и склад. Листайте кнопкой «Далее» или стрелками на клавиатуре.'},
+  {h: 'Добро пожаловать в ULTIMATE SHOP СКЛАД', t: 'Покажем за минуту, как идёт рабочий день: утром заказы, потом закупка в ТЦ Москва, приёмка мешков и склад. Листайте кнопкой «Далее» или стрелками на клавиатуре.' + (location.protocol === 'file:' ? ' Эта копия работает без интернета, все данные хранятся на этом компьютере.' : '')},
   {tab: 'home', sel: ['#gs'], h: 'Где шуба?', t: 'Поиск на любой вкладке, открывается и клавишей «/». Введите артикул или часть названия: программа покажет, сколько таких на складе, в каких отправлениях они ждут и едут ли в мешке.'},
   {tab: 'home', sel: ['#bento .w-rings', '#bento'], h: 'Сводка: весь день на одном экране', t: 'Кольца показывают, сколько отправлений можно собрать, сколько обеспечено товаром и сколько мешков принято. Рядом склад, продажи, закупка и подсказки, что сделать сейчас. Нажмите на любой виджет, чтобы перейти в раздел. Кнопка «Разбор дня» просит Claude коротко сказать, что делать в первую очередь.'},
   {tab: 'day', sel: ['#pane-day [data-import="orders"]'], h: 'Утром — лист подбора', t: 'Скачайте лист подбора в кабинете Озона и загрузите сюда PDF. Программа прочитает все отправления, даже 1600 с лишним, и сверит их число с шапкой листа. Повторная загрузка ничего не задвоит.'},
