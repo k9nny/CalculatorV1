@@ -755,6 +755,100 @@ body[data-tab="home"] .top .kpis{display:none}
 .helpbtn.gear{display:none}
 @media (max-width:1023px){#t-settings{display:none}.helpbtn.gear{display:grid;place-items:center}.side .tab{flex:1 0 54px;font-size:10.5px}.side .tab .tl{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
 @media (prefers-reduced-motion:reduce){.aurora i,.pulse,.ai,.aibtn,.ai-text.think{animation:none!important}.rings .rv,.w{transition:none!important}}
+
+/* ============ photo viewer ============ */
+img.ph.zoom{cursor:zoom-in;transition:transform .45s var(--spring),box-shadow .25s}
+@media (hover:hover){img.ph.zoom:hover{transform:scale(1.06);box-shadow:0 8px 20px -10px rgba(0,0,0,.45)}}
+img.ph.zoom:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.lb{position:fixed;inset:0;z-index:92;display:grid;grid-template-columns:64px minmax(0,1fr) 64px;align-items:center;background:rgba(8,9,11,.88);-webkit-backdrop-filter:blur(18px) saturate(1.2);backdrop-filter:blur(18px) saturate(1.2);padding:calc(env(safe-area-inset-top,0px) + 12px) 8px calc(env(safe-area-inset-bottom,0px) + 12px);color:#F4F4F6;animation:fadeIn .25s ease-out}
+.lb-fig{margin:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,340px);gap:28px;align-items:center;justify-items:center;max-height:100%;min-width:0}
+.lb-imgw{display:grid;place-items:center;width:100%;height:min(82vh,760px);min-width:0}
+.lb-imgw img{max-width:100%;max-height:100%;border-radius:18px;background:#fff;box-shadow:0 30px 80px -20px rgba(0,0,0,.7);touch-action:pan-y}
+.lb-cap{justify-self:stretch;display:grid;gap:10px;align-content:center}
+.lb-t{font:600 22px/1.2 var(--f-mono);word-break:break-word}
+.lb-n{font-size:15px;color:#B9BDC4;line-height:1.45}
+.lb-sz{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.lb-sz .z{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:9px 12px;display:grid;gap:2px;min-width:78px}
+.lb-sz .z b{font:600 20px/1 var(--f-ui)}
+.lb-sz .z span{font-size:12.5px;color:#B9BDC4}
+.lb-sz .z.ok{border-color:rgba(95,203,145,.55);background:rgba(95,203,145,.12)}
+.lb-sz button.z{appearance:none;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:transform .4s var(--spring),background-color .2s}
+.lb-sz button.z:active{transform:scale(.94)}
+.lb-sz .z i{font-style:normal;font:600 12px var(--f-ui);color:#D9B76E}
+.lb-pos{font-size:12.5px;color:#8E939C}
+.lb-x{position:absolute;top:calc(env(safe-area-inset-top,0px) + 12px);right:14px;width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;font:400 26px/1 var(--f-ui);cursor:pointer;z-index:2;transition:transform .45s var(--spring),background-color .2s}
+.lb-x:hover{background:rgba(255,255,255,.18);transform:rotate(90deg)}
+.lb-nav{width:52px;height:52px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;display:grid;place-items:center;justify-self:center;transition:transform .45s var(--spring),background-color .2s,opacity .2s}
+.lb-nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.lb-nav:hover{background:rgba(255,255,255,.2);transform:scale(1.08)}
+.lb-nav:disabled{opacity:0;pointer-events:none}
+.lb button:focus-visible{outline:3px solid #80A8FF;outline-offset:2px}
+@media (max-width:760px){
+  .lb{grid-template-columns:minmax(0,1fr);align-content:center;padding-inline:14px}
+  .lb-fig{grid-template-columns:minmax(0,1fr);gap:16px}
+  .lb-imgw{height:min(56vh,520px)}
+  .lb-cap{justify-self:stretch}
+  .lb-t{font-size:18px}
+  .lb-nav{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:48px;height:48px}
+  .lb-nav.prev{left:16px}.lb-nav.next{right:16px}
+  .lb-pos{text-align:center}
+}
+@media (prefers-reduced-motion:reduce){.lb{animation:none}img.ph.zoom,.lb-x,.lb-nav,.lb-sz button.z{transition:none}}
+
+/* ============ «Где шуба?» ============ */
+.top .title{order:0}.gs{order:1}.top .kpis{order:2}
+.gs{position:relative;flex:1 1 260px;max-width:400px;align-self:center;z-index:40}
+.gsf{display:flex;align-items:center;gap:10px;height:46px;padding:0 12px 0 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);cursor:text;transition:border-color .2s,box-shadow .3s var(--ease-out)}
+.gsf:focus-within{border-color:var(--ink);box-shadow:0 0 0 4px color-mix(in srgb,var(--gold) 22%,transparent),var(--shadow)}
+.gsf .ic{color:var(--muted);width:18px;height:18px}
+.gsf input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:500 15px var(--f-ui);outline:none;height:100%}
+.gsf input::-webkit-search-cancel-button{cursor:pointer}
+.gsf kbd{font:600 11px/1 var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:6px;padding:4px 7px;background:var(--surface-2)}
+.gsf:focus-within kbd{display:none}
+.gres{position:absolute;top:calc(100% + 10px);right:0;width:min(620px,calc(100vw - 32px));max-height:min(70vh,640px);overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 70px -24px rgba(0,0,0,.45);padding:10px;display:grid;gap:8px;animation:gresIn .45s var(--spring)}
+@keyframes gresIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:none}}
+.gr{display:grid;gap:10px;padding:12px;border-radius:14px;background:var(--surface-2)}
+.gh{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}
+.gh .ph{width:48px;height:58px}
+.gh b{display:block;font:600 15px/1.25 var(--f-mono);word-break:break-word}
+.gh .nm{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.gl{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.gl li{display:grid;grid-template-columns:22px 118px minmax(0,1fr);gap:8px;align-items:baseline;font-size:13.5px}
+.gl li .ic{width:16px;height:16px;color:var(--muted);align-self:center}
+.gl li b{font-weight:600;color:var(--muted)}
+.gl li span{color:var(--ink)}
+.gl li.none span{color:var(--muted)}
+.gl .st{display:inline-flex;gap:6px;flex-wrap:wrap}
+.ga{display:flex;gap:6px;flex-wrap:wrap}
+.ga .btn{min-height:34px;padding:6px 12px;font-size:13px}
+.gempty{padding:18px;text-align:center;color:var(--muted);font-size:14px}
+body.emp [data-gs-go="day"],body.emp [data-gs-go="buy"]{display:none}
+@media (max-width:1023px){.gs{order:3;flex-basis:100%;max-width:none}.gres{left:0;right:auto;width:100%}.gsf kbd{display:none}.gl li{grid-template-columns:20px 100px minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.gres{animation:none}}
+
+/* undo in the island */
+.toast .tu{appearance:none;border:0;margin-left:4px;background:rgba(255,255,255,.14);color:#fff;font:600 13.5px/1 var(--f-ui);border-radius:999px;padding:7px 13px 7px 8px;display:inline-flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap;transition:background-color .2s,transform .4s var(--spring)}
+.toast .tu:hover{background:rgba(255,255,255,.24)}
+.toast .tu:active{transform:scale(.94)}
+.toast .tu svg{width:18px;height:18px;transform:rotate(-90deg)}
+.toast .tu circle{fill:none;stroke:#D9B76E;stroke-width:2.4;stroke-linecap:round;stroke-dasharray:44;stroke-dashoffset:0;animation:undoRing linear forwards}
+@keyframes undoRing{to{stroke-dashoffset:44}}
+@media (prefers-reduced-motion:reduce){.toast .tu circle{animation:none}}
+
+/* ============ employee mode ============ */
+.empbadge,.helpbtn.empexit,.onlyemp{display:none}
+body.emp .noemp{display:none}
+body.emp .onlyemp{display:inline}
+.helpbtn.empexit{text-align:left}
+body.emp .empbadge{display:block;margin:-8px 8px 0;padding:6px 10px;border-radius:8px;background:color-mix(in srgb,var(--side-gold) 18%,transparent);color:var(--side-gold);font:600 11.5px/1.2 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;text-align:center}
+body.emp .helpbtn.empexit{display:flex}
+body.emp #t-home,body.emp #t-day,body.emp #t-buy,body.emp #t-an,body.emp #t-settings,body.emp .helpbtn.gear,body.emp .top .kpis,
+body.emp #recvAsIs,body.emp [data-import="stock"],body.emp [data-paste="stock"],body.emp [data-export-stock],body.emp #rcReplace,body.emp #stSeg,body.emp #stBody [data-del],
+body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-cancel-pur]{display:none!important}
+@media (max-width:1023px){body.emp .empbadge{display:none}body.emp .helpbtn.empexit{width:34px;height:34px;padding:0;justify-content:center}body.emp .helpbtn.empexit span{display:none}}
+.empcard{border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
+.shake{animation:shake .45s}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
 /* celebration layer */
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:96}
 @media (prefers-reduced-motion:reduce){
@@ -766,6 +860,7 @@ body[data-tab="home"] .top .kpis{display:none}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5l5 5"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7.5" height="7.5" rx="2.2"/><rect x="13" y="3.5" width="7.5" height="7.5" rx="2.2"/><rect x="3.5" y="13" width="7.5" height="7.5" rx="2.2"/><circle cx="16.75" cy="16.75" r="3.75"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M11 3.5l1.9 5.1 5.1 1.9-5.1 1.9L11 17.5l-1.9-5.1L4 10.5l5.1-1.9z"/><path d="M18.5 15l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
@@ -792,6 +887,7 @@ body[data-tab="home"] .top .kpis{display:none}
       <div class="mark" aria-hidden="true">US</div>
       <div class="logo">Ultimate Shop <span>Склад</span></div>
     </div>
+    <div class="empbadge" aria-hidden="true">Режим сотрудника</div>
     <nav class="tabs" role="tablist" aria-label="Разделы"><span class="tabpill" id="tabPill" aria-hidden="true"></span>
       <button class="tab" role="tab" id="t-home" data-tab="home" aria-selected="false"><svg class="ic"><use href="#i-home"/></svg><span class="tl">Сводка</span></button>
       <button class="tab" role="tab" id="t-day" data-tab="day" aria-selected="true"><svg class="ic"><use href="#i-day"/></svg><span class="tl">Заказы</span> <span class="badge hot" id="bDay" hidden></span></button>
@@ -801,13 +897,17 @@ body[data-tab="home"] .top .kpis{display:none}
       <button class="tab" role="tab" id="t-an" data-tab="an" aria-selected="false"><svg class="ic"><use href="#i-an"/></svg><span class="tl">Анализ</span></button>
       <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false"><svg class="ic"><use href="#i-set"/></svg><span class="tl">Настройки</span></button>
     </nav>
-    <div class="side-foot"><button class="helpbtn gear" type="button" data-go="settings" aria-label="Настройки"><svg class="ic"><use href="#i-set"/></svg></button><button class="helpbtn" type="button" id="tourOpen" aria-label="Как пользоваться"><svg class="ic"><use href="#i-help"/></svg><span>Как пользоваться</span></button><div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div></div>
+    <div class="side-foot"><button class="helpbtn empexit" type="button" id="empExit" aria-label="Выйти из режима сотрудника"><svg class="ic"><use href="#i-back"/></svg><span>Выйти из режима сотрудника</span></button><button class="helpbtn gear" type="button" data-go="settings" aria-label="Настройки"><svg class="ic"><use href="#i-set"/></svg></button><button class="helpbtn" type="button" id="tourOpen" aria-label="Как пользоваться"><svg class="ic"><use href="#i-help"/></svg><span>Как пользоваться</span></button><div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div></div>
   </aside>
 <div class="app">
   <header class="top">
     <div class="title">
       <div class="eyebrow" id="pageDate"></div>
       <h1 id="pageTitle">Заказы</h1>
+    </div>
+    <div class="gs" id="gs">
+      <label class="gsf"><svg class="ic" aria-hidden="true"><use href="#i-search"/></svg><input id="gq" type="search" placeholder="Где шуба? Артикул или название" autocomplete="off" spellcheck="false" aria-label="Где шуба: поиск по артикулу или названию" aria-controls="gres"><kbd aria-hidden="true">/</kbd></label>
+      <div class="gres" id="gres" role="region" aria-label="Где шуба" aria-live="polite" hidden></div>
     </div>
     <div class="kpis">
       <div class="kpi"><span class="num" id="kQty">0</span><span class="lbl">штук на складе</span></div>
@@ -951,7 +1051,6 @@ body[data-tab="home"] .top .kpis{display:none}
         </form>
         <div class="actions">
           <button class="btn primary" type="button" id="buyCommit">Оформить закупку</button>
-          <button class="btn" type="button" id="buyCopy"><svg class="ic"><use href="#i-copy"/></svg>Скопировать для WhatsApp</button>
           <button class="btn" type="button" id="buyPdfAll"><svg class="ic"><use href="#i-doc"/></svg>Все заказы с фото (PDF)</button>
           <button class="btn" type="button" id="buyExport"><svg class="ic"><use href="#i-dl"/></svg>Скачать Excel</button>
         </div>
@@ -1052,7 +1151,7 @@ body[data-tab="home"] .top .kpis{display:none}
 
       <div class="card">
         <h2>Пересчёт и ручной приход</h2>
-        <p class="hint">Введите артикул и количество или просканируйте штрихкод. Одинаковые артикулы складываются. Потом добавьте список на склад или замените им весь склад, если это полный пересчёт.</p>
+        <p class="hint">Введите артикул и количество или просканируйте штрихкод. Одинаковые артикулы складываются. Потом <span class="noemp">добавьте список на склад или замените им весь склад, если это полный пересчёт.</span><span class="onlyemp">нажмите «Добавить на склад».</span></p>
         <form class="scan" id="scanForm" autocomplete="off">
           <label class="fld">Артикул или штрихкод<input class="in big" id="scanArt" spellcheck="false" autocapitalize="characters" enterkeyhint="done"></label>
           <label class="fld">Кол-во, шт.<input class="in big" id="scanQty" inputmode="decimal" value="1"></label>
@@ -1152,6 +1251,15 @@ body[data-tab="home"] .top .kpis{display:none}
 
     <!-- НАСТРОЙКИ -->
     <section class="pane stack" id="pane-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
+      <div class="card empcard">
+        <h2>Режим сотрудника</h2>
+        <p class="hint">Для телефона приёмщика. На этом устройстве останутся только «Приёмка» и «Склад», без денег, закупки, анализа и настроек. Спрячутся и кнопки, которыми можно испортить склад: замена склада, загрузка файлов, правка остатков. На других устройствах ничего не изменится.</p>
+        <form class="addrow" id="empForm" autocomplete="off">
+          <label class="fld">Код для выхода, если нужен<input class="in" id="empPin" inputmode="numeric" maxlength="6" placeholder="например, 2580" autocomplete="off"></label>
+          <button class="btn primary" type="submit">Включить на этом устройстве</button>
+        </form>
+        <p class="hint small">Без кода выйти сможет любой, кто нажмёт «Выйти из режима сотрудника». С кодом выход только по нему.</p>
+      </div>
       <div class="card">
         <h2>Как читать артикул</h2>
         <label class="opt"><input type="checkbox" id="optPrice"><div><b>Число в артикуле — закупочная цена</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> цена — <code class="k">1900</code>. По ней программа считает, сколько денег нужно на закупку, сколько стоит склад и сколько денег лежит в залежавшемся товаре. Если число означает что-то другое, выключите.</span></div></label>
@@ -1245,6 +1353,26 @@ body[data-tab="home"] .top .kpis{display:none}
   </div>
 </div>
 
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-labelledby="lbT" hidden>
+  <button class="lb-x" type="button" id="lbX" aria-label="Закрыть">×</button>
+  <button class="lb-nav prev" type="button" id="lbPrev" aria-label="Предыдущая модель"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+  <figure class="lb-fig">
+    <div class="lb-imgw"><img id="lbImg" alt=""></div>
+    <figcaption class="lb-cap"><div class="lb-t" id="lbT"></div><div class="lb-n" id="lbN"></div><div class="lb-sz" id="lbSz"></div><div class="lb-pos" id="lbPos"></div></figcaption>
+  </figure>
+  <button class="lb-nav next" type="button" id="lbNext" aria-label="Следующая модель"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+</div>
+<div class="modal" id="empDlg" role="dialog" aria-modal="true" aria-labelledby="empDlgT" hidden>
+  <div class="sheet" style="max-width:420px">
+    <header><h2 id="empDlgT">Выйти из режима сотрудника?</h2><button class="x" type="button" id="empDlgX" aria-label="Закрыть">×</button></header>
+    <form class="sbody" id="empDlgForm" autocomplete="off">
+      <p class="hint" id="empDlgHint" style="margin:0"></p>
+      <label class="fld" id="empDlgPinWrap">Код<input class="in" id="empDlgPin" inputmode="numeric" maxlength="6" autocomplete="off"></label>
+      <p class="hint" id="empDlgErr" style="margin:0;color:var(--bad)" hidden>Код не подходит</p>
+      <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn" type="button" id="empDlgNo">Остаться</button><button class="btn primary" type="submit">Выйти</button></div>
+    </form>
+  </div>
+</div>
 <div class="modal" id="ord" role="dialog" aria-modal="true" aria-labelledby="ordTitle" hidden>
   <div class="sheet ordsheet">
     <header><h2 id="ordTitle">Заказ с фото</h2><button class="x" type="button" id="ordX" aria-label="Закрыть">×</button></header>
@@ -1312,10 +1440,11 @@ const dm = t => { const d = new Date(t); return `${p2(d.getDate())}.${p2(d.getMo
 const daysSince = t => t ? Math.max(0, Math.floor((Date.now() - t) / DAYMS)) : null;
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receiving and stock only
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-26.2';
+const APP_VERSION = '2026-09-26.3';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -1457,11 +1586,14 @@ function localBackend() {
 }
 
 // a map of items saved as 16 bucket documents in one collection
+// undo of the last purchase or receipt; any later change of data drops it
+let UNDO = null, dataEpoch = 0;
+function bumpData() { dataEpoch++; if (UNDO && !UNDO.restoring && UNDO.epoch !== dataEpoch) disarmUndo(); }
 class PMap {
   constructor(name, o) { this.name = name; this.o = o; this.items = new Map(); this.dirty = new Set(); this.inflight = new Set(); this.timer = 0; this.busy = false; this.again = false; this.fails = 0; this.seen = []; }
   bucket(k) { return hash(k) % NB; }
-  touch(k) { this.dirty.add(this.bucket(k)); this.schedule(); }
-  touchAll() { for (let b = 0; b < NB; b++) this.dirty.add(b); this.schedule(); }
+  touch(k) { this.dirty.add(this.bucket(k)); this.schedule(); bumpData(); }
+  touchAll() { for (let b = 0; b < NB; b++) this.dirty.add(b); this.schedule(); bumpData(); }
   schedule(ms = 450) { clearTimeout(this.timer); setSync('busy'); this.timer = setTimeout(() => this.flush(), ms); }
   quiet(it) { const k = this.o.key(it); if (!k) return null; const c = this.items.get(k); if (c) this.o.merge(c, it); else this.items.set(k, it); return k; }
   put(it) { const k = this.quiet(it); if (k) this.touch(k); return k; }
@@ -1545,6 +1677,7 @@ const SUPSTAT = new Map();        // pavilion → {n receipts, ord, got, short, 
 const PUR = new Map();            // purchases by id
 const PHOTO = new Map();          // model key → data URL
 const photoUrl = new Map();       // model key → blob URL for <img>
+const PHOTO_V = new Map();        // model key → 2 when the photo was taken at the picture's own resolution
 const META = {
   'meta/settings': () => S,
   'meta/log': () => ({entries: LOG}),
@@ -1555,7 +1688,7 @@ const META = {
   'meta/returns': () => ({items: RET.map(r => [r.a, r.q, r.pav, r.at])}),
 };
 const docSt = {};
-function saveDoc(path, get, ms = 300) { const st = docSt[path] || (docSt[path] = {}); st.get = get; st.dirty = true; clearTimeout(st.timer); setSync('busy'); st.timer = setTimeout(() => flushDoc(path), ms); }
+function saveDoc(path, get, ms = 300) { if (!path.startsWith('photo/')) bumpData(); const st = docSt[path] || (docSt[path] = {}); st.get = get; st.dirty = true; clearTimeout(st.timer); setSync('busy'); st.timer = setTimeout(() => flushDoc(path), ms); }
 async function flushDoc(path) {
   const st = docSt[path];
   if (st.busy) { st.again = true; return; }
@@ -1674,7 +1807,7 @@ function subscribe() {
     if (!fromCache) first('done');
     render();
   });
-  Backend.watchColl('photo', (docs, fromCache) => { for (const d of docs) if (d.data && d.data.k && d.data.img) setPhoto(String(d.data.k), String(d.data.img)); if (!fromCache) first('photo'); render(); });
+  Backend.watchColl('photo', (docs, fromCache) => { for (const d of docs) if (d.data && d.data.k && d.data.img) { setPhoto(String(d.data.k), String(d.data.img)); PHOTO_V.set(String(d.data.k), Number(d.data.v) || 1); } if (!fromCache) first('photo'); render(); });
   Backend.watchDoc('meta/settings', d => {
     first('settings');
     if (!d || docPending('meta/settings')) return;
@@ -1941,9 +2074,69 @@ let photoJob = Promise.resolve();
 function queuePhotos(files, linesByFile) {
   photoJob = photoJob.then(() => extractPhotos(files, linesByFile)).catch(e => { diag('error', 'photos: ' + String((e && e.message) || e).slice(0, 200), {stack: String((e && e.stack) || '').slice(0, 900)}); $('#photoStatus').hidden = true; });
 }
+// every picture drawn on a PDF page, with the box it is drawn in (PDF units)
+async function pageImages(page) {
+  const OPS = window.pdfjsLib && pdfjsLib.OPS; if (!OPS) return [];
+  const list = await page.getOperatorList(), out = [];
+  const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  let ctm = [1, 0, 0, 1, 0, 0]; const stack = [];
+  for (let i = 0; i < list.fnArray.length; i++) {
+    const fn = list.fnArray[i], a = list.argsArray[i];
+    if (fn === OPS.save) stack.push(ctm);
+    else if (fn === OPS.restore) ctm = stack.pop() || [1, 0, 0, 1, 0, 0];
+    else if (fn === OPS.transform) ctm = mul(ctm, a);
+    else if (fn === OPS.paintFormXObjectBegin) { stack.push(ctm); if (Array.isArray(a[0]) && a[0].length === 6) ctm = mul(ctm, a[0]); }
+    else if (fn === OPS.paintFormXObjectEnd) ctm = stack.pop() || ctm;
+    else if (fn === OPS.paintImageXObject || fn === OPS.paintInlineImageXObject) {
+      const xs = [ctm[4], ctm[0] + ctm[4], ctm[2] + ctm[4], ctm[0] + ctm[2] + ctm[4]], ys = [ctm[5], ctm[1] + ctm[5], ctm[3] + ctm[5], ctm[1] + ctm[3] + ctm[5]];
+      out.push({x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys), id: fn === OPS.paintImageXObject ? a[0] : null, inline: fn === OPS.paintInlineImageXObject ? a[0] : null});
+    }
+  }
+  return out;
+}
+// the decoded picture as a canvas at its own size
+async function imageCanvas(page, im) {
+  let img = im.inline;
+  if (!img && im.id) img = await new Promise(res => { const store = String(im.id).startsWith('g_') ? page.commonObjs : page.objs; const t = setTimeout(() => res(null), 3000); try { store.get(im.id, v => { clearTimeout(t); res(v); }); } catch { clearTimeout(t); res(null); } });
+  if (!img || !img.width || !img.height || img.width * img.height > 16e6) return null;
+  const cv = document.createElement('canvas'); cv.width = img.width; cv.height = img.height;
+  const g = cv.getContext('2d', {willReadFrequently: true});
+  if (img.bitmap) { g.drawImage(img.bitmap, 0, 0); return cv; }
+  if (!img.data) return null;
+  const id = g.createImageData(img.width, img.height), d = id.data, src = img.data, n = img.width * img.height;
+  if (img.kind === 3) d.set(src.subarray(0, n * 4));
+  else if (img.kind === 2) for (let i = 0, j = 0, k = 0; i < n; i++) { d[j++] = src[k++]; d[j++] = src[k++]; d[j++] = src[k++]; d[j++] = 255; }
+  else if (img.kind === 1) { const rb = (img.width + 7) >> 3; for (let y = 0; y < img.height; y++) for (let x = 0; x < img.width; x++) { const v = (src[y * rb + (x >> 3)] >> (7 - (x & 7))) & 1 ? 255 : 0, j = (y * img.width + x) * 4; d[j] = d[j + 1] = d[j + 2] = v; d[j + 3] = 255; } }
+  else return null;
+  g.putImageData(id, 0, 0);
+  return cv;
+}
+// the white margin around a picture is cut off; full-width rows are the table's separator lines
+function trimWhite(ctx, w, h, ox = 0, oy = 0) {
+  const px = ctx.getImageData(ox, oy, w, h).data;
+  const ink = (x, y) => { const o = (y * w + x) * 4; return px[o + 3] > 30 && (px[o] < 236 || px[o + 1] < 236 || px[o + 2] < 236); };
+  const rowInk = new Uint32Array(h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (ink(x, y)) rowInk[y]++;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) {
+    if (!rowInk[y] || (ox + oy > 0 && rowInk[y] >= w * 0.97)) continue;
+    for (let x = 0; x < w; x++) if (ink(x, y)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 - x0 < 10 || y1 - y0 < 10) return null;
+  return {x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1};
+}
+function savePhoto(mk, src, r, H) {
+  const k = Math.min(1, H / r.h), out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(r.w * k)); out.height = Math.max(1, Math.round(r.h * k));
+  const g = out.getContext('2d'); g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, out.width, out.height); g.imageSmoothingQuality = 'high';
+  g.drawImage(src, r.x, r.y, r.w, r.h, 0, 0, out.width, out.height);
+  const url = out.toDataURL('image/jpeg', H > 200 ? 0.82 : 0.72);
+  setPhoto(mk, url); PHOTO_V.set(mk, 2);
+  saveDoc('photo/' + photoDocId(mk), () => ({k: mk, img: url, h: out.height, v: 2}), 60);
+}
 async function extractPhotos(files, linesByFile) {
   const el = $('#photoStatus'), t0 = performance.now();
-  let wanted = 0, made = 0;
+  let wanted = 0, made = 0, native = 0;
   for (let fi = 0; fi < files.length; fi++) {
     const f = files[fi];
     if (!f.pdf) continue;
@@ -1951,7 +2144,7 @@ async function extractPhotos(files, linesByFile) {
     const chosen = new Set();
     for (const l of linesByFile[fi] || []) {
       const mk = parseArt(l.a).mkey, box = f.boxes[l.r - 1];
-      if (!mk || !box || PHOTO.has(mk) || chosen.has(mk)) continue;
+      if (!mk || !box || (PHOTO.has(mk) && (PHOTO_V.get(mk) || 1) >= 2) || chosen.has(mk)) continue;
       chosen.add(mk);
       (need.get(box.p) || need.set(box.p, []).get(box.p)).push({mk, box});
     }
@@ -1960,33 +2153,40 @@ async function extractPhotos(files, linesByFile) {
     for (const p of pages) {
       el.hidden = false; el.textContent = `Собираю фото моделей из листа: ${fmt(done)} из ${fmt(chosen.size)}`;
       const page = await f.pdf.getPage(p);
-      const vp = page.getViewport({scale: 2});
-      const cv = document.createElement('canvas'); cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
-      const ctx = cv.getContext('2d', {willReadFrequently: true});
-      await page.render({canvasContext: ctx, viewport: vp}).promise;
-      for (const {mk, box} of need.get(p)) {
-        const [ax, ay] = vp.convertToViewportPoint(box.x0, box.y1), [bx, by] = vp.convertToViewportPoint(box.x1, box.y0);
-        const sx = Math.max(0, Math.floor(Math.min(ax, bx))), sy = Math.max(0, Math.floor(Math.min(ay, by)));
-        const sw = Math.min(cv.width - sx, Math.ceil(Math.abs(bx - ax))), sh = Math.min(cv.height - sy, Math.ceil(Math.abs(by - ay)));
-        if (sw < 8 || sh < 8) continue;
-        // trim the white margin around the picture; full-width rows are the table's separator lines
-        const px = ctx.getImageData(sx, sy, sw, sh).data;
-        const ink = (x, y) => { const o = (y * sw + x) * 4; return px[o] < 236 || px[o + 1] < 236 || px[o + 2] < 236; };
-        const rowInk = new Uint32Array(sh);
-        for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) if (ink(x, y)) rowInk[y]++;
-        let x0 = sw, y0 = sh, x1 = -1, y1 = -1;
-        for (let y = 0; y < sh; y++) {
-          if (!rowInk[y] || rowInk[y] >= sw * 0.97) continue;
-          for (let x = 0; x < sw; x++) if (ink(x, y)) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      // first try the pictures themselves: the list draws them tiny, but the file usually keeps them larger
+      let natives = [];
+      try { natives = await pageImages(page); } catch (e) { diag('error', 'photo ops: ' + (e && e.message)); }
+      const rest = [];
+      for (const it of need.get(p)) {
+        const {mk, box} = it, bw = box.x1 - box.x0, bh = box.y1 - box.y0;
+        let best = null, bestA = 0;
+        for (const im of natives) {
+          const ox = Math.min(box.x1, im.x1) - Math.max(box.x0, im.x0), oy = Math.min(box.y1, im.y1) - Math.max(box.y0, im.y0);
+          const a = ox > 0 && oy > 0 ? ox * oy : 0, ia = (im.x1 - im.x0) * (im.y1 - im.y0);
+          if (a > bestA && ia > 0 && a / ia > 0.5 && ia < bw * bh * 1.6) { best = im; bestA = a; }
         }
-        done++;
-        if (x1 - x0 < 10 || y1 - y0 < 10) continue;
-        const cw = x1 - x0 + 1, ch = y1 - y0 + 1, H = 160, r = Math.min(1, H / ch);
-        const out = document.createElement('canvas'); out.width = Math.max(1, Math.round(cw * r)); out.height = Math.max(1, Math.round(ch * r));
-        out.getContext('2d').drawImage(cv, sx + x0, sy + y0, cw, ch, 0, 0, out.width, out.height);
-        const url = out.toDataURL('image/jpeg', 0.72);
-        setPhoto(mk, url); made++;
-        saveDoc('photo/' + photoDocId(mk), () => ({k: mk, img: url}), 60);
+        const cv0 = best ? await imageCanvas(page, best) : null;
+        if (cv0 && cv0.height >= 40) {
+          const t = trimWhite(cv0.getContext('2d', {willReadFrequently: true}), cv0.width, cv0.height);
+          if (t) { savePhoto(mk, cv0, t, 360); made++; native++; done++; continue; }
+        }
+        rest.push(it);
+      }
+      if (rest.length) {
+        const vp = page.getViewport({scale: 2});
+        const cv = document.createElement('canvas'); cv.width = Math.ceil(vp.width); cv.height = Math.ceil(vp.height);
+        const ctx = cv.getContext('2d', {willReadFrequently: true});
+        await page.render({canvasContext: ctx, viewport: vp}).promise;
+        for (const {mk, box} of rest) {
+          const [ax, ay] = vp.convertToViewportPoint(box.x0, box.y1), [bx, by] = vp.convertToViewportPoint(box.x1, box.y0);
+          const sx = Math.max(0, Math.floor(Math.min(ax, bx))), sy = Math.max(0, Math.floor(Math.min(ay, by)));
+          const sw = Math.min(cv.width - sx, Math.ceil(Math.abs(bx - ax))), sh = Math.min(cv.height - sy, Math.ceil(Math.abs(by - ay)));
+          done++;
+          if (sw < 8 || sh < 8) continue;
+          const t = trimWhite(ctx, sw, sh, sx, sy);
+          if (!t) continue;
+          savePhoto(mk, cv, {x: sx + t.x, y: sy + t.y, w: t.w, h: t.h}, 160); made++;
+        }
       }
       page.cleanup();
       render();
@@ -1994,7 +2194,7 @@ async function extractPhotos(files, linesByFile) {
     try { await f.pdf.destroy(); } catch {}
   }
   el.hidden = true;
-  diag('photos', `${made} из ${wanted}`, {ms: Math.round(performance.now() - t0), total: PHOTO.size});
+  diag('photos', `${made} из ${wanted}`, {ms: Math.round(performance.now() - t0), total: PHOTO.size, native});
 }
 async function readFiles(list) {
   const out = [];
@@ -2103,7 +2303,7 @@ const MODES = {
 const curRows = (f = IMP.files[0], si = IMP.sheet) => { const sh = f.sheets[Math.min(si, f.sheets.length - 1)]; return sh ? sh.rows : []; };
 
 function showModal(id) { const el = $(id); el._back = document.activeElement; el.hidden = false; document.body.classList.add('noscroll'); }
-function closeModal(id) { const el = $(id); if (el.hidden) return; el.hidden = true; if ($('#imp').hidden && $('#cpy').hidden && $('#ord').hidden) document.body.classList.remove('noscroll'); if (el._back && el._back.focus) el._back.focus(); }
+function closeModal(id) { const el = $(id); if (el.hidden) return; el.hidden = true; if ($('#imp').hidden && $('#cpy').hidden && $('#ord').hidden && $('#empDlg').hidden) document.body.classList.remove('noscroll'); if (el._back && el._back.focus) el._back.focus(); }
 
 function openImport(target, files) {
   IMP.target = target; IMP.files = files;
@@ -2449,6 +2649,7 @@ function loadList(inLines, info) {
 }
 
 function commit() {
+  const snap = takeSnap();
   const p = plan(), now = Date.now();
   let taken = 0; const takenShips = new Set();
   for (const [k, r] of p) {
@@ -2488,7 +2689,7 @@ function commit() {
   if (taken) log(`Списано со склада под отправления: ${fmt(taken)} шт., ${cnt(takenShips.size, W.ship)}`);
   if (made.length) log(`Закупка у поставщиков: ${fmt(ordered)} шт. ${inPav(made.length)} (${made.map(x => x.pav || 'без павильона').join(', ')}); под заказы ${fmt(forOrders)}, на склад ${fmt(round(ordered - forOrders))}`);
   diag('commit', '', {taken, ships: takenShips.size, pur: made.map(x => [x.pav, round(x.lines.reduce((a, l) => a + l.q, 0)), round(x.lines.reduce((a, l) => a + l.need, 0)), x.lines.length])});
-  toast(made.length ? `Закупка оформлена: ${fmt(ordered)} шт.${taken ? `, со склада списано ${fmt(taken)} шт.` : ''}` : `Со склада списано ${fmt(taken)} шт.`);
+  toastUndo(made.length ? `Закупка оформлена: ${fmt(ordered)} шт.${taken ? `, со склада списано ${fmt(taken)} шт.` : ''}` : `Со склада списано ${fmt(taken)} шт.`, snap, made.length ? 'оформление закупки' : 'списание со склада');
   celebrate(TAP.x, TAP.y);
 }
 
@@ -2507,6 +2708,7 @@ function recvPreview(pur) {
   return {ord: round(ord), got: round(got), toOrd: round(toOrd), toStock: round(toStock), unc: round(unc), diff};
 }
 function receive(pur) {
+  const snap = takeSnap();
   const now = Date.now();
   const rep = {ord: 0, got: 0, toOrd: 0, toStock: 0, rows: [], extra: pur.extra.map(e => [e.a, e.q, e.to]), unc: []};
   const waitBy = new Map();
@@ -2539,7 +2741,7 @@ function receive(pur) {
   const miss = round(rep.ord - rep.got);
   log(`Приёмка ${pur.pav || 'без павильона'} от ${dm(pur.at)}: заказано ${fmt(rep.ord)}, пришло ${fmt(rep.got)}${pur.extra.length ? `, не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}; в отправления ${fmt(rep.toOrd)}, на склад ${fmt(rep.toStock)}${rep.unc.length ? `; снова не хватает: ${cnt(rep.unc.length, W.ship)}` : ''}`);
   diag('receive', pur.pav, {id: pur.id, ord: rep.ord, got: rep.got, toOrd: rep.toOrd, toStock: rep.toStock, unc: rep.unc.length, extra: pur.extra.length, lines: pur.lines.length});
-  toast(miss > 0 ? `Приёмка проведена. Не доложили ${fmt(miss)} шт.` : 'Приёмка проведена');
+  toastUndo(miss > 0 ? `Приёмка проведена. Не доложили ${fmt(miss)} шт.` : 'Приёмка проведена', snap, `приёмка ${pur.pav || 'без павильона'}`, () => { if (ui.tab === 'recv') ui.recvId = pur.id; });
   celebrate(TAP.x, TAP.y, miss > 0 ? 50 : 130);
 }
 function cancelPurchase(id) {
@@ -2757,6 +2959,7 @@ function renderAn(p) {
 
 /* ---------- UI state & render ---------- */
 const ui = {lastDiff: null, lastSug: null, editSup: null, tab: 'day', dayF: 'all', dayQ: '', dayLimit: 300, recvId: '', recvQ: '', buyPav: null, stView: 'models', stSort: 'pav', stPav: '*', stQ: '', stLimit: 200, rcQ: '', rcLimit: 200, flash: null};
+let LAST = {p: null, ships: null, rows: null};   // what the last render computed; the search reuses it
 let raf = 0;
 function render() { if (raf) return; raf = requestAnimationFrame(() => { raf = 0; renderAll(); }); }
 function setBody(el, html) {
@@ -2767,7 +2970,7 @@ function setBody(el, html) {
 }
 const matches = (q, ...fields) => { if (!q) return true; const nk = normKey(q), lq = q.toLowerCase(); return fields.some(f => { const s = String(f || ''); return (nk && normKey(s).includes(nk)) || s.toLowerCase().includes(lq); }); };
 const artCell = (a, n, extra = '') => `<span class="art">${esc(a)}</span>${n ? `<span class="nm">${esc(n)}</span>` : ''}${extra}`;
-const thumb = (a, size, byModel) => { const mk = byModel ? a : parseArt(a).mkey, u = photoUrl.get(mk); return u ? `<img class="ph ${size}" src="${u}" alt="">` : `<span class="ph ${size}" aria-hidden="true"></span>`; };
+const thumb = (a, size, byModel) => { const mk = byModel ? a : parseArt(a).mkey, u = photoUrl.get(mk); return u ? `<img class="ph ${size} zoom" src="${u}" alt="Фото модели" data-mk="${esc(mk)}" tabindex="0" role="button" aria-label="Открыть фото крупно">` : `<span class="ph ${size}" aria-hidden="true"></span>`; };
 const hasCyr = s => /[а-яё]/i.test(s), hasLat = s => /[a-z]/i.test(s);
 function aliasNote(mine, theirs) {
   if (!theirs || theirs === mine) return '';
@@ -2819,6 +3022,7 @@ function renderAllInner() {
   if (ui.tab === 'settings') renderSuppliers();
   if (ui.tab === 'an') renderAn(p);
   if (ui.tab === 'home') renderHome(p, ships, rows, go);
+  LAST = {p, ships, rows};
   if (ui.flash) { const tr = $(`#rcBody tr[data-k="${CSS.escape(ui.flash)}"]`); if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } ui.flash = null; }
   placeThumbs();
 }
@@ -2882,7 +3086,7 @@ function renderBuy(p, rows) {
   const cm = $('#buyCommit');
   cm.disabled = !(order > 0 || pendQ > 0);
   cm.textContent = order > 0 ? 'Оформить закупку' : pendQ > 0 ? 'Списать со склада (докупать нечего)' : 'Оформить закупку';
-  $('#buyCopy').disabled = !(order > 0); $('#buyExport').disabled = !(order > 0); $('#buyPdfAll').disabled = !(order > 0);
+  $('#buyExport').disabled = !(order > 0); $('#buyPdfAll').disabled = !(order > 0);
   const keys = pavs.map(pv => pv.pav), many = pavs.length > 1;
   if (ui.buyPav !== '*' && !keys.includes(ui.buyPav)) ui.buyPav = (pavs.find(pv => pv.order > 0 && !SENT.has(pv.pav)) || pavs[0] || {}).pav;
   const cur = many && ui.buyPav !== '*' ? keys.indexOf(ui.buyPav) : -1;
@@ -2996,7 +3200,7 @@ function renderStock() {
     setBody($('#stModels'), shown.map(m => `<div class="mrow">${thumb(m.mkey, 'md', true)}<div>
       <div class="row" style="gap:8px">${m.pav ? `<span class="pavtag">${esc(m.pav)}</span>` : ''}<span class="art">${esc(shortModel(m.model, m.pav))}</span></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
       <div class="szchips">${m.sizes.sort((a, b) => bySize(a.size, b.size)).map(s => `<span class="szc${s.q < 0 ? ' neg' : s.d >= S.deadDays ? ' dead' : s.d >= oldDays() ? ' old' : ''}" title="${s.d != null ? `без продаж ${s.d} ${plural(s.d, W.day)}` : ''}">${esc(s.size || 'шт')} · ${fmt(s.q)}</span>`).join('')}</div>
-    </div><div class="tot">${fmt(m.total)}<small>${m.idle >= oldDays() ? `без продаж ${m.idle} ${plural(m.idle, W.day)}` : 'шт.'}</small></div></div>`).join('') || `<p class="empty">${items.length ? 'Ничего не найдено' : 'Склад пуст. Сделайте пересчёт ниже или загрузите остатки из файла.'}</p>`);
+    </div><div class="tot">${fmt(m.total)}<small>${m.idle >= oldDays() ? `без продаж ${m.idle} ${plural(m.idle, W.day)}` : 'шт.'}</small></div></div>`).join('') || `<p class="empty">${items.length ? 'Ничего не найдено' : (EMP ? 'Склад пуст.' : 'Склад пуст. Сделайте пересчёт ниже или загрузите остатки из файла.')}</p>`);
     $('#stMore').hidden = list.length <= shown.length;
     $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
   } else {
@@ -3019,7 +3223,7 @@ function renderRecount() {
   setBody($('#rcBody'), shown.map(([k, it]) => {
     const st = stock.items.get(k);
     return `<tr data-k="${esc(k)}"><td>${artCell(it.a, it.n || (st && st.n), st ? aliasNote(it.a, st.a) : '')}</td><td class="num">${st ? fmt(st.q) : '<span class="chip new">новый</span>'}</td><td class="num"><input class="in qin" inputmode="decimal" value="${esc(qv(it.q))}" aria-label="Посчитано, ${esc(it.a)}"></td><td class="c"><button class="x" type="button" data-del title="Убрать из списка" aria-label="Убрать из списка: ${esc(it.a)}">×</button></td></tr>`;
-  }).join('') || `<tr><td colspan="4" class="empty">${all.length ? 'Ничего не найдено' : 'Список пуст. Отсканируйте товар или загрузите файл.'}</td></tr>`);
+  }).join('') || `<tr><td colspan="4" class="empty">${all.length ? 'Ничего не найдено' : (EMP ? 'Список пуст. Отсканируйте товар или введите артикул.' : 'Список пуст. Отсканируйте товар или загрузите файл.')}</td></tr>`);
   $('#rcMore').hidden = list.length <= shown.length;
   $('#rcMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
   ['#rcAdd', '#rcReplace', '#rcClear'].forEach(s => $(s).disabled = !all.length);
@@ -3032,7 +3236,7 @@ function supHead(pv) {
   const money = pv.list.reduce((a, m) => a + m.rows.reduce((b, r) => b + r.order * priceOf(r.a), 0), 0);
   return `<span class="sum">нужно ${fmt(pv.need)} · заказать ${fmt(pv.order)} шт.${money ? ` · ≈ ${rub(money)}` : ''}</span>
     <span class="supinfo${who ? '' : ' none'}">${who ? esc(who) : 'поставщик не указан'}</span>${sent ? `<span class="chip good">отправлено ${when(sent)}</span>` : ''}
-    <span class="row">${pv.order > 0 ? `<button class="btn primary" type="button" data-order-pav="${esc(pv.pav)}"><svg class="ic"><use href="#i-doc"/></svg>Заказ с фото</button>` : ''}${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener" data-wa="${esc(pv.pav)}"><svg class="ic"><use href="#i-wa"/></svg>WhatsApp</a>` : ''}<button class="btn" type="button" data-copy-pav="${esc(pv.pav)}">Скопировать</button><button class="btn ghost" type="button" data-edit-sup="${esc(pv.pav)}">${who ? 'Изменить' : 'Указать поставщика'}</button></span>`;
+    <span class="row">${pv.order > 0 ? `<button class="btn primary" type="button" data-order-pav="${esc(pv.pav)}"><svg class="ic"><use href="#i-doc"/></svg>Заказ с фото</button>` : ''}${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener" data-wa="${esc(pv.pav)}"><svg class="ic"><use href="#i-wa"/></svg>WhatsApp</a>` : ''}<button class="btn ghost" type="button" data-edit-sup="${esc(pv.pav)}">${who ? 'Изменить' : 'Указать поставщика'}</button></span>`;
 }
 function supForm(pav) {
   const sup = SUP.get(pav) || {name: '', phone: ''};
@@ -3090,6 +3294,7 @@ function renderTester() {
 
 const TAB_TITLE = {home: 'Сводка', day: 'Заказы', buy: 'Закупка', recv: 'Приёмка', stock: 'Склад', an: 'Анализ', settings: 'Настройки'};
 function setTab(t) {
+  if (EMP && t !== 'recv' && t !== 'stock') t = 'recv';
   const changed = ui.tab !== t;
   if (changed) diag('tab', t);
   ui.tab = t;
@@ -3117,10 +3322,16 @@ function confirmIn(box, html, okLabel, onOk, danger) {
   $('[data-ok]', el).focus();
 }
 let toastT = 0;
-function toast(msg, ms = 3800) {
+function toast(msg, ms = 3800, action) {
   const el = $('#toast'), bad = /^Не |не получилось|не удалось|ошибк|не загрузил/i.test(msg);
   el.innerHTML = `<span class="ti${bad ? ' err' : ''}" aria-hidden="true"><svg viewBox="0 0 24 24">${bad ? '<path d="M12 7v6M12 17h.01"/>' : '<path d="M5 12.5l4.5 4.5L19 7.5"/>'}</svg></span><span class="tt"></span>`;
   el.querySelector('.tt').textContent = msg;
+  if (action) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'tu';
+    b.innerHTML = `<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7" style="animation-duration:${ms}ms"/></svg>${esc(action.label)}`;
+    b.addEventListener('click', () => { clearTimeout(toastT); el.hidden = true; action.fn(); });
+    el.appendChild(b);
+  }
   el.classList.remove('out'); el.hidden = true; void el.offsetWidth; el.hidden = false;
   clearTimeout(toastT); toastT = setTimeout(() => { el.classList.add('out'); toastT = setTimeout(() => { el.hidden = true; el.classList.remove('out'); }, 340); }, ms);
 }
@@ -3128,7 +3339,7 @@ function toast(msg, ms = 3800) {
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-copy-pav],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel]');
+  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel]');
   if (!t) return;
   if (t.hasAttribute('data-order-all')) { openOrder(null); return; }
   if (t.hasAttribute('data-order-pav')) { openOrder([t.dataset.orderPav]); return; }
@@ -3159,7 +3370,7 @@ document.addEventListener('click', e => {
     const x = PUR.get(t.dataset.cancelPur); if (!x) return;
     const box = t.closest('#pane-recv') ? '#recvGoConfirm' : '#goConfirm';
     confirmIn(box, `Отменить закупку ${esc(x.pav || 'без павильона')} от ${when(x.at)}? Отправления, которые её ждут, снова попадут в нехватку.`, 'Отменить закупку', () => cancelPurchase(x.id), true);
-  } else if (t.hasAttribute('data-copy-pav')) copyBuy(t.dataset.copyPav);
+  }
   else if (t.dataset.addSize) {
     const inp = t.parentElement.querySelector('input'), size = inp.value.trim();
     if (!size) { inp.focus(); return; }
@@ -3253,10 +3464,6 @@ $('#addForm').addEventListener('submit', e => {
   saveMeta('meta/po'); $('#addArt').value = ''; $('#addQty').value = '1'; render();
   toast(`Добавлено в закупку: ${a}`);
 });
-function buyText(onlyPav) {
-  const pavs = groupModels(buyRows(plan()).filter(r => r.order > 0)).filter(pv => onlyPav == null || pv.pav === onlyPav);
-  return pavs.map(pavText).join('\n\n');
-}
 /* ---------- order sheet with photos: a PDF or a picture for the supplier ---------- */
 // Pages are drawn on a canvas (Cyrillic text renders with the page's own fonts) and wrapped into a PDF as JPEG pages.
 const OS = {W: 1240, H: 1754, M: 64, gap: 24, pad: 20, pw: 184, ph: 236, chW: 88, chH: 78, chGap: 10};
@@ -3478,8 +3685,6 @@ $('#ordX').addEventListener('click', () => closeModal('#ord'));
 $('#ord').addEventListener('click', e => { if (e.target.id === 'ord') closeModal('#ord'); });
 $('#buyPdfAll').addEventListener('click', () => openOrder(null));
 
-function copyBuy(pav) { const t = buyText(pav); if (!t) { toast('Нечего копировать'); return; } copyText(t, 'Скопировано. Вставьте в WhatsApp или Telegram.'); }
-$('#buyCopy').addEventListener('click', () => copyBuy(null));
 $('#buyExport').addEventListener('click', () => {
   const rows = [];
   for (const pv of groupModels(buyRows(plan()).filter(r => r.order > 0))) for (const m of pv.list) for (const r of m.rows) { const pr = priceOf(r.a); rows.push([pv.pav, shortModel(m.model, pv.pav), r.size, r.a, r.n, r.need, r.order, pr || '', pr ? pr * r.order : '']); }
@@ -3756,7 +3961,7 @@ function renderHome(p, ships, rows, go) {
   $('#hSizeM').textContent = topSz && stot ? `больше всего ${topSz[0]} · ${Math.round(100 * topSz[1] / stot)}%` : '';
   setBody($('#hSizes'), sz.length ? sz.map(([k, q]) => `<div class="sb${topSz && k === topSz[0] ? ' mx' : ''}"><i style="height:${Math.max(4, 100 * q / smax).toFixed(1)}%" title="${esc(k)}: ${fmt(q)} шт."></i><span>${esc(k)}</span></div>`).join('') : '<div class="hempty">Склад пуст</div>');
   // best sellers
-  setBody($('#hTop'), D.top.length ? D.top.map(t => { const u = photoUrl.get(t.mkey); return `<li>${u ? `<img class="ph" src="${u}" alt="">` : '<span class="ph"></span>'}<div style="min-width:0"><div class="nm2">${esc(shortModel(t.model))}</div><div class="sub2">${t.pav ? `${esc(t.pav)} · ` : ''}на складе ${fmt(round(t.have))}</div></div><div class="rt2">${nf.format(Math.round(t.rate * 10) / 10)}<small>в день</small></div></li>`; }).join('')
+  setBody($('#hTop'), D.top.length ? D.top.map(t => { const u = photoUrl.get(t.mkey); return `<li>${u ? `<img class="ph zoom" src="${u}" alt="Фото модели" data-mk="${esc(t.mkey)}" tabindex="0" role="button" aria-label="Открыть фото крупно">` : '<span class="ph"></span>'}<div style="min-width:0"><div class="nm2">${esc(shortModel(t.model))}</div><div class="sub2">${t.pav ? `${esc(t.pav)} · ` : ''}на складе ${fmt(round(t.have))}</div></div><div class="rt2">${nf.format(Math.round(t.rate * 10) / 10)}<small>в день</small></div></li>`; }).join('')
     : `<li class="hempty">${HIST === null ? 'Загружаю историю продаж…' : 'Появится, когда накопится история продаж.'}</li>`);
   // what to do now
   setBody($('#hTips'), homeTips(D).map(t => `<li><i class="sv ${t.sv}"></i><b>${esc(t.b)}</b>${t.act}<span>${esc(t.d)}</span></li>`).join(''));
@@ -3821,6 +4026,238 @@ $('#hAiBtn').addEventListener('click', async () => {
   }
 });
 $('#hAiStop').addEventListener('click', () => { if (HOME.ctl) HOME.ctl.abort(); else $('#hAi').hidden = true; });
+
+/* ---------- undo: «Оформить закупку» and «Провести приёмка» can be taken back for 10 seconds ---------- */
+function takeSnap() {
+  const cl = o => JSON.parse(JSON.stringify(o));
+  return {
+    stock: new Map([...stock.items].map(([k, it]) => [k, {...it}])),
+    lines: new Map([...lines.items].map(([k, it]) => [k, {...it, w: {...it.w}}])),
+    pur: new Map([...PUR].map(([id, x]) => [id, cl(x)])),
+    po: new Map([...PO].map(([k, e]) => [k, {...e}])), sent: new Map(SENT),
+    ret: RET.map(r => ({...r})), sup: new Map([...SUPSTAT].map(([k, v]) => [k, {...v}])), log: LOG.slice(),
+  };
+}
+function restoreMap(m, snap) {
+  for (const k of [...m.items.keys()]) if (!snap.has(k)) m.remove(k);
+  for (const [k, it] of snap) { const cur = m.items.get(k); if (!cur || JSON.stringify(m.o.pack(cur)) !== JSON.stringify(m.o.pack(it))) { m.items.set(k, it); m.touch(k); } }
+}
+function restoreSnap(sn) {
+  restoreMap(stock, sn.stock); restoreMap(lines, sn.lines);
+  for (const id of [...PUR.keys()]) if (!sn.pur.has(id)) { PUR.delete(id); savePur(id, 50); }
+  for (const [id, x] of sn.pur) { const cur = PUR.get(id); if (!cur || JSON.stringify(purToDoc(cur)) !== JSON.stringify(purToDoc(x))) { PUR.set(id, x); savePur(id, 50); } }
+  PO = sn.po; SENT = sn.sent; saveMeta('meta/po');
+  RET = sn.ret; saveMeta('meta/returns');
+  SUPSTAT.clear(); for (const [k, v] of sn.sup) SUPSTAT.set(k, v); saveMeta('meta/supstats');
+  LOG = sn.log; saveMeta('meta/log');
+}
+function toastUndo(msg, snap, what, after) {
+  disarmUndo();
+  UNDO = {snap, what, after, epoch: dataEpoch, t: setTimeout(disarmUndo, 10000)};
+  toast(msg, 10000, {label: 'Отменить', fn: doUndo});
+}
+function disarmUndo() {
+  if (!UNDO) return;
+  clearTimeout(UNDO.t); UNDO = null;
+  const b = $('#toast .tu'); if (b) b.remove();
+}
+function doUndo() {
+  if (!UNDO) { toast('Отменить уже нельзя: после этого данные менялись'); return; }
+  const u = UNDO; clearTimeout(u.t); u.restoring = true;
+  restoreSnap(u.snap);
+  UNDO = null;
+  log(`Отменено: ${u.what}`); diag('undo', u.what);
+  if (u.after) u.after();
+  render(); toast(`Отменено: ${u.what}. Всё как было.`);
+}
+
+/* ---------- employee mode ---------- */
+function setEmp(on) {
+  EMP = on; lsSet('sklad/emp', on ? '1' : '');
+  document.body.classList.toggle('emp', on);
+  diag('emp', on ? 'включён' : 'выключен');
+  setTab(on ? 'recv' : 'home'); render(); scrollTo({top: 0});
+  requestAnimationFrame(placePill);
+}
+$('#empForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const pin = $('#empPin').value.replace(/\D/g, '').slice(0, 6);
+  lsSet('sklad/empPin', pin); lsSet(TOUR_KEY, '');
+  $('#empPin').value = '';
+  setEmp(true);
+  toast(pin ? `Режим сотрудника включён. Код для выхода: ${pin}` : 'Режим сотрудника включён');
+});
+$('#empExit').addEventListener('click', () => {
+  const pin = lsGet('sklad/empPin') || '';
+  $('#empDlgHint').textContent = pin ? 'Введите код, который задали при включении.' : 'Вернутся все разделы: сводка, заказы, закупка, анализ и настройки.';
+  $('#empDlgPinWrap').hidden = !pin; $('#empDlgErr').hidden = true; $('#empDlgPin').value = '';
+  showModal('#empDlg'); setTimeout(() => (pin ? $('#empDlgPin') : $('#empDlgNo')).focus(), 50);
+});
+$('#empDlgForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const pin = lsGet('sklad/empPin') || '';
+  if (pin && $('#empDlgPin').value.replace(/\D/g, '') !== pin) {
+    $('#empDlgErr').hidden = false; const sh = $('#empDlg .sheet'); sh.classList.remove('shake'); void sh.offsetWidth; sh.classList.add('shake');
+    diag('emp', 'неверный код'); return;
+  }
+  closeModal('#empDlg'); setEmp(false); toast('Режим сотрудника выключен');
+});
+['#empDlgX', '#empDlgNo'].forEach(q => $(q).addEventListener('click', () => closeModal('#empDlg')));
+
+/* ---------- «Где шуба?»: one model, everywhere it is ---------- */
+function whereIs(q) {
+  const qk = normKey(q);
+  if (!qk || q.trim().length < 2) return [];
+  const M = new Map();
+  const get = (a, n) => { const pa = parseArt(a); let m = M.get(pa.mkey); if (!m) M.set(pa.mkey, m = {mk: pa.mkey, model: pa.model, pav: pa.pav, n: n || '', stock: new Map(), ships: {ready: new Set(), wait: new Set(), short: new Set()}, go: [], order: 0, ret: 0}); if (!m.n && n) m.n = n; return {m, pa}; };
+  const hit = (a, n) => matches(q, a, n);
+  for (const it of stock.items.values()) if (it.q > 0 && hit(it.a, it.n)) { const {m, pa} = get(it.a, it.n), z = pa.size || 'шт'; m.stock.set(z, round((m.stock.get(z) || 0) + it.q)); }
+  const ships = LAST.ships || shipsOf(plan());
+  for (const sh of ships.values()) for (const x of sh.lines) if (hit(x.ln.a, x.ln.n)) { const {m} = get(x.ln.a, x.ln.n); (m.ships[x.st === 'stock' ? 'ready' : x.st] || m.ships.short).add(sh.sid); }
+  for (const pur of going()) for (const l of pur.lines) if (hit(l.a, l.n)) { const {m, pa} = get(l.a, l.n); m.go.push({pav: pur.pav, at: pur.at, q: l.q, size: pa.size || 'шт'}); }
+  for (const r of LAST.rows || buyRows(plan())) if (r.order > 0 && hit(r.a, r.n)) { const {m} = get(r.a, r.n); m.order = round(m.order + r.order); }
+  for (const r of RET) if (hit(r.a)) { const {m} = get(r.a); m.ret = round(m.ret + r.q); }
+  const rank = m => { const k = normKey(m.model); return k.startsWith(qk) ? 0 : k.includes(qk) ? 1 : 2; };
+  return [...M.values()].sort((a, b) => rank(a) - rank(b) || coll.compare(a.model, b.model)).slice(0, 8);
+}
+function renderWhere(q) {
+  const box = $('#gres'), res = whereIs(q);
+  if (!q.trim()) { box.hidden = true; return; }
+  box.hidden = false;
+  if (!res.length) { box.innerHTML = `<div class="gempty">${normKey(q).length < 2 ? 'Введите хотя бы два знака артикула или названия.' : 'Такой шубы нигде нет: ни на складе, ни в отправлениях, ни в пути. Русские и английские буквы программа не различает, проверьте цифры.'}</div>`; return; }
+  box.innerHTML = res.map(m => {
+    const szs = [...m.stock.entries()].sort((a, b) => bySize(a[0], b[0]));
+    const tot = round(szs.reduce((a, [, q]) => a + q, 0));
+    const sh = m.ships, shN = sh.ready.size + sh.wait.size + sh.short.size;
+    const goBy = new Map(); for (const g of m.go) { const k = `${g.pav}|${g.at}`; const e = goBy.get(k) || goBy.set(k, {pav: g.pav, at: g.at, sz: new Map()}).get(k); e.sz.set(g.size, round((e.sz.get(g.size) || 0) + g.q)); }
+    const rows = [
+      `<li class="${tot ? '' : 'none'}"><svg class="ic"><use href="#i-stock"/></svg><b>На складе</b><span>${tot ? `${fmt(tot)} шт.: ${szs.map(([z, q]) => `${esc(z)} — ${fmt(q)}`).join(', ')}` : 'нет'}</span></li>`,
+      `<li class="${shN ? '' : 'none'}"><svg class="ic"><use href="#i-day"/></svg><b>Отправления</b><span class="st">${shN ? [sh.ready.size && `<span class="chip good">${fmt(sh.ready.size)} к сборке</span>`, sh.wait.size && `<span class="chip warn">${fmt(sh.wait.size)} ждут мешок</span>`, sh.short.size && `<span class="chip bad">${fmt(sh.short.size)} не хватает</span>`].filter(Boolean).join('') : 'нет'}</span></li>`,
+      `<li class="${goBy.size ? '' : 'none'}"><svg class="ic"><use href="#i-recv"/></svg><b>Едет</b><span>${goBy.size ? [...goBy.values()].map(g => `из ${esc(g.pav || 'павильона')} от ${dm(g.at)}: ${[...g.sz].sort((a, b) => bySize(a[0], b[0])).map(([z, q]) => `${esc(z)} — ${fmt(q)}`).join(', ')}`).join('; ') : 'нет'}</span></li>`,
+      m.order ? `<li><svg class="ic"><use href="#i-buy"/></svg><b>Нужно купить</b><span>${fmt(m.order)} шт.${m.pav ? ` в павильоне ${esc(m.pav)}` : ''}</span></li>` : '',
+      m.ret ? `<li><svg class="ic"><use href="#i-back"/></svg><b>Вернуть</b><span>${fmt(m.ret)} шт. поставщику</span></li>` : '',
+    ].join('');
+    const code = shortModel(m.model);
+    return `<div class="gr"><div class="gh">${thumb(m.mk, 'md', true)}<div><b>${m.pav ? `${esc(m.pav)} · ` : ''}${esc(code)}</b>${m.n ? `<span class="nm">${esc(trunc(m.n, 90))}</span>` : ''}</div></div><ul class="gl">${rows}</ul>
+      <div class="ga">${tot ? `<button class="btn" type="button" data-gs-go="stock" data-q="${esc(code)}">На складе</button>` : ''}${shN ? `<button class="btn" type="button" data-gs-go="day" data-q="${esc(code)}">Отправления</button>` : ''}${m.order ? `<button class="btn" type="button" data-gs-go="buy" data-pav="${esc(m.pav)}">В закупку</button>` : ''}${goBy.size ? `<button class="btn" type="button" data-gs-go="recv">Приёмка</button>` : ''}</div></div>`;
+  }).join('');
+}
+let gsT = 0;
+$('#gq').addEventListener('input', e => { clearTimeout(gsT); const v = e.target.value; gsT = setTimeout(() => { renderWhere(v); diag('search', v.slice(0, 40), null, 'search'); }, 140); });
+$('#gq').addEventListener('focus', e => { if (e.target.value.trim()) renderWhere(e.target.value); });
+$('#gq').addEventListener('keydown', e => { if (e.key === 'Escape') { e.target.value = ''; $('#gres').hidden = true; e.target.blur(); } });
+$('#gres').addEventListener('click', e => {
+  const b = e.target.closest('[data-gs-go]'); if (!b) return;
+  const t = b.dataset.gsGo, q = b.dataset.q || '';
+  if (t === 'stock') { ui.stQ = q; ui.stPav = '*'; $('#stSearch').value = q; }
+  if (t === 'day') { ui.dayQ = q; ui.dayF = 'all'; $('#daySearch').value = q; }
+  if (t === 'buy') ui.buyPav = b.dataset.pav || null;
+  if (t === 'recv') ui.recvId = '';
+  $('#gres').hidden = true; setTab(t); render(); scrollTo({top: 0});
+});
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#gs') && !e.target.closest('#lb')) $('#gres').hidden = true; });
+document.addEventListener('keydown', e => {
+  const typing = e.target.matches && e.target.matches('input,textarea,select,[contenteditable]');
+  if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) {
+    if (tour.on || !$('#lb').hidden || !$('#ord').hidden || !$('#imp').hidden) return;
+    e.preventDefault(); $('#gq').focus(); $('#gq').select();
+  }
+});
+
+/* ---------- photo viewer: the model big, with its sizes; in receiving each size counts with one tap ---------- */
+const LB = {list: [], i: 0, from: null};
+function lbInfo(mk) {
+  const pa0 = {model: '', n: '', pav: ''}, rows = [];
+  let mode = 'stock';
+  const pur = ui.tab === 'recv' && ui.recvId && PUR.get(ui.recvId);
+  if (pur) {
+    mode = 'recv';
+    pur.lines.forEach((l, i) => { const pa = parseArt(l.a); if (pa.mkey !== mk) return; if (!pa0.model) Object.assign(pa0, {model: pa.model, pav: pa.pav, n: l.n || ''}); rows.push({size: pa.size, i, q: l.q, c: l.c}); });
+  } else if (ui.tab === 'buy') {
+    mode = 'buy';
+    for (const r of buyRows(plan())) if (r.mkey === mk && r.order > 0) { if (!pa0.model) Object.assign(pa0, {model: r.model, pav: r.pav, n: r.n || ''}); rows.push({size: r.size, q: r.order}); }
+  }
+  if (!rows.length) {
+    mode = 'stock';
+    for (const it of stock.items.values()) { const pa = parseArt(it.a); if (pa.mkey !== mk) continue; if (!pa0.model) Object.assign(pa0, {model: pa.model, pav: pa.pav, n: it.n || ''}); if (it.q > 0) rows.push({size: pa.size, q: it.q}); }
+    if (!pa0.model) for (const ln of lines.items.values()) { const pa = parseArt(ln.a); if (pa.mkey === mk) { Object.assign(pa0, {model: pa.model, pav: pa.pav, n: ln.n || ''}); break; } }
+  }
+  rows.sort((a, b) => bySize(a.size, b.size));
+  return {mode, ...pa0, rows};
+}
+// the photo fills the space it has, but never more than three times its own size
+function lbFit() {
+  const img = $('#lbImg'), box = $('.lb-imgw'); if (!img.naturalWidth || !box) return;
+  const k = Math.min(box.clientWidth / img.naturalWidth, box.clientHeight / img.naturalHeight, 3);
+  img.style.width = Math.round(img.naturalWidth * k) + 'px'; img.style.height = Math.round(img.naturalHeight * k) + 'px';
+}
+function lbShow() {
+  const mk = LB.list[LB.i], info = lbInfo(mk), img = $('#lbImg');
+  img.onload = lbFit; img.src = photoUrl.get(mk) || PHOTO.get(mk) || ''; if (img.complete) lbFit();
+  $('#lbT').textContent = [info.pav, shortModel(info.model || mk)].filter(Boolean).join(' · ');
+  $('#lbN').textContent = info.n || '';
+  $('#lbSz').innerHTML = info.mode === 'recv'
+    ? info.rows.map(r => `<button class="z${r.c === r.q ? ' ok' : ''}" type="button" data-lb-inc="${r.i}" aria-label="Размер ${esc(r.size || 'шт')}: пришло ${fmt(r.c)} из ${fmt(r.q)}, добавить одну"><b>${esc(r.size || 'шт')}</b><span>пришло ${fmt(r.c)} из ${fmt(r.q)}</span><i>+1</i></button>`).join('')
+    : info.rows.map(r => `<div class="z"><b>${esc(r.size || 'шт')}</b><span>${info.mode === 'buy' ? 'заказать' : 'на складе'} ${fmt(r.q)} шт.</span></div>`).join('') || '<span class="lb-n">На складе нет</span>';
+  $('#lbPos').textContent = LB.list.length > 1 ? `${LB.i + 1} из ${LB.list.length} · листайте стрелками или пальцем` : '';
+  $('#lbPrev').disabled = LB.i <= 0; $('#lbNext').disabled = LB.i >= LB.list.length - 1;
+}
+function lbOpen(el) {
+  const scope = el.closest('#recvModels,#buyList,#stModels,#anBuy,#anDeadList,#anHot,#hTop,#dayBody,#gres') || document;
+  LB.list = [...new Set([...scope.querySelectorAll('img.ph.zoom[data-mk]')].map(x => x.dataset.mk))];
+  LB.i = Math.max(0, LB.list.indexOf(el.dataset.mk)); LB.from = el;
+  lbShow();
+  const box = $('#lb'); box.hidden = false; document.body.classList.add('noscroll'); lbFit();
+  $('#lbX').focus({preventScroll: true});
+  diag('photo-view', el.dataset.mk);
+  if (!motionOk()) return;
+  // the photo grows out of the thumbnail it was opened from
+  const img = $('#lbImg');
+  const go = () => {
+    const a = el.getBoundingClientRect(), b = img.getBoundingClientRect(); if (!b.width) return;
+    img.animate([{transform: `translate(${a.left + a.width / 2 - (b.left + b.width / 2)}px, ${a.top + a.height / 2 - (b.top + b.height / 2)}px) scale(${a.width / b.width})`, borderRadius: '10px'}, {transform: 'none', borderRadius: '18px'}], {duration: 620, easing: EASE_SPRING});
+    $('.lb-cap').animate([{opacity: 0, transform: 'translateY(10px)'}, {opacity: 1, transform: 'none'}], {duration: 500, delay: 120, easing: EASE_SPRING, fill: 'backwards'});
+  };
+  if (img.complete) go(); else img.onload = () => { img.onload = lbFit; lbFit(); go(); };
+}
+function lbClose() {
+  const box = $('#lb'); if (box.hidden) return;
+  box.hidden = true;
+  if ($('#imp').hidden && $('#cpy').hidden && $('#ord').hidden) document.body.classList.remove('noscroll');
+  if (LB.from && LB.from.isConnected) LB.from.focus({preventScroll: true});
+}
+function lbStep(d) {
+  const j = LB.i + d; if (j < 0 || j >= LB.list.length) return;
+  LB.i = j; lbShow();
+  if (motionOk()) $('#lbImg').animate([{opacity: 0, transform: `translateX(${d * 40}px) scale(.97)`}, {opacity: 1, transform: 'none'}], {duration: 480, easing: EASE_SPRING});
+}
+document.addEventListener('click', e => { const im = e.target.closest && e.target.closest('img.ph.zoom[data-mk]'); if (im) { e.preventDefault(); e.stopPropagation(); lbOpen(im); } }, true);
+document.addEventListener('keydown', e => {
+  if (!$('#lb').hidden) {
+    if (e.key === 'Escape') { e.preventDefault(); lbClose(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); lbStep(1); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); lbStep(-1); }
+    return;
+  }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('img.ph.zoom[data-mk]')) { e.preventDefault(); lbOpen(e.target); }
+}, true);
+$('#lbX').addEventListener('click', lbClose);
+$('#lbPrev').addEventListener('click', () => lbStep(-1));
+$('#lbNext').addEventListener('click', () => lbStep(1));
+$('#lb').addEventListener('click', e => { if (e.target.id === 'lb' || e.target.classList.contains('lb-imgw')) lbClose(); });
+$('#lbSz').addEventListener('click', e => {
+  const b = e.target.closest('[data-lb-inc]'); if (!b) return;
+  const pur = PUR.get(ui.recvId); if (!pur) return;
+  const l = pur.lines[+b.dataset.lbInc]; if (!l) return;
+  l.c = round(l.c + 1); savePur(pur.id); render(); lbShow();
+  const nb = $(`#lbSz [data-lb-inc="${b.dataset.lbInc}"]`);
+  if (nb && motionOk()) nb.animate([{transform: 'scale(1.12)'}, {transform: 'none'}], {duration: 500, easing: EASE_SPRING});
+  if (l.c === l.q && nb) { const r = nb.getBoundingClientRect(); celebrate(r.left + r.width / 2, r.top + r.height / 2, 26); }
+});
+// a finger swipe flips between models
+let lbX0 = null;
+$('#lb').addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') lbX0 = e.clientX; });
+$('#lb').addEventListener('pointerup', e => { if (lbX0 == null) return; const dx = e.clientX - lbX0; lbX0 = null; if (Math.abs(dx) > 50) lbStep(dx < 0 ? 1 : -1); });
 
 /* ---------- motion ---------- */
 const motionOk = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3933,30 +4370,39 @@ function celebrate(x, y, n = 130) {
   requestAnimationFrame(step);
 }
 let placeT = 0;
-addEventListener('resize', () => { clearTimeout(placeT); placeT = setTimeout(() => { placePill(); placeThumbs(); if (ui.tab === 'home') render(); }, 80); });
+addEventListener('resize', () => { if (!$('#lb').hidden) lbFit(); clearTimeout(placeT); placeT = setTimeout(() => { placePill(); placeThumbs(); if (ui.tab === 'home') render(); }, 80); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { placePill(); placeThumbs(); });
 
 /* ---------- tour: a guided walk through one working day ---------- */
 const TOUR = [
   {h: 'Добро пожаловать в ULTIMATE SHOP СКЛАД', t: 'Покажем за минуту, как идёт рабочий день: утром заказы, потом закупка в ТЦ Москва, приёмка мешков и склад. Листайте кнопкой «Далее» или стрелками на клавиатуре.'},
+  {tab: 'home', sel: ['#gs'], h: 'Где шуба?', t: 'Поиск на любой вкладке, открывается и клавишей «/». Введите артикул или часть названия: программа покажет, сколько таких на складе, в каких отправлениях они ждут и едут ли в мешке.'},
   {tab: 'home', sel: ['#bento .w-rings', '#bento'], h: 'Сводка: весь день на одном экране', t: 'Кольца показывают, сколько отправлений можно собрать, сколько обеспечено товаром и сколько мешков принято. Рядом склад, продажи, закупка и подсказки, что сделать сейчас. Нажмите на любой виджет, чтобы перейти в раздел. Кнопка «Разбор дня» просит Claude коротко сказать, что делать в первую очередь.'},
   {tab: 'day', sel: ['#pane-day [data-import="orders"]'], h: 'Утром — лист подбора', t: 'Скачайте лист подбора в кабинете Озона и загрузите сюда PDF. Программа прочитает все отправления, даже 1600 с лишним, и сверит их число с шапкой листа. Повторная загрузка ничего не задвоит.'},
   {tab: 'day', sel: ['#dayTiles', '#dayEmpty'], h: 'Что можно собрать, а чего нет', t: 'Товар со склада сразу отдаётся отправлениям, сначала старым. У каждого отправления свой статус: «можно собирать», «ждёт мешок» или «не хватает». То, чего не хватает, уходит в закупку.'},
   {tab: 'buy', sel: ['#pavPick', '#buyList'], h: 'Закупка по павильонам', t: 'Всё, чего не хватает, разложено по павильонам. Выберите павильон: там модели с фото и размерами. В поле «Заказать» можно вписать больше, на целый мешок, лишнее уйдёт на склад.'},
   {tab: 'buy', sel: ['#buyList [data-order-pav]', '#buyList .btn.wa', '#buyPdfAll'], h: 'Заказ с фото вместо скриншотов', t: 'Кнопка «Заказ с фото» собирает PDF или картинку: фото каждой модели, размеры и количество, всё пронумеровано. Сохраните и отправьте поставщику в WhatsApp. На iPhone в приложении Claude сразу откроется «Поделиться».'},
-  {tab: 'buy', sel: ['#buyCommit'], h: 'Оформить закупку', t: 'Когда заказали у всех, нажмите «Оформить закупку». Товар со склада спишется под отправления, а остальные отправления будут ждать свой мешок.'},
-  {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть.'},
+  {tab: 'buy', sel: ['#buyCommit'], h: 'Оформить закупку', t: 'Когда заказали у всех, нажмите «Оформить закупку». Товар со склада спишется под отправления, а остальные отправления будут ждать свой мешок. Ошиблись — 10 секунд можно нажать «Отменить».'},
+  {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно.'},
   {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
   {tab: 'an', sel: ['#pane-an .card'], h: 'Анализ продаж', t: 'По истории продаж программа подскажет, что закупить впрок, что залежалось и стоит снизить в цене, а что продаётся хорошо, но на складе нет. Видны и перекосы по размерам.'},
-  {tab: 'settings', sel: [() => $('#supList').closest('.card'), '#pane-settings .card'], h: 'Настройки', t: 'Телефоны поставщиков для WhatsApp, правила сравнения артикулов (русские и английские буквы, нули в начале) и резервная копия всех данных в один файл.'},
+  {tab: 'settings', sel: [() => $('#supList').closest('.card'), '#pane-settings .card'], h: 'Настройки', t: 'Телефоны поставщиков для WhatsApp, правила сравнения артикулов (русские и английские буквы, нули в начале) и резервная копия всех данных в один файл. Здесь же включается режим сотрудника для телефона приёмщика.'},
   {sel: ['#tourOpen'], h: 'Готово', t: 'Каждый день по кругу: Заказы → Закупка → Приёмка. Это обучение всегда можно открыть снова вот этой кнопкой.', last: true},
 ];
+const TOUR_EMP = [
+  {h: 'Добро пожаловать', t: 'Здесь две вкладки: «Приёмка», где считают приехавшие мешки, и «Склад». Покажем за полминуты.'},
+  {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Выберите мешок, который приехал. Берите шубу, находите её по фото и нажимайте «+» у размера с бирки. Нажмите на фото, и оно откроется крупно: считать можно прямо там.'},
+  {tab: 'recv', sel: ['#recvHome .card'], h: 'Провести приёмку', t: 'Когда всё посчитали, нажмите «Провести приёмку». Ошиблись — 10 секунд можно нажать «Отменить» в сообщении сверху.'},
+  {tab: 'stock', sel: ['#gs'], h: 'Где шуба?', t: 'Введите артикул или часть названия, и программа покажет, сколько таких на складе и едет ли ещё.'},
+  {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Шубу, которой нет в заказе, добавьте при приёмке в «Не из заказа».'},
+  {sel: ['#tourOpen'], h: 'Готово', t: 'Обучение можно открыть снова этой кнопкой.', last: true},
+];
 const TOUR_KEY = 'sklad/tour1';
-const tour = {i: 0, on: false, back: 'day', el: null, focus: null, raf: 0};
+const tour = {i: 0, on: false, back: 'day', el: null, focus: null, raf: 0, steps: TOUR};
 const isShown = el => el && el.getClientRects().length > 0 && !el.closest('[hidden]');
 function tourStart(auto) {
   if (tour.on) return;
-  Object.assign(tour, {on: true, i: 0, back: ui.tab, focus: document.activeElement});
+  Object.assign(tour, {on: true, i: 0, back: ui.tab, focus: document.activeElement, steps: EMP ? TOUR_EMP : TOUR});
   $('.shell').inert = true; $('#tour').hidden = false;
   diag('tour', auto ? 'показано при первом входе' : 'открыто кнопкой');
   tourShow();
@@ -3965,18 +4411,18 @@ function tourEnd(done) {
   if (!tour.on) return;
   tour.on = false; $('#tour').hidden = true; $('.shell').inert = false;
   lsSet(TOUR_KEY, '1');
-  diag('tour', done ? 'пройдено до конца' : `закрыто на шаге ${tour.i + 1} из ${TOUR.length}`);
+  diag('tour', done ? 'пройдено до конца' : `закрыто на шаге ${tour.i + 1} из ${tour.steps.length}`);
   if (ui.tab !== tour.back) setTab(tour.back);
   if (tour.focus && tour.focus.focus) tour.focus.focus({preventScroll: true});
 }
 function tourShow() {
-  const st = TOUR[tour.i];
+  const st = tour.steps[tour.i];
   if (st.tab && ui.tab !== st.tab) setTab(st.tab);
   tour.el = null;
   for (const q of st.sel || []) { const el = typeof q === 'function' ? q() : $(q); if (isShown(el)) { tour.el = el; break; } }
-  $('#tourN').textContent = `Шаг ${tour.i + 1} из ${TOUR.length}`;
+  $('#tourN').textContent = `Шаг ${tour.i + 1} из ${tour.steps.length}`;
   $('#tourH').textContent = st.h; $('#tourT').textContent = st.t;
-  $('#tourFill').style.width = `${100 * (tour.i + 1) / TOUR.length}%`;
+  $('#tourFill').style.width = `${100 * (tour.i + 1) / tour.steps.length}%`;
   $('#tourPrev').hidden = tour.i === 0; $('#tourSkip').hidden = !!st.last;
   $('#tourNext').textContent = st.last ? 'Начать работу' : tour.i === 0 ? 'Показать' : 'Далее';
   // bring the target into view with room for the card under it, unless it sits in the fixed menu
@@ -4009,7 +4455,7 @@ function tourPlace() {
 }
 function tourGo(d) {
   const j = tour.i + d;
-  if (j >= TOUR.length) { tourEnd(true); return; }
+  if (j >= tour.steps.length) { tourEnd(true); return; }
   if (j < 0) return;
   tour.i = j; tourShow();
 }
@@ -4031,7 +4477,7 @@ addEventListener('resize', tourReplace); addEventListener('scroll', tourReplace,
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches && e.target.matches('.qin, .cin')) { e.preventDefault(); e.target.blur(); }
-  if (e.key === 'Escape') { if (!$('#ord').hidden) closeModal('#ord'); else if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
+  if (e.key === 'Escape') { if (!$('#empDlg').hidden) closeModal('#empDlg'); else if (!$('#ord').hidden) closeModal('#ord'); else if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
 });
 
 // settings
@@ -4165,7 +4611,8 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 async function start() {
   document.body.classList.add('loading');
   const saved = lsGet('sklad/tab');
-  setTab(['home', 'day', 'buy', 'recv', 'stock', 'an', 'settings'].includes(saved) ? saved : 'home');
+  document.body.classList.toggle('emp', EMP);
+  setTab(['home', 'day', 'buy', 'recv', 'stock', 'an', 'settings'].includes(saved) ? saved : EMP ? 'recv' : 'home');
   renderSettings(); render();
   let db = null;
   if (inViewer) {
