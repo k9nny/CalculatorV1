@@ -444,6 +444,24 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 .chart .hit{fill:transparent;cursor:crosshair}
 .ctip{position:absolute;pointer-events:none;background:var(--ink);color:var(--surface);padding:7px 10px;border-radius:8px;font:500 12.5px/1.3 var(--f-ui);white-space:nowrap;transform:translate(-50%,calc(-100% - 10px));box-shadow:0 8px 24px -10px rgba(0,0,0,.5)}
 .ctip b{font-weight:700}
+/* help button & tour */
+.helpbtn{appearance:none;border:0;background:transparent;color:var(--side-muted);display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;margin:0 0 10px;border-radius:10px;font:500 14px/1.2 var(--f-ui);cursor:pointer;transition:background .15s,color .15s}
+.helpbtn:hover{color:var(--side-ink);background:var(--side-2)}
+.helpbtn .ic{color:var(--side-gold)}
+.helpbtn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.tour{position:fixed;inset:0;z-index:90}
+.tour-ring{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(8,9,11,.64);outline:2px solid var(--side-gold);outline-offset:0;pointer-events:none;transition:top .32s cubic-bezier(.2,.8,.2,1),left .32s cubic-bezier(.2,.8,.2,1),width .32s cubic-bezier(.2,.8,.2,1),height .32s cubic-bezier(.2,.8,.2,1)}
+.tour-ring.none{outline-color:transparent}
+.tour-pop{position:fixed;width:min(390px,calc(100vw - 24px));background:var(--surface);color:var(--ink);border-radius:16px;padding:20px 20px 16px;box-shadow:0 24px 60px -12px rgba(0,0,0,.45),0 0 0 1px var(--line);overflow:hidden;transition:top .32s cubic-bezier(.2,.8,.2,1),left .32s cubic-bezier(.2,.8,.2,1)}
+.tour-bar{position:absolute;left:0;right:0;top:0;height:3px;background:var(--surface-2)}
+.tour-bar i{display:block;height:100%;background:var(--gold);transition:width .32s}
+.tour-n{font:600 11.5px/1 var(--f-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:4px 0 10px}
+.tour-pop h3{font:600 19px/1.25 var(--f-ui);margin:0 0 8px}
+.tour-pop p{margin:0;color:var(--muted);font-size:15px;line-height:1.5}
+.tour-act{display:flex;align-items:center;gap:8px;margin-top:18px}
+.tour-act .grow{flex:1}
+.tour-act #tourSkip{padding-inline:4px}
+@media (prefers-reduced-motion:reduce){.tour-ring,.tour-pop,.tour-bar i{transition:none}}
 /* pavilion picker */
 .pavpick{scroll-margin-top:16px}
 .pavpick .lhead{margin-bottom:12px}
@@ -467,6 +485,10 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 @media (max-width:1023px){.ppchips{display:none}.pavpick{scroll-margin-top:72px}}
 @media (max-width:560px){.pv-nav{padding:12px 14px}.pv-nav .btn{flex:1 1 auto;justify-content:center}}
 @media (max-width:1023px){
+  .side-foot{display:flex;align-items:center;gap:10px}
+  .helpbtn{width:34px;height:34px;padding:0;margin:0;justify-content:center;border-radius:50%;background:var(--side-2)}
+  .helpbtn span{display:none}
+  .helpbtn .ic{width:20px;height:20px}
   .shell{display:block}
   .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;flex-direction:row;align-items:center;gap:12px;padding:10px 16px;overflow:visible}
   .side .brand{flex-basis:auto;padding:0}
@@ -495,6 +517,7 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.4 2.4c-.6.3-1 .8-1 1.5v.6M12 16.9v.1"/></symbol>
   <symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
   <symbol id="i-day" viewBox="0 0 24 24"><rect x="4.5" y="4" width="15" height="17.5" rx="2.5"/><rect x="8.5" y="2.5" width="7" height="3.5" rx="1.2"/><path d="M8.5 11h7M8.5 14.5h7M8.5 18h4"/></symbol>
   <symbol id="i-buy" viewBox="0 0 24 24"><path d="M3 3.5h2.2l2.3 11.2a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 1.9-1.4L21.5 8H6.2"/><circle cx="10" cy="20" r="1.4"/><circle cx="17.5" cy="20" r="1.4"/></symbol>
@@ -521,7 +544,7 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
       <button class="tab" role="tab" id="t-an" data-tab="an" aria-selected="false"><svg class="ic"><use href="#i-an"/></svg><span class="tl">Анализ</span></button>
       <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false"><svg class="ic"><use href="#i-set"/></svg><span class="tl">Настройки</span></button>
     </nav>
-    <div class="side-foot"><div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div></div>
+    <div class="side-foot"><button class="helpbtn" type="button" id="tourOpen" aria-label="Как пользоваться"><svg class="ic"><use href="#i-help"/></svg><span>Как пользоваться</span></button><div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div></div>
   </aside>
 <div class="app">
   <header class="top">
@@ -907,6 +930,16 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 </div>
 
 <div class="drop" id="drop" hidden>Отпустите файл, чтобы загрузить</div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-ring" id="tourRing"></div>
+  <div class="tour-pop" id="tourPop" role="dialog" aria-modal="true" aria-labelledby="tourH" aria-describedby="tourT">
+    <div class="tour-bar"><i id="tourFill"></i></div>
+    <div class="tour-n" id="tourN"></div>
+    <h3 id="tourH"></h3>
+    <p id="tourT"></p>
+    <div class="tour-act"><button class="btn ghost" type="button" id="tourSkip">Пропустить</button><span class="grow"></span><button class="btn" type="button" id="tourPrev">Назад</button><button class="btn primary" type="button" id="tourNext">Далее</button></div>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" id="xlsxLib" async></script>
@@ -937,9 +970,10 @@ const dm = t => { const d = new Date(t); return `${p2(d.getDate())}.${p2(d.getMo
 const daysSince = t => t ? Math.max(0, Math.floor((Date.now() - t) / DAYMS)) : null;
 const lsGet = k => { try { return localStorage.getItem(k); } catch { return null; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-25.8';
+const APP_VERSION = '2026-09-26.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -1353,6 +1387,7 @@ function checkReady() {
   if (chk.neg || chk.over || chk.orphan) diag('check', 'странные данные', chk);
   if (ui.tab === 'an') loadHist();
   setTimeout(cleanup, 8000);
+  if (lsOk() && !lsGet(TOUR_KEY)) setTimeout(() => { if ($('#imp').hidden && $('#cpy').hidden) tourStart(true); }, 700);
 }
 function rekeyAll(save) {
   artCache.clear();
@@ -3012,6 +3047,98 @@ $('#rcClear').addEventListener('click', () => {
   confirmIn('#rcConfirm', `Удалить все ${cnt(draft.items.size, W.row)} из списка пересчёта? Склад не изменится.`, 'Очистить список', () => { draft.clear(); $('#scanInfo').textContent = ''; }, true);
 });
 document.addEventListener('focusout', e => { const s = e.target.closest && e.target.closest('[data-stale]'); if (s) setTimeout(render, 0); });
+/* ---------- tour: a guided walk through one working day ---------- */
+const TOUR = [
+  {h: 'Добро пожаловать в ULTIMATE SHOP СКЛАД', t: 'Покажем за минуту, как идёт рабочий день: утром заказы, потом закупка в ТЦ Москва, приёмка мешков и склад. Листайте кнопкой «Далее» или стрелками на клавиатуре.'},
+  {tab: 'day', sel: ['#pane-day [data-import="orders"]'], h: 'Утром — лист подбора', t: 'Скачайте лист подбора в кабинете Озона и загрузите сюда PDF. Программа прочитает все отправления, даже 1600 с лишним, и сверит их число с шапкой листа. Повторная загрузка ничего не задвоит.'},
+  {tab: 'day', sel: ['#dayTiles', '#dayEmpty'], h: 'Что можно собрать, а чего нет', t: 'Товар со склада сразу отдаётся отправлениям, сначала старым. У каждого отправления свой статус: «можно собирать», «ждёт мешок» или «не хватает». То, чего не хватает, уходит в закупку.'},
+  {tab: 'buy', sel: ['#pavPick', '#buyList'], h: 'Закупка по павильонам', t: 'Всё, чего не хватает, разложено по павильонам. Выберите павильон: там модели с фото и размерами. В поле «Заказать» можно вписать больше, на целый мешок, лишнее уйдёт на склад.'},
+  {tab: 'buy', sel: ['#buyList .btn.wa', '#buyList [data-edit-sup]', '#buyCopy'], h: 'Заказ поставщику в WhatsApp', t: 'Кнопка WhatsApp открывает чат с поставщиком, где заказ уже написан: остаётся нажать «Отправить». Номер поставщика вписывается один раз, кнопкой «Указать поставщика».'},
+  {tab: 'buy', sel: ['#buyCommit'], h: 'Оформить закупку', t: 'Когда заказали у всех, нажмите «Оформить закупку». Товар со склада спишется под отправления, а остальные отправления будут ждать свой мешок.'},
+  {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть.'},
+  {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
+  {tab: 'an', sel: ['#pane-an .card'], h: 'Анализ продаж', t: 'По истории продаж программа подскажет, что закупить впрок, что залежалось и стоит снизить в цене, а что продаётся хорошо, но на складе нет. Видны и перекосы по размерам.'},
+  {tab: 'settings', sel: [() => $('#supList').closest('.card'), '#pane-settings .card'], h: 'Настройки', t: 'Телефоны поставщиков для WhatsApp, правила сравнения артикулов (русские и английские буквы, нули в начале) и резервная копия всех данных в один файл.'},
+  {sel: ['#tourOpen'], h: 'Готово', t: 'Каждый день по кругу: Заказы → Закупка → Приёмка. Это обучение всегда можно открыть снова вот этой кнопкой.', last: true},
+];
+const TOUR_KEY = 'sklad/tour1';
+const tour = {i: 0, on: false, back: 'day', el: null, focus: null, raf: 0};
+const isShown = el => el && el.getClientRects().length > 0 && !el.closest('[hidden]');
+function tourStart(auto) {
+  if (tour.on) return;
+  Object.assign(tour, {on: true, i: 0, back: ui.tab, focus: document.activeElement});
+  $('.shell').inert = true; $('#tour').hidden = false;
+  diag('tour', auto ? 'показано при первом входе' : 'открыто кнопкой');
+  tourShow();
+}
+function tourEnd(done) {
+  if (!tour.on) return;
+  tour.on = false; $('#tour').hidden = true; $('.shell').inert = false;
+  lsSet(TOUR_KEY, '1');
+  diag('tour', done ? 'пройдено до конца' : `закрыто на шаге ${tour.i + 1} из ${TOUR.length}`);
+  if (ui.tab !== tour.back) setTab(tour.back);
+  if (tour.focus && tour.focus.focus) tour.focus.focus({preventScroll: true});
+}
+function tourShow() {
+  const st = TOUR[tour.i];
+  if (st.tab && ui.tab !== st.tab) setTab(st.tab);
+  tour.el = null;
+  for (const q of st.sel || []) { const el = typeof q === 'function' ? q() : $(q); if (isShown(el)) { tour.el = el; break; } }
+  $('#tourN').textContent = `Шаг ${tour.i + 1} из ${TOUR.length}`;
+  $('#tourH').textContent = st.h; $('#tourT').textContent = st.t;
+  $('#tourFill').style.width = `${100 * (tour.i + 1) / TOUR.length}%`;
+  $('#tourPrev').hidden = tour.i === 0; $('#tourSkip').hidden = !!st.last;
+  $('#tourNext').textContent = st.last ? 'Начать работу' : tour.i === 0 ? 'Показать' : 'Далее';
+  // bring the target into view with room for the card under it, unless it sits in the fixed menu
+  if (tour.el && !tour.el.closest('.side')) {
+    const r = tour.el.getBoundingClientRect(), top = innerWidth < 1024 ? 76 : 20, bottom = innerWidth < 1024 ? 84 : 12;
+    const free = innerHeight - top - bottom - r.height - 14 - $('#tourPop').offsetHeight;
+    scrollBy({top: r.top - top - Math.max(0, free / 2), behavior: 'instant'});
+  }
+  tourPlace();
+  $('#tourNext').focus({preventScroll: true});
+}
+function tourPlace() {
+  const ring = $('#tourRing'), pop = $('#tourPop'), vw = innerWidth, vh = innerHeight, m = 12, gap = 14;
+  const pw = pop.offsetWidth, ph = pop.offsetHeight;
+  const put = (l, t) => { pop.style.left = Math.round(l) + 'px'; pop.style.top = Math.round(t) + 'px'; };
+  if (!tour.el) {
+    ring.classList.add('none'); Object.assign(ring.style, {left: vw / 2 + 'px', top: vh / 2 + 'px', width: '0px', height: '0px'});
+    put((vw - pw) / 2, (vh - ph) / 2); return;
+  }
+  ring.classList.remove('none');
+  const r = tour.el.getBoundingClientRect(), pad = 6;
+  const x = Math.max(4, r.left - pad), y = Math.max(4, r.top - pad);
+  const w = Math.min(vw - 4, r.right + pad) - x, h = Math.min(vh - 4, r.bottom + pad) - y;
+  Object.assign(ring.style, {left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px'});
+  const cx = l => Math.min(Math.max(m, l), vw - m - pw), cy = t => Math.min(Math.max(m, t), vh - m - ph);
+  const cands = [[cx(x + w / 2 - pw / 2), y + h + gap], [cx(x + w / 2 - pw / 2), y - gap - ph], [x + w + gap, cy(y + h / 2 - ph / 2)], [x - gap - pw, cy(y + h / 2 - ph / 2)]];
+  const pos = cands.find(([l, t]) => l >= m && t >= m && l + pw <= vw - m && t + ph <= vh - m);
+  // a target larger than the screen: park the card where it covers the least of it
+  if (pos) put(...pos); else put((vw - pw) / 2, vh - (y + h) >= y ? vh - m - ph : m);
+}
+function tourGo(d) {
+  const j = tour.i + d;
+  if (j >= TOUR.length) { tourEnd(true); return; }
+  if (j < 0) return;
+  tour.i = j; tourShow();
+}
+$('#tourOpen').addEventListener('click', () => tourStart(false));
+$('#tourNext').addEventListener('click', () => tourGo(1));
+$('#tourPrev').addEventListener('click', () => tourGo(-1));
+$('#tourSkip').addEventListener('click', () => tourEnd(false));
+document.addEventListener('keydown', e => {
+  if (!tour.on) return;
+  if (e.key === 'Escape') tourEnd(false);
+  else if (e.key === 'ArrowRight') tourGo(1);
+  else if (e.key === 'ArrowLeft') tourGo(-1);
+  else if (e.key === 'Tab') { const b = [...$$('#tourPop .btn')].filter(x => !x.hidden); const k = b.indexOf(document.activeElement); e.preventDefault(); b[(k + (e.shiftKey ? -1 : 1) + b.length) % b.length].focus(); }
+  else return;
+  e.preventDefault(); e.stopImmediatePropagation();
+}, true);
+const tourReplace = () => { if (!tour.on) return; cancelAnimationFrame(tour.raf); tour.raf = requestAnimationFrame(tourPlace); };
+addEventListener('resize', tourReplace); addEventListener('scroll', tourReplace, {passive: true});
+
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches && e.target.matches('.qin, .cin')) { e.preventDefault(); e.target.blur(); }
   if (e.key === 'Escape') { if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
