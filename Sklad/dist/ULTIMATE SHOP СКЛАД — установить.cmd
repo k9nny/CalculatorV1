@@ -2018,7 +2018,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-27.1';
+const APP_VERSION = '2026-09-27.2';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -2075,9 +2075,10 @@ function parseRaw(a) {
   if (parts.length > 1 && SIZE_RX.test(latinUp(parts[parts.length - 1]).replace(/\s+/g, ''))) { size = parts.pop().trim(); model = parts.join('-'); }
   const pn = pavParts(parts);
   const pav = pn ? normPav(parts.slice(0, pn).join('-')) : '';
-  // the price is a round number (К18-900-777-2-XL: 900, not the model number 777)
-  let price = 0, even = 0;
-  for (const seg of parts.slice(pn)) { const t = seg.trim(); if (/^\d{3,5}$/.test(t) && +t >= 300 && +t <= 50000) { price = +t; if (+t % 50 === 0) even = +t; } }
+  // the price is a round number (К18-900-777-2-XL: 900, not the model number 777; 1990 counts too)
+  let price = 0, e50 = 0, e10 = 0;
+  for (const seg of parts.slice(pn)) { const t = seg.trim(); if (/^\d{3,5}$/.test(t) && +t >= 300 && +t <= 50000) { price = +t; if (+t % 50 === 0) e50 = +t; else if (+t % 10 === 0) e10 = +t; } }
+  const even = e50 || e10;
   price = even || price;
   r = {model, size, pav, price, aprice: price, rp: even, mkey: normKey(model)};
   if (artCache.size > 20000) artCache.clear();
@@ -2514,7 +2515,7 @@ function loadModels(d) {
   for (const [k, t] of TWIN) if (TWIN.has(t.to) || !t.a) TWIN.delete(k);   // only one level: a twin always points at a main model
   for (const x of Array.isArray(d.no) ? d.no : []) NOTWIN.add(String(x));
   for (const r of Array.isArray(d.moves) ? d.moves : []) if (Array.isArray(r) && r[0] && r[1]) MOVE.set(String(r[0]), {pav: normPav(r[1]), price: Number(r[2]) || 0, from: String(r[3] || ''), at: Number(r[4]) || 0, model: String(r[5] || '')});
-  clearArt();
+  clearArt(); MODV++;
   return was !== JSON.stringify([...TWIN]);
 }
 function rekeyAll(save) {
@@ -3305,7 +3306,7 @@ function twinFeat(m) {
     if (!w || (w.length < 2 && !/\d/.test(w))) continue;
     const u = latinUp(w);
     if (SIZE_RX.test(u) && (/[A-Z]/.test(u) || m.sizes.has(u) || (+u >= 38 && +u <= 64))) continue;
-    const c = colorOf(w, /^[a-z]/.test(w)); if (c) colors.add(c);
+    const lat = /^[a-z]/.test(w), c = colorOf(lat ? w.toUpperCase() : w, lat); if (c) colors.add(c);
     toks.add(u);
   }
   const parts = shortModel(m.model).split('-').map(x => latinUp(x.trim())).filter(Boolean);
@@ -3318,17 +3319,18 @@ function twinFeat(m) {
   return {toks, colors, tag, sig};
 }
 const pairKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
-let twinCache = {sig: '', list: [], M: null};
+let twinCache = {sig: '', list: [], M: null}, MODV = 0;   // MODV: bumped on every change of twins
 // pairs worth a look: same pavilion, similar name and article; each model in one pair at most
 function twinSuggest() {
-  const sig = [lines.items.size, stock.items.size, PO.size, TWIN.size, NOTWIN.size, going().length, S.pav].join('|');
+  const sig = [lines.items.size, stock.items.size, PO.size, MODV, TWIN.size, NOTWIN.size, going().length, S.pav, S.latin, S.punct, S.zeros, DAYM.at].join('|');
   if (twinCache.sig === sig) return twinCache;
   const M = modelIndex(), roots = [...M.values()].filter(m => !TWIN.has(m.mk));
   const F = new Map(roots.map(m => [m.mk, twinFeat(m)])), df = new Map();
   for (const f of F.values()) for (const t of f.toks) df.set(t, (df.get(t) || 0) + 1);
   const N = Math.max(2, roots.length), w = t => Math.log(1 + N / (df.get(t) || 1));
-  const byPavM = new Map();
-  for (const m of roots) (byPavM.get(m.pav) || byPavM.set(m.pav, []).get(m.pav)).push(m);
+  // «А3» and «А03» written by two shops are one pavilion here too
+  const byPavM = new Map(), pk = pav => pav.replace(/^([^\d]*)0+(?=\d)/, '$1');
+  for (const m of roots) { const k = pk(m.pav); (byPavM.get(k) || byPavM.set(k, []).get(k)).push(m); }
   const cand = [];
   for (const [pav, ms] of byPavM) {
     if (!pav || ms.length < 2) continue;
@@ -3358,7 +3360,7 @@ function twinRank(mk) {
   const {M} = twinSuggest(), me = M.get(mk); if (!me) return [];
   const fm = twinFeat(me), out = [];
   for (const m of M.values()) {
-    if (m.mk === mk || TWIN.has(m.mk) || m.pav !== me.pav) continue;
+    if (m.mk === mk || TWIN.has(m.mk) || m.pav.replace(/^([^\d]*)0+(?=\d)/, '$1') !== me.pav.replace(/^([^\d]*)0+(?=\d)/, '$1')) continue;
     const f = twinFeat(m); let both = 0, any = 0;
     for (const t of fm.toks) { any++; if (f.toks.has(t)) both++; }
     for (const t of f.toks) if (!fm.toks.has(t)) any++;
@@ -3377,11 +3379,13 @@ function joinTwins(pairs) {
     if (SKIP.m.has(other.mk)) { SKIP.m.delete(other.mk); SKIP.m.add(root.to); }
     NOTWIN.delete(pairKey(main.mk, other.mk));
   }
+  MODV++;
   saveMeta('meta/models'); saveMeta('meta/po');
   rekeyAll(true);
 }
 function splitTwin(mk) {
   if (!TWIN.delete(mk)) return;
+  MODV++;
   saveMeta('meta/models');
   rekeyAll(true);
 }
@@ -3773,7 +3777,7 @@ function aliasNote(mine, theirs) {
 const going = () => [...PUR.values()].filter(p => p.st === 'go').sort((a, b) => b.at - a.at);
 // the model code for the supplier: our price inside the article is left out (QQ3-1500 → QQ3)
 function sheetCode(m, rows) {
-  const parts = shortModel(m.model).split('-'), rp = rows.length ? parseRaw(rows[0].a).rp : 0;
+  const parts = shortModel(m.model).split('-'), rp = S.price && rows.length ? parseRaw(rows[0].a).rp : 0;
   if (rp && parts.length > 1) { const i = parts.map(x => x.trim()).lastIndexOf(String(rp)); if (i >= 0) parts.splice(i, 1); }
   return parts.join('-');
 }
@@ -3786,7 +3790,8 @@ function sheetName(n, sizes) {
     .replace(/\(\s*\d{8,14}\s*\)|\b\d{11,14}\b/g, ' ')
     .replace(/\(\s*\d{2}\s*[-–]\s*\d{2}\s*\)/g, ' ')
     .replace(/\b(\d{2})\s*[-–]\s*(\d{2})\b/g, (m, a, b) => +a >= 38 && +a <= 64 && +b >= 38 && +b <= 64 ? ' ' : m);
-  return t.split(/\s+/).filter(w => { const u = latinUp(w).replace(/[(),.;:]/g, ''); return u && !isSize(u); }).join(' ').replace(/\(\s*\)/g, '').replace(/\s+([,.;:])/g, '$1').replace(/[,;:\s]+$/, '').trim();
+  const ws = t.split(/\s+/);
+  return ws.filter((w, i) => { const u = latinUp(w).replace(/[(),.;:]/g, ''); return u && (!isSize(u) || /^(см|мм|м|cm|mm)([.,;:)]|$)/i.test(ws[i + 1] || '')); }).join(' ').replace(/\(\s*\)/g, '').replace(/\s+([,.;:])/g, '$1').replace(/[,;:\s]+$/, '').trim();
 }
 // the order for one pavilion as a message: "LM9-Ser (Экошуба …): 42 — 10, 44 — 15"
 function pavText(pv) {
@@ -4254,7 +4259,7 @@ function askCommit(box) {
   for (const [k, r] of p) if (r.take > 0) { take += r.take; const ln = lines.items.get(k); tShips.add(ln.s || k); }
   const order = round(rows.reduce((s, r) => s + r.order, 0));
   let forOrders = 0; for (const r of rows) forOrders += Math.min(r.need, r.order);
-  let notOrdered = 0; for (const r of buyRows(p)) notOrdered += Math.max(0, r.need - r.order);
+  let notOrdered = 0; for (const r of buyRows(p, true)) notOrdered += r.skip ? r.need : Math.max(0, r.need - r.order);
   const pavs = new Set(rows.map(r => r.pav)).size;
   const parts = [];
   if (take) parts.push(`Со склада спишется <b>${fmt(round(take))} шт.</b> под ${cnt(tShips.size, W.ship)}.`);
@@ -4428,7 +4433,7 @@ $('#twBody').addEventListener('click', e => {
   if (t.dataset.twYes != null) { const c = list[+t.dataset.twYes]; if (c) joinWithUndo([c], `Объединено: ${shortModel(c.main.model)} и ${shortModel(c.other.model)}`); }
   else if (t.dataset.twNo != null) {
     const c = list[+t.dataset.twNo]; if (!c) return;
-    const done = () => { NOTWIN.add(pairKey(c.main.mk, c.other.mk)); saveMeta('meta/models'); renderTw(); render(); };
+    const done = () => { NOTWIN.add(pairKey(c.main.mk, c.other.mk)); MODV++; saveMeta('meta/models'); renderTw(); render(); };
     const el = t.closest('.twpair');
     if (el && motionOk()) el.animate([{opacity: 1}, {opacity: 0, transform: 'translateX(-20px)'}], {duration: 200, easing: 'ease-in', fill: 'forwards'}).finished.then(done, done); else done();
   }
@@ -4614,7 +4619,7 @@ async function offerFile(name, data, mime) {
   diag('export', name, inViewer ? 'link-in-viewer' : 'link');
   return true;
 }
-const ORD = {pavs: [], pages: [], busy: false};
+const ORD = {pavs: [], pages: [], busy: false, drag: false};
 async function openOrder(pavList) {
   const all = groupModels(buyRows(plan())).filter(pv => pv.order > 0);
   const pvs = pavList ? all.filter(pv => pavList.includes(pv.pav)) : all;
@@ -4686,12 +4691,13 @@ $('#ordPages').addEventListener('click', e => {
 $('#ordPages').addEventListener('dragstart', e => {
   const im = e.target.closest && e.target.closest('img[data-page]'); if (!im) return;
   const p = ORD.pages[+im.dataset.page]; if (!p) return;
-  e.dataTransfer.effectAllowed = 'copy';
-  // Chrome and Yandex Browser: dropped on the desktop or into an app, the picture arrives as a .jpg file with this name
-  try { e.dataTransfer.setData('DownloadURL', `image/jpeg:${p.file}:${new URL(p.url, location.href).href}`); } catch {}
+  ORD.drag = true;
   im.closest('.ordpage').classList.add('dragging');
 });
+// while the picture is dragged, the program itself is no drop target: no file import, and the window never opens the picture instead of the program
+for (const ev of ['dragenter', 'dragover', 'drop']) document.addEventListener(ev, e => { if (!ORD.drag) return; e.preventDefault(); e.stopImmediatePropagation(); if (e.dataTransfer) e.dataTransfer.dropEffect = 'none'; }, true);
 $('#ordPages').addEventListener('dragend', e => {
+  ORD.drag = false;
   const f = e.target.closest && e.target.closest('.ordpage'); if (f) f.classList.remove('dragging');
   if (e.dataTransfer && e.dataTransfer.dropEffect !== 'none') { markSent('перетащено'); toast('Картинка перетащена. Если WhatsApp её не принял, нажмите «Скопировать» и вставьте в чат: Ctrl+V.'); }
 });
