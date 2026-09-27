@@ -425,6 +425,7 @@ tr.flash td{animation:flash 1.4s ease-out}
 .more{margin-top:10px}
 .chip{display:inline-flex;align-items:center;font:600 12px/1 var(--f-ui);padding:5px 8px;border-radius:999px;white-space:nowrap}
 .chip.good{background:var(--good-soft);color:var(--good)}
+.chip.plain{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .chip.bad{background:var(--bad-soft);color:var(--bad)}
 .chip.warn{background:var(--warn-soft);color:var(--warn)}
 .chip.new{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
@@ -520,7 +521,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 .model>div{min-width:0}
 .model:last-child{border-bottom:0}
 @media (max-width:560px){.model{padding:12px 14px}.pav>header{padding:12px 14px}}
-.model h4{margin:0;font:700 15px/1.3 var(--f-mono);word-break:break-all}
+.model h4{margin:0;font:700 15px/1.3 var(--f-mono);overflow-wrap:anywhere}
 .model .nm{margin-top:3px}
 .sz{width:auto;border-collapse:collapse;margin-top:8px;font-size:14px}
 .sz th:nth-child(2),.sz td:nth-child(2){width:80px}.sz th:nth-child(3),.sz td:nth-child(3){width:100px}.sz td:nth-child(4){width:40px}
@@ -537,6 +538,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 .go b{font:800 15px var(--f-display)}
 .go .sum{color:var(--muted);font-size:14px;margin-right:auto}
 .go .btn{min-height:38px;padding:8px 12px}
+.goall{display:flex;justify-content:flex-end}
 .cnt{display:grid;grid-template-columns:64px 1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .cnt .size{font:700 18px var(--f-mono)}
 .cnt .ord{color:var(--muted);font-size:14px}
@@ -739,7 +741,16 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 .ordsteps li::before{content:counter(st);width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-ink);font:600 13px/1 var(--f-ui)}
 .ordsteps b{color:var(--ink);font-weight:600}
 .ordpages{display:grid;gap:14px;justify-items:center;background:var(--surface-2);border-radius:14px;padding:16px;min-height:220px;align-content:start}
-.ordpages canvas{width:100%;max-width:560px;height:auto;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 28px -12px rgba(0,0,0,.35);background:#fff}
+.ordpage{margin:0;width:100%;max-width:560px;display:grid;gap:8px}
+.ordpage img{width:100%;height:auto;display:block;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 28px -12px rgba(0,0,0,.35);background:#fff;cursor:grab;-webkit-user-drag:element;transition:transform .35s var(--spring),box-shadow .25s}
+.ordpage img:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(0,0,0,.08),0 18px 36px -14px rgba(0,0,0,.45)}
+.ordpage img:active{cursor:grabbing}
+.ordpage.dragging img{opacity:.55;transform:scale(.98)}
+.ordpage figcaption{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}
+.ordpage .draghint{display:inline-flex;align-items:center;gap:6px}
+.ordpage .draghint .ic{width:16px;height:16px}
+@media (hover:none){.ordsteps .fine,.ordpage .draghint{display:none}.ordpage figcaption{justify-content:flex-end}}
+@media (hover:hover){.ordsteps .touch{display:none}}
 .ordpages .ordwait{align-self:center;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:10px}
 .ordpages .ordwait i{width:18px;height:18px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--gold);animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -779,6 +790,65 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 .ppc[aria-pressed="true"] span{color:inherit;opacity:.72}
 .ppc[aria-pressed="true"] .ic{color:inherit}
 .ppc:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+/* buy: ×, move, join */
+.mhead{display:flex;align-items:flex-start;gap:8px}
+.mhead h4{flex:1;min-width:0;padding-top:6px}
+.mact{display:flex;gap:6px;flex-shrink:0}
+.btn.sm{min-height:34px;padding:6px 10px;font-size:13px;gap:6px}
+.btn.sm .ic{width:16px;height:16px}
+.xx{appearance:none;flex-shrink:0;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font:400 22px/1 var(--f-ui);cursor:pointer;display:inline-grid;place-items:center;padding:0 0 2px;transition:background-color .15s,border-color .15s,color .15s,transform .4s var(--spring)}
+.xx:hover{color:#fff;background:var(--bad);border-color:var(--bad)}
+.xx:active{transform:scale(.88)}
+.xx:focus-visible,.ppx:focus-visible,.skc:focus-visible,.lnk:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.pav>header{position:relative;padding-right:64px}
+.pav>header .xx{position:absolute;top:12px;right:16px}
+@media (max-width:560px){.pav>header{padding-right:56px}.pav>header .xx{top:9px;right:12px}}
+@media (max-width:760px){.mact .btn span{display:none}.mact .btn.sm{width:34px;padding:0}}
+.mnote{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:6px;font-size:12.5px;color:var(--muted)}
+.tagm{font:600 12px/1.25 var(--f-mono);padding:4px 8px;border-radius:999px;background:var(--accent-soft);color:var(--ink)}
+.lnk{appearance:none;background:none;border:0;padding:2px 0;font:600 12.5px/1.2 var(--f-ui);color:var(--ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.ppw{position:relative;display:grid}
+.ppx{position:absolute;top:-8px;right:-8px;z-index:3;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font:400 17px/1 var(--f-ui);cursor:pointer;display:grid;place-items:center;padding:0 0 2px;opacity:.7;transition:opacity .15s,transform .35s var(--spring),background-color .15s,color .15s,border-color .15s}
+.ppw:hover .ppx{opacity:1;transform:scale(1.08)}
+.ppx:hover{background:var(--bad);border-color:var(--bad);color:#fff}
+.skipbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding-block:12px}
+.skipbar>b{font-size:14px;margin-right:4px}
+.skc{appearance:none;display:inline-flex;align-items:center;gap:6px;font:600 13px/1.2 var(--f-mono);padding:7px 11px;border-radius:999px;border:1.5px dashed var(--muted);background:var(--surface);color:var(--muted);cursor:pointer;text-decoration:line-through;text-decoration-thickness:1px}
+.skc:hover{border-style:solid;border-color:var(--ink);color:var(--ink);text-decoration:none}
+.skc .ic{width:14px;height:14px;stroke-width:2.2}
+.twbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.twbar p{margin:0;flex:1 1 320px;font-size:14px}
+/* move dialog */
+.mvsheet{max-width:600px}
+.mvmodel{display:flex;gap:12px;align-items:center}
+.mvmodel .art{font-size:15px}
+.mvpavs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:14px;max-height:34vh;overflow:auto;padding:2px}
+.mvpavs .ppc{padding:9px 10px}
+.mvpavs .ppc b{padding-right:0}
+.mvform{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:14px}
+.mvform small{font-weight:400;color:var(--muted)}
+@media (max-width:560px){.mvform{grid-template-columns:1fr 1fr}.mvform .btn{grid-column:1/-1}}
+/* twins dialog */
+.twsheet{max-width:900px}
+.twpair{border:1px solid var(--line);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr auto 1fr;gap:10px 12px;align-items:center}
+.twpair+.twpair{margin-top:10px}
+.twside{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.twside>div{min-width:0}
+.twside .nm{max-width:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tweq{font:400 22px/1 var(--f-display);color:var(--muted);text-align:center}
+.twmeta{font-size:12px;color:var(--muted);margin-top:4px}
+.twact{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.twact .why{margin-right:auto;font-size:12.5px;color:var(--muted)}
+.twact .why b{color:var(--good)}
+.twpair.pick{grid-template-columns:1fr auto}
+.twpair.pick .twact{grid-column:auto}
+@media (max-width:640px){.twpair{grid-template-columns:1fr}.tweq{transform:rotate(90deg)}.twpair.pick{grid-template-columns:1fr}.twact .why{flex-basis:100%}.twact .btn{flex:1 1 0}}
+.twhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:4px 0 12px}
+.twhead h3{margin:0}
+.twdone{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.twrow{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.twrow:last-child{border-bottom:0}
+.twrow>span{flex:1;min-width:0}
 .pv-nav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line);background:var(--surface-2)}
 @media (min-width:1024px){.pp-nav{display:none}}
 @media (max-width:1023px){.ppchips{display:none}.pavpick{scroll-margin-top:72px}}
@@ -1133,7 +1203,7 @@ body.emp .empbadge{display:block;margin:-8px 8px 0;padding:6px 10px;border-radiu
 body.emp .helpbtn.empexit{display:flex}
 body.emp #t-home,body.emp #t-day,body.emp #t-buy,body.emp #t-an,body.emp #t-settings,body.emp .helpbtn.gear,body.emp .top .kpis,
 body.emp #recvAsIs,body.emp [data-import="stock"],body.emp [data-paste="stock"],body.emp [data-export-stock],body.emp #rcReplace,body.emp #stSeg,body.emp #stBody [data-del],
-body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-cancel-pur]{display:none!important}
+body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-cancel-pur],body.emp [data-recv-asis]{display:none!important}
 @media (max-width:1023px){body.emp .empbadge{display:none}body.emp .helpbtn.empexit{width:34px;height:34px;padding:0;justify-content:center}body.emp .helpbtn.empexit span{display:none}}
 .empcard{border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
 .shake{animation:shake .45s}
@@ -1176,6 +1246,10 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
   <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4.5 20.5h15"/></symbol>
   <symbol id="i-up" viewBox="0 0 24 24"><path d="M14 3.5H6.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V9z"/><path d="M14 3.5V9h5.5M12 17.5v-6M9.5 14l2.5-2.5 2.5 2.5"/></symbol>
   <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><rect x="8.5" y="11.5" width="7" height="6" rx="1"/><path d="M8.5 16l2.2-2 1.6 1.4 1.3-1 1.9 1.6"/></symbol>
+  <symbol id="i-drag" viewBox="0 0 24 24"><path d="M9 11.5V5.2a1.7 1.7 0 0 1 3.4 0v5.3M12.4 10.5V4.2a1.7 1.7 0 0 1 3.4 0v6.3M15.8 10.5V6.2a1.7 1.7 0 0 1 3.4 0v7.3a7 7 0 0 1-7 7h-.6a6.4 6.4 0 0 1-5-2.4l-3-3.8a1.7 1.7 0 0 1 2.6-2.2L9 15"/></symbol>
+  <symbol id="i-move" viewBox="0 0 24 24"><path d="M4 8h14M14.5 4.5 18 8l-3.5 3.5M20 16H6M9.5 12.5 6 16l3.5 3.5"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></symbol>
 </defs></svg>
 <div class="shell">
@@ -1353,11 +1427,13 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
         </div>
         <div class="confirm" id="buyConfirm" hidden></div>
       </div>
+      <div class="card twbar" id="twBar" hidden></div>
       <div class="card pavpick" id="pavPick" hidden>
         <div class="lhead"><h3>Павильоны</h3><span class="sum" id="ppSum"></span></div>
         <div class="pp-nav"><button class="btn ico" type="button" data-pav-step="-1" aria-label="Предыдущий павильон">←</button><select class="in" id="ppSel" aria-label="Павильон"></select><button class="btn ico" type="button" data-pav-step="1" aria-label="Следующий павильон">→</button></div>
         <div class="ppchips" id="ppChips" role="group" aria-label="Выбор павильона"></div>
       </div>
+      <div class="card skipbar" id="skipBar" hidden></div>
       <div class="stack" id="buyList"></div>
       <div class="card">
         <h3>Едут от поставщиков</h3>
@@ -1576,6 +1652,14 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
         <p class="hint" id="testMatch"></p>
       </div>
       <div class="card">
+        <h2>Товары двух магазинов</h2>
+        <p class="hint">Одна и та же шуба в двух магазинах бывает под разными артикулами. Объединённые артикулы программа считает одним товаром: заказы складываются в одну строку закупки, остаток на складе общий.</p>
+        <div class="row mt" style="gap:12px;align-items:center"><span class="sum" id="twSetSum"></span><button class="btn" type="button" data-twin="*"><svg class="ic"><use href="#i-link"/></svg>Одинаковые товары</button></div>
+        <h3 class="mt">Модели в другом павильоне</h3>
+        <p class="hint small">Сюда попадает модель после кнопки «Перенести» на вкладке «Закупка».</p>
+        <div id="mvList"></div>
+      </div>
+      <div class="card">
         <h2>Поставщик</h2>
         <p class="hint">Где вы докупаете товар. Название попадёт в заголовок и имя файла закупки.</p>
         <label class="fld mt" style="max-width:420px">Поставщик<input class="in" id="optSupplier"></label>
@@ -1678,11 +1762,31 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
       <div class="ordpages" id="ordPages" aria-live="polite"></div>
     </div>
     <footer>
-      <button class="btn" type="button" id="ordCopy"><svg class="ic"><use href="#i-copy"/></svg>Скопировать картинку</button>
       <button class="btn" type="button" id="ordImg"><svg class="ic"><use href="#i-dl"/></svg>Сохранить картинкой</button>
       <button class="btn primary" type="button" id="ordPdf"><svg class="ic"><use href="#i-doc"/></svg>Сохранить PDF</button>
       <a class="btn wa" id="ordWa" target="_blank" rel="noopener" hidden><svg class="ic"><use href="#i-wa"/></svg>Открыть чат</a>
     </footer>
+  </div>
+</div>
+<div class="modal" id="mv" role="dialog" aria-modal="true" aria-labelledby="mvTitle" hidden>
+  <div class="sheet mvsheet">
+    <header><h2 id="mvTitle">Перенести в другой павильон</h2><button class="x" type="button" id="mvX" aria-label="Закрыть">×</button></header>
+    <div class="sbody">
+      <div class="mvmodel" id="mvModel"></div>
+      <p class="hint" style="margin:0">Выберите павильон, где эта модель дешевле. Программа запомнит выбор: и в следующих закупках модель будет у этого павильона.</p>
+      <div class="mvpavs" id="mvPavs" role="group" aria-label="Павильоны"></div>
+      <form class="mvform" id="mvForm" autocomplete="off">
+        <label class="fld">Павильон<input class="in mono" id="mvPav" placeholder="например, К18" spellcheck="false" required></label>
+        <label class="fld">Цена там, ₽<input class="in" id="mvPrice" inputmode="numeric" placeholder="можно не писать"></label>
+        <button class="btn primary" type="submit">Перенести</button>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal" id="tw" role="dialog" aria-modal="true" aria-labelledby="twTitle" hidden>
+  <div class="sheet twsheet">
+    <header><h2 id="twTitle">Одинаковые товары двух магазинов</h2><button class="x" type="button" id="twX" aria-label="Закрыть">×</button></header>
+    <div class="sbody" id="twBody"></div>
   </div>
 </div>
 <div class="modal" id="cpy" role="dialog" aria-modal="true" aria-labelledby="cpyTitle" hidden>
@@ -1812,7 +1916,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-26.5';
+const APP_VERSION = '2026-09-27.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -1851,8 +1955,15 @@ const tick = () => (SEQ = Math.max(SEQ + 1, Date.now()));
 
 // A04-LM9-Ser-1900-3XL → павильон A04, модель A04-LM9-Ser-1900, размер 3XL
 const SIZE_RX = /^(\d{2,3}(\/\d{2,3})?|\d?X{0,4}[SML]|XXS|ONESIZE|OS)$/;
-const artCache = new Map();
-function parseArt(a) {
+// «А-03», «A03» and «а 03» are one pavilion: the letters go right before the number
+function normPav(p) {
+  const t = latinUp(p).replace(/\s+/g, ''), m = t.match(/^([A-ZА-ЯЁ]{1,3})[-._]*(\d+)$/);
+  return m ? m[1] + m[2] : t;
+}
+const artCache = new Map(), modCache = new Map();
+const clearArt = () => { artCache.clear(); modCache.clear(); };
+// the article as written: pavilion, model, size and the price inside it
+function parseRaw(a) {
   const s = String(a ?? '').trim();
   const ck = (S.pav ? '1' : '0') + s;
   let r = artCache.get(ck);
@@ -1861,13 +1972,48 @@ function parseArt(a) {
   let size = '', model = s;
   if (parts.length > 1 && SIZE_RX.test(latinUp(parts[parts.length - 1]).replace(/\s+/g, ''))) { size = parts.pop().trim(); model = parts.join('-'); }
   const pn = pavParts(parts);
-  const pav = pn ? latinUp(parts.slice(0, pn).join('-')).replace(/\s+/g, '') : '';
-  let price = 0;
-  for (const seg of parts.slice(pn)) { const t = seg.trim(); if (/^\d{3,5}$/.test(t) && +t >= 300 && +t <= 50000) price = +t; }
-  r = {model, size, pav, price, mkey: normKey(model)};
+  const pav = pn ? normPav(parts.slice(0, pn).join('-')) : '';
+  // the price is a round number (К18-900-777-2-XL: 900, not the model number 777)
+  let price = 0, even = 0;
+  for (const seg of parts.slice(pn)) { const t = seg.trim(); if (/^\d{3,5}$/.test(t) && +t >= 300 && +t <= 50000) { price = +t; if (+t % 50 === 0) even = +t; } }
+  price = even || price;
+  r = {model, size, pav, price, aprice: price, rp: even, mkey: normKey(model)};
   if (artCache.size > 20000) artCache.clear();
   artCache.set(ck, r);
   return r;
+}
+/* one product sold by two shops under different articles counts as one (TWIN),
+   and a model can be bought in another pavilion than its article says (MOVE) */
+const TWIN = new Map();     // model key → {to: model key, a: an article of that model}
+const NOTWIN = new Set();   // "key|key" pairs the owner said are different products
+const MOVE = new Map();     // model key → {pav, price, from, at}
+function parseArt(a) {
+  const r = parseRaw(a);
+  if (!TWIN.size && !MOVE.size) return r;
+  const ck = (S.pav ? '1' : '0') + String(a ?? '').trim();
+  let x = modCache.get(ck);
+  if (x) return x;
+  x = r;
+  const t = TWIN.get(r.mkey);
+  if (t) { const c = parseRaw(t.a); x = {model: c.model, size: r.size, pav: c.pav, price: c.price, aprice: c.aprice, rp: c.rp, mkey: c.mkey, twin: r.mkey}; }
+  const mv = MOVE.get(x.mkey);
+  if (mv) x = {...x, pav: mv.pav, price: mv.price || x.price, movedFrom: mv.from};
+  if (modCache.size > 20000) modCache.clear();
+  modCache.set(ck, x);
+  return x;
+}
+// the key an article is counted under: a twin counts as the same size of its main model
+function akey(a) {
+  const k = normKey(a);
+  if (!k || !TWIN.size) return k;
+  const r = parseRaw(a), t = TWIN.get(r.mkey);
+  return t ? normKey(parseRaw(t.a).model + (r.size ? '-' + r.size : '')) : k;
+}
+// the article to show for a twin: the main model's, same size
+function canonArt(a) {
+  if (!TWIN.size) return a;
+  const r = parseRaw(a), t = TWIN.get(r.mkey);
+  return t ? parseRaw(t.a).model + (r.size ? '-' + r.size : '') : a;
 }
 function pavParts(parts) {
   if (!S.pav || parts.length < 2) return 0;
@@ -1884,7 +2030,7 @@ const rub = n => `${nf.format(Math.round(n))} ₽`;
 
 /* ---------- storage ---------- */
 let Backend = null, DL = null, SAMPLE = null;
-const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false, sup: false, supst: false};
+const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false, sup: false, supst: false, models: false};
 const allReady = () => Object.values(ready).every(Boolean);
 
 function dbBackend(db) {
@@ -2016,20 +2162,20 @@ class PMap {
   }
 }
 const stock = new PMap('stock', {
-  key: it => normKey(it.a),
+  key: it => akey(it.a),
   pack: it => [it.a, it.q, it.n, null, it.t, it.in || 0, it.out || 0],
   unpack: r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, n: r[2] ? String(r[2]) : '', t: Number(r[4]) || 0, in: Number(r[5]) || 0, out: Number(r[6]) || 0}),
   merge: (c, it) => { c.q = round(c.q + it.q); if (!c.n && it.n) c.n = it.n; c.t = Math.max(c.t || 0, it.t || 0); if (it.in && (!c.in || it.in < c.in)) c.in = it.in; c.out = Math.max(c.out || 0, it.out || 0); },
 });
 const draft = new PMap('receipt', {
-  key: it => normKey(it.a),
+  key: it => akey(it.a),
   pack: it => [it.a, it.q, it.n, null, it.t],
   unpack: r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, n: r[2] ? String(r[2]) : '', t: Number(r[4]) || 0}),
   merge: (c, it) => { c.q = round(c.q + it.q); if (!c.n && it.n) c.n = it.n; c.t = Math.max(c.t || 0, it.t || 0); },
 });
 // one line of an order: shipment s, article a, qty q; got = already given (from stock or a bag), w = {purchase id: qty awaited}
 const lines = new PMap('lines', {
-  key: it => { const ak = normKey(it.a); return ak ? (it.s ? String(it.s) : 'r' + it.i) + '|' + ak : null; },
+  key: it => { const ak = akey(it.a); return ak ? (it.s ? String(it.s) : 'r' + it.i) + '|' + ak : null; },
   pack: it => [it.s, it.a, it.n, it.q, it.got, it.w, it.d, it.i],
   unpack: r => ({s: r[0] ? String(r[0]) : '', a: String(r[1] ?? ''), n: r[2] ? String(r[2]) : '', q: Number(r[3]) || 0, got: Number(r[4]) || 0, w: r[5] && typeof r[5] === 'object' && !Array.isArray(r[5]) ? {...r[5]} : {}, d: Number(r[6]) || 0, i: Number(r[7]) || 0}),
   merge: (c, it) => { c.q = round(c.q + it.q); c.got = round(c.got + (it.got || 0)); for (const [p, v] of Object.entries(it.w || {})) c.w[p] = round((c.w[p] || 0) + v); if (!c.n && it.n) c.n = it.n; },
@@ -2040,20 +2186,39 @@ const wsum = ln => { let s = 0; for (const v of Object.values(ln.w)) s += v; ret
 let LOG = [], DAYM = {date: '', file: '', at: 0, expected: 0, ships: 0}, RET = [];
 let PO = new Map();               // order draft: article key → {a, n, q (null = as needed), add}
 let SENT = new Map();             // pavilion → when its order was sent to the supplier
+const SKIP = {m: new Set(), p: new Set()};   // taken out of this purchase with ×: model keys and pavilions
+const loadSkip = d => { SKIP.m = new Set((Array.isArray(d.skip) ? d.skip : []).map(String)); SKIP.p = new Set((Array.isArray(d.skipPav) ? d.skipPav : []).map(x => normPav(x))); };
 const SUP = new Map();            // pavilion → {name, phone}
+// saved before «А-03» and «A03» became one pavilion: join them, the one with a phone wins
+function putSup(r) { const k = normPav(r[0] ?? ''), x = {name: String(r[1] || ''), phone: String(r[2] || '')}, c = SUP.get(k); if (!c || (!c.phone && x.phone)) SUP.set(k, x); }
 const SUPSTAT = new Map();        // pavilion → {n receipts, ord, got, short, extra, last}
+function putStat(r) {
+  const k = normPav(r[0] ?? ''), x = {n: +r[1] || 0, ord: +r[2] || 0, got: +r[3] || 0, short: +r[4] || 0, extra: +r[5] || 0, last: +r[6] || 0}, c = SUPSTAT.get(k);
+  if (!c) { SUPSTAT.set(k, x); return; }
+  for (const f of ['n', 'ord', 'got', 'short', 'extra']) c[f] = round(c[f] + x[f]);
+  c.last = Math.max(c.last, x.last);
+}
 const PUR = new Map();            // purchases by id
 const PHOTO = new Map();          // model key → data URL
 const photoUrl = new Map();       // model key → blob URL for <img>
 const PHOTO_V = new Map();        // model key → 2 when the photo was taken at the picture's own resolution
+const PH_HASH = new Map();        // model key → photo fingerprint (64 × 0/1), '' without a photo
+// the photo for a model; a twin's photo stands in when the main model has none
+function purl(mk) {
+  const u = photoUrl.get(mk);
+  if (u || !TWIN.size) return u;
+  for (const [from, t] of TWIN) if (t.to === mk && photoUrl.has(from)) return photoUrl.get(from);
+  return undefined;
+}
 const META = {
   'meta/settings': () => S,
   'meta/log': () => ({entries: LOG}),
   'meta/day': () => DAYM,
-  'meta/po': () => ({items: [...PO.values()].map(e => [e.a, e.n, e.q, !!e.add]), sent: [...SENT]}),
+  'meta/po': () => ({items: [...PO.values()].map(e => [e.a, e.n, e.q, !!e.add]), sent: [...SENT], skip: [...SKIP.m], skipPav: [...SKIP.p]}),
   'meta/suppliers': () => ({items: [...SUP].map(([pav, x]) => [pav, x.name, x.phone])}),
   'meta/supstats': () => ({items: [...SUPSTAT].map(([pav, x]) => [pav, x.n, x.ord, x.got, x.short, x.extra, x.last])}),
   'meta/returns': () => ({items: RET.map(r => [r.a, r.q, r.pav, r.at])}),
+  'meta/models': () => ({twins: [...TWIN].map(([k, t]) => [k, t.to, t.a]), no: [...NOTWIN], moves: [...MOVE].map(([k, m]) => [k, m.pav, m.price || 0, m.from || '', m.at || 0, m.model || ''])}),
 };
 const docSt = {};
 function saveDoc(path, get, ms = 300) { if (!path.startsWith('photo/')) bumpData(); const st = docSt[path] || (docSt[path] = {}); st.get = get; st.dirty = true; clearTimeout(st.timer); setSync('busy'); st.timer = setTimeout(() => flushDoc(path), ms); }
@@ -2124,8 +2289,8 @@ function checkData() {
 
 // purchases: one document each
 const purToDoc = p => ({id: p.id, at: p.at, pav: p.pav, st: p.st, lines: p.lines.map(l => [l.a, l.n, l.q, l.need, l.c]), extra: p.extra.map(e => [e.a, e.q, e.to]), rep: p.rep || null, doneAt: p.doneAt || 0});
-const docToPur = (id, d) => ({id, at: Number(d.at) || 0, pav: String(d.pav || ''), st: d.st === 'done' ? 'done' : 'go',
-  lines: (Array.isArray(d.lines) ? d.lines : []).map(r => ({a: String(r[0] ?? ''), n: r[1] ? String(r[1]) : '', q: Number(r[2]) || 0, need: Number(r[3]) || 0, c: Number(r[4]) || 0, k: normKey(r[0])})),
+const docToPur = (id, d) => ({id, at: Number(d.at) || 0, pav: normPav(d.pav || ''), st: d.st === 'done' ? 'done' : 'go',
+  lines: (Array.isArray(d.lines) ? d.lines : []).map(r => ({a: String(r[0] ?? ''), n: r[1] ? String(r[1]) : '', q: Number(r[2]) || 0, need: Number(r[3]) || 0, c: Number(r[4]) || 0, k: akey(r[0])})),
   extra: (Array.isArray(d.extra) ? d.extra : []).map(r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, to: r[2] === 'ret' ? 'ret' : 'stock'})),
   rep: d.rep && typeof d.rep === 'object' ? d.rep : null, doneAt: Number(d.doneAt) || 0});
 const savePur = (id, ms = 400) => saveDoc('purch/' + id, () => PUR.has(id) ? purToDoc(PUR.get(id)) : null, ms);
@@ -2147,7 +2312,7 @@ function syncFail(e) {
 
 function setPhoto(mk, url) {
   if (!mk || !url || PHOTO.get(mk) === url) return;
-  PHOTO.set(mk, url);
+  PHOTO.set(mk, url); PH_HASH.delete(mk);
   const old = photoUrl.get(mk); if (old) URL.revokeObjectURL(old);
   try {
     const [head, b64] = url.split(',');
@@ -2184,7 +2349,7 @@ function subscribe() {
     for (const [k, [lo, hi]] of Object.entries(NUMS)) if (Number.isFinite(+d[k])) ns[k] = Math.min(hi, Math.max(lo, Math.round(+d[k])));
     if (typeof d.supplier === 'string' && d.supplier.trim()) ns.supplier = d.supplier;
     const rekey = ns.latin !== S.latin || ns.zeros !== S.zeros || ns.punct !== S.punct;
-    S = ns; artCache.clear(); if (rekey) rekeyAll(false);
+    S = ns; clearArt(); if (rekey) rekeyAll(false);
     renderSettings(); render();
   });
   Backend.watchDoc('meta/log', d => { first('log'); if (d && Array.isArray(d.entries) && !docPending('meta/log')) { LOG = d.entries.slice(0, 300); render(); } });
@@ -2193,28 +2358,35 @@ function subscribe() {
     first('po');
     if (!d || docPending('meta/po')) return;
     PO = new Map();
-    for (const r of Array.isArray(d.items) ? d.items : []) { const a = String(r[0] ?? ''), k = normKey(a); if (k) PO.set(k, {a, n: r[1] ? String(r[1]) : '', q: r[2] == null ? null : Number(r[2]) || 0, add: !!r[3]}); }
-    SENT = new Map((Array.isArray(d.sent) ? d.sent : []).filter(x => Array.isArray(x)).map(x => [String(x[0] ?? ''), Number(x[1]) || 0]));
+    for (const r of Array.isArray(d.items) ? d.items : []) { const a = String(r[0] ?? ''), k = akey(a); if (k) PO.set(k, {a, n: r[1] ? String(r[1]) : '', q: r[2] == null ? null : Number(r[2]) || 0, add: !!r[3]}); }
+    loadSkip(d);
+    SENT = new Map((Array.isArray(d.sent) ? d.sent : []).filter(x => Array.isArray(x)).map(x => [normPav(x[0] ?? ''), Number(x[1]) || 0]));
     render();
   });
   Backend.watchDoc('meta/supstats', d => {
     first('supst');
     if (!d || docPending('meta/supstats')) return;
     SUPSTAT.clear();
-    for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) SUPSTAT.set(String(r[0] ?? ''), {n: +r[1] || 0, ord: +r[2] || 0, got: +r[3] || 0, short: +r[4] || 0, extra: +r[5] || 0, last: +r[6] || 0});
+    for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) putStat(r);
     render();
   });
   Backend.watchDoc('meta/suppliers', d => {
     first('sup');
     if (!d || docPending('meta/suppliers')) return;
     SUP.clear();
-    for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) SUP.set(String(r[0] ?? ''), {name: String(r[1] || ''), phone: String(r[2] || '')});
+    for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) putSup(r);
+    render();
+  });
+  Backend.watchDoc('meta/models', d => {
+    first('models');
+    if (!d || docPending('meta/models')) return;
+    if (loadModels(d)) rekeyAll(false);
     render();
   });
   Backend.watchDoc('meta/returns', d => {
     first('ret');
     if (!d || docPending('meta/returns')) return;
-    RET = (Array.isArray(d.items) ? d.items : []).map(r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, pav: String(r[2] || ''), at: Number(r[3]) || 0}));
+    RET = (Array.isArray(d.items) ? d.items : []).map(r => ({a: String(r[0] ?? ''), q: Number(r[1]) || 0, pav: normPav(r[2] || ''), at: Number(r[3]) || 0}));
     render();
   });
   setTimeout(() => { for (const k in ready) ready[k] = true; checkReady(); }, 9000);
@@ -2232,11 +2404,23 @@ function checkReady() {
   setTimeout(cleanup, 8000);
   if (lsOk() && !lsGet(TOUR_KEY)) setTimeout(() => { if ($('#imp').hidden && $('#cpy').hidden) tourStart(true); }, 700);
 }
+// twins and moved models from the saved document; true when the twins changed (keys must be rebuilt)
+function loadModels(d) {
+  const was = JSON.stringify([...TWIN]);
+  TWIN.clear(); NOTWIN.clear(); MOVE.clear();
+  for (const r of Array.isArray(d.twins) ? d.twins : []) if (Array.isArray(r) && r[0] && r[1] && r[0] !== r[1]) TWIN.set(String(r[0]), {to: String(r[1]), a: String(r[2] ?? '')});
+  for (const [k, t] of TWIN) if (TWIN.has(t.to) || !t.a) TWIN.delete(k);   // only one level: a twin always points at a main model
+  for (const x of Array.isArray(d.no) ? d.no : []) NOTWIN.add(String(x));
+  for (const r of Array.isArray(d.moves) ? d.moves : []) if (Array.isArray(r) && r[0] && r[1]) MOVE.set(String(r[0]), {pav: normPav(r[1]), price: Number(r[2]) || 0, from: String(r[3] || ''), at: Number(r[4]) || 0, model: String(r[5] || '')});
+  clearArt();
+  return was !== JSON.stringify([...TWIN]);
+}
 function rekeyAll(save) {
-  artCache.clear();
+  clearArt();
   maps.forEach(m => { m.rekey(); if (save) m.touchAll(); });
-  const po = [...PO.values()]; PO = new Map(); for (const e of po) { const k = normKey(e.a); if (k) PO.set(k, e); }
-  for (const p of PUR.values()) for (const l of p.lines) l.k = normKey(l.a);
+  const po = [...PO.values()]; PO = new Map();
+  for (const e of po) { const k = akey(e.a); if (!k) continue; const c = PO.get(k); if (!c) { PO.set(k, e); continue; } if (e.q != null) c.q = round((c.q || 0) + e.q); c.add = c.add || e.add; if (!c.n) c.n = e.n; }
+  for (const p of PUR.values()) for (const l of p.lines) l.k = akey(l.a);
   if (save) saveMeta('meta/po');
 }
 
@@ -2672,7 +2856,7 @@ const MODES = {
 const curRows = (f = IMP.files[0], si = IMP.sheet) => { const sh = f.sheets[Math.min(si, f.sheets.length - 1)]; return sh ? sh.rows : []; };
 
 function showModal(id) { const el = $(id); el._back = document.activeElement; el.hidden = false; document.body.classList.add('noscroll'); }
-function closeModal(id) { const el = $(id); if (el.hidden) return; el.hidden = true; if ($('#imp').hidden && $('#cpy').hidden && $('#ord').hidden && $('#empDlg').hidden) document.body.classList.remove('noscroll'); if (el._back && el._back.focus) el._back.focus(); }
+function closeModal(id) { const el = $(id); if (el.hidden) return; el.hidden = true; if ($$('.modal').every(m => m.hidden)) document.body.classList.remove('noscroll'); if (el._back && el._back.focus) el._back.focus(); }
 
 function openImport(target, files) {
   IMP.target = target; IMP.files = files;
@@ -2778,7 +2962,7 @@ function renderImport() {
   }
   h += `<div>Будет загружено <b>${cnt(s.lines.length, W.row)}</b> → <b>${cnt(s.uniq, W.art)}</b>, всего <b>${fmt(s.sum)} шт.</b></div>`;
   if (isOrders) {
-    const known = s.lines.filter(l => l.s && lines.items.has(l.s + '|' + normKey(l.a))).length;
+    const known = s.lines.filter(l => l.s && lines.items.has(l.s + '|' + akey(l.a))).length;
     if (known) h += `<div>${cnt(known, W.row)} уже есть в программе — они не задвоятся.</div>`;
     if (m.ship < 0) h += `<div class="warnline">Нет колонки с номером отправления: при повторной загрузке того же листа строки задвоятся.</div>`;
   }
@@ -2902,7 +3086,7 @@ async function copyText(text, ok) {
 /* ---------- the day: orders, stock, purchases ---------- */
 function stockAdd(a, q, n) {
   a = String(a ?? '').trim();
-  const k = normKey(a); if (!k) return null;
+  const k = akey(a); if (!k) return null;
   const c = stock.items.get(k);
   if (c) { const was = c.q; c.q = round(c.q + q); if (!c.n && n) c.n = n; if (was <= 0 && c.q > 0) c.in = Date.now(); stock.touch(k); return k; }
   return stock.put({a, q: round(q), n: n || '', t: tick(), in: q > 0 ? Date.now() : 0, out: 0});
@@ -2919,7 +3103,7 @@ function plan() {
   open.sort((a, b) => byAge(a.ln, b.ln));
   const res = new Map();
   for (const {k, ln, need} of open) {
-    const ak = normKey(ln.a), f = free.get(ak) || 0, take = Math.min(f, need);
+    const ak = akey(ln.a), f = free.get(ak) || 0, take = Math.min(f, need);
     if (take > 0) free.set(ak, round(f - take));
     res.set(k, {take, short: round(need - take)});
   }
@@ -2949,7 +3133,7 @@ function shortage(p) {
   const m = new Map();
   for (const [k, r] of p) {
     if (r.short <= 0) continue;
-    const ln = lines.items.get(k), ak = normKey(ln.a);
+    const ln = lines.items.get(k), ak = akey(ln.a);
     let e = m.get(ak);
     if (!e) m.set(ak, e = {ak, a: ln.a, n: ln.n, need: 0});
     e.need = round(e.need + r.short);
@@ -2957,17 +3141,20 @@ function shortage(p) {
   }
   return m;
 }
-function buyRows(p) {
+// what to buy; models and pavilions taken out with × are left out unless «all»
+function buyRows(p, all) {
   const sh = shortage(p), rows = [];
   const keys = new Set(sh.keys());
   for (const [k, e] of PO) if (e.add) keys.add(k);
   for (const ak of keys) {
     const e = sh.get(ak), po = PO.get(ak);
-    const a = e ? e.a : po.a;
+    const a = canonArt(e ? e.a : po.a);
     const n = (e && e.n) || (po && po.n) || (stock.items.get(ak) || {}).n || '';
     const need = e ? e.need : 0;
     const order = po && po.q != null ? po.q : need;
-    rows.push({ak, a, n, need, order, add: !!(po && po.add), ...parseArt(a)});
+    const pa = parseArt(a), skip = SKIP.p.has(pa.pav) ? 'p' : SKIP.m.has(pa.mkey) ? 'm' : '';
+    if (skip && !all) continue;
+    rows.push({ak, a, n, need, order, add: !!(po && po.add), ...pa, skip});
   }
   return rows;
 }
@@ -2975,7 +3162,7 @@ function groupModels(rows) {
   const pavs = new Map();
   for (const r of rows) {
     let pv = pavs.get(r.pav); if (!pv) pavs.set(r.pav, pv = {pav: r.pav, models: new Map(), need: 0, order: 0});
-    let m = pv.models.get(r.mkey); if (!m) pv.models.set(r.mkey, m = {mkey: r.mkey, model: r.model, n: r.n, rows: []});
+    let m = pv.models.get(r.mkey); if (!m) pv.models.set(r.mkey, m = {mkey: r.mkey, model: r.model, n: r.n, rows: [], moved: r.movedFrom || ''});
     if (!m.n && r.n) m.n = r.n;
     m.rows.push(r); pv.need = round(pv.need + r.need); pv.order = round(pv.order + r.order);
   }
@@ -2984,14 +3171,127 @@ function groupModels(rows) {
   return list;
 }
 
+/* ---------- twins: one coat sold by two shops under different articles ---------- */
+// colours from the name (Russian) or the article (English or transliterated): a black and a white coat are never twins
+const COLOR_RU = ['черн', 'бел', 'беж', 'сер', 'корич', 'шокол', 'молоч', 'крем', 'айвор', 'трюфел', 'зебр', 'леопар', 'тигр', 'голуб', 'син', 'розов', 'пудр', 'красн', 'бордо', 'вишн', 'зелен', 'олив', 'хаки', 'мят', 'желт', 'горч', 'оранж', 'персик', 'фиолет', 'лилов', 'сирен', 'графит', 'антрац', 'капуч', 'мокк', 'карамел', 'песоч', 'золот', 'серебр', 'изумр'];
+const COLOR_LAT = [['BLACK', 'черн'], ['CHERN', 'черн'], ['WHITE', 'бел'], ['BELA', 'бел'], ['BELY', 'бел'], ['BEIG', 'беж'], ['BEZH', 'беж'], ['GREY', 'сер'], ['GRAY', 'сер'], ['SERA', 'сер'], ['SERY', 'сер'], ['BROWN', 'корич'], ['KORICH', 'корич'], ['CHOCO', 'шокол'], ['SHOKO', 'шокол'], ['MILK', 'молоч'], ['MOLOCH', 'молоч'], ['CREAM', 'крем'], ['KREM', 'крем'], ['IVOR', 'айвор'], ['TRUF', 'трюфел'], ['ZEBR', 'зебр'], ['LEOP', 'леопар'], ['BLUE', 'голуб'], ['GOLUB', 'голуб'], ['PINK', 'розов'], ['ROZOV', 'розов'], ['PUDR', 'пудр'], ['RED', 'красн'], ['KRASN', 'красн'], ['BORDO', 'бордо'], ['GREEN', 'зелен'], ['ZELEN', 'зелен'], ['OLIV', 'олив'], ['KHAKI', 'хаки'], ['HAKI', 'хаки'], ['MINT', 'мят'], ['GRAFIT', 'графит'], ['CAMEL', 'карамел'], ['GOLD', 'золот'], ['SILV', 'серебр']];
+const colorOf = (t, lat) => { if (lat) { for (const [p, c] of COLOR_LAT) if (t.startsWith(p)) return c; return ''; } for (const c of COLOR_RU) if (t.startsWith(c)) return c; return ''; };
+// every model the program knows now, by the article as written
+function modelIndex() {
+  const M = new Map();
+  const add = (a, n, q) => {
+    const r = parseRaw(a); if (!r.mkey) return;
+    let m = M.get(r.mkey);
+    if (!m) M.set(r.mkey, m = {mk: r.mkey, a: String(a).trim(), model: r.model, pav: r.pav, rp: r.rp, n: '', sizes: new Set(), q: 0});
+    if (!m.n && n) m.n = n;
+    if (r.size) m.sizes.add(latinUp(r.size));
+    m.q += Math.max(0, q || 0);
+  };
+  for (const ln of lines.items.values()) add(ln.a, ln.n, ln.q);
+  for (const it of stock.items.values()) add(it.a, it.n, it.q);
+  for (const e of PO.values()) add(e.a, e.n, 0);
+  for (const x of going()) for (const l of x.lines) add(l.a, l.n, 0);
+  return M;
+}
+// words of the name and parts of the article, without sizes, barcodes, the price and the shop's «"2"» mark
+function twinFeat(m) {
+  const toks = new Set(), colors = new Set();
+  let n = String(m.n || '').toLowerCase().replace(/ё/g, 'е');
+  const tag = (n.match(/^\s*["«'“„]\s*(\d{1,2})\s*["»'”“]/) || [])[1] || '';
+  n = n.replace(/^\s*["«'“„]\s*\d{1,2}\s*["»'”“]/, ' ').replace(/\d{11,14}/g, ' ');
+  for (const w of n.split(/[^a-zа-я0-9]+/)) {
+    if (!w || (w.length < 2 && !/\d/.test(w))) continue;
+    const u = latinUp(w);
+    if (SIZE_RX.test(u) && (/[A-Z]/.test(u) || m.sizes.has(u) || (+u >= 38 && +u <= 64))) continue;
+    const c = colorOf(w, /^[a-z]/.test(w)); if (c) colors.add(c);
+    toks.add(u);
+  }
+  const parts = shortModel(m.model).split('-').map(x => latinUp(x.trim())).filter(Boolean);
+  let sig = '';
+  for (const t of parts) {
+    if (m.rp && t === String(m.rp)) continue;
+    const c = colorOf(t, true); if (c) colors.add(c);
+    toks.add(t); sig += (t.match(/\d+/g) || []).join('');
+  }
+  return {toks, colors, tag, sig};
+}
+const pairKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
+let twinCache = {sig: '', list: [], M: null};
+// pairs worth a look: same pavilion, similar name and article; each model in one pair at most
+function twinSuggest() {
+  const sig = [lines.items.size, stock.items.size, PO.size, TWIN.size, NOTWIN.size, going().length, S.pav].join('|');
+  if (twinCache.sig === sig) return twinCache;
+  const M = modelIndex(), roots = [...M.values()].filter(m => !TWIN.has(m.mk));
+  const F = new Map(roots.map(m => [m.mk, twinFeat(m)])), df = new Map();
+  for (const f of F.values()) for (const t of f.toks) df.set(t, (df.get(t) || 0) + 1);
+  const N = Math.max(2, roots.length), w = t => Math.log(1 + N / (df.get(t) || 1));
+  const byPavM = new Map();
+  for (const m of roots) (byPavM.get(m.pav) || byPavM.set(m.pav, []).get(m.pav)).push(m);
+  const cand = [];
+  for (const [pav, ms] of byPavM) {
+    if (!pav || ms.length < 2) continue;
+    for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) {
+      const a = ms[i], b = ms[j], fa = F.get(a.mk), fb = F.get(b.mk);
+      if (NOTWIN.has(pairKey(a.mk, b.mk))) continue;
+      if (fa.colors.size && fb.colors.size && ![...fa.colors].some(c => fb.colors.has(c))) continue;
+      let both = 0, any = 0;
+      for (const t of fa.toks) { const x = w(t); any += x; if (fb.toks.has(t)) both += x; }
+      for (const t of fb.toks) if (!fa.toks.has(t)) any += w(t);
+      let sc = any ? both / any : 0;
+      if (fa.sig && fb.sig) sc = fa.sig === fb.sig ? Math.min(1, sc + 0.2) : sc * 0.5;
+      if (fa.tag && fb.tag && fa.tag === fb.tag) sc *= 0.7;
+      if (sc < 0.5) continue;
+      const main = (b.q > a.q || (b.q === a.q && !purl(a.mk) && purl(b.mk))) ? b : a, other = main === a ? b : a;
+      cand.push({main, other, sc, sure: sc >= 0.8 && (!fa.sig || fa.sig === fb.sig)});
+    }
+  }
+  cand.sort((x, y) => y.sc - x.sc);
+  const used = new Set(), list = [];
+  for (const c of cand) { if (used.has(c.main.mk) || used.has(c.other.mk)) continue; used.add(c.main.mk); used.add(c.other.mk); list.push(c); }
+  twinCache = {sig, list, M, F, w};
+  return twinCache;
+}
+// models of the same pavilion ranked by likeness, for joining by hand
+function twinRank(mk) {
+  const {M} = twinSuggest(), me = M.get(mk); if (!me) return [];
+  const fm = twinFeat(me), out = [];
+  for (const m of M.values()) {
+    if (m.mk === mk || TWIN.has(m.mk) || m.pav !== me.pav) continue;
+    const f = twinFeat(m); let both = 0, any = 0;
+    for (const t of fm.toks) { any++; if (f.toks.has(t)) both++; }
+    for (const t of f.toks) if (!fm.toks.has(t)) any++;
+    out.push({m, sc: any ? both / any : 0});
+  }
+  return out.sort((a, b) => b.sc - a.sc);
+}
+// «other» becomes a twin of «main»: from now on both count as main's article, size by size
+function joinTwins(pairs) {
+  for (const [main, other] of pairs) {
+    const root = TWIN.get(main.mk) || {to: main.mk, a: main.a};
+    if (root.to === other.mk) continue;
+    TWIN.set(other.mk, {to: root.to, a: root.a});
+    for (const t of TWIN.values()) if (t.to === other.mk) { t.to = root.to; t.a = root.a; }
+    if (MOVE.has(other.mk)) { if (!MOVE.has(root.to)) MOVE.set(root.to, MOVE.get(other.mk)); MOVE.delete(other.mk); }
+    if (SKIP.m.has(other.mk)) { SKIP.m.delete(other.mk); SKIP.m.add(root.to); }
+    NOTWIN.delete(pairKey(main.mk, other.mk));
+  }
+  saveMeta('meta/models'); saveMeta('meta/po');
+  rekeyAll(true);
+}
+function splitTwin(mk) {
+  if (!TWIN.delete(mk)) return;
+  saveMeta('meta/models');
+  rekeyAll(true);
+}
+
 function loadList(inLines, info) {
   const day = tick();
-  const incoming = new Set(inLines.map(l => l.s ? l.s + '|' + normKey(l.a) : ''));
+  const incoming = new Set(inLines.map(l => l.s ? l.s + '|' + akey(l.a) : ''));
   // shipments given out earlier and missing from the new list have left the warehouse
   for (const [k, ln] of [...lines.items]) if (ln.got >= ln.q && !incoming.has(k)) lines.remove(k);
   let added = 0, dup = 0;
   inLines.forEach((l, idx) => {
-    const k = l.s ? l.s + '|' + normKey(l.a) : null;
+    const k = l.s ? l.s + '|' + akey(l.a) : null;
     if (k && lines.items.has(k)) {
       const ex = lines.items.get(k);
       if (ex.d === day) ex.q = round(ex.q + l.q); else dup++;
@@ -3025,12 +3325,12 @@ function commit() {
     if (r.take <= 0) continue;
     const ln = lines.items.get(k);
     ln.got = round(ln.got + r.take); lines.touch(k);
-    stockTake(normKey(ln.a), r.take);
+    stockTake(akey(ln.a), r.take);
     taken = round(taken + r.take); takenShips.add(ln.s || k);
   }
   // short lines by article, oldest first
   const shortBy = new Map();
-  for (const [k, r] of p) if (r.short > 0) { const ln = lines.items.get(k), ak = normKey(ln.a); (shortBy.get(ak) || shortBy.set(ak, []).get(ak)).push({k, ln, r}); }
+  for (const [k, r] of p) if (r.short > 0) { const ln = lines.items.get(k), ak = akey(ln.a); (shortBy.get(ak) || shortBy.set(ak, []).get(ak)).push({k, ln, r}); }
   for (const arr of shortBy.values()) arr.sort((a, b) => byAge(a.ln, b.ln));
   const rows = buyRows(p).filter(r => r.order > 0);
   const pavs = groupModels(rows);
@@ -3052,7 +3352,7 @@ function commit() {
     }
     PUR.set(id, pur); savePur(id, 50); made.push(pur);
   }
-  PO = new Map(); SENT = new Map(); saveMeta('meta/po');
+  PO = new Map(); SENT = new Map(); SKIP.m = new Set(); SKIP.p = new Set(); saveMeta('meta/po');
   const ordered = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.q, 0), 0);
   const forOrders = made.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.need, 0), 0);
   if (taken) log(`Списано со склада под отправления: ${fmt(taken)} шт., ${cnt(takenShips.size, W.ship)}`);
@@ -3064,7 +3364,7 @@ function commit() {
 
 function recvPreview(pur) {
   const want = new Map();
-  for (const ln of lines.items.values()) { const w = ln.w[pur.id]; if (w) { const ak = normKey(ln.a); want.set(ak, round((want.get(ak) || 0) + w)); } }
+  for (const ln of lines.items.values()) { const w = ln.w[pur.id]; if (w) { const ak = akey(ln.a); want.set(ak, round((want.get(ak) || 0) + w)); } }
   let toOrd = 0, toStock = 0, unc = 0, ord = 0, got = 0;
   const diff = [];
   for (const l of pur.lines) {
@@ -3076,12 +3376,14 @@ function recvPreview(pur) {
   for (const e of pur.extra) if (e.to === 'stock') toStock += e.q;
   return {ord: round(ord), got: round(got), toOrd: round(toOrd), toStock: round(toStock), unc: round(unc), diff};
 }
-function receive(pur) {
-  const snap = takeSnap();
+// bulk: part of «принять без проверки» — the caller keeps one undo for all bags
+function receive(pur, bulk) {
+  const snap = bulk ? null : takeSnap();
   const now = Date.now();
   const rep = {ord: 0, got: 0, toOrd: 0, toStock: 0, rows: [], extra: pur.extra.map(e => [e.a, e.q, e.to]), unc: []};
+  if (bulk) rep.asis = 1;
   const waitBy = new Map();
-  for (const [k, ln] of lines.items) if (ln.w[pur.id]) { const ak = normKey(ln.a); (waitBy.get(ak) || waitBy.set(ak, []).get(ak)).push({k, ln}); }
+  for (const [k, ln] of lines.items) if (ln.w[pur.id]) { const ak = akey(ln.a); (waitBy.get(ak) || waitBy.set(ak, []).get(ak)).push({k, ln}); }
   for (const arr of waitBy.values()) arr.sort((a, b) => byAge(a.ln, b.ln));
   for (const l of pur.lines) {
     let A = l.c;
@@ -3108,10 +3410,26 @@ function receive(pur) {
   for (const e of pur.extra) ss.extra = round(ss.extra + e.q);
   SUPSTAT.set(pur.pav, ss); saveMeta('meta/supstats');
   const miss = round(rep.ord - rep.got);
-  log(`Приёмка ${pur.pav || 'без павильона'} от ${dm(pur.at)}: заказано ${fmt(rep.ord)}, пришло ${fmt(rep.got)}${pur.extra.length ? `, не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}; в отправления ${fmt(rep.toOrd)}, на склад ${fmt(rep.toStock)}${rep.unc.length ? `; снова не хватает: ${cnt(rep.unc.length, W.ship)}` : ''}`);
-  diag('receive', pur.pav, {id: pur.id, ord: rep.ord, got: rep.got, toOrd: rep.toOrd, toStock: rep.toStock, unc: rep.unc.length, extra: pur.extra.length, lines: pur.lines.length});
+  log(`Приёмка ${pur.pav || 'без павильона'} от ${dm(pur.at)}${bulk ? ' без пересчёта' : ''}: заказано ${fmt(rep.ord)}, пришло ${fmt(rep.got)}${pur.extra.length ? `, не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}; в отправления ${fmt(rep.toOrd)}, на склад ${fmt(rep.toStock)}${rep.unc.length ? `; снова не хватает: ${cnt(rep.unc.length, W.ship)}` : ''}`);
+  diag('receive', pur.pav, {id: pur.id, ord: rep.ord, got: rep.got, toOrd: rep.toOrd, toStock: rep.toStock, unc: rep.unc.length, extra: pur.extra.length, lines: pur.lines.length, asis: !!bulk});
+  if (bulk) return rep;
   toastUndo(miss > 0 ? `Приёмка проведена. Не доложили ${fmt(miss)} шт.` : 'Приёмка проведена', snap, `приёмка ${pur.pav || 'без павильона'}`, () => { if (ui.tab === 'recv') ui.recvId = pur.id; });
   celebrate(TAP.x, TAP.y, miss > 0 ? 50 : 130);
+}
+// «принять без проверки»: every size came as ordered, no counting
+function askAsIs(id, box) {
+  const purs = (id === '*' ? going() : [PUR.get(id)]).filter(x => x && x.st === 'go');
+  if (!purs.length) return;
+  const q = round(purs.reduce((s, x) => s + x.lines.reduce((a, l) => a + l.q, 0), 0));
+  const one = purs.length === 1;
+  const html = `${one ? `Принять мешок <b>${esc(purs[0].pav || 'без павильона')}</b>` : `Принять <b>все ${cnt(purs.length, ['мешок', 'мешка', 'мешков'])}</b>`} без пересчёта? Программа посчитает, что пришло ровно то, что заказано: <b>${fmt(q)} шт.</b> Товар сразу разложится по отправлениям, остаток пойдёт на склад. Если потом чего-то не окажется, поправьте склад пересчётом.`;
+  confirmIn(box, html, one ? 'Принять без проверки' : 'Принять все без проверки', () => {
+    const snap = takeSnap();
+    let got = 0, toOrd = 0, toStock = 0;
+    for (const pur of purs) { pur.lines.forEach(l => { l.c = l.q; }); const r = receive(pur, true); got += r.got; toOrd += r.toOrd; toStock += r.toStock; }
+    toastUndo(`Принято без пересчёта: ${fmt(round(got))} шт. В отправления ${fmt(round(toOrd))}, на склад ${fmt(round(toStock))}.`, snap, one ? `приёмка ${purs[0].pav || 'без павильона'}` : 'приёмка всех мешков');
+    celebrate(TAP.x, TAP.y);
+  });
 }
 function cancelPurchase(id) {
   const pur = PUR.get(id); if (!pur) return;
@@ -3175,7 +3493,7 @@ function analyze() {
   A.effW = Math.max(1, Math.min(S.anWin, span)); A.eff7 = Math.max(1, Math.min(7, span));
   for (const [iso, day] of HIST) {
     if (iso < startW || iso > end) continue;
-    for (const [k, [a, q]] of day) { let e = A.arts.get(k); if (!e) A.arts.set(k, e = {k, a, sold: 0, sold7: 0}); e.sold += q; if (iso >= start7) { e.sold7 += q; A.total7 += q; } }
+    for (const [k0, [a, q]] of day) { const k = TWIN.size ? akey(a) : k0; let e = A.arts.get(k); if (!e) A.arts.set(k, e = {k, a, sold: 0, sold7: 0}); e.sold += q; if (iso >= start7) { e.sold7 += q; A.total7 += q; } }
   }
   for (const e of A.arts.values()) e.rate = 0.6 * (e.sold7 / A.eff7) + 0.4 * (e.sold / A.effW);
   return A;
@@ -3183,12 +3501,12 @@ function analyze() {
 function names() {
   const m = new Map();
   for (const [k, it] of stock.items) if (it.n) m.set(k, it.n);
-  for (const ln of lines.items.values()) if (ln.n) { const k = normKey(ln.a); if (!m.has(k)) m.set(k, ln.n); }
+  for (const ln of lines.items.values()) if (ln.n) { const k = akey(ln.a); if (!m.has(k)) m.set(k, ln.n); }
   return m;
 }
 function suggestions(p, A) {
   const takes = new Map();
-  for (const [k, r] of p) if (r.take > 0) { const ak = normKey(lines.items.get(k).a); takes.set(ak, (takes.get(ak) || 0) + r.take); }
+  for (const [k, r] of p) if (r.take > 0) { const ak = akey(lines.items.get(k).a); takes.set(ak, (takes.get(ak) || 0) + r.take); }
   const transit = new Map();
   for (const x of going()) for (const l of x.lines) { const sur = l.q - l.need; if (sur > 0) transit.set(l.k, (transit.get(l.k) || 0) + sur); }
   const extra = new Map();
@@ -3268,7 +3586,7 @@ function renderAn(p) {
     if (it.q <= 0) continue;
     const pr = priceOf(it.a); stQ += it.q; stM += it.q * pr;
     const idle = daysSince(Math.max(it.in || 0, it.out || 0));
-    if ((idle != null && idle >= S.deadDays) || (has && A.effW >= 7 && !A.arts.has(normKey(it.a)))) { deadQ += it.q; deadM += it.q * pr; }
+    if ((idle != null && idle >= S.deadDays) || (has && A.effW >= 7 && !A.arts.has(akey(it.a)))) { deadQ += it.q; deadM += it.q * pr; }
   }
   const sug = has ? suggestions(p, A) : [];
   const sugQ = sug.reduce((s, x) => s + x.order, 0), sugM = sug.reduce((s, x) => s + x.order * priceOf(x.a), 0);
@@ -3339,7 +3657,7 @@ function setBody(el, html) {
 }
 const matches = (q, ...fields) => { if (!q) return true; const nk = normKey(q), lq = q.toLowerCase(); return fields.some(f => { const s = String(f || ''); return (nk && normKey(s).includes(nk)) || s.toLowerCase().includes(lq); }); };
 const artCell = (a, n, extra = '') => `<span class="art">${esc(a)}</span>${n ? `<span class="nm">${esc(n)}</span>` : ''}${extra}`;
-const thumb = (a, size, byModel) => { const mk = byModel ? a : parseArt(a).mkey, u = photoUrl.get(mk); return u ? `<img class="ph ${size} zoom" src="${u}" alt="Фото модели" data-mk="${esc(mk)}" tabindex="0" role="button" aria-label="Открыть фото крупно">` : `<span class="ph ${size}" aria-hidden="true"></span>`; };
+const thumb = (a, size, byModel) => { const mk = byModel ? a : parseArt(a).mkey, u = purl(mk); return u ? `<img class="ph ${size} zoom" src="${u}" alt="Фото модели" data-mk="${esc(mk)}" tabindex="0" role="button" aria-label="Открыть фото крупно">` : `<span class="ph ${size}" aria-hidden="true"></span>`; };
 const hasCyr = s => /[а-яё]/i.test(s), hasLat = s => /[a-z]/i.test(s);
 function aliasNote(mine, theirs) {
   if (!theirs || theirs === mine) return '';
@@ -3351,11 +3669,28 @@ function aliasNote(mine, theirs) {
   return `<span class="alias">${t}</span>`;
 }
 const going = () => [...PUR.values()].filter(p => p.st === 'go').sort((a, b) => b.at - a.at);
-// the order for one pavilion as a message: "LM9-Ser-1900 (Экошуба …): 42 — 10, 44 — 15"
+// the model code for the supplier: our price inside the article is left out (QQ3-1500 → QQ3)
+function sheetCode(m, rows) {
+  const parts = shortModel(m.model).split('-'), rp = rows.length ? parseRaw(rows[0].a).rp : 0;
+  if (rp && parts.length > 1) { const i = parts.map(x => x.trim()).lastIndexOf(String(rp)); if (i >= 0) parts.splice(i, 1); }
+  return parts.join('-');
+}
+// the name for the supplier: no shop mark «"2"», barcode or size — sizes are only in the order itself
+function sheetName(n, sizes) {
+  const sz = new Set(sizes.map(x => latinUp(x).replace(/\s+/g, '')).filter(Boolean));
+  const isSize = u => sz.has(u) || /^(\d?X{0,4}[SML]|XXS|ONESIZE|\d{2,3}\/\d{2,3})$/.test(u) || (/^\d{2}$/.test(u) && +u >= 38 && +u <= 64);
+  const t = String(n || '')
+    .replace(/^\s*["«'“„]\s*\d{1,2}\s*["»'”“]\s*/, '')
+    .replace(/\(\s*\d{8,14}\s*\)|\b\d{11,14}\b/g, ' ')
+    .replace(/\(\s*\d{2}\s*[-–]\s*\d{2}\s*\)/g, ' ')
+    .replace(/\b(\d{2})\s*[-–]\s*(\d{2})\b/g, (m, a, b) => +a >= 38 && +a <= 64 && +b >= 38 && +b <= 64 ? ' ' : m);
+  return t.split(/\s+/).filter(w => { const u = latinUp(w).replace(/[(),.;:]/g, ''); return u && !isSize(u); }).join(' ').replace(/\(\s*\)/g, '').replace(/\s+([,.;:])/g, '$1').replace(/[,;:\s]+$/, '').trim();
+}
+// the order for one pavilion as a message: "LM9-Ser (Экошуба …): 42 — 10, 44 — 15"
 function pavText(pv) {
-  const models = pv.list.map(m => ({m, rows: m.rows.filter(r => r.order > 0)})).filter(x => x.rows.length);
+  const models = orderModels(pv);
   const total = round(models.reduce((s, x) => s + x.rows.reduce((a, r) => a + r.order, 0), 0));
-  return [`Заказ ${today()} · ${pavLabel(pv.pav)}`, ...models.map(({m, rows}) => `${shortModel(m.model)}${m.n ? ` (${trunc(m.n, 40)})` : ''}: ${rows.map(r => `${r.size || 'шт'} — ${fmt(r.order)}`).join(', ')}`), `Итого: ${fmt(total)} шт.`].join('\n');
+  return [`Заказ ${today()} · ${pavLabel(pv.pav)}`, ...models.map(x => `${x.code}${x.name ? ` (${trunc(x.name, 40)})` : ''}: ${x.rows.map(r => `${r.size || 'шт'} — ${fmt(r.order)}`).join(', ')}`), `Итого: ${fmt(total)} шт.`].join('\n');
 }
 const waDigits = ph => { let d = String(ph || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '8') d = '7' + d.slice(1); if (d.length === 10) d = '7' + d; return d.length >= 10 ? d : ''; };
 const waLink = (ph, text) => { const d = waDigits(ph); return d ? `https://wa.me/${d}${text ? '?text=' + encodeURIComponent(text) : ''}` : ''; };
@@ -3388,7 +3723,7 @@ function renderAllInner() {
   badge($('#bBuy'), rows.length);
   badge($('#bRecv'), go.length);
   renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog();
-  if (ui.tab === 'settings') renderSuppliers();
+  if (ui.tab === 'settings') { renderSuppliers(); renderModelsSet(); }
   if (ui.tab === 'an') renderAn(p);
   if (ui.tab === 'home') renderHome(p, ships, rows, go);
   LAST = {p, ships, rows};
@@ -3467,7 +3802,7 @@ function renderBuy(p, rows) {
     const sel = $('#ppSel'); if (sel._h !== opts) { sel.innerHTML = opts; sel._h = opts; }
     sel.value = ui.buyPav;
     $$('#pavPick [data-pav-step]').forEach(b => { const d = +b.dataset.pavStep; b.disabled = cur >= 0 && (cur + d < 0 || cur + d >= keys.length); });
-    setBody($('#ppChips'), pavs.map(pv => `<button type="button" class="ppc${pv.order > 0 ? '' : ' zero'}${SENT.has(pv.pav) ? ' sent' : ''}" data-pick-pav="${esc(pv.pav)}" aria-pressed="${pv.pav === ui.buyPav}"><b>${esc(pn(pv))}</b><span>${fmt(pv.order)} шт.</span>${SENT.has(pv.pav) ? '<svg class="ic" aria-label="отправлено"><use href="#i-ok"/></svg>' : ''}</button>`).join('') +
+    setBody($('#ppChips'), pavs.map(pv => `<span class="ppw"><button type="button" class="ppc${pv.order > 0 ? '' : ' zero'}${SENT.has(pv.pav) ? ' sent' : ''}" data-pick-pav="${esc(pv.pav)}" aria-pressed="${pv.pav === ui.buyPav}"><b>${esc(pn(pv))}</b><span>${fmt(pv.order)} шт.</span>${SENT.has(pv.pav) ? '<svg class="ic" aria-label="отправлено"><use href="#i-ok"/></svg>' : ''}</button><button type="button" class="ppx" data-skip-p="${esc(pv.pav)}" aria-label="Убрать ${esc(pn(pv))} из закупки" title="Убрать павильон из закупки">×</button></span>`).join('') +
       `<button type="button" class="ppc all" data-pick-pav="*" aria-pressed="${ui.buyPav === '*'}"><b>Все</b><span>списком</span></button>`);
   }
   const pavNav = pv => {
@@ -3477,21 +3812,41 @@ function renderBuy(p, rows) {
     const lbl = x => esc(x.pav || 'без павильона');
     return `<footer class="pv-nav">${prev ? `<button class="btn ghost" type="button" data-pick-pav="${esc(prev.pav)}" data-scroll>← ${lbl(prev)}</button>` : '<span></span>'}${later ? `<button class="btn" type="button" data-pick-pav="${esc(later.pav)}" data-scroll>${next ? 'Следующий' : 'Не отправлен'}: ${lbl(later)} →</button>` : ''}</footer>`;
   };
+  const MI = TWIN.size ? twinSuggest().M : null;
+  const twinNote = mk => { if (!MI) return ''; const ts = [...TWIN].filter(([, t]) => t.to === mk).map(([k]) => MI.get(k)).filter(Boolean); return ts.length ? `<span class="tagm">+ ${esc(ts.map(x => shortModel(x.model)).join(', '))}</span><span>одинаковый товар другого магазина, заказы сложены</span>` : ''; };
   const out = (cur < 0 ? pavs : [pavs[cur]]).map(pv => `<article class="pav" data-pav="${esc(pv.pav)}">
-    <header><h3>${esc(pavLabel(pv.pav))}</h3>${supHead(pv)}</header>
+    <header><h3>${esc(pavLabel(pv.pav))}</h3>${supHead(pv)}<button class="xx" type="button" data-skip-p="${esc(pv.pav)}" aria-label="Убрать ${esc(pavLabel(pv.pav).toLowerCase())} из закупки" title="Убрать павильон из закупки">×</button></header>
     ${ui.editSup === pv.pav ? supForm(pv.pav) : ''}
-    ${pv.list.map(m => `<div class="model">${thumb(m.mkey, 'md', true)}<div>
-      <h4>${esc(shortModel(m.model, pv.pav))}</h4>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
+    ${pv.list.map(m => { const tn = twinNote(m.mkey); return `<div class="model" data-model="${esc(m.mkey)}">${thumb(m.mkey, 'md', true)}<div>
+      <div class="mhead"><h4>${esc(shortModel(m.model, pv.pav))}</h4><div class="mact">
+        <button class="btn sm" type="button" data-move="${esc(m.mkey)}" title="Перенести в другой павильон"><svg class="ic"><use href="#i-move"/></svg><span>Перенести</span></button>
+        <button class="btn sm" type="button" data-twin="${esc(m.mkey)}" title="Объединить с таким же товаром другого магазина"><svg class="ic"><use href="#i-link"/></svg><span>Объединить</span></button>
+        <button class="xx" type="button" data-skip-m="${esc(m.mkey)}" aria-label="Убрать ${esc(shortModel(m.model))} из закупки" title="Убрать из закупки">×</button>
+      </div></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
+      ${m.moved || tn ? `<div class="mnote">${m.moved ? `<span class="tagm">из ${esc(m.moved)}</span><span>перенесено в этот павильон</span><button class="lnk" type="button" data-unmove="${esc(m.mkey)}">вернуть в ${esc(m.moved)}</button>` : ''}${tn}</div>` : ''}
       <table class="sz"><thead><tr><th>Размер</th><th class="num">Нужно</th><th class="num">Заказать</th><th></th></tr></thead><tbody>
       ${m.rows.map(r => `<tr><td class="size">${esc(r.size || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : ''}</td></tr>`).join('')}
       </tbody></table>
       <div class="plus"><input class="in" data-size-for="${esc(m.model)}" placeholder="размер" aria-label="Добавить размер к ${esc(m.model)}"><button class="btn" type="button" data-add-size="${esc(m.model)}">+ размер</button></div>
-    </div></div>`).join('')}
+    </div></div>`; }).join('')}
     ${pavNav(pv)}
   </article>`).join('');
   setBody($('#buyList'), out || `<div class="card"><p class="empty" style="margin:0">Сейчас докупать нечего. Если хотите взять товар на склад, добавьте артикул выше.</p></div>`);
+  // taken out with ×: one tap brings it back
+  const sk = buyRows(p, true).filter(r => r.skip), skP = new Map(), skM = new Map();
+  for (const r of sk) {
+    if (r.skip === 'p') skP.set(r.pav, round((skP.get(r.pav) || 0) + r.order));
+    else { const e = skM.get(r.mkey) || skM.set(r.mkey, {model: r.model, pav: r.pav, q: 0}).get(r.mkey); e.q = round(e.q + r.order); }
+  }
+  const back = `<svg class="ic" aria-hidden="true"><use href="#i-undo"/></svg>`;
+  $('#skipBar').hidden = !sk.length;
+  setBody($('#skipBar'), sk.length ? `<b>Убрано из закупки:</b>${[...skP].sort((a, b) => byPav(a[0], b[0])).map(([pav, q]) => `<button type="button" class="skc" data-unskip-p="${esc(pav)}" title="Вернуть в закупку">${back}${esc(pav || 'без павильона')} · ${fmt(q)} шт.</button>`).join('')}${[...skM].map(([mk, e]) => `<button type="button" class="skc" data-unskip-m="${esc(mk)}" title="Вернуть в закупку">${back}${esc(shortModel(e.model))}${e.pav ? ` (${esc(e.pav)})` : ''} · ${fmt(e.q)} шт.</button>`).join('')}${skP.size + skM.size > 1 ? '<button type="button" class="lnk" data-unskip-all>Вернуть всё</button>' : ''}` : '');
+  // the same coat in two shops: offer to join
+  const tw = twinSuggest().list;
+  $('#twBar').hidden = !tw.length;
+  if (tw.length) { const x = tw[0]; setBody($('#twBar'), `<p>Похоже, ${tw.length === 1 ? 'одна модель есть' : `${cnt(tw.length, W.model)} есть`} в обоих магазинах под разными артикулами — например, <b class="art">${esc(shortModel(x.main.model))}</b> и <b class="art">${esc(shortModel(x.other.model))}</b>. Если объединить, заказы обоих магазинов сложатся в одну строку закупки.</p><button class="btn" type="button" data-twin="*"><svg class="ic"><use href="#i-link"/></svg>Проверить</button>`); }
   const go = going();
-  setBody($('#goList'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), nd = round(x.lines.reduce((s, l) => s + l.need, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт., под отправления ${fmt(nd)}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">Принять</button><button class="btn ghost danger" type="button" data-cancel-pur="${esc(x.id)}">Отменить</button></div>`; }).join('') || '<p class="hint" style="margin:0">Ничего не едет.</p>');
+  setBody($('#goList'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), nd = round(x.lines.reduce((s, l) => s + l.need, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт., под отправления ${fmt(nd)}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">Принять</button><button class="btn" type="button" data-recv-asis="${esc(x.id)}" title="Пришло всё, как заказано — без пересчёта">Без проверки</button><button class="btn ghost danger" type="button" data-cancel-pur="${esc(x.id)}">Отменить</button></div>`; }).join('') + (go.length > 1 ? `<div class="goall"><button class="btn ghost" type="button" data-recv-asis="*">Принять все мешки без проверки</button></div>` : '') || '<p class="hint" style="margin:0">Ничего не едет.</p>');
 }
 
 function renderRecv() {
@@ -3500,12 +3855,12 @@ function renderRecv() {
   $('#recvHome').hidden = !!ui.recvId; $('#recvView').hidden = !ui.recvId;
   if (!ui.recvId) {
     const go = going();
-    setBody($('#recvGo'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), c = round(x.lines.reduce((s, l) => s + l.c, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт.${c ? ` · посчитано ${fmt(c)}` : ''}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">${c ? 'Продолжить приёмку' : 'Начать приёмку'}</button></div>`; }).join('') || '<p class="hint" style="margin:0">Нет закупок в пути. Закупка появится здесь, когда вы оформите её на вкладке «Закупка».</p>');
+    setBody($('#recvGo'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), c = round(x.lines.reduce((s, l) => s + l.c, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт.${c ? ` · посчитано ${fmt(c)}` : ''}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">${c ? 'Продолжить приёмку' : 'Начать приёмку'}</button><button class="btn" type="button" data-recv-asis="${esc(x.id)}" title="Пришло всё, как заказано — без пересчёта">Без проверки</button></div>`; }).join('') + (go.length > 1 ? `<div class="goall"><button class="btn ghost" type="button" data-recv-asis="*">Принять все мешки без проверки</button></div>` : '') || '<p class="hint" style="margin:0">Нет закупок в пути. Закупка появится здесь, когда вы оформите её на вкладке «Закупка».</p>');
     const done = [...PUR.values()].filter(x => x.st === 'done' && x.rep).sort((a, b) => b.doneAt - a.doneAt).slice(0, 20);
     setBody($('#recvHist'), done.map(x => {
       const r = x.rep, miss = round(r.ord - r.got), ex = (r.extra || []).reduce((s, e) => s + (+e[1] || 0), 0);
       const bad = (r.rows || []).filter(row => +row[1] !== +row[2]);
-      return `<details class="rep"><summary><b>${esc(x.pav || '—')}</b><span>принято ${when(x.doneAt)} · заказано ${fmt(r.ord)}, пришло ${fmt(r.got)}</span>${miss > 0 ? `<span class="chip warn">не доложили ${fmt(miss)}</span>` : ''}${miss < 0 ? `<span class="chip warn">больше на ${fmt(-miss)}</span>` : ''}${ex ? `<span class="chip bad">не из заказа ${fmt(ex)}</span>` : ''}${(r.unc || []).length ? `<span class="chip bad">снова не хватает: ${fmt(r.unc.length)}</span>` : ''}</summary>
+      return `<details class="rep"><summary><b>${esc(x.pav || '—')}</b><span>принято ${when(x.doneAt)} · заказано ${fmt(r.ord)}, пришло ${fmt(r.got)}</span>${r.asis ? '<span class="chip plain">без пересчёта</span>' : ''}${miss > 0 ? `<span class="chip warn">не доложили ${fmt(miss)}</span>` : ''}${miss < 0 ? `<span class="chip warn">больше на ${fmt(-miss)}</span>` : ''}${ex ? `<span class="chip bad">не из заказа ${fmt(ex)}</span>` : ''}${(r.unc || []).length ? `<span class="chip bad">снова не хватает: ${fmt(r.unc.length)}</span>` : ''}</summary>
         <p class="hint" style="margin:0 0 8px">В отправления ${fmt(r.toOrd)} шт., на склад ${fmt(r.toStock)} шт.</p>
         ${bad.length ? `<div class="tw"><table class="t"><thead><tr><th>Артикул</th><th class="num">Заказано</th><th class="num">Пришло</th></tr></thead><tbody>${bad.map(row => `<tr><td class="art">${esc(row[0])}</td><td class="num">${fmt(row[1])}</td><td class="num strong">${fmt(row[2])}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint" style="margin:0">По заказанным артикулам всё сошлось.</p>'}
         ${(r.extra || []).length ? `<p class="hint">Не из заказа: ${r.extra.map(e => `<code>${esc(e[0])}</code> × ${fmt(e[1])} (${e[2] === 'ret' ? 'вернуть' : 'на склад'})`).join(', ')}</p>` : ''}
@@ -3621,6 +3976,11 @@ function setSupplier(pav, name, phone) {
   saveMeta('meta/suppliers');
   if (phone && !waDigits(phone)) toast('Номер похож на неполный: нужен номер вместе с кодом, например +7 900 000-00-00');
 }
+function renderModelsSet() {
+  const n = TWIN.size, sug = twinSuggest().list.length;
+  $('#twSetSum').textContent = `${n ? `объединено ${cnt(n, ['артикул', 'артикула', 'артикулов'])}` : 'пока ничего не объединено'}${sug ? ` · похожих пар: ${fmt(sug)}` : ''}`;
+  setBody($('#mvList'), [...MOVE].map(([mk, m]) => `<div class="twrow"><span><b class="art">${esc(m.model ? shortModel(m.model) : mk)}</b> · ${esc(m.from || 'без павильона')} → <b>${esc(m.pav)}</b>${m.price ? ` · ${rub(m.price)}` : ''}</span><button class="btn sm ghost" type="button" data-unmove="${esc(mk)}">Вернуть в ${esc(m.from || 'свой павильон')}</button></div>`).join('') || '<p class="hint" style="margin:0">Нет перенесённых моделей.</p>');
+}
 function renderSuppliers() {
   const pavs = knownPavs();
   setBody($('#supList'), pavs.map(pav => { const sup = SUP.get(pav) || {name: '', phone: ''}, link = waLink(sup.phone, ''); return `<tr data-sup-pav="${esc(pav)}"><td><span class="pavtag">${esc(pav)}</span></td><td><input class="in" data-f="name" value="${esc(sup.name)}" placeholder="имя" aria-label="Поставщик павильона ${esc(pav)}"></td><td><input class="in" data-f="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00" aria-label="WhatsApp павильона ${esc(pav)}"></td><td>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>Чат</a>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="4" class="hint">Павильоны появятся здесь, когда в программе будут товары или заказы. Можно добавить павильон вручную ниже.</td></tr>');
@@ -3708,8 +4068,17 @@ function toast(msg, ms = 3800, action) {
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel]');
+  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel],[data-skip-m],[data-skip-p],[data-unskip-m],[data-unskip-p],[data-unskip-all],[data-move],[data-unmove],[data-twin],[data-recv-asis]');
   if (!t) return;
+  if (t.dataset.skipM || t.dataset.skipP != null) { skipIt(t); return; }
+  if (t.dataset.unskipM || t.dataset.unskipP != null || t.hasAttribute('data-unskip-all')) {
+    if (t.dataset.unskipM) SKIP.m.delete(t.dataset.unskipM); else if (t.dataset.unskipP != null) { SKIP.p.delete(t.dataset.unskipP); ui.buyPav = t.dataset.unskipP; } else { SKIP.m.clear(); SKIP.p.clear(); }
+    saveMeta('meta/po'); render(); return;
+  }
+  if (t.dataset.move) { openMove(t.dataset.move); return; }
+  if (t.dataset.unmove) { const mv = MOVE.get(t.dataset.unmove); if (mv) moveModel(t.dataset.unmove, mv.from, 0, mv.from); return; }
+  if (t.dataset.twin) { openTwins(t.dataset.twin === '*' ? '' : t.dataset.twin); return; }
+  if (t.dataset.recvAsis) { askAsIs(t.dataset.recvAsis, t.closest('#pane-recv') ? '#recvGoConfirm' : '#goConfirm'); return; }
   if (t.hasAttribute('data-order-all')) { openOrder(null); return; }
   if (t.hasAttribute('data-order-pav')) { openOrder([t.dataset.orderPav]); return; }
   if (t.hasAttribute('data-pick-pav') || t.dataset.pavStep) {
@@ -3743,7 +4112,7 @@ document.addEventListener('click', e => {
   else if (t.dataset.addSize) {
     const inp = t.parentElement.querySelector('input'), size = inp.value.trim();
     if (!size) { inp.focus(); return; }
-    const a = `${t.dataset.addSize}-${size}`, k = normKey(a);
+    const a = `${t.dataset.addSize}-${size}`, k = akey(a);
     const cur = PO.get(k);
     PO.set(k, {a, n: cur ? cur.n : '', q: cur && cur.q != null ? cur.q : 1, add: true}); saveMeta('meta/po');
     inp.value = ''; render();
@@ -3815,7 +4184,7 @@ $('#supList').addEventListener('change', e => {
 });
 $('#supAdd').addEventListener('submit', e => {
   e.preventDefault();
-  const pav = latinUp($('#supPav').value).replace(/\s+/g, '');
+  const pav = normPav($('#supPav').value);
   if (!pav) { $('#supPav').focus(); return; }
   setSupplier(pav, $('#supName').value, $('#supPhone').value);
   $('#supPav').value = ''; $('#supName').value = ''; $('#supPhone').value = ''; renderSuppliers();
@@ -3826,13 +4195,161 @@ $('#addForm').addEventListener('submit', e => {
   const a = $('#addArt').value.trim(), q = parseQty($('#addQty').value);
   if (!a) { $('#addArt').focus(); return; }
   if (q == null || q <= 0) { toast('Количество должно быть больше нуля'); return; }
-  const k = normKey(a); if (!k) return;
+  const k = akey(a); if (!k) return;
   const cur = PO.get(k);
   PO.set(k, {a: cur ? cur.a : a, n: cur ? cur.n : ((stock.items.get(k) || {}).n || ''), q: round((cur && cur.q != null ? cur.q : 0) + q), add: true});
   ui.buyPav = parseArt(cur ? cur.a : a).pav;
   saveMeta('meta/po'); $('#addArt').value = ''; $('#addQty').value = '1'; render();
   toast(`Добавлено в закупку: ${a}`);
 });
+/* ---------- × in the purchase: a model or a whole pavilion is left out until the purchase is made ---------- */
+function skipIt(t) {
+  const isP = t.dataset.skipP != null, key = isP ? t.dataset.skipP : t.dataset.skipM, set = isP ? SKIP.p : SKIP.m;
+  const row = !isP && buyRows(plan()).find(r => r.mkey === key);
+  const what = isP ? pavLabel(key) : row ? `Модель ${shortModel(row.model)}` : 'Модель';
+  const apply = () => { set.add(key); saveMeta('meta/po'); render(); toast(`${what} убран${isP ? '' : 'а'} из закупки`, 6000, {label: 'Вернуть', fn: () => { set.delete(key); saveMeta('meta/po'); render(); }}); };
+  const el = isP ? (t.closest('.ppw') || t.closest('.pav')) : t.closest('.model');
+  if (el && motionOk()) el.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'scale(.96) translateY(-6px)'}], {duration: 200, easing: 'ease-in', fill: 'forwards'}).finished.then(apply, apply);
+  else apply();
+}
+
+/* ---------- a model bought in another pavilion ---------- */
+const MV = {mk: '', from: ''};
+function openMove(mk) {
+  const r = buyRows(plan()).find(x => x.mkey === mk); if (!r) return;
+  MV.mk = mk; MV.from = r.movedFrom || r.pav;
+  const was = r.movedFrom ? parseRaw(r.a).price : 0;
+  $('#mvModel').innerHTML = `${thumb(mk, 'md', true)}<div style="min-width:0"><span class="art">${esc(shortModel(r.model))}</span>${r.n ? `<span class="nm">${esc(r.n)}</span>` : ''}<div class="twmeta">сейчас: ${esc(pavLabel(r.pav))}${r.movedFrom ? `, перенесено из ${esc(r.movedFrom)}${was ? ` (там ${rub(was)})` : ''}` : ''}${r.price ? ` · цена ${rub(r.price)}` : ''}</div></div>`;
+  const pavs = knownPavs().filter(p => p !== r.pav);
+  $('#mvPavs').innerHTML = pavs.map(p => { const sup = SUP.get(p); return `<button type="button" class="ppc" data-mv-pav="${esc(p)}" aria-pressed="false"><b>${esc(p)}</b><span>${p === MV.from && r.movedFrom ? 'был здесь' : sup && sup.name ? esc(trunc(sup.name, 14)) : '&nbsp;'}</span></button>`; }).join('');
+  $('#mvPav').value = ''; $('#mvPrice').value = '';
+  showModal('#mv'); setTimeout(() => $('#mvPav').focus(), 60);
+}
+function moveModel(mk, pav, price, from) {
+  const was = MOVE.get(mk), row = buyRows(plan(), true).find(x => x.mkey === mk);
+  const name = row ? shortModel(row.model) : 'Модель';
+  pav = normPav(pav);
+  if (!pav || pav === from) MOVE.delete(mk); else MOVE.set(mk, {pav, price: price || 0, from, at: Date.now(), model: row ? row.model : (was && was.model) || ''});
+  clearArt(); saveMeta('meta/models');
+  log(pav === from ? `${name}: закупка снова в ${from}` : `${name}: закупка перенесена из ${from || 'без павильона'} в ${pav}${price ? ` по ${rub(price)}` : ''}`);
+  closeModal('#mv'); render();
+  toast(pav === from ? `${name} снова в ${from ? `павильоне ${from}` : 'закупке без павильона'}` : `${name} перенесена в павильон ${pav}`, 6000, {label: 'Отменить', fn: () => { if (was) MOVE.set(mk, was); else MOVE.delete(mk); clearArt(); saveMeta('meta/models'); render(); }});
+}
+$('#mvPavs').addEventListener('click', e => {
+  const b = e.target.closest('[data-mv-pav]'); if (!b) return;
+  $$('#mvPavs .ppc').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  $('#mvPav').value = b.dataset.mvPav; $('#mvPrice').focus();
+});
+$('#mvPav').addEventListener('input', () => { const v = normPav($('#mvPav').value); $$('#mvPavs .ppc').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.mvPav === v))); });
+$('#mvForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const pav = normPav($('#mvPav').value); if (!pav) { $('#mvPav').focus(); return; }
+  const pr = parseQty($('#mvPrice').value);
+  if ($('#mvPrice').value.trim() && !(pr > 0)) { toast('Цена — это число, например 1500'); $('#mvPrice').focus(); return; }
+  moveModel(MV.mk, pav, pr > 0 ? Math.round(pr) : 0, MV.from);
+});
+$('#mvX').addEventListener('click', () => closeModal('#mv'));
+$('#mv').addEventListener('click', e => { if (e.target.id === 'mv') closeModal('#mv'); });
+
+/* ---------- the same coat in two shops: the owner confirms, the program joins ---------- */
+const TWV = {focus: '', q: '', more: 30, hashing: false};
+async function photoHash(mk) {
+  if (PH_HASH.has(mk)) return PH_HASH.get(mk);
+  const im = await loadImg(photoUrl.get(mk));
+  let h = '';
+  if (im) {
+    const cv = document.createElement('canvas'); cv.width = 9; cv.height = 8;
+    const g = cv.getContext('2d', {willReadFrequently: true}); g.drawImage(im, 0, 0, 9, 8);
+    const d = g.getImageData(0, 0, 9, 8).data, lum = i => d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11;
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { const i = (y * 9 + x) * 4; h += lum(i) > lum(i + 4) ? '1' : '0'; }
+  }
+  PH_HASH.set(mk, h); return h;
+}
+// 0 = the same picture, up to 64 = nothing alike; null while unknown or without photos
+function photoDist(a, b) {
+  const x = PH_HASH.get(a), y = PH_HASH.get(b);
+  if (!x || !y) return null;
+  let n = 0; for (let i = 0; i < 64; i++) if (x[i] !== y[i]) n++;
+  return n;
+}
+async function hashPairs(pairs) {
+  const need = [...new Set(pairs.flatMap(c => [c.main.mk, c.other.mk]))].filter(mk => !PH_HASH.has(mk) && photoUrl.has(mk));
+  if (!need.length || TWV.hashing) return;
+  TWV.hashing = true;
+  try { for (const mk of need) await photoHash(mk); } finally { TWV.hashing = false; }
+  if (!$('#tw').hidden) renderTw();
+}
+const twSure = c => { const d = photoDist(c.main.mk, c.other.mk); return (c.sure && (d == null || d <= 20)) || (d != null && d <= 8 && c.sc >= 0.6); };
+function twSide(m) {
+  const sizes = [...m.sizes].sort(bySize);
+  return `<div class="twside">${thumb(m.mk, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="twmeta">${esc(pavLabel(m.pav))}${sizes.length ? ` · ${esc(sizes.slice(0, 8).join(', '))}${sizes.length > 8 ? '…' : ''}` : ''}${m.q ? ` · ${fmt(round(m.q))} шт. в заказах и на складе` : ''}</div></div></div>`;
+}
+function renderTw() {
+  const {list, M} = twinSuggest(), box = $('#twBody');
+  const done = [...TWIN].map(([k, t]) => ({k, t, m: M.get(k), main: M.get(t.to)})).filter(x => x.m || x.main);
+  const doneHtml = done.length ? `<div class="twdone"><h3>Уже объединены (${fmt(done.length)})</h3>${done.map(x => `<div class="twrow"><span><b class="art">${esc(shortModel((x.main || parseRaw(x.t.a)).model))}</b> = <b class="art">${esc(x.m ? shortModel(x.m.model) : x.k)}</b></span><button class="btn sm ghost" type="button" data-tw-split="${esc(x.k)}">Разъединить</button></div>`).join('')}</div>` : '';
+  const intro = '<p class="hint" style="margin:0 0 14px">Если одна и та же шуба продаётся в двух магазинах под разными артикулами, объедините их. Заказы обоих магазинов сложатся в одну строку закупки, остаток на складе станет общим, а в заказах Озона у каждого магазина останется свой артикул.</p>';
+  if (TWV.focus) {
+    const me = M.get(TWV.focus) || [...M.values()].find(m => TWIN.has(m.mk) ? false : parseArt(m.a).mkey === TWV.focus);
+    if (!me) { TWV.focus = ''; renderTw(); return; }
+    let cand = twinRank(me.mk);
+    if (TWV.q) cand = [...M.values()].filter(m => m.mk !== me.mk && !TWIN.has(m.mk) && matches(TWV.q, m.model, m.n, m.a)).map(m => ({m, sc: 0}));
+    box.innerHTML = `${intro}<div class="twpair pick" style="border-color:var(--ink)">${twSide(me)}<span class="chip good">этот товар</span></div>
+      <div class="twhead" style="margin-top:16px"><h3>Какой товар другого магазина — такой же?</h3><input class="in search" id="twQ" placeholder="Поиск по артикулу или названию" value="${esc(TWV.q)}" aria-label="Поиск товара"></div>
+      ${cand.slice(0, 12).map(c => `<div class="twpair pick">${twSide(c.m)}<button class="btn primary" type="button" data-tw-join="${esc(me.mk)}" data-tw-other="${esc(c.m.mk)}">Это он</button></div>`).join('') || `<p class="hint">${TWV.q ? 'Ничего не нашлось. Попробуйте часть артикула.' : 'В этом павильоне больше нет товаров. Найдите нужный поиском.'}</p>`}
+      ${TWV.q ? '' : '<p class="hint small" style="margin-top:10px">Сверху самые похожие товары того же павильона. Если нужного нет, найдите его поиском.</p>'}${doneHtml}`;
+    hashPairs(cand.slice(0, 12).map(c => ({main: me, other: c.m})));
+    return;
+  }
+  const sure = list.filter(twSure);
+  box.innerHTML = `${intro}${list.length ? `<div class="twhead"><h3>Похожие пары: ${fmt(list.length)}</h3>${sure.length ? `<button class="btn primary" type="button" data-tw-all>Объединить все уверенные (${fmt(sure.length)})</button>` : ''}</div>` : '<p class="empty" style="padding:18px 0">Похожих пар не нашлось. Если программа что-то пропустила, нажмите «Объединить» у модели на вкладке «Закупка».</p>'}
+    ${list.slice(0, TWV.more).map((c, i) => { const d = photoDist(c.main.mk, c.other.mk); return `<div class="twpair" data-tw-i="${i}">${twSide(c.main)}<span class="tweq" aria-hidden="true">=</span>${twSide(c.other)}<div class="twact"><span class="why">похожи на ${Math.round(c.sc * 100)}%${d == null ? '' : d <= 8 ? ' · <b>фото одинаковые</b>' : d > 20 ? ' · фото разные' : ''}</span><button class="btn ghost" type="button" data-tw-no="${i}">Разные товары</button><button class="btn primary" type="button" data-tw-yes="${i}">Один товар</button></div></div>`; }).join('')}
+    ${list.length > TWV.more ? `<button class="btn more" type="button" data-tw-more>Показать ещё ${fmt(Math.min(30, list.length - TWV.more))}</button>` : ''}${doneHtml}`;
+  hashPairs(list.slice(0, TWV.more));
+}
+function openTwins(mk) {
+  TWV.focus = mk || ''; TWV.q = ''; TWV.more = 30;
+  renderTw(); showModal('#tw');
+  $('#twBody').scrollTop = 0;
+}
+function joinWithUndo(pairs, what) {
+  const snap = takeSnap();
+  joinTwins(pairs.map(c => [c.main, c.other]));
+  log(`Объединены одинаковые товары двух магазинов: ${pairs.map(c => `${shortModel(c.main.model)} = ${shortModel(c.other.model)}`).slice(0, 12).join(', ')}${pairs.length > 12 ? '…' : ''}`);
+  diag('twins', 'join', {n: pairs.length});
+  render(); if (!$('#tw').hidden) renderTw();
+  toastUndo(what, snap, 'объединение товаров');
+}
+$('#twBody').addEventListener('click', e => {
+  const t = e.target.closest('[data-tw-yes],[data-tw-no],[data-tw-all],[data-tw-more],[data-tw-join],[data-tw-split]'); if (!t) return;
+  const {list, M} = twinSuggest();
+  if (t.dataset.twYes != null) { const c = list[+t.dataset.twYes]; if (c) joinWithUndo([c], `Объединено: ${shortModel(c.main.model)} и ${shortModel(c.other.model)}`); }
+  else if (t.dataset.twNo != null) {
+    const c = list[+t.dataset.twNo]; if (!c) return;
+    const done = () => { NOTWIN.add(pairKey(c.main.mk, c.other.mk)); saveMeta('meta/models'); renderTw(); render(); };
+    const el = t.closest('.twpair');
+    if (el && motionOk()) el.animate([{opacity: 1}, {opacity: 0, transform: 'translateX(-20px)'}], {duration: 200, easing: 'ease-in', fill: 'forwards'}).finished.then(done, done); else done();
+  }
+  else if (t.hasAttribute('data-tw-all')) { const sure = list.filter(twSure); if (sure.length) joinWithUndo(sure, `Объединено пар: ${fmt(sure.length)}`); }
+  else if (t.hasAttribute('data-tw-more')) { TWV.more += 30; renderTw(); }
+  else if (t.dataset.twJoin) {
+    const a = M.get(t.dataset.twJoin), b = M.get(t.dataset.twOther); if (!a || !b) return;
+    const [main, other] = b.q > a.q ? [b, a] : [a, b];
+    TWV.focus = ''; TWV.q = '';
+    joinWithUndo([{main, other}], `Объединено: ${shortModel(main.model)} и ${shortModel(other.model)}`);
+  }
+  else if (t.dataset.twSplit) {
+    const snap = takeSnap(), m = M.get(t.dataset.twSplit);
+    splitTwin(t.dataset.twSplit);
+    log(`Разъединены товары двух магазинов: ${m ? shortModel(m.model) : t.dataset.twSplit}`);
+    render(); renderTw();
+    toastUndo('Разъединено. Остаток на складе остался у одного из артикулов — если нужно, поправьте его пересчётом.', snap, 'разъединение товаров');
+  }
+});
+$('#twBody').addEventListener('input', e => { if (e.target.id !== 'twQ') return; TWV.q = e.target.value.trim(); const pos = e.target.selectionStart; renderTw(); const q = $('#twQ'); if (q) { q.focus(); q.setSelectionRange(pos, pos); } });
+$('#twX').addEventListener('click', () => closeModal('#tw'));
+$('#tw').addEventListener('click', e => { if (e.target.id === 'tw') closeModal('#tw'); });
+
 /* ---------- order sheet with photos: a PDF or a picture for the supplier ---------- */
 // Pages are drawn on a canvas (Cyrillic text renders with the page's own fonts) and wrapped into a PDF as JPEG pages.
 const OS = {W: 1240, H: 1754, M: 64, gap: 24, pad: 20, pw: 184, ph: 236, chW: 88, chH: 78, chGap: 10};
@@ -3851,11 +4368,11 @@ function wrapText(g, text, maxW, maxLines) {
   return out.map((l, k) => clipText(g, k === out.length - 1 && cut ? l + ' …' : l, maxW).replace(/ …$/, '…'));
 }
 function fitFont(g, t, weight, family, size, min, maxW) { for (let s = size; s >= min; s -= 2) { g.font = `${weight} ${s}px ${family}`; if (g.measureText(t).width <= maxW) return s; } return min; }
-const orderModels = pv => pv.list.map(m => ({m, rows: m.rows.filter(r => r.order > 0)})).filter(x => x.rows.length);
+const orderModels = pv => pv.list.map(m => ({m, rows: m.rows.filter(r => r.order > 0)})).filter(x => x.rows.length).map(x => ({...x, code: sheetCode(x.m, x.rows), name: sheetName(x.m.n, x.rows.map(r => r.size))}));
 function osCardH(g, x) {
   const rw = OS.cw - 2 * OS.pad - OS.pw - 20, per = Math.max(1, Math.floor((rw + OS.chGap) / (OS.chW + OS.chGap)));
   g.font = `400 21px ${OSF.ui}`;
-  const nl = x.m.n ? wrapText(g, x.m.n, rw, 2).length : 0;
+  const nl = x.name ? wrapText(g, x.name, rw, 2).length : 0;
   const chips = Math.ceil(x.rows.length / per) * (OS.chH + OS.chGap) - OS.chGap;
   return 2 * OS.pad + Math.max(OS.ph, 38 + (nl ? 8 + nl * 27 : 0) + 16 + chips);
 }
@@ -3871,11 +4388,11 @@ function osCard(g, x, cx, cy, h, img, idx, pv) {
   g.beginPath(); g.arc(px + 22, py + 22, 18, 0, Math.PI * 2); g.fillStyle = OSC.band; g.fill();
   g.fillStyle = '#FFFFFF'; g.font = `600 ${idx > 99 ? 14 : 17}px ${OSF.ui}`; g.textAlign = 'center'; g.fillText(String(idx), px + 22, py + 28); g.textAlign = 'left';
   const tx = px + pw + 20, rw = cw - 2 * pad - pw - 20;
-  const code = shortModel(x.m.model, pv.pav);
+  const code = x.code;
   const fs = fitFont(g, code, 600, OSF.mono, 30, 18, rw);
   g.fillStyle = OSC.ink; g.fillText(clipText(g, code, rw), tx, py + fs);
   let y = py + 38;
-  if (x.m.n) { g.font = `400 21px ${OSF.ui}`; g.fillStyle = OSC.muted; for (const l of wrapText(g, x.m.n, rw, 2)) { y += 27; g.fillText(l, tx, y - 6); } y += 8; }
+  if (x.name) { g.font = `400 21px ${OSF.ui}`; g.fillStyle = OSC.muted; for (const l of wrapText(g, x.name, rw, 2)) { y += 27; g.fillText(l, tx, y - 6); } y += 8; }
   y += 16;
   const per = Math.max(1, Math.floor((rw + OS.chGap) / (OS.chW + OS.chGap)));
   x.rows.forEach((r, i) => {
@@ -3901,7 +4418,7 @@ async function orderCanvases(pvs, onStep) {
   const scratch = document.createElement('canvas').getContext('2d');
   for (const pv of pvs) {
     const items = orderModels(pv); if (!items.length) continue;
-    const imgs = await Promise.all(items.map(x => loadImg(photoUrl.get(x.m.mkey))));
+    const imgs = await Promise.all(items.map(x => loadImg(purl(x.m.mkey))));
     const total = round(items.reduce((s, x) => s + x.rows.reduce((a, r) => a + r.order, 0), 0));
     const sup = SUP.get(pv.pav) || {};
     // lay out rows of two cards, then cut them into pages
@@ -4006,23 +4523,30 @@ async function openOrder(pavList) {
   const link = one ? waLink(sup.phone, `Здравствуйте! Заказ от Ultimate Shop на ${today()}, файл ниже.`) : '';
   const wa = $('#ordWa'); wa.hidden = !link; if (link) { wa.href = link; wa.dataset.pav = one.pav; }
   $('#ordSteps').innerHTML = one
-    ? `<li><span><b>Сохраните заказ</b> PDF-файлом или картинкой. В приложении Claude на iPhone сразу откроется «Поделиться»: выберите WhatsApp и поставщика.</span></li><li><span>${link ? '<b>Откройте чат</b> с поставщиком кнопкой ниже и прикрепите файл.' : '<b>Отправьте файл поставщику</b> в WhatsApp. Если записать его номер кнопкой «Указать поставщика», здесь появится кнопка «Открыть чат».'}</span></li><li><span>Поставщик видит фото, размеры и количество. Если чего-то нет, ему достаточно написать номер позиции.</span></li>`
+    ? `<li class="fine"><span><b>Перетащите картинку мышкой</b> прямо в чат с поставщиком в WhatsApp${link ? ' (чат откроется кнопкой «Открыть чат»)' : ''}. Или нажмите «Скопировать» под картинкой и вставьте в чат: Ctrl+V.</span></li><li class="touch"><span><b>Сохраните заказ</b> картинкой или PDF. В приложении Claude на iPhone сразу откроется «Поделиться»: выберите WhatsApp и поставщика.</span></li><li><span>Поставщик видит фото, размеры и количество, без цен. Если чего-то нет, ему достаточно написать номер позиции.</span></li>`
     : '<li><span><b>Один PDF со всеми павильонами</b>, каждый с новой страницы. Удобно распечатать или сохранить себе. Поставщику лучше отправлять заказ его павильона: кнопка «Заказ с фото» у павильона.</span></li>';
   const box = $('#ordPages'); box.innerHTML = '<div class="ordwait"><i></i><span>Собираю заказ…</span></div>';
-  ['#ordPdf', '#ordImg', '#ordCopy'].forEach(q => { $(q).disabled = true; });
+  ['#ordPdf', '#ordImg'].forEach(q => { $(q).disabled = true; });
+  for (const p of ORD.pages) if (p.url) URL.revokeObjectURL(p.url);
   showModal('#ord');
   const t0 = performance.now();
   ORD.busy = true;
   try {
     ORD.pages = await orderCanvases(pvs, k => { const sp = box.querySelector('.ordwait span'); if (sp) sp.textContent = `Собираю заказ… готово страниц: ${k}`; });
   } catch (e) { diag('error', 'заказ с фото: ' + (e && e.message), null, 'err'); box.innerHTML = '<p class="hint">Не получилось собрать заказ. Обновите страницу и попробуйте ещё раз.</p>'; ORD.busy = false; return; }
+  // each page as a picture: it can be dragged with the mouse straight into a WhatsApp chat
+  const n = ORD.pages.length, canCopy = !!(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
+  for (let i = 0; i < n; i++) {
+    const p = ORD.pages[i];
+    p.blob = await new Promise(res => trimmedPage(p).toBlob(res, 'image/jpeg', 0.9));
+    p.url = URL.createObjectURL(p.blob);
+    p.file = `${ordName()}${n > 1 ? ` (${i + 1} из ${n})` : ''}.jpg`;
+  }
   ORD.busy = false;
-  box.innerHTML = '';
-  ORD.pages.forEach(p => { p.cv.setAttribute('role', 'img'); p.cv.setAttribute('aria-label', `Страница заказа, ${pavLabel(p.pav)}`); box.appendChild(p.cv); });
+  box.innerHTML = ORD.pages.map((p, i) => `<figure class="ordpage"><img src="${p.url}" alt="Заказ, ${esc(pavLabel(p.pav).toLowerCase())}${n > 1 ? `, страница ${i + 1} из ${n}` : ''}" draggable="true" data-page="${i}"><figcaption><span class="draghint"><svg class="ic" aria-hidden="true"><use href="#i-drag"/></svg>Перетащите в чат WhatsApp${n > 1 ? ` · стр. ${i + 1} из ${n}` : ''}</span>${canCopy ? `<button class="btn sm" type="button" data-copy-page="${i}"><svg class="ic"><use href="#i-copy"/></svg>Скопировать</button>` : ''}</figcaption></figure>`).join('');
   $('#ordPdf').disabled = false; $('#ordImg').disabled = false;
-  $('#ordCopy').disabled = ORD.pages.length !== 1; $('#ordCopy').hidden = !(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write);
   $('#ordImg').innerHTML = `<svg class="ic"><use href="#i-dl"/></svg>${ORD.pages.length > 1 ? `Сохранить картинками (${ORD.pages.length})` : 'Сохранить картинкой'}`;
-  diag('order-sheet', one ? one.pav : 'все', {pavs: pvs.length, pages: ORD.pages.length, photos: pvs.reduce((s, pv) => s + orderModels(pv).filter(x => photoUrl.has(x.m.mkey)).length, 0), ms: Math.round(performance.now() - t0)});
+  diag('order-sheet', one ? one.pav : 'все', {pavs: pvs.length, pages: ORD.pages.length, photos: pvs.reduce((s, pv) => s + orderModels(pv).filter(x => purl(x.m.mkey)).length, 0), ms: Math.round(performance.now() - t0)});
 }
 const ordName = () => safeName(`Заказ ${ORD.pavs.length === 1 ? (ORD.pavs[0].pav || 'без павильона') : 'все павильоны'} ${today()}`);
 $('#ordPdf').addEventListener('click', async () => {
@@ -4042,12 +4566,32 @@ $('#ordImg').addEventListener('click', async () => {
   }
   toast(n > 1 ? `Сохранено картинок: ${n}. Отправьте их поставщику.` : 'Картинка готова. Отправьте её поставщику в WhatsApp.');
 });
-$('#ordCopy').addEventListener('click', () => {
-  const p = ORD.pages[0]; if (!p) return;
+// one pavilion's order went out: tick it off in «Закупка»
+function markSent(how) {
+  if (ORD.pavs.length !== 1) return;
+  const pav = ORD.pavs[0].pav;
+  if (!SENT.has(pav)) { SENT.set(pav, Date.now()); saveMeta('meta/po'); render(); }
+  diag('wa', pav, how);
+}
+$('#ordPages').addEventListener('click', e => {
+  const b = e.target.closest('[data-copy-page]'); if (!b) return;
+  const p = ORD.pages[+b.dataset.copyPage]; if (!p) return;
   try {
     navigator.clipboard.write([new ClipboardItem({'image/png': new Promise(res => trimmedPage(p).toBlob(res, 'image/png'))})])
-      .then(() => toast('Картинка скопирована. Вставьте её в чат WhatsApp: Ctrl+V или «Вставить».'), () => toast('Скопировать не получилось. Нажмите «Сохранить картинкой».'));
+      .then(() => { toast('Картинка скопирована. Вставьте её в чат WhatsApp: Ctrl+V или «Вставить».'); markSent('скопировано'); }, () => toast('Скопировать не получилось. Перетащите картинку мышкой или нажмите «Сохранить картинкой».'));
   } catch { toast('Скопировать не получилось. Нажмите «Сохранить картинкой».'); }
+});
+$('#ordPages').addEventListener('dragstart', e => {
+  const im = e.target.closest && e.target.closest('img[data-page]'); if (!im) return;
+  const p = ORD.pages[+im.dataset.page]; if (!p) return;
+  e.dataTransfer.effectAllowed = 'copy';
+  // Chrome and Yandex Browser: dropped on the desktop or into an app, the picture arrives as a .jpg file with this name
+  try { e.dataTransfer.setData('DownloadURL', `image/jpeg:${p.file}:${new URL(p.url, location.href).href}`); } catch {}
+  im.closest('.ordpage').classList.add('dragging');
+});
+$('#ordPages').addEventListener('dragend', e => {
+  const f = e.target.closest && e.target.closest('.ordpage'); if (f) f.classList.remove('dragging');
+  if (e.dataTransfer && e.dataTransfer.dropEffect !== 'none') { markSent('перетащено'); toast('Картинка перетащена. Если WhatsApp её не принял, нажмите «Скопировать» и вставьте в чат: Ctrl+V.'); }
 });
 $('#ordWa').addEventListener('click', () => { const pav = $('#ordWa').dataset.pav; if (pav == null) return; SENT.set(pav, Date.now()); saveMeta('meta/po'); diag('wa', pav, 'из заказа с фото'); setTimeout(render, 300); });
 $('#ordX').addEventListener('click', () => closeModal('#ord'));
@@ -4088,7 +4632,7 @@ $('#exForm').addEventListener('submit', e => {
   const a = $('#exArt').value.trim(), q = parseQty($('#exQty').value), to = $('#exTo').value;
   if (!a) { $('#exArt').focus(); return; }
   if (q == null || q <= 0) { toast('Количество должно быть больше нуля'); return; }
-  const k = normKey(a), l = pur.lines.find(x => x.k === k);
+  const k = akey(a), l = pur.lines.find(x => x.k === k);
   if (l && to === 'stock') { l.c = round(l.c + q); toast('Этот артикул есть в заказе — добавил к нему'); }
   else pur.extra.push({a, q, to});
   savePur(pur.id); $('#exArt').value = ''; $('#exQty').value = '1'; render();
@@ -4262,6 +4806,8 @@ function homeTips(D) {
   if (D.short) T.push({sv: 'bad', b: `Не хватает товара для ${cnt(D.short, W.ship)}`, d: `Нужно купить ${fmt(round(D.shortQ))} шт. ${inPav(D.pavs.length)}.`, act: '<button class="btn primary" type="button" data-go="buy">К закупке</button>'});
   if (D.unsent.length) { const pv = D.unsent[0]; T.push({sv: 'warn', b: `Заказ не отправлен: ${D.unsent.length === 1 ? pavLabel(pv.pav).toLowerCase() : cnt(D.unsent.length, W.pav)}`, d: D.unsent.slice(0, 4).map(x => `${x.pav || 'без павильона'} · ${fmt(x.order)} шт.`).join(', ') + (D.unsent.length > 4 ? '…' : ''), act: `<button class="btn" type="button" data-order-pav="${esc(pv.pav)}"><svg class="ic"><use href="#i-doc"/></svg>Заказ ${esc(pv.pav || '')}</button>`}); }
   if (D.oldest && daysSince(D.oldest.at) >= 3) T.push({sv: 'warn', b: `Мешок из ${D.oldest.pav || 'павильона'} едет ${daysSince(D.oldest.at)} ${plural(daysSince(D.oldest.at), W.day)}`, d: 'Проверьте у поставщика, или примите, если уже приехал.', act: `<button class="btn" type="button" data-recv="${esc(D.oldest.id)}">Принять</button>`});
+  const twN = twinSuggest().list.length;
+  if (twN) T.push({sv: 'info', b: `Одинаковые товары в двух магазинах: ${fmt(twN)} ${plural(twN, ['пара', 'пары', 'пар'])}`, d: 'Объедините их — заказы обоих магазинов сложатся в одну строку закупки.', act: '<button class="btn" type="button" data-twin="*">Проверить</button>'});
   if (D.pendQ && !D.short) T.push({sv: 'info', b: 'Товар со склада ещё не списан', d: `${fmt(round(D.pendQ))} шт. отложено под отправления, спишите их.`, act: '<button class="btn" type="button" data-go="day">К заказам</button>'});
   if (D.noPhone.length) T.push({sv: 'info', b: `Нет телефона поставщика: ${D.noPhone.slice(0, 3).map(x => x.pav || '—').join(', ')}${D.noPhone.length > 3 ? '…' : ''}`, d: 'С номером заказ уходит в WhatsApp одной кнопкой.', act: '<button class="btn" type="button" data-go="settings">Указать</button>'});
   if (D.deadQ >= 5) T.push({sv: 'warn', b: `Залежалось ${fmt(round(D.deadQ))} шт.${D.deadM ? ` на ${rubShort(D.deadM)}` : ''}`, d: 'Эти деньги стоят без движения. Снизьте цену и не докупайте.', act: '<button class="btn" type="button" data-go="an">Что снизить</button>'});
@@ -4330,7 +4876,7 @@ function renderHome(p, ships, rows, go) {
   $('#hSizeM').textContent = topSz && stot ? `больше всего ${topSz[0]} · ${Math.round(100 * topSz[1] / stot)}%` : '';
   setBody($('#hSizes'), sz.length ? sz.map(([k, q]) => `<div class="sb${topSz && k === topSz[0] ? ' mx' : ''}"><i style="height:${Math.max(4, 100 * q / smax).toFixed(1)}%" title="${esc(k)}: ${fmt(q)} шт."></i><span>${esc(k)}</span></div>`).join('') : '<div class="hempty">Склад пуст</div>');
   // best sellers
-  setBody($('#hTop'), D.top.length ? D.top.map(t => { const u = photoUrl.get(t.mkey); return `<li>${u ? `<img class="ph zoom" src="${u}" alt="Фото модели" data-mk="${esc(t.mkey)}" tabindex="0" role="button" aria-label="Открыть фото крупно">` : '<span class="ph"></span>'}<div style="min-width:0"><div class="nm2">${esc(shortModel(t.model))}</div><div class="sub2">${t.pav ? `${esc(t.pav)} · ` : ''}на складе ${fmt(round(t.have))}</div></div><div class="rt2">${nf.format(Math.round(t.rate * 10) / 10)}<small>в день</small></div></li>`; }).join('')
+  setBody($('#hTop'), D.top.length ? D.top.map(t => { const u = purl(t.mkey); return `<li>${u ? `<img class="ph zoom" src="${u}" alt="Фото модели" data-mk="${esc(t.mkey)}" tabindex="0" role="button" aria-label="Открыть фото крупно">` : '<span class="ph"></span>'}<div style="min-width:0"><div class="nm2">${esc(shortModel(t.model))}</div><div class="sub2">${t.pav ? `${esc(t.pav)} · ` : ''}на складе ${fmt(round(t.have))}</div></div><div class="rt2">${nf.format(Math.round(t.rate * 10) / 10)}<small>в день</small></div></li>`; }).join('')
     : `<li class="hempty">${HIST === null ? 'Загружаю историю продаж…' : 'Появится, когда накопится история продаж.'}</li>`);
   // what to do now
   setBody($('#hTips'), homeTips(D).map(t => `<li><i class="sv ${t.sv}"></i><b>${esc(t.b)}</b>${t.act}<span>${esc(t.d)}</span></li>`).join(''));
@@ -4403,8 +4949,9 @@ function takeSnap() {
     stock: new Map([...stock.items].map(([k, it]) => [k, {...it}])),
     lines: new Map([...lines.items].map(([k, it]) => [k, {...it, w: {...it.w}}])),
     pur: new Map([...PUR].map(([id, x]) => [id, cl(x)])),
-    po: new Map([...PO].map(([k, e]) => [k, {...e}])), sent: new Map(SENT),
+    po: new Map([...PO].map(([k, e]) => [k, {...e}])), sent: new Map(SENT), skip: {m: new Set(SKIP.m), p: new Set(SKIP.p)},
     ret: RET.map(r => ({...r})), sup: new Map([...SUPSTAT].map(([k, v]) => [k, {...v}])), log: LOG.slice(),
+    models: cl(META['meta/models']()), draft: new Map([...draft.items].map(([k, it]) => [k, {...it}])),
   };
 }
 function restoreMap(m, snap) {
@@ -4412,10 +4959,11 @@ function restoreMap(m, snap) {
   for (const [k, it] of snap) { const cur = m.items.get(k); if (!cur || JSON.stringify(m.o.pack(cur)) !== JSON.stringify(m.o.pack(it))) { m.items.set(k, it); m.touch(k); } }
 }
 function restoreSnap(sn) {
-  restoreMap(stock, sn.stock); restoreMap(lines, sn.lines);
+  if (JSON.stringify(META['meta/models']()) !== JSON.stringify(sn.models)) { loadModels(sn.models); saveMeta('meta/models'); for (const m of maps) m.rekey(); for (const p of PUR.values()) for (const l of p.lines) l.k = akey(l.a); }
+  restoreMap(stock, sn.stock); restoreMap(lines, sn.lines); restoreMap(draft, sn.draft);
   for (const id of [...PUR.keys()]) if (!sn.pur.has(id)) { PUR.delete(id); savePur(id, 50); }
   for (const [id, x] of sn.pur) { const cur = PUR.get(id); if (!cur || JSON.stringify(purToDoc(cur)) !== JSON.stringify(purToDoc(x))) { PUR.set(id, x); savePur(id, 50); } }
-  PO = sn.po; SENT = sn.sent; saveMeta('meta/po');
+  PO = sn.po; SENT = sn.sent; SKIP.m = sn.skip.m; SKIP.p = sn.skip.p; saveMeta('meta/po');
   RET = sn.ret; saveMeta('meta/returns');
   SUPSTAT.clear(); for (const [k, v] of sn.sup) SUPSTAT.set(k, v); saveMeta('meta/supstats');
   LOG = sn.log; saveMeta('meta/log');
@@ -4562,7 +5110,7 @@ function lbFit() {
 }
 function lbShow() {
   const mk = LB.list[LB.i], info = lbInfo(mk), img = $('#lbImg');
-  img.onload = lbFit; img.src = photoUrl.get(mk) || PHOTO.get(mk) || ''; if (img.complete) lbFit();
+  img.onload = lbFit; img.src = purl(mk) || PHOTO.get(mk) || ''; if (img.complete) lbFit();
   $('#lbT').textContent = [info.pav, shortModel(info.model || mk)].filter(Boolean).join(' · ');
   $('#lbN').textContent = info.n || '';
   $('#lbSz').innerHTML = info.mode === 'recv'
@@ -4750,9 +5298,10 @@ const TOUR = [
   {tab: 'day', sel: ['#pane-day [data-import="orders"]'], h: 'Утром — лист подбора', t: 'Скачайте лист подбора в кабинете Озона и загрузите сюда PDF. Программа прочитает все отправления, даже 1600 с лишним, и сверит их число с шапкой листа. Повторная загрузка ничего не задвоит.'},
   {tab: 'day', sel: ['#dayTiles', '#dayEmpty'], h: 'Что можно собрать, а чего нет', t: 'Товар со склада сразу отдаётся отправлениям, сначала старым. У каждого отправления свой статус: «можно собирать», «ждёт мешок» или «не хватает». То, чего не хватает, уходит в закупку.'},
   {tab: 'buy', sel: ['#pavPick', '#buyList'], h: 'Закупка по павильонам', t: 'Всё, чего не хватает, разложено по павильонам. Выберите павильон: там модели с фото и размерами. В поле «Заказать» можно вписать больше, на целый мешок, лишнее уйдёт на склад.'},
-  {tab: 'buy', sel: ['#buyList [data-order-pav]', '#buyList .btn.wa', '#buyPdfAll'], h: 'Заказ с фото вместо скриншотов', t: 'Кнопка «Заказ с фото» собирает PDF или картинку: фото каждой модели, размеры и количество, всё пронумеровано. Сохраните и отправьте поставщику в WhatsApp. На iPhone в приложении Claude сразу откроется «Поделиться».'},
+  {tab: 'buy', sel: ['#buyList [data-order-pav]', '#buyList .btn.wa', '#buyPdfAll'], h: 'Заказ с фото вместо скриншотов', t: 'Кнопка «Заказ с фото» собирает картинку: фото каждой модели, размеры и количество, без цен, всё пронумеровано. На компьютере перетащите её мышкой прямо в чат WhatsApp. На iPhone в приложении Claude сохраните её — сразу откроется «Поделиться».'},
+  {tab: 'buy', sel: ['#buyList .mact', '#buyList .model', '#buyList'], h: 'Перенести, объединить, убрать', t: '«Перенести» — купить модель в другом павильоне, где дешевле; программа это запомнит. «Объединить» — если та же шуба есть во втором магазине под другим артикулом: заказы сложатся в одну строку. Крестик убирает модель или целый павильон из этой закупки, вернуть можно одним нажатием.'},
   {tab: 'buy', sel: ['#buyCommit'], h: 'Оформить закупку', t: 'Когда заказали у всех, нажмите «Оформить закупку». Товар со склада спишется под отправления, а остальные отправления будут ждать свой мешок. Ошиблись — 10 секунд можно нажать «Отменить».'},
-  {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно.'},
+  {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно. Если пересчитывать некогда, «Без проверки» примет мешок как заказано.'},
   {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
   {tab: 'an', sel: ['#pane-an .card'], h: 'Анализ продаж', t: 'По истории продаж программа подскажет, что закупить впрок, что залежалось и стоит снизить в цене, а что продаётся хорошо, но на складе нет. Видны и перекосы по размерам.'},
   {tab: 'settings', sel: [() => $('#supList').closest('.card'), '#pane-settings .card'], h: 'Настройки', t: 'Телефоны поставщиков для WhatsApp, правила сравнения артикулов (русские и английские буквы, нули в начале) и резервная копия всех данных в один файл. Здесь же включается режим сотрудника для телефона приёмщика.'},
@@ -4846,7 +5395,7 @@ addEventListener('resize', tourReplace); addEventListener('scroll', tourReplace,
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Enter' && e.target.matches && e.target.matches('.qin, .cin')) { e.preventDefault(); e.target.blur(); }
-  if (e.key === 'Escape') { if (!$('#empDlg').hidden) closeModal('#empDlg'); else if (!$('#ord').hidden) closeModal('#ord'); else if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
+  if (e.key === 'Escape') { if (!$('#empDlg').hidden) closeModal('#empDlg'); else if (!$('#mv').hidden) closeModal('#mv'); else if (!$('#tw').hidden) closeModal('#tw'); else if (!$('#ord').hidden) closeModal('#ord'); else if (!$('#cpy').hidden) closeModal('#cpy'); else if (!$('#imp').hidden) closeModal('#imp'); }
 });
 
 // settings
@@ -4871,17 +5420,19 @@ $('#bkFile').addEventListener('change', async () => {
   try { b = JSON.parse(await f.text()); if (!b || b.app !== 'sklad' || !Array.isArray(b.stock)) throw 0; }
   catch { toast('Это не резервная копия программы «Склад»'); return; }
   confirmIn('#setConfirm', `Восстановить данные из копии от ${when(b.at)}? Сейчас в программе ${cnt(stock.items.size, W.art)} на складе и ${cnt(lines.items.size, W.row)} отправлений — они заменятся данными из копии.`, 'Восстановить', () => {
+    const m = b.meta || {};
+    if (m['meta/models']) loadModels(m['meta/models']); else loadModels({});
+    saveMeta('meta/models');
     stock.items.clear(); for (const r of b.stock) stock.quiet(stock.o.unpack(r)); stock.touchAll();
     draft.items.clear(); for (const r of b.receipt || []) draft.quiet(draft.o.unpack(r)); draft.touchAll();
     lines.items.clear(); for (const r of b.lines || []) lines.quiet(lines.o.unpack(r)); lines.touchAll();
     for (const id of [...PUR.keys()]) if (PUR.get(id).st === 'go' && !(b.purch || []).some(x => x.id === id)) { PUR.delete(id); savePur(id, 50); }
     (b.purch || []).forEach((x, i) => { PUR.set(x.id, docToPur(x.id, x)); savePur(x.id, 80 + i * 60); });
-    const m = b.meta || {};
-    if (m['meta/settings']) { const ns = {...DEF}; for (const [k, v] of Object.entries(m['meta/settings'])) if (k in DEF && typeof v === typeof DEF[k]) ns[k] = v; S = ns; artCache.clear(); saveMeta('meta/settings'); }
-    if (m['meta/po']) { PO = new Map(); for (const r of m['meta/po'].items || []) { const k = normKey(r[0]); if (k) PO.set(k, {a: String(r[0]), n: r[1] || '', q: r[2] == null ? null : +r[2] || 0, add: !!r[3]}); } SENT = new Map(m['meta/po'].sent || []); saveMeta('meta/po'); }
-    if (m['meta/returns']) { RET = (m['meta/returns'].items || []).map(r => ({a: String(r[0] ?? ''), q: +r[1] || 0, pav: String(r[2] || ''), at: +r[3] || 0})); saveMeta('meta/returns'); }
-    if (m['meta/suppliers']) { SUP.clear(); for (const r of m['meta/suppliers'].items || []) SUP.set(String(r[0] ?? ''), {name: String(r[1] || ''), phone: String(r[2] || '')}); saveMeta('meta/suppliers'); }
-    if (m['meta/supstats']) { SUPSTAT.clear(); for (const r of m['meta/supstats'].items || []) SUPSTAT.set(String(r[0] ?? ''), {n: +r[1] || 0, ord: +r[2] || 0, got: +r[3] || 0, short: +r[4] || 0, extra: +r[5] || 0, last: +r[6] || 0}); saveMeta('meta/supstats'); }
+    if (m['meta/settings']) { const ns = {...DEF}; for (const [k, v] of Object.entries(m['meta/settings'])) if (k in DEF && typeof v === typeof DEF[k]) ns[k] = v; S = ns; clearArt(); saveMeta('meta/settings'); }
+    if (m['meta/po']) { PO = new Map(); for (const r of m['meta/po'].items || []) { const k = akey(r[0]); if (k) PO.set(k, {a: String(r[0]), n: r[1] || '', q: r[2] == null ? null : +r[2] || 0, add: !!r[3]}); } loadSkip(m['meta/po']); SENT = new Map((m['meta/po'].sent || []).map(x => [normPav(x[0] ?? ''), +x[1] || 0])); saveMeta('meta/po'); }
+    if (m['meta/returns']) { RET = (m['meta/returns'].items || []).map(r => ({a: String(r[0] ?? ''), q: +r[1] || 0, pav: normPav(r[2] || ''), at: +r[3] || 0})); saveMeta('meta/returns'); }
+    if (m['meta/suppliers']) { SUP.clear(); for (const r of m['meta/suppliers'].items || []) putSup(r); saveMeta('meta/suppliers'); }
+    if (m['meta/supstats']) { SUPSTAT.clear(); for (const r of m['meta/supstats'].items || []) putStat(r); saveMeta('meta/supstats'); }
     if (m['meta/day']) { DAYM = {...DAYM, ...m['meta/day']}; saveMeta('meta/day'); }
     log(`Данные восстановлены из копии от ${when(b.at)}`);
     diag('backup', 'restore', {at: b.at, stock: b.stock.length, lines: (b.lines || []).length, purch: (b.purch || []).length});
@@ -4895,7 +5446,7 @@ $('#stClear').addEventListener('click', () => {
   const id = '#opt' + k[0].toUpperCase() + k.slice(1);
   $(id).addEventListener('change', e => { S = {...S, [k]: e.target.checked}; rekeyAll(true); saveMeta('meta/settings'); log('Изменены правила сравнения артикулов'); renderTester(); render(); });
 });
-$('#optPav').addEventListener('change', e => { S = {...S, pav: e.target.checked}; artCache.clear(); saveMeta('meta/settings'); renderTester(); render(); });
+$('#optPav').addEventListener('change', e => { S = {...S, pav: e.target.checked}; clearArt(); saveMeta('meta/settings'); renderTester(); render(); });
 $('#optSupplier').addEventListener('change', e => { const v = e.target.value.trim(); S = {...S, supplier: v || DEF.supplier}; e.target.value = S.supplier; saveMeta('meta/settings'); render(); });
 $('#testIn').addEventListener('input', renderTester);
 $('#anForm').addEventListener('change', e => {
@@ -4993,6 +5544,9 @@ async function start() {
   Backend = db ? dbBackend(db) : localBackend();
   subscribe(); renderSettings();
 }
+// for the program's own tests: the internals are reachable only when the address ends with ?test
+if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
+  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, shortModel};
 start();
 })();
 </script>
