@@ -5,13 +5,12 @@
 
 ## Что нужно в среде
 
-- Ключ Seedream одним из способов:
-  - API credential в настройках облачной среды (тип Bearer, хост `ark.ap-southeast.bytepluses.com`):
-    ключ подставляет прокси, доступ к хосту открывается сам, `ARK_API_KEY` не нужен;
-  - или переменная окружения `ARK_API_KEY` плюс хост в Network access → Custom → Allowed domains.
-- Хост API: `ark.ap-southeast.bytepluses.com` (BytePlus) или `ark.cn-beijing.volces.com` (Volcengine).
-  Для Volcengine также задать `ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3`
-  и `SEEDREAM_MODEL=doubao-seedream-4-0-250828`.
+- Ключ OpenRouter (модель по умолчанию `bytedance-seed/seedream-4.5`, около $0.04 за картинку).
+  Добавить в настройках облачной среды как API credential: тип Bearer, Allowed websites `openrouter.ai`.
+  Прокси подставит ключ сам и откроет доступ к хосту, переменная окружения не нужна.
+  Запасной вариант: переменная `OPENROUTER_API_KEY` плюс `openrouter.ai` в Network access → Custom → Allowed domains.
+- Проверить доступные модели: `python3 seedream_frames.py models`. Другую модель задать через `SEEDREAM_MODEL`.
+- BytePlus/Volcengine напрямую: `SEEDREAM_PROVIDER=ark` и ключ `ARK_API_KEY` (подробности в начале скрипта).
 - Фото лица в `ando-site/tools/ref/` (папка в `.gitignore`, в репозиторий не коммитить).
 
 ## Генерация

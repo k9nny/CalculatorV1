@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Кадры для анимации ANDO через Seedream (BytePlus ModelArk или Volcengine Ark).
+"""Кадры для анимации ANDO через Seedream: OpenRouter (по умолчанию) или BytePlus/Volcengine Ark.
 
-Ключ берется из переменной окружения ARK_API_KEY. Если ее нет, заголовок Authorization не отправляется:
-так работает облачная среда Claude Code, где ключ добавлен как API credential и прокси подставляет его сам.
-В коде и в репозитории ключа быть не должно.
+Ключ берется из переменной окружения (OPENROUTER_API_KEY или ARK_API_KEY). Если ее нет, заголовок
+Authorization не отправляется: так работает облачная среда Claude Code, где ключ добавлен как
+API credential и прокси подставляет его сам. В коде и в репозитории ключа быть не должно.
 
 Порядок работы:
   1) python3 seedream_frames.py start --face ref/face1.jpg --face ref/face2.jpg
@@ -11,16 +11,19 @@
   2) Выберите master-N с самым похожим лицом.
   3) python3 seedream_frames.py finish --master ../assets/raw/master-2.jpg --light
      Стекло закрыто, широкая улыбка, деньги в руке; с --light еще и версии для светлой темы.
+  Список моделей картинок OpenRouter: python3 seedream_frames.py models
 
 Только стандартная библиотека Python 3.8+, ничего устанавливать не нужно.
 Проверить запросы без отправки: добавьте --dry-run.
 
 Переменные окружения:
-  ARK_API_KEY     ключ API (не нужен, если ключ подставляет прокси среды)
-  ARK_BASE_URL    по умолчанию https://ark.ap-southeast.bytepluses.com/api/v3 (BytePlus);
-                  для Volcengine: https://ark.cn-beijing.volces.com/api/v3
-  SEEDREAM_MODEL  по умолчанию seedream-4-0-250828; для Volcengine doubao-seedream-4-0-250828.
-                  Точный ID модели посмотрите в консоли, где выпущен ключ.
+  SEEDREAM_PROVIDER   openrouter (по умолчанию) или ark
+  SEEDREAM_MODEL      по умолчанию bytedance-seed/seedream-4.5 (OpenRouter) или seedream-4-0-250828 (Ark)
+  IMAGE_RESOLUTION    для OpenRouter: 1K, 2K или 4K (по умолчанию 2K)
+  OPENROUTER_API_KEY  ключ OpenRouter
+  ARK_API_KEY         ключ BytePlus/Volcengine
+  ARK_BASE_URL        по умолчанию https://ark.ap-southeast.bytepluses.com/api/v3;
+                      для Volcengine https://ark.cn-beijing.volces.com/api/v3 и модель doubao-seedream-4-0-250828
 """
 import argparse
 import base64
@@ -32,13 +35,24 @@ import time
 import urllib.error
 import urllib.request
 
-BASE_URL = os.environ.get("ARK_BASE_URL", "https://ark.ap-southeast.bytepluses.com/api/v3").rstrip("/")
-MODEL = os.environ.get("SEEDREAM_MODEL", "seedream-4-0-250828")
+PROVIDER = os.environ.get("SEEDREAM_PROVIDER", "openrouter").lower()
+if PROVIDER == "ark":
+    BASE_URL = os.environ.get("ARK_BASE_URL", "https://ark.ap-southeast.bytepluses.com/api/v3").rstrip("/")
+    ENDPOINT = BASE_URL + "/images/generations"
+    MODEL = os.environ.get("SEEDREAM_MODEL", "seedream-4-0-250828")
+    API_KEY = os.environ.get("ARK_API_KEY", "")
+else:
+    BASE_URL = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
+    ENDPOINT = BASE_URL + "/images"
+    MODEL = os.environ.get("SEEDREAM_MODEL", "bytedance-seed/seedream-4.5")
+    API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
+RESOLUTION = os.environ.get("IMAGE_RESOLUTION", "2K")
 DEFAULT_OUT = pathlib.Path(__file__).resolve().parent.parent / "assets" / "raw"
 
-SIZE_WIDE = "4096x2304"
-SIZE_WHEEL = "2048x1536"
-SIZE_WINDOW = "2560x1920"
+# Кадр: (соотношение сторон для OpenRouter, точный размер для Ark)
+SHOT_WIDE = ("16:9", "4096x2304")
+SHOT_WHEEL = ("4:3", "2048x1536")
+SHOT_WINDOW = ("4:3", "2560x1920")
 
 STUDIO_DARK = (
     "Low-key dark studio: seamless charcoal-black backdrop, softly lit dark floor with a subtle reflection, "
@@ -120,48 +134,71 @@ def extension(raw):
     return ".jpg"
 
 
+def request(url, body=None):
+    headers = {"Content-Type": "application/json"}
+    if API_KEY:
+        headers["Authorization"] = "Bearer " + API_KEY
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST" if body is not None else "GET")
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        return json.loads(resp.read())
+
+
+def build_payload(prompt, shot, refs):
+    aspect, size = shot
+    if PROVIDER == "ark":
+        payload = {"model": MODEL, "prompt": prompt, "size": size, "response_format": "b64_json",
+                   "watermark": False, "sequential_image_generation": "disabled"}
+        if refs:
+            payload["image"] = refs[0] if len(refs) == 1 else refs
+    else:
+        payload = {"model": MODEL, "prompt": prompt, "aspect_ratio": aspect, "resolution": RESOLUTION}
+        if refs:
+            payload["input_references"] = [{"type": "image_url", "image_url": {"url": r}} for r in refs]
+    return payload
+
+
+def image_bytes(result):
+    """Достает первую картинку из ответа: b64_json или data:/https-ссылка."""
+    items = result.get("data") or []
+    if not items:
+        return None
+    item = items[0]
+    if item.get("b64_json"):
+        return base64.b64decode(item["b64_json"])
+    url = item.get("url") or ""
+    if url.startswith("data:"):
+        return base64.b64decode(url.split(",", 1)[1])
+    if url.startswith("http"):
+        with urllib.request.urlopen(url, timeout=300) as resp:
+            return resp.read()
+    return None
+
+
 class Client:
     def __init__(self, out, dry_run):
         self.out = pathlib.Path(out)
         self.dry_run = dry_run
-        self.key = os.environ.get("ARK_API_KEY", "")
-        if not dry_run and not self.key:
-            print("ARK_API_KEY не задан: отправляю без ключа, его должен подставить прокси среды (API credential).")
+        if not dry_run and not API_KEY:
+            print("Ключ в переменных окружения не задан: отправляю без него, его должен подставить прокси среды.")
         self.out.mkdir(parents=True, exist_ok=True)
 
-    def generate(self, name, prompt, size, images=()):
+    def generate(self, name, prompt, shot, images=()):
         """Один запрос, одна картинка. Возвращает путь к сохраненному файлу."""
-        payload = {
-            "model": MODEL,
-            "prompt": prompt,
-            "size": size,
-            "response_format": "b64_json",
-            "watermark": False,
-            "sequential_image_generation": "disabled",
-        }
         if self.dry_run:
-            shown = dict(payload)
-            if images:
-                shown["image"] = ["<%s>" % pathlib.Path(p).name for p in images]
-            print("\n[dry-run] %s -> POST %s/images/generations\n%s" % (name, BASE_URL, json.dumps(shown, ensure_ascii=False, indent=2)))
+            shown = build_payload(prompt, shot, ["<%s>" % pathlib.Path(p).name for p in images])
+            print("\n[dry-run] %s -> POST %s\n%s" % (name, ENDPOINT, json.dumps(shown, ensure_ascii=False, indent=2)))
             return self.out / (name + ".jpg")
 
-        refs = [data_uri(p) for p in images]
-        if refs:
-            payload["image"] = refs[0] if len(refs) == 1 else refs
+        payload = build_payload(prompt, shot, [data_uri(p) for p in images])
         print("-> %s ..." % name, flush=True)
-        body = json.dumps(payload).encode("utf-8")
+        result = None
         for attempt, pause in enumerate((0, 5, 15, 30)):
             if pause:
                 print("   повтор через %d с" % pause, flush=True)
                 time.sleep(pause)
-            headers = {"Content-Type": "application/json"}
-            if self.key:
-                headers["Authorization"] = "Bearer " + self.key
-            req = urllib.request.Request(BASE_URL + "/images/generations", data=body, headers=headers)
             try:
-                with urllib.request.urlopen(req, timeout=300) as resp:
-                    result = json.loads(resp.read())
+                result = request(ENDPOINT, payload)
                 break
             except urllib.error.HTTPError as err:
                 detail = err.read().decode("utf-8", "replace")
@@ -169,18 +206,18 @@ class Client:
                     continue
                 hint = ""
                 if err.code in (401, 403):
-                    hint = ("\nКлюч не принят. Проверьте ARK_API_KEY или API credential в настройках среды "
-                            "(хост %s)." % BASE_URL.split("/")[2])
+                    hint = "\nКлюч не принят. Проверьте ключ в настройках среды (хост %s)." % ENDPOINT.split("/")[2]
+                elif err.code == 402:
+                    hint = "\nНа балансе не хватает денег."
                 sys.exit("Ошибка API %d при генерации %s:\n%s%s" % (err.code, name, detail, hint))
             except urllib.error.URLError as err:
                 if attempt < 3:
                     continue
-                sys.exit("Нет соединения с %s: %s" % (BASE_URL, err.reason))
+                sys.exit("Нет соединения с %s: %s" % (ENDPOINT, err.reason))
 
-        items = result.get("data") or []
-        if not items or "b64_json" not in items[0]:
+        raw = image_bytes(result)
+        if not raw:
             sys.exit("API не вернул картинку для %s:\n%s" % (name, json.dumps(result, ensure_ascii=False)[:2000]))
-        raw = base64.b64decode(items[0]["b64_json"])
         path = self.out / (name + extension(raw))
         path.write_bytes(raw)
         print("   сохранено: %s" % path, flush=True)
@@ -204,14 +241,14 @@ def cmd_start(args):
             sys.exit("Файл не найден: %s" % f)
     client = Client(args.out, args.dry_run)
 
-    wide = client.generate("wide", PROMPT_WIDE, SIZE_WIDE)
-    client.generate("wheel", PROMPT_WHEEL, SIZE_WHEEL, [wide])
+    wide = client.generate("wide", PROMPT_WIDE, SHOT_WIDE)
+    client.generate("wheel", PROMPT_WHEEL, SHOT_WHEEL, [wide])
 
     face_refs = " and ".join("image %d" % (i + 1) for i in range(len(faces)))
     car_ref = "image %d" % (len(faces) + 1)
     refs = list(faces) + [wide]
     for n in range(1, args.count + 1):
-        client.generate("master-%d" % n, prompt_master(face_refs, car_ref), SIZE_WINDOW, refs)
+        client.generate("master-%d" % n, prompt_master(face_refs, car_ref), SHOT_WINDOW, refs)
 
     print("\nГотово. Выберите master-N с самым похожим лицом и запустите:\n"
           "  python3 seedream_frames.py finish --master %s/master-N.jpg --light" % args.out)
@@ -223,19 +260,30 @@ def cmd_finish(args):
         sys.exit("Файл не найден: %s" % master)
     client = Client(args.out, args.dry_run)
 
-    closed = client.generate("window-closed", PROMPT_CLOSED, SIZE_WINDOW, [master])
-    smile = client.generate("smile", PROMPT_SMILE, SIZE_WINDOW, [master])
-    money = client.generate("money", PROMPT_MONEY, SIZE_WINDOW, [smile])
+    closed = client.generate("window-closed", PROMPT_CLOSED, SHOT_WINDOW, [master])
+    smile = client.generate("smile", PROMPT_SMILE, SHOT_WINDOW, [master])
+    money = client.generate("money", PROMPT_MONEY, SHOT_WINDOW, [smile])
 
     if args.light:
-        frames = [("wide", SIZE_WIDE, find(args.out, "wide")), ("wheel", SIZE_WHEEL, find(args.out, "wheel")),
-                  ("window-closed", SIZE_WINDOW, closed), ("master", SIZE_WINDOW, master),
-                  ("smile", SIZE_WINDOW, smile), ("money", SIZE_WINDOW, money)]
-        for name, size, src in frames:
+        frames = [("wide", SHOT_WIDE, find(args.out, "wide")), ("wheel", SHOT_WHEEL, find(args.out, "wheel")),
+                  ("window-closed", SHOT_WINDOW, closed), ("master", SHOT_WINDOW, master),
+                  ("smile", SHOT_WINDOW, smile), ("money", SHOT_WINDOW, money)]
+        for name, shot, src in frames:
             if src is not None:
-                client.generate(name + "-light", PROMPT_LIGHT, size, [src])
+                client.generate(name + "-light", PROMPT_LIGHT, shot, [src])
 
     print("\nГотово. Кадры лежат в %s" % args.out)
+
+
+def cmd_models(args):
+    if PROVIDER == "ark":
+        sys.exit("Список моделей доступен только для OpenRouter.")
+    try:
+        result = request(BASE_URL + "/images/models")
+    except urllib.error.URLError as err:
+        sys.exit("Не удалось получить список моделей: %s" % err)
+    for m in result.get("data", []):
+        print(m.get("id"), json.dumps({k: v for k, v in m.items() if k != "id"}, ensure_ascii=False)[:300])
 
 
 def main():
@@ -253,6 +301,9 @@ def main():
     p_finish.add_argument("--master", required=True, help="выбранный master-N")
     p_finish.add_argument("--light", action="store_true", help="сделать версии для светлой темы")
     p_finish.set_defaults(func=cmd_finish)
+
+    p_models = sub.add_parser("models", help="модели картинок, доступные на OpenRouter")
+    p_models.set_defaults(func=cmd_models)
 
     args = parser.parse_args()
     args.func(args)
