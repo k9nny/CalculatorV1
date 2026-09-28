@@ -3,43 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>ANDO перекидка</title>
-<meta name="description" content="Срочный выкуп автомобилей за один день. Оценка за 15 минут, бесплатный выезд эксперта, деньги в день сделки.">
+<title>ANDO AUTO</title>
+<meta name="description" content="ANDO AUTO: срочный выкуп автомобилей за один день. Оценка за 15 минут, бесплатный выезд эксперта, расчет в день сделки.">
 <meta name="theme-color" content="#0B0C0D">
-<script>try{var t=localStorage.getItem('ando-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>(function(){var d=document.documentElement;try{if(localStorage.getItem('ando-theme')==='light')d.setAttribute('data-scheme','light')}catch(e){}if('IntersectionObserver' in window&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('js')})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@300;400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@300;400;500;600&display=swap">
 <style>
-/* ============ Светлая тема (Gallery) и общие токены ============ */
+/* ============ Темная тема (Noir): по умолчанию ============ */
 :root{
-  color-scheme:light;
-  --bg:#EFF0EE; --surface:#FFFFFF; --surface-2:#E5E7E4;
-  --line:#D5D8D4; --line-strong:#AEB2AD;
-  --text:#101214; --text-2:#4A4F54; --text-3:#6B7076;
-  --accent:#2446A6; --danger:#B3261E;
-  --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
-  --show-sun:none; --show-moon:block;
-
-
-  --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em;
-  --f-body:"Onest", "Helvetica Neue", Arial, sans-serif;
-  --radius:2px;
-}
-/* ============ Тёмная тема (Noir) ============ */
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
-    --line:#25292D; --line-strong:#3A3F45;
-    --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#767A7F;
-    --accent:#C8AD7F; --danger:#E26D5A;
-    --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
-    --show-sun:block; --show-moon:none;
-
-  }
-}
-:root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
   --line:#25292D; --line-strong:#3A3F45;
@@ -48,6 +21,20 @@
   --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
   --show-sun:block; --show-moon:none;
 
+  --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em;
+  --f-body:"Onest", "Helvetica Neue", Arial, sans-serif;
+  --radius:2px;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+/* ============ Светлая тема (Gallery): по кнопке в шапке ============ */
+:root[data-scheme="light"]{
+  color-scheme:light;
+  --bg:#EFF0EE; --surface:#FFFFFF; --surface-2:#E5E7E4;
+  --line:#D5D8D4; --line-strong:#AEB2AD;
+  --text:#101214; --text-2:#4A4F54; --text-3:#6B7076;
+  --accent:#2446A6; --danger:#B3261E;
+  --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
+  --show-sun:none; --show-moon:block;
 }
 
 /* ============ База ============ */
@@ -62,63 +49,60 @@ button{font:inherit;color:inherit}
 .wrap{width:100%;max-width:1280px;margin-inline:auto;padding-inline:clamp(16px,4vw,48px)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 
-.eyebrow{margin:0;font:500 12px/1.4 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text-3)}
+.eyebrow{margin:0;font:500 12px/1.4 var(--f-body);letter-spacing:.2em;text-transform:uppercase;color:var(--text-3)}
 .display{margin:0;font-family:var(--f-display);font-weight:var(--display-weight);letter-spacing:var(--display-track);line-height:1.08;text-wrap:balance}
-h1.display{font-size:clamp(30px,4.3vw,62px)}
-h2.display{font-size:clamp(26px,3.2vw,44px)}
+h2.display{font-size:clamp(28px,3.4vw,48px)}
 .lead{margin:0;max-width:34em;font-size:clamp(16px,1.35vw,18px);color:var(--text-2);text-wrap:pretty}
 
 /* ============ Кнопки ============ */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;height:56px;padding:0 28px;border:1px solid transparent;border-radius:var(--radius);font:500 15px/1 var(--f-body);letter-spacing:.01em;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background-color .25s,color .25s,border-color .25s}
-.btn-primary{background:var(--cta);color:var(--cta-ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;height:56px;padding:0 28px;border:1px solid transparent;border-radius:var(--radius);font:500 15px/1 var(--f-body);letter-spacing:.01em;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background-color .25s,color .25s,border-color .25s}
+.btn-primary{position:relative;overflow:hidden;isolation:isolate;background:var(--cta);color:var(--cta-ink)}
 .btn-primary:hover{background:var(--cta-hover)}
+/* Блик, пробегающий по кнопке при наведении */
+.btn-primary::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.5) 50%,transparent 65%);transform:translateX(-100%);transition:transform .9s var(--ease)}
+.btn-primary:hover::after{transform:translateX(100%)}
 .btn-ghost{background:transparent;color:var(--text);border-color:var(--line-strong)}
 .btn-ghost:hover{border-color:var(--text)}
 .btn-sm{height:40px;padding:0 18px;font-size:14px}
 .btn-block{width:100%}
 .btn[disabled]{opacity:.6;cursor:progress}
+.btn .ico{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .arrow{width:18px;height:10px;flex:none;transition:transform .25s}
 .btn:hover .arrow{transform:translateX(4px)}
-.icon-btn{display:grid;place-items:center;flex:none;width:40px;height:40px;padding:0;background:transparent;color:var(--text);border:1px solid var(--line-strong);border-radius:50%;cursor:pointer;transition:border-color .2s}
+.icon-btn{display:grid;place-items:center;flex:none;width:40px;height:40px;padding:0;background:transparent;color:var(--text);border:1px solid var(--line-strong);border-radius:50%;cursor:pointer;text-decoration:none;transition:border-color .2s}
 .icon-btn:hover{border-color:var(--text)}
-.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
 .i-sun{display:var(--show-sun)}
 .i-moon{display:var(--show-moon)}
 
-/* ============ Шапка ============ */
-.site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:saturate(140%) blur(14px);backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid var(--line);transition:background-color .4s}
+/* ============ Шапка: прозрачная поверх сцены, плотная после прокрутки ============ */
+.site-header{position:fixed;top:0;left:0;right:0;z-index:20;padding-top:env(safe-area-inset-top,0px);background:transparent;border-bottom:1px solid transparent;transition:background-color .4s,border-color .4s,-webkit-backdrop-filter .4s,backdrop-filter .4s}
+.site-header.scrolled{background:var(--bg);background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:saturate(140%) blur(14px);backdrop-filter:saturate(140%) blur(14px);border-bottom-color:var(--line)}
+/* Над темной сценой шапка всегда светлая, в любой теме */
+.site-header:not(.scrolled){--text:#F2F0EA;--text-2:rgba(242,240,234,.8);--text-3:rgba(242,240,234,.62);--line-strong:rgba(255,255,255,.3);--cta:#F2F0EA;--cta-ink:#0B0C0D;--cta-hover:#FFFFFF}
 .site-header .wrap{display:flex;align-items:center;gap:24px;height:72px}
 .brand{display:flex;align-items:center;gap:14px;color:var(--text);text-decoration:none}
-.wordmark{display:block;height:17px;width:auto}
-.brand-sub{padding-left:14px;border-left:1px solid var(--line-strong);font:500 10px/1 var(--f-body);letter-spacing:.24em;text-transform:uppercase;color:var(--text-3)}
+.wordmark{display:block;height:18px;width:auto;overflow:visible}
+.logo-wheel{transform-box:fill-box;transform-origin:center;animation:logo-spin-in 1.8s var(--ease) .3s both}
+.brand:hover .logo-wheel{animation:logo-spin 1s var(--ease)}
+@keyframes logo-spin-in{from{rotate:-540deg}to{rotate:0deg}}
+@keyframes logo-spin{from{rotate:-360deg}to{rotate:0deg}}
+.brand-sub{padding-left:14px;border-left:1px solid var(--line-strong);font:600 11px/1 var(--f-display);letter-spacing:.34em;color:var(--text-2)}
 .nav{display:flex;gap:28px;margin-left:auto}
-.nav a{font-size:14px;color:var(--text-2);text-decoration:none;transition:color .2s}
+.nav a{position:relative;font-size:14px;color:var(--text-2);text-decoration:none;transition:color .2s}
+.nav a::after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:1px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .35s var(--ease)}
 .nav a:hover{color:var(--text)}
+.nav a:hover::after{transform:scaleX(1)}
 .header-phone{font-size:14px;font-weight:500;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
-@media (max-width:1060px){.nav{display:none}.header-phone{margin-left:auto}}
-@media (max-width:640px){.header-phone{display:none}.theme-btn{margin-left:auto}.site-header .wrap{gap:12px}}
-@media (max-width:380px){.brand-sub{display:none}}
-
-/* ============ Первый экран ============ */
-.hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px clamp(32px,6vw,96px);align-items:start;padding-top:clamp(32px,5vw,64px)}
-.hero-copy{display:grid;gap:20px;align-content:start}
-@media (max-width:980px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
-
-.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(36px,5vw,64px);border-top:1px solid var(--line)}
-.fact{display:grid;gap:10px;align-content:start;padding:28px 24px 34px 0}
-.fact + .fact{padding-left:24px;border-left:1px solid var(--line)}
-.fact b{font:var(--display-weight) clamp(26px,2.5vw,36px)/1 var(--f-display);letter-spacing:var(--display-track);font-variant-numeric:tabular-nums}
-.fact span{font-size:14px;line-height:1.45;color:var(--text-2)}
-@media (max-width:760px){
-  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .fact:nth-child(3){padding-left:0;border-left:0}
-  .fact:nth-child(n+3){border-top:1px solid var(--line)}
-}
+.call-btn{display:none}
+@media (max-width:1100px){.nav{display:none}.header-phone{margin-left:auto}}
+@media (max-width:640px){.header-phone{display:none}.call-btn{display:grid;margin-left:auto}.site-header .wrap{gap:10px}.header-cta{padding:0 14px}}
+@media (max-width:400px){.brand-sub{display:none}}
 
 /* ============ Сцена: фото-кадры на всю ширину, камеру ведет скрипт ============ */
 /* Фото сняты в темной студии, поэтому сцена темная в обеих темах */
-.stage{position:relative;width:100%;height:min(78vh,62vw);height:clamp(240px,min(78svh,62vw),860px);overflow:hidden;isolation:isolate;background:#0A0B0C;container-type:size}
-@media (max-width:640px){.stage{height:75vw}}
+.stage{position:relative;width:100%;height:min(70vh,60vw);height:clamp(260px,min(70svh,60vw),820px);overflow:hidden;isolation:isolate;background:#0A0B0C;container-type:size}
+@media (max-width:640px){.stage{height:78vw}}
 .shot{position:absolute;inset:0;opacity:0}
 .shot-window{opacity:1}
 .frame{position:absolute;left:50%;top:50%;width:100%;transform:translate(-50%,-50%);will-change:transform}
@@ -138,15 +122,47 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 .stage.idle .glint{opacity:1}
 .stage.idle .glint i{animation:glint 7s ease-in-out 1.5s infinite}
 @keyframes glint{0%{transform:translateX(-120%) rotate(18deg)}12%,100%{transform:translateX(380%) rotate(18deg)}}
-@media (prefers-reduced-motion:reduce){.stage.idle .glint i{animation:none}}
 .stage-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 50%,transparent 58%,rgba(0,0,0,.38))}
+/* Затемнение сверху, чтобы шапка читалась поверх любого кадра */
+.stage-top{position:absolute;inset:0 0 auto;height:30%;pointer-events:none;background:linear-gradient(rgba(5,6,7,.65),transparent)}
 .replay{position:absolute;right:clamp(16px,4vw,48px);bottom:16px;z-index:2;width:36px;height:36px;background:rgba(18,20,22,.7);color:#D8DADD;border-color:rgba(255,255,255,.25)}
 .replay:hover{border-color:#FFFFFF}
 .replay svg{width:15px;height:15px}
+.scroll-cue{position:absolute;left:50%;bottom:18px;z-index:2;display:grid;justify-items:center;gap:10px;transform:translateX(-50%);color:rgba(242,240,234,.72);font:500 10px/1 var(--f-body);letter-spacing:.32em;text-transform:uppercase;text-decoration:none}
+.scroll-cue i{position:relative;overflow:hidden;width:1px;height:36px;background:rgba(242,240,234,.2)}
+.scroll-cue i::after{content:"";position:absolute;left:0;top:-40%;width:1px;height:40%;background:#F2F0EA;animation:cue 2.2s cubic-bezier(.6,0,.4,1) infinite}
+@keyframes cue{to{top:100%}}
+@media (max-width:640px){.scroll-cue{display:none}}
+
+/* ============ Первый экран под сценой ============ */
+.hero-body{padding-top:clamp(36px,5vw,72px)}
+.hero-title{margin:14px 0 0;font:500 clamp(36px,6.6vw,104px)/.98 var(--f-display);letter-spacing:-.02em;text-transform:uppercase;text-wrap:balance}
+.hero-title .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.06em}
+.hero-title .w > span{display:inline-block}
+.hero-title .accent{color:var(--accent)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:36px clamp(32px,6vw,96px);align-items:start;margin-top:clamp(28px,4vw,48px)}
+.hero-copy{display:grid;gap:28px;align-content:start}
+.hero-actions{display:flex;flex-wrap:wrap;gap:12px}
+.trust{display:grid;gap:10px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--text-2)}
+.trust li{display:flex;align-items:center;gap:12px}
+.trust li::before{content:"";flex:none;width:6px;height:6px;border:1px solid var(--accent);transform:rotate(45deg)}
+@media (max-width:980px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
+
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(40px,5vw,72px);border-top:1px solid var(--line)}
+.fact{display:grid;gap:10px;align-content:start;padding:28px 24px 34px 0}
+.fact + .fact{padding-left:24px;border-left:1px solid var(--line)}
+.fact b{font:var(--display-weight) clamp(28px,2.8vw,40px)/1 var(--f-display);letter-spacing:var(--display-track);font-variant-numeric:tabular-nums;white-space:nowrap}
+.fact span{font-size:14px;line-height:1.45;color:var(--text-2)}
+@media (max-width:760px){
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fact:nth-child(3){padding-left:0;border-left:0}
+  .fact:nth-child(n+3){border-top:1px solid var(--line)}
+}
 
 /* ============ Карточка заявки ============ */
 .lead-card{padding:clamp(22px,2.6vw,32px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:0 40px 80px -48px rgba(0,0,0,.45);transition:background-color .4s,border-color .4s}
-.card-title{margin:0 0 20px;font:var(--display-weight) 20px/1.25 var(--f-display);letter-spacing:var(--display-track)}
+.lead-card:focus-within{border-color:var(--line-strong)}
+.card-title{margin:0 0 20px;font:var(--display-weight) 21px/1.25 var(--f-display);letter-spacing:var(--display-track)}
 .card-sub{margin:-12px 0 24px;font-size:14px;line-height:1.5;color:var(--text-2)}
 .form-stack{display:grid;gap:18px}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
@@ -165,14 +181,14 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 .form-note{margin:0;font-size:12.5px;line-height:1.5;color:var(--text-3)}
 .form-note a{color:var(--text-2)}
 
-.done{display:grid;gap:14px;justify-items:start}
+.done{display:grid;gap:14px;justify-items:start;animation:fade-up .6s var(--ease)}
 .done-mark{display:grid;place-items:center;width:44px;height:44px;color:var(--accent);border:1px solid var(--accent);border-radius:50%}
 .done-mark svg{width:18px;height:18px}
-.done h3{margin:0;font:var(--display-weight) 20px/1.25 var(--f-display)}
+.done h3{margin:0;font:var(--display-weight) 21px/1.25 var(--f-display)}
 .done p{margin:0;color:var(--text-2)}
 
 /* ============ Секции ============ */
-.section{padding-block:clamp(72px,10vw,136px);border-top:1px solid var(--line)}
+.section{padding-block:clamp(80px,10vw,144px);border-top:1px solid var(--line)}
 .section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 48px;align-items:end}
 .section-titles{display:grid;gap:18px}
 @media (max-width:860px){.section-head{grid-template-columns:minmax(0,1fr)}}
@@ -191,15 +207,19 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 
 .table-wrap{margin-top:clamp(44px,5vw,64px);overflow-x:auto;border-top:1px solid var(--line)}
 .compare{width:100%;min-width:720px;border-collapse:collapse;font-size:15px;line-height:1.5}
-.compare th,.compare td{padding:20px 20px 20px 0;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.compare th,.compare td{padding:20px 20px 20px 0;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);transition:background-color .25s}
 .compare thead th{padding-top:24px;font:500 12px/1.3 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
 .compare tbody th{width:22%;font-weight:500;color:var(--text)}
 .compare td{width:26%;color:var(--text-2)}
-.compare .is-ando{padding-left:20px;background:var(--surface);color:var(--text);transition:background-color .4s}
+.compare .is-ando{padding-left:20px;background:var(--surface);color:var(--text)}
 .compare thead .is-ando{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+.compare tbody tr:hover th,.compare tbody tr:hover td:not(.is-ando){background:var(--surface-2)}
 
 .cond{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:clamp(44px,5vw,64px);background:var(--line);border:1px solid var(--line)}
-.cond-item{display:grid;gap:10px;align-content:start;padding:clamp(22px,2.6vw,36px);background:var(--bg);transition:background-color .4s}
+.cond-item{position:relative;display:grid;gap:10px;align-content:start;padding:clamp(22px,2.6vw,36px);background:var(--bg);transition:background-color .35s}
+.cond-item::before{content:"";position:absolute;left:0;top:0;width:100%;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
+.cond-item:hover{background:var(--surface)}
+.cond-item:hover::before{transform:scaleX(1)}
 .cond-item h3{margin:0;font:500 17px/1.35 var(--f-body)}
 .cond-item p{margin:0;font-size:15px;color:var(--text-2)}
 @media (max-width:860px){.cond{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -209,18 +229,21 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 .faq-grid .section-titles{position:sticky;top:120px}
 .faq{border-top:1px solid var(--line)}
 .faq details{border-bottom:1px solid var(--line)}
-.faq summary{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 0;font:500 clamp(16px,1.5vw,18px)/1.4 var(--f-body);list-style:none;cursor:pointer}
+.faq summary{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 0;font:500 clamp(16px,1.5vw,18px)/1.4 var(--f-body);list-style:none;cursor:pointer;transition:color .2s}
+.faq summary:hover{color:var(--accent)}
 .faq summary::-webkit-details-marker{display:none}
 .plus{position:relative;flex:none;width:14px;height:14px}
-.plus::before,.plus::after{content:"";position:absolute;left:0;top:50%;width:14px;height:1.5px;margin-top:-.75px;background:var(--text-2);transition:transform .3s}
+.plus::before,.plus::after{content:"";position:absolute;left:0;top:50%;width:14px;height:1.5px;margin-top:-.75px;background:var(--text-2);transition:transform .35s var(--ease)}
 .plus::after{transform:rotate(90deg)}
 .faq details[open] .plus::after{transform:rotate(0deg)}
 .faq .answer{margin:0;padding-bottom:26px;max-width:62ch;color:var(--text-2)}
+.faq details[open] .answer{animation:fade-up .5s var(--ease)}
 @media (max-width:860px){.faq-grid{grid-template-columns:minmax(0,1fr)}.faq-grid .section-titles{position:static}}
 
 .cta-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px clamp(40px,6vw,96px);align-items:start}
 .contacts{display:grid;gap:26px;margin-top:40px}
-.contact-phone{font:var(--display-weight) clamp(24px,2.6vw,34px)/1.1 var(--f-display);letter-spacing:var(--display-track);text-decoration:none;font-variant-numeric:tabular-nums}
+.contact-phone{font:var(--display-weight) clamp(26px,2.8vw,38px)/1.1 var(--f-display);letter-spacing:var(--display-track);text-decoration:none;font-variant-numeric:tabular-nums;transition:color .2s}
+.contact-phone:hover{color:var(--accent)}
 .contact-row{display:flex;flex-wrap:wrap;gap:12px}
 .meta-list{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--text-2)}
 @media (max-width:860px){.cta-grid{grid-template-columns:minmax(0,1fr)}}
@@ -230,31 +253,55 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 .footer-links{display:flex;flex-wrap:wrap;gap:8px 24px}
 .footer-links a{color:var(--text-2);text-decoration:none}
 .footer-links a:hover{color:var(--text)}
+
+/* ============ Появление при прокрутке ============ */
+/* Скрываем только при поддержке IntersectionObserver и без reduced motion (класс js ставится в head) */
+[data-reveal]{transition:opacity 1s var(--ease) var(--d,0s),transform 1s var(--ease) var(--d,0s)}
+.js [data-reveal]:not(.in){opacity:0;transform:translateY(28px)}
+.js [data-reveal="split"]:not(.in){opacity:1;transform:none}
+.js .hero-title .w > span{transform:translateY(110%);transition:transform 1.2s var(--ease)}
+.js .hero-title .w:nth-child(2) > span{transition-delay:.1s}
+.js .hero-title .w:nth-child(3) > span{transition-delay:.2s}
+.js .hero-title.in .w > span{transform:none}
+.js .step .step-rail{transform:scaleX(0);transform-origin:left;transition:transform 1.3s var(--ease) calc(var(--d,0s) + .25s)}
+.js .step.in .step-rail{transform:none}
+@keyframes fade-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .logo-wheel,.brand:hover .logo-wheel,.scroll-cue i::after,.stage.idle .glint i{animation:none}
+  .btn-primary::after{display:none}
+}
 </style>
 </head>
 <body>
 
-<header class="site-header">
+<header class="site-header scrolled" id="site-header">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="ANDO перекидка, на главную">
+    <a class="brand" href="#top" aria-label="ANDO AUTO, на главную">
       <svg class="wordmark" viewBox="0 0 112 22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
         <polyline points="1,21 12,1 23,21"/>
         <polyline points="32,21 32,1 52,21 52,1"/>
         <path d="M61 1H71A10 10 0 0 1 71 21H61Z"/>
-        <circle cx="100" cy="11" r="10"/>
-        <circle cx="100" cy="11" r="2.4" fill="currentColor" stroke="none"/>
+        <g class="logo-wheel">
+          <circle cx="100" cy="11" r="10"/>
+          <circle cx="100" cy="11" r="6.3" stroke-width="1"/>
+          <path d="M100 4.7V8.6M106 9.05 102.3 10.26M103.7 16.1 101.4 12.94M96.3 16.1 98.6 12.94M94 9.05 97.7 10.26" stroke-width="1.1" stroke-linecap="round"/>
+          <circle cx="100" cy="11" r="1.7" fill="currentColor" stroke="none"/>
+        </g>
       </svg>
-      <span class="brand-sub">перекидка</span>
+      <span class="brand-sub">AUTO</span>
     </a>
     <nav class="nav" aria-label="Разделы">
-      <a href="#process">Как проходит выкуп</a>
-      <a href="#compare">Сравнение</a>
+      <a href="#process">Как мы работаем</a>
+      <a href="#compare">Преимущества</a>
       <a href="#cars">Какие авто</a>
       <a href="#faq">Вопросы</a>
     </nav>
-    <!-- Замените номер телефона -->
-    <a class="header-phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
-    <button class="icon-btn theme-btn" type="button" id="theme-toggle" aria-label="Сменить тему">
+    <a class="header-phone" href="tel:+79890853177">+7 (989) 085-31-77</a>
+    <a class="icon-btn call-btn" href="tel:+79890853177" aria-label="Позвонить: +7 989 085-31-77">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h2.6l1.3 3.6-1.8 1.2a9 9 0 0 0 5.1 5.1l1.2-1.8 3.6 1.3v2.6a1.7 1.7 0 0 1-1.8 1.7A14.3 14.3 0 0 1 3.8 4.3 1.7 1.7 0 0 1 5.5 2.5Z"/></svg>
+    </a>
+    <button class="icon-btn theme-btn" type="button" id="theme-toggle" aria-label="Включить светлую тему">
       <svg class="i-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9Z"/></svg>
       <svg class="i-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.5V4M10 16v2.5M1.5 10H4M16 10h2.5M4 4l1.8 1.8M14.2 14.2 16 16M4 16l1.8-1.8M14.2 5.8 16 4"/></svg>
     </button>
@@ -288,6 +335,8 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
         </div>
       </div>
       <div class="stage-vignette"></div>
+      <div class="stage-top"></div>
+      <a class="scroll-cue" href="#hero-content"><span>Листайте</span><i></i></a>
       <button class="icon-btn replay" type="button" id="scene-replay" aria-label="Повторить анимацию" title="Повторить анимацию">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
       </button>
@@ -420,16 +469,33 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
       </script>
     </div>
 
-    <div class="wrap">
+    <div class="wrap hero-body" id="hero-content">
+      <p class="eyebrow" data-reveal>ANDO AUTO · Выкуп автомобилей</p>
+      <h1 class="hero-title" id="hero-title" data-reveal="split"><span class="w"><span>Срочный</span></span> <span class="w"><span>выкуп</span></span> <span class="w accent"><span>авто</span></span></h1>
+
       <div class="hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow">Срочный выкуп автомобилей</p>
-          <h1 class="display" id="hero-title">Выкупим ваш автомобиль за&nbsp;один день</h1>
-          <p class="lead">Назовем цену за 15 минут. Эксперт приедет на осмотр туда, где удобно вам. Деньги в день сделки, наличными или на карту.</p>
+          <p class="lead" data-reveal style="--d:.1s">Оценим автомобиль за 15 минут, приедем туда, где удобно вам, и рассчитаемся в день сделки. Наличными или на карту, без торга и скрытых удержаний.</p>
+          <div class="hero-actions" data-reveal style="--d:.2s">
+            <a class="btn btn-ghost" href="tel:+79890853177">
+              <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h2.6l1.3 3.6-1.8 1.2a9 9 0 0 0 5.1 5.1l1.2-1.8 3.6 1.3v2.6a1.7 1.7 0 0 1-1.8 1.7A14.3 14.3 0 0 1 3.8 4.3 1.7 1.7 0 0 1 5.5 2.5Z"/></svg>
+              +7 (989) 085-31-77
+            </a>
+            <a class="btn btn-ghost" href="https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E" target="_blank" rel="noopener">
+              <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.4s-3.1 6.4-7.5 6.4c-.9 0-1.8-.1-2.6-.4L3.5 17l1.1-3.4C3.3 12.5 2.5 11 2.5 9.4 2.5 5.9 5.6 3 10 3Z"/></svg>
+              Написать в MAX
+            </a>
+          </div>
+          <ul class="trust" data-reveal style="--d:.3s">
+            <li>Официальный договор купли-продажи</li>
+            <li>Проверка по базам ГИБДД и реестру залогов</li>
+            <li>Выезд эксперта бесплатно</li>
+          </ul>
         </div>
-        <div class="lead-card" id="hero-form">
+
+        <div class="lead-card" id="hero-form" data-reveal style="--d:.15s">
           <form class="lead-form" id="form-hero" novalidate>
-            <h2 class="card-title">Узнать цену выкупа</h2>
+            <h2 class="card-title">Узнайте цену за 15 минут</h2>
             <div class="form-stack">
               <div class="field">
                 <label class="label" for="hero-model">Марка, модель, год</label>
@@ -445,7 +511,7 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
                 Получить оценку
                 <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
               </button>
-              <p class="form-note">Перезвоним в течение 15 минут. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
+              <p class="form-note">Оценка бесплатна и ни к чему не обязывает. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
             </div>
           </form>
           <div class="done" hidden tabindex="-1">
@@ -458,44 +524,44 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
       </div>
 
       <div class="facts">
-        <div class="fact"><b>15 мин</b><span>предварительная оценка по телефону</span></div>
-        <div class="fact"><b>40 мин</b><span>осмотр и диагностика на месте</span></div>
-        <div class="fact"><b>1 день</b><span>от заявки до денег на руках</span></div>
-        <div class="fact"><b>0 ₽</b><span>комиссия и выезд эксперта</span></div>
+        <div class="fact" data-reveal data-count><b data-to="15" data-suffix=" мин">15 мин</b><span>на предварительную оценку</span></div>
+        <div class="fact" data-reveal data-count style="--d:.1s"><b data-to="40" data-suffix=" мин">40 мин</b><span>на осмотр и диагностику</span></div>
+        <div class="fact" data-reveal data-count style="--d:.2s"><b data-to="1" data-from="7" data-suffix=" день">1 день</b><span>от звонка до денег на руках</span></div>
+        <div class="fact" data-reveal data-count style="--d:.3s"><b data-to="0" data-from="5000" data-suffix=" ₽">0 ₽</b><span>комиссий и платы за выезд</span></div>
       </div>
     </div>
   </section>
 
   <section class="section" id="process" aria-labelledby="process-title">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head" data-reveal>
         <div class="section-titles">
-          <p class="eyebrow">Как проходит выкуп</p>
-          <h2 class="display" id="process-title">Три шага от заявки до денег</h2>
+          <p class="eyebrow">Как мы работаем</p>
+          <h2 class="display" id="process-title">Три шага. Один день.</h2>
         </div>
-        <p class="lead">Большинство сделок укладывается в один день. Вы не встречаетесь с перекупщиками и не отвечаете на звонки по объявлению.</p>
+        <p class="lead">Проверку, документы и оформление мы берем на себя. От вас нужны только автомобиль и документы на него.</p>
       </div>
       <ol class="steps">
-        <li class="step">
+        <li class="step" data-reveal>
           <span class="step-time">≈ 15 минут</span>
           <span class="step-rail"></span>
           <span class="step-no">01</span>
           <h3>Заявка и оценка</h3>
-          <p>Оставляете марку, модель и телефон. Эксперт перезванивает, уточняет комплектацию и состояние и называет предварительную цену по рыночным данным.</p>
+          <p>Оставьте марку, модель и телефон. Эксперт перезвонит, уточнит детали и назовет предварительную цену по актуальному рынку.</p>
         </li>
-        <li class="step">
+        <li class="step" data-reveal style="--d:.15s">
           <span class="step-time">≈ 40 минут</span>
           <span class="step-rail"></span>
           <span class="step-no">02</span>
           <h3>Осмотр</h3>
-          <p>Приезжаем домой, в офис или на парковку. Проверяем кузов толщиномером, делаем диагностику, сверяем автомобиль по базам ГИБДД и реестру залогов.</p>
+          <p>Приедем домой, в офис или на парковку. Проверим кузов толщиномером, проведем диагностику и сверим автомобиль по базам ГИБДД и реестру залогов.</p>
         </li>
-        <li class="step">
+        <li class="step" data-reveal style="--d:.3s">
           <span class="step-time">В тот же день</span>
           <span class="step-rail"></span>
           <span class="step-no">03</span>
-          <h3>Сделка и деньги</h3>
-          <p>Подписываем договор купли-продажи. Деньги наличными или переводом сразу после подписания, регистрацию берем на себя.</p>
+          <h3>Сделка и расчет</h3>
+          <p>Подписываем договор купли-продажи и сразу рассчитываемся, наличными или переводом. Регистрацию берем на себя.</p>
         </li>
       </ol>
     </div>
@@ -503,30 +569,30 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 
   <section class="section" id="compare" aria-labelledby="compare-title">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head" data-reveal>
         <div class="section-titles">
-          <p class="eyebrow">Сравнение</p>
-          <h2 class="display" id="compare-title">Три способа продать автомобиль</h2>
+          <p class="eyebrow">Преимущества</p>
+          <h2 class="display" id="compare-title">Почему выбирают ANDO AUTO</h2>
         </div>
-        <p class="lead">Объявление дает рыночную цену, но отнимает недели. Трейд-ин быстрый, но дешевый. Мы берем скорость трейд-ина и честную оценку.</p>
+        <p class="lead">Частное объявление отнимает недели звонков и торга. Трейд-ин быстрый, но ниже рынка. Мы объединили скорость сделки и честную цену.</p>
       </div>
-      <div class="table-wrap" role="region" aria-labelledby="compare-title" tabindex="0">
+      <div class="table-wrap" role="region" aria-labelledby="compare-title" tabindex="0" data-reveal style="--d:.1s">
         <table class="compare">
           <thead>
             <tr>
               <th scope="col"><span class="sr-only">Параметр</span></th>
-              <th scope="col">Объявление</th>
+              <th scope="col">Частное объявление</th>
               <th scope="col">Трейд-ин у дилера</th>
-              <th scope="col" class="is-ando">ANDO</th>
+              <th scope="col" class="is-ando">ANDO AUTO</th>
             </tr>
           </thead>
           <tbody>
             <tr><th scope="row">Срок продажи</th><td>От нескольких недель до месяцев</td><td>1–2 дня</td><td class="is-ando">1 день</td></tr>
-            <tr><th scope="row">Итоговая цена</th><td>Рыночная, минус торг на осмотре</td><td>Ниже рынка, обычно в зачет новой машины</td><td class="is-ando">Фиксируем после осмотра, на сделке не меняется</td></tr>
-            <tr><th scope="row">Звонки и показы</th><td>Десятки звонков, показы незнакомым людям</td><td>Не нужны</td><td class="is-ando">Один звонок эксперта</td></tr>
-            <tr><th scope="row">Авто в кредите</th><td>Покупатели чаще отказываются</td><td>Зависит от дилера</td><td class="is-ando">Выкупаем, сами закрываем долг перед банком</td></tr>
-            <tr><th scope="row">Документы</th><td>Готовите сами</td><td>Готовит дилер</td><td class="is-ando">Готовим договор, регистрацию берем на себя</td></tr>
-            <tr><th scope="row">Оплата</th><td>Как договоритесь с покупателем</td><td>Зачет в стоимость нового авто</td><td class="is-ando">Наличными или на карту в день сделки</td></tr>
+            <tr><th scope="row">Итоговая цена</th><td>Рыночная, минус торг на осмотре</td><td>Ниже рынка, в зачет нового автомобиля</td><td class="is-ando">Фиксируется после осмотра и не меняется</td></tr>
+            <tr><th scope="row">Звонки и показы</th><td>Десятки звонков и показов незнакомым людям</td><td>Не нужны</td><td class="is-ando">Один звонок эксперта</td></tr>
+            <tr><th scope="row">Автомобиль в кредите</th><td>Покупатели чаще отказываются</td><td>Зависит от дилера</td><td class="is-ando">Выкупаем и сами закрываем долг перед банком</td></tr>
+            <tr><th scope="row">Документы</th><td>Готовите сами</td><td>Готовит дилер</td><td class="is-ando">Договор и регистрацию берем на себя</td></tr>
+            <tr><th scope="row">Расчет</th><td>Как договоритесь с покупателем</td><td>Зачет в стоимость нового автомобиля</td><td class="is-ando">Наличными или на карту в день сделки</td></tr>
           </tbody>
         </table>
       </div>
@@ -535,50 +601,50 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 
   <section class="section" id="cars" aria-labelledby="cars-title">
     <div class="wrap">
-      <div class="section-head">
+      <div class="section-head" data-reveal>
         <div class="section-titles">
-          <p class="eyebrow">Какие автомобили выкупаем</p>
-          <h2 class="display" id="cars-title">Любые, в том числе со сложной историей</h2>
+          <p class="eyebrow">Какие автомобили мы выкупаем</p>
+          <h2 class="display" id="cars-title">Любой автомобиль. Любая история.</h2>
         </div>
-        <p class="lead">Состояние влияет на цену, но не на решение. Если автомобиль можно оформить по закону, мы его выкупим.</p>
+        <p class="lead">Состояние влияет на цену, но не на наше решение. Если автомобиль можно законно оформить, мы его выкупим.</p>
       </div>
       <div class="cond">
-        <div class="cond-item"><h3>В кредите или в залоге</h3><p>Гасим остаток долга банку, разницу выплачиваем вам.</p></div>
-        <div class="cond-item"><h3>После ДТП</h3><p>Оцениваем с учетом ремонта, без скрытых вычетов на сделке.</p></div>
-        <div class="cond-item"><h3>Не на ходу</h3><p>Забираем на эвакуаторе, доставку оплачиваем сами.</p></div>
-        <div class="cond-item"><h3>С большим пробегом</h3><p>Пробег учитываем в цене, но не отказываем из-за него.</p></div>
-        <div class="cond-item"><h3>Любой марки и года</h3><p>От бюджетных седанов до премиальных внедорожников.</p></div>
-        <div class="cond-item"><h3>Когда деньги нужны сегодня</h3><p>Приезжаем в день обращения и рассчитываемся на месте.</p></div>
+        <div class="cond-item" data-reveal><h3>В кредите или в залоге</h3><p>Закроем долг перед банком напрямую, разницу выплатим вам.</p></div>
+        <div class="cond-item" data-reveal style="--d:.08s"><h3>После ДТП</h3><p>Оценим с учетом ремонта, без скрытых вычетов на сделке.</p></div>
+        <div class="cond-item" data-reveal style="--d:.16s"><h3>Не на ходу</h3><p>Заберем на эвакуаторе за наш счет.</p></div>
+        <div class="cond-item" data-reveal style="--d:.08s"><h3>С большим пробегом</h3><p>Пробег учитываем в цене, но не отказываем из-за него.</p></div>
+        <div class="cond-item" data-reveal style="--d:.16s"><h3>Любой марки и года</h3><p>От городских седанов до премиальных внедорожников.</p></div>
+        <div class="cond-item" data-reveal style="--d:.24s"><h3>Когда деньги нужны сегодня</h3><p>Приедем в день обращения и рассчитаемся на месте.</p></div>
       </div>
     </div>
   </section>
 
   <section class="section" id="faq" aria-labelledby="faq-title">
     <div class="wrap faq-grid">
-      <div class="section-titles">
+      <div class="section-titles" data-reveal>
         <p class="eyebrow">Вопросы</p>
-        <h2 class="display" id="faq-title">Коротко о главном</h2>
+        <h2 class="display" id="faq-title">Вопросы и ответы</h2>
       </div>
-      <div class="faq">
+      <div class="faq" data-reveal style="--d:.1s">
         <details>
-          <summary>Как вы определяете цену?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Смотрим цены реальных продаж и объявлений на такие же автомобили, учитываем комплектацию, пробег и состояние. Цифру называем до встречи и объясняем, из чего она складывается.</p>
+          <summary>Как формируется цена?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Мы анализируем реальные сделки и актуальные предложения по вашей модели, учитываем комплектацию, пробег и состояние. Цену называем до встречи и прозрачно объясняем, из чего она складывается.</p>
         </details>
         <details>
           <summary>Может ли цена измениться после осмотра?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Предварительная цена считается по вашему описанию. После осмотра эксперт называет точную сумму, и на сделке она уже не меняется.</p>
+          <p class="answer">Предварительная оценка строится по вашему описанию. После осмотра эксперт называет окончательную сумму, и на сделке она уже не меняется.</p>
         </details>
         <details>
           <summary>Как я получу деньги?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Наличными в момент подписания договора или переводом на карту. Выбираете вы.</p>
+          <p class="answer">Наличными в момент подписания договора или переводом на карту. Способ выбираете вы.</p>
         </details>
         <details>
-          <summary>Какие документы нужны?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Паспорт собственника, СТС, ПТС (бумажный или электронный) и все комплекты ключей. Если автомобиль в залоге, добавьте кредитный договор.</p>
+          <summary>Какие документы понадобятся?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Паспорт собственника, СТС, ПТС (бумажный или электронный) и все комплекты ключей. Если автомобиль в залоге, возьмите кредитный договор.</p>
         </details>
         <details>
-          <summary>Можно продать автомобиль в кредите?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Да. Мы гасим остаток долга напрямую банку, снимаем залог и выплачиваем вам разницу.</p>
+          <summary>Можно ли продать автомобиль в кредите?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Да. Мы гасим остаток долга напрямую банку, снимаем обременение и выплачиваем вам разницу.</p>
         </details>
       </div>
     </div>
@@ -586,19 +652,22 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 
   <section class="section" id="lead" aria-labelledby="lead-title">
     <div class="wrap cta-grid">
-      <div>
+      <div data-reveal>
         <div class="section-titles">
           <p class="eyebrow">Оценка</p>
-          <h2 class="display" id="lead-title">Узнайте цену своего автомобиля сегодня</h2>
-          <p class="lead">Оставьте заявку или позвоните. Оценка бесплатная и ни к чему не обязывает.</p>
+          <h2 class="display" id="lead-title">Узнайте стоимость вашего автомобиля сегодня</h2>
+          <p class="lead">Оставьте заявку, позвоните или напишите в MAX. Эксперт свяжется с вами в течение 15 минут.</p>
         </div>
-        <!-- Замените телефон, ссылки на мессенджеры и часы работы -->
         <div class="contacts">
-          <a class="contact-phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
+          <a class="contact-phone" href="tel:+79890853177">+7 (989) 085-31-77</a>
           <div class="contact-row">
-            <a class="btn btn-ghost btn-sm" href="https://t.me/" target="_blank" rel="noopener">Telegram</a>
-            <a class="btn btn-ghost btn-sm" href="https://wa.me/" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="btn btn-primary btn-sm" href="https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E" target="_blank" rel="noopener">
+              <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.4s-3.1 6.4-7.5 6.4c-.9 0-1.8-.1-2.6-.4L3.5 17l1.1-3.4C3.3 12.5 2.5 11 2.5 9.4 2.5 5.9 5.6 3 10 3Z"/></svg>
+              Написать в MAX
+            </a>
+            <!-- Telegram добавим, когда будет ссылка -->
           </div>
+          <!-- Уточните часы работы и зону выезда -->
           <ul class="meta-list">
             <li>Ежедневно, 9:00–21:00</li>
             <li>Выезд эксперта по городу и области</li>
@@ -606,10 +675,10 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
         </div>
       </div>
 
-      <div class="lead-card">
+      <div class="lead-card" data-reveal style="--d:.15s">
         <form class="lead-form" id="form-final" novalidate>
           <h3 class="card-title">Заявка на выкуп</h3>
-          <p class="card-sub">Чем точнее данные, тем точнее предварительная цена.</p>
+          <p class="card-sub">Чем подробнее данные, тем точнее предварительная оценка.</p>
           <div class="form-grid">
             <div class="field span-2">
               <label class="label" for="final-model">Марка и модель</label>
@@ -653,18 +722,22 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 
 <footer class="site-footer">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="ANDO перекидка, наверх">
+    <a class="brand" href="#top" aria-label="ANDO AUTO, наверх">
       <svg class="wordmark" viewBox="0 0 112 22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
         <polyline points="1,21 12,1 23,21"/>
         <polyline points="32,21 32,1 52,21 52,1"/>
         <path d="M61 1H71A10 10 0 0 1 71 21H61Z"/>
-        <circle cx="100" cy="11" r="10"/>
-        <circle cx="100" cy="11" r="2.4" fill="currentColor" stroke="none"/>
+        <g class="logo-wheel">
+          <circle cx="100" cy="11" r="10"/>
+          <circle cx="100" cy="11" r="6.3" stroke-width="1"/>
+          <path d="M100 4.7V8.6M106 9.05 102.3 10.26M103.7 16.1 101.4 12.94M96.3 16.1 98.6 12.94M94 9.05 97.7 10.26" stroke-width="1.1" stroke-linecap="round"/>
+          <circle cx="100" cy="11" r="1.7" fill="currentColor" stroke="none"/>
+        </g>
       </svg>
-      <span class="brand-sub">перекидка</span>
+      <span class="brand-sub">AUTO</span>
     </a>
     <!-- Замените реквизиты и добавьте ссылку на документ политики -->
-    <span>© 2026 ANDO перекидка · ИП Фамилия И. О., ИНН 000000000000</span>
+    <span>© 2026 ANDO AUTO · ИП Фамилия И. О., ИНН 000000000000</span>
     <div class="footer-links">
       <a href="#privacy" id="privacy">Политика обработки персональных данных</a>
       <a href="#top">Наверх</a>
@@ -676,28 +749,65 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 (function () {
   var root = document.documentElement;
 
-  /* ---------- Светлая и темная тема ---------- */
+  /* ---------- Тема: по умолчанию темная, светлая по кнопке ---------- */
   var themeBtn = document.getElementById('theme-toggle');
   var themeMeta = document.querySelector('meta[name="theme-color"]');
-  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  function currentTheme() {
-    var t = root.getAttribute('data-theme');
-    if (t === 'light' || t === 'dark') return t;
-    return mq && mq.matches ? 'dark' : 'light';
-  }
+  function isLight() { return root.getAttribute('data-scheme') === 'light'; }
   function syncTheme() {
-    var t = currentTheme();
-    themeBtn.setAttribute('aria-label', t === 'dark' ? 'Включить светлую тему' : 'Включить темную тему');
+    themeBtn.setAttribute('aria-label', isLight() ? 'Включить темную тему' : 'Включить светлую тему');
     if (themeMeta) themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim());
   }
   themeBtn.addEventListener('click', function () {
-    var next = currentTheme() === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', next);
-    try { localStorage.setItem('ando-theme', next); } catch (e) {}
+    if (isLight()) root.removeAttribute('data-scheme'); else root.setAttribute('data-scheme', 'light');
+    try { localStorage.setItem('ando-theme', isLight() ? 'light' : 'dark'); } catch (e) {}
     syncTheme();
   });
-  if (mq && mq.addEventListener) mq.addEventListener('change', syncTheme);
   syncTheme();
+
+  /* ---------- Шапка поверх сцены и колесо в логотипе, которое катится при прокрутке ---------- */
+  var header = document.getElementById('site-header');
+  var wheels = Array.prototype.slice.call(document.querySelectorAll('.logo-wheel'));
+  var ticking = false;
+  function onScroll() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      var y = window.scrollY || window.pageYOffset || 0;
+      header.classList.toggle('scrolled', y > 24);
+      wheels.forEach(function (w) { w.style.transform = 'rotate(' + (y * .5).toFixed(1) + 'deg)'; });
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  /* ---------- Появление блоков и счетчики ---------- */
+  function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
+  function countUp(box) {
+    var b = box.querySelector('b[data-to]');
+    if (!b) return;
+    var to = +b.getAttribute('data-to'), from = +(b.getAttribute('data-from') || 0), suffix = b.getAttribute('data-suffix') || '';
+    var t0 = 0, dur = 1600;
+    b.textContent = fmt(from) + suffix;
+    function step(now) {
+      if (!t0) t0 = now;
+      var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      b.textContent = fmt(Math.round(from + (to - from) * e)) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    }
+    setTimeout(function () { requestAnimationFrame(step); }, 250);
+  }
+  if (root.classList.contains('js')) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in');
+        io.unobserve(en.target);
+        if (en.target.hasAttribute('data-count')) countUp(en.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px', threshold: .12 });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-reveal]'), function (el) { io.observe(el); });
+  }
 
   /* ---------- Телефон: +7 (XXX) XXX-XX-XX ---------- */
   function phoneDigits(v) {
