@@ -129,7 +129,7 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 .frame .layer{opacity:0}
 /* Обод колеса вырезан кругом из того же кадра: центр 1148×954, радиус 411 на исходнике 2304×1728 */
 .rim,.rim-blur{position:absolute;left:31.99%;top:31.42%;width:35.68%;aspect-ratio:1;border-radius:50%}
-.rim{background:url("assets/hero/wheel.webp") 49.73% 59.93% / 280.29% auto no-repeat;will-change:transform}
+.rim{background-position:49.73% 59.93%;background-size:280.29% auto;background-repeat:no-repeat;will-change:transform}
 .rim-blur{background:radial-gradient(circle,#2E3134 0 13%,#8A8E93 21%,#9DA1A6 62%,#B7BBBF 93%,transparent 100%);opacity:0}
 .headlight{position:absolute;left:83.52%;top:55.32%;width:8%;aspect-ratio:2.4;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,251,240,.95),rgba(255,244,222,.4) 50%,transparent);mix-blend-mode:screen;opacity:0}
 .beam{position:absolute;left:84%;top:55%;width:36%;height:22%;transform:translateY(-50%);background:radial-gradient(ellipse at 0 50%,rgba(255,244,222,.22),transparent 70%);mix-blend-mode:screen;opacity:0}
@@ -271,7 +271,7 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
         <div class="stage" id="stage" role="img" aria-label="Колесо Mercedes крупным планом, машина останавливается, водитель в черных очках опускает стекло, улыбается и протягивает деньги">
           <div class="shot" id="shot-wheel">
             <div class="frame frame-43 frame-wheel" id="frame-wheel">
-              <img src="assets/hero/wheel.webp" alt="" width="1600" height="1200" fetchpriority="high">
+              <img id="img-wheel" src="assets/hero/wheel.webp" alt="" width="1600" height="1200" fetchpriority="high">
               <div class="rim-blur" id="rim-blur"></div>
               <div class="rim" id="rim"></div>
             </div>
@@ -313,6 +313,9 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
             var fWheel = $('frame-wheel'), fWide = $('frame-wide'), fWin = $('frame-window'), fMoney = $('frame-money');
             var rim = $('rim'), rimBlur = $('rim-blur'), head = $('headlight'), beam = $('beam');
             var open = $('img-open'), smile = $('img-smile'), edge = $('glass-edge'), glint = $('glint'), bar = glint.firstElementChild;
+            var wheelImg = $('img-wheel');
+            /* Обод берет картинку из того же кадра, что и колесо, поэтому файл грузится один раз */
+            rim.style.backgroundImage = 'url("' + (wheelImg.currentSrc || wheelImg.src) + '")';
             var TL = { d0: .1, d1: 2.2, z0: 2.4, z1: 4.0, l0: 3.7, p0: 4.35, p1: 5.1, w0: 5.2, w1: 6.2, s0: 6.3, s1: 6.8, g0: 6.9, g1: 7.5, m0: 7.6, m1: 8.4, end: 8.5 };
             var W = 0;
             function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -368,6 +371,7 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
               /* 4. Деньги: кадр плавно приближается, будто купюры протягивают зрителю */
               var pm = seg(t, TL.m0, TL.m1);
               op(sMoney, pm.toFixed(3));
+              if (pm >= 1) { op(sWide, 0); op(sWin, 0); }
               cam(fMoney, .5, .5, lerp(1, 1.06, 1 - Math.pow(1 - pm, 3)));
             }
 
@@ -384,10 +388,13 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
               if (t < TL.end) raf = requestAnimationFrame(frame);
               else { playing = false; requestAnimationFrame(idle); }
             }
+            /* true, если все кадры загрузились; иначе анимацию не запускаем, чтобы не было пустых бликов */
             function ready() {
               var imgs = Array.prototype.slice.call(stage.querySelectorAll('img'));
-              var all = Promise.all(imgs.map(function (img) { return img.decode ? img.decode().catch(function () {}) : Promise.resolve(); }));
-              return Promise.race([all, new Promise(function (r) { setTimeout(r, 5000); })]);
+              var all = Promise.all(imgs.map(function (img) {
+                return (img.decode ? img.decode() : Promise.resolve()).then(function () { return img.naturalWidth > 0; }, function () { return false; });
+              })).then(function (list) { return list.every(Boolean); });
+              return Promise.race([all, new Promise(function (r) { setTimeout(function () { r(false); }, 8000); })]);
             }
             function play() {
               cancelAnimationFrame(raf);
@@ -395,7 +402,11 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
               fMoney.style.transition = '';
               playing = true; start = 0;
               render(0);
-              ready().then(function () { raf = requestAnimationFrame(frame); });
+              ready().then(function (ok) {
+                if (ok) { raf = requestAnimationFrame(frame); return; }
+                playing = false;
+                render(TL.end);
+              });
             }
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
             W = stage.clientWidth;
