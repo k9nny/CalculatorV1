@@ -7,7 +7,7 @@ API credential и прокси подставляет его сам. В коде
 
 Порядок работы:
   1) python3 seedream_frames.py start --face ref/face1.jpg --face ref/face2.jpg
-     Общий план машины, колесо крупно и 4 варианта главного кадра (водитель у открытого окна).
+     Общий план машины, колесо крупно и 3 варианта главного кадра (водитель у открытого окна).
   2) Выберите master-N с самым похожим лицом.
   3) python3 seedream_frames.py finish --master ../assets/raw/master-2.jpg --light
      Стекло закрыто, широкая улыбка, деньги в руке; с --light еще и версии для светлой темы.
@@ -18,8 +18,8 @@ API credential и прокси подставляет его сам. В коде
 
 Переменные окружения:
   SEEDREAM_PROVIDER   openrouter (по умолчанию) или ark
-  SEEDREAM_MODEL      по умолчанию bytedance-seed/seedream-4.5 (OpenRouter) или seedream-4-0-250828 (Ark)
-  IMAGE_RESOLUTION    для OpenRouter: 1K, 2K или 4K (по умолчанию 2K)
+  SEEDREAM_MODEL      по умолчанию bytedance-seed/seedream-5-0-pro (OpenRouter) или seedream-4-0-250828 (Ark)
+  IMAGE_RESOLUTION    для OpenRouter: 1K или 2K, у seedream-4.5 еще 4K (по умолчанию 2K)
   OPENROUTER_API_KEY  ключ OpenRouter
   ARK_API_KEY         ключ BytePlus/Volcengine
   ARK_BASE_URL        по умолчанию https://ark.ap-southeast.bytepluses.com/api/v3;
@@ -43,8 +43,11 @@ if PROVIDER == "ark":
     API_KEY = os.environ.get("ARK_API_KEY", "")
 else:
     BASE_URL = os.environ.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
-    ENDPOINT = BASE_URL + "/images"
-    MODEL = os.environ.get("SEEDREAM_MODEL", "bytedance-seed/seedream-4.5")
+    # chat: ответ идет через /chat/completions, OpenRouter шлет пробелы, пока модель работает,
+    # и прокси не рвет долгий запрос. images: /images, короче, но молчит до конца генерации.
+    TRANSPORT = os.environ.get("OPENROUTER_TRANSPORT", "chat")
+    ENDPOINT = BASE_URL + ("/images" if TRANSPORT == "images" else "/chat/completions")
+    MODEL = os.environ.get("SEEDREAM_MODEL", "bytedance-seed/seedream-5-0-pro")
     API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 RESOLUTION = os.environ.get("IMAGE_RESOLUTION", "2K")
 DEFAULT_OUT = pathlib.Path(__file__).resolve().parent.parent / "assets" / "raw"
@@ -83,9 +86,9 @@ def prompt_master(face_refs, car_ref):
         "Photorealistic automotive advertising photo. Medium close-up from outside the car at window height, "
         "slightly in front of the driver's door, looking into the fully lowered driver's window of the black "
         "Mercedes-Benz S-Class from " + car_ref + ". In the driver's seat sits the man from " + face_refs + ": "
-        "exactly the same face, same face shape and nose, same short dark hair with faded sides, "
-        "same short full dark beard. He wears rectangular sunglasses with fully opaque solid black lenses, "
-        "a grey overshirt over a black t-shirt. He is turned three-quarters toward the camera (half-profile), "
+        "exactly the same face, same face shape, nose and ears, same very short dark buzz-cut hair with faded sides, "
+        "same short full dark beard. He wears sleek rectangular sunglasses with fully opaque solid black lenses, "
+        "a plain white crew-neck t-shirt and a steel wristwatch. He is turned three-quarters toward the camera (half-profile), "
         "relaxed, lips closed, slight confident expression. Chrome window trim, side mirror and part of the "
         "black door in frame, dark leather interior behind him. Low-key dark studio lighting, soft key light on "
         "his face, rim light on the car. 85mm lens, shallow depth of field, sharp focus on the face, natural skin "
@@ -99,13 +102,15 @@ PROMPT_CLOSED = (
     "framing, car, man, lighting, background."
 )
 PROMPT_SMILE = (
-    "Edit this image: the man breaks into a big genuine open-mouth smile showing his upper teeth, cheeks raised, "
-    "head turned slightly more toward the camera. Keep his identity, beard, hair, black sunglasses, clothing, "
+    "Edit this image: the man breaks into a wide Hollywood smile with bright white, perfectly even teeth, "
+    "genuine and warm, cheeks raised, head turned slightly more toward the camera. "
+    "Keep his identity, beard, hair, black sunglasses, clothing, "
     "framing, car and lighting exactly the same."
 )
 PROMPT_MONEY = (
-    "Edit this image: keeping the same big smile, the man reaches his left arm out of the open window toward the "
-    "camera, holding a neat fan of Russian 5000-ruble banknotes between his thumb and fingers. The hand and "
+    "Edit this image: keeping the same wide Hollywood smile, the man reaches his left arm out of the open window "
+    "toward the camera, holding a neat fan of Russian 5000-ruble banknotes between his thumb and fingers, "
+    "steel wristwatch visible on his wrist. The hand and "
     "banknotes are closer to the camera and in sharp focus, anatomically correct hand with five fingers. "
     "Keep his face, black sunglasses, clothing, framing, car and lighting exactly the same."
 )
@@ -141,7 +146,35 @@ def request(url, body=None):
     data = json.dumps(body).encode("utf-8") if body is not None else None
     req = urllib.request.Request(url, data=data, headers=headers, method="POST" if body is not None else "GET")
     with urllib.request.urlopen(req, timeout=300) as resp:
-        return json.loads(resp.read())
+        result = json.loads(resp.read())
+    if isinstance(result, dict) and "error" in result and not result.get("choices"):
+        raise RuntimeError(json.dumps(result["error"], ensure_ascii=False))
+    return result
+
+
+def request_stream(url, body):
+    """Потоковый чат-запрос: OpenRouter шлет служебные комментарии, пока модель работает,
+    поэтому прокси не обрывает соединение. Собирает картинки из всех чанков."""
+    headers = {"Content-Type": "application/json", "Accept": "text/event-stream"}
+    if API_KEY:
+        headers["Authorization"] = "Bearer " + API_KEY
+    req = urllib.request.Request(url, data=json.dumps(dict(body, stream=True)).encode("utf-8"), headers=headers)
+    images = []
+    with urllib.request.urlopen(req, timeout=600) as resp:
+        for line in resp:
+            line = line.decode("utf-8", "replace").strip()
+            if not line.startswith("data:"):
+                continue
+            data = line[5:].strip()
+            if data == "[DONE]":
+                break
+            chunk = json.loads(data)
+            if "error" in chunk:
+                raise RuntimeError(json.dumps(chunk["error"], ensure_ascii=False))
+            for choice in chunk.get("choices") or []:
+                part = choice.get("delta") or choice.get("message") or {}
+                images.extend(part.get("images") or [])
+    return {"choices": [{"message": {"images": images}}]}
 
 
 def build_payload(prompt, shot, refs):
@@ -151,22 +184,33 @@ def build_payload(prompt, shot, refs):
                    "watermark": False, "sequential_image_generation": "disabled"}
         if refs:
             payload["image"] = refs[0] if len(refs) == 1 else refs
-    else:
+    elif TRANSPORT == "images":
         payload = {"model": MODEL, "prompt": prompt, "aspect_ratio": aspect, "resolution": RESOLUTION}
         if refs:
             payload["input_references"] = [{"type": "image_url", "image_url": {"url": r}} for r in refs]
+    else:
+        content = [{"type": "text", "text": prompt}] + [{"type": "image_url", "image_url": {"url": r}} for r in refs]
+        payload = {"model": MODEL, "modalities": ["image"], "messages": [{"role": "user", "content": content}],
+                   "image_config": {"aspect_ratio": aspect, "image_size": RESOLUTION}}
     return payload
 
 
 def image_bytes(result):
     """Достает первую картинку из ответа: b64_json или data:/https-ссылка."""
-    items = result.get("data") or []
-    if not items:
-        return None
-    item = items[0]
-    if item.get("b64_json"):
-        return base64.b64decode(item["b64_json"])
-    url = item.get("url") or ""
+    choices = result.get("choices") or []
+    if choices:
+        images = (choices[0].get("message") or {}).get("images") or []
+        if not images:
+            return None
+        url = (images[0].get("image_url") or {}).get("url") or ""
+    else:
+        items = result.get("data") or []
+        if not items:
+            return None
+        item = items[0]
+        if item.get("b64_json"):
+            return base64.b64decode(item["b64_json"])
+        url = item.get("url") or ""
     if url.startswith("data:"):
         return base64.b64decode(url.split(",", 1)[1])
     if url.startswith("http"):
@@ -198,11 +242,14 @@ class Client:
                 print("   повтор через %d с" % pause, flush=True)
                 time.sleep(pause)
             try:
-                result = request(ENDPOINT, payload)
+                if PROVIDER != "ark" and TRANSPORT != "images":
+                    result = request_stream(ENDPOINT, payload)
+                else:
+                    result = request(ENDPOINT, payload)
                 break
             except urllib.error.HTTPError as err:
                 detail = err.read().decode("utf-8", "replace")
-                if err.code in (429, 500, 502, 503, 504) and attempt < 3:
+                if err.code in (429, 503) and attempt < 3:
                     continue
                 hint = ""
                 if err.code in (401, 403):
@@ -214,6 +261,8 @@ class Client:
                 if attempt < 3:
                     continue
                 sys.exit("Нет соединения с %s: %s" % (ENDPOINT, err.reason))
+            except RuntimeError as err:
+                sys.exit("API вернул ошибку при генерации %s: %s" % (name, err))
 
         raw = image_bytes(result)
         if not raw:
@@ -294,7 +343,7 @@ def main():
 
     p_start = sub.add_parser("start", help="общий план, колесо и варианты главного кадра")
     p_start.add_argument("--face", action="append", default=[], help="фото лица (можно несколько раз)")
-    p_start.add_argument("--count", type=int, default=4, help="сколько вариантов главного кадра")
+    p_start.add_argument("--count", type=int, default=3, help="сколько вариантов главного кадра")
     p_start.set_defaults(func=cmd_start)
 
     p_finish = sub.add_parser("finish", help="стекло, улыбка, деньги из выбранного главного кадра")

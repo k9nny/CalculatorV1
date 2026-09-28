@@ -21,20 +21,6 @@
   --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
   --show-sun:none; --show-moon:block;
 
-  --stage-hi:#FFFFFF; --stage-lo:#E1E3E0; --floor:#CDD1CC;
-  --car-top:#FFFFFF; --car-bot:#D0D4CF; --car-edge:#2A2E33; --edge-mid:.5; --edge-end:.3; --car-line:#5E6369;
-  --chrome:#8E949A; --glass:#1C2126; --glass-hi:#8894A0; --cabin:#1A1D21; --cabin-far:#7C8690; --halo:#9AA3AC; --seat:#2A2D31;
-  --pillar:#15171A; --well:#26292D; --lamp:#15181B;
-  --tire:#16181A; --tire-wall:#2E3236; --rim:#D2D5D8; --rim-shade:#83888E; --rim-dark:#2C3035; --rim-blur:#A5AAAF;
-  --disc:#6E7378; --disc-hole:#3A3E42; --caliper:#2446A6;
-  --head:#FFFFFF; --beam:#2446A6; --beam-strength:.1; --tail:#D0392B;
-  --shadow:#4E555B; --shadow-strength:.35;
-
-  /* Водитель и купюры: реальные предметы, в обеих темах одинаковые */
-  --skin:#E2B08F; --skin-sh:#C28667; --hair:#2A1E16; --beard:#3A2A1F; --beard-dk:#261A13;
-  --jacket:#8C9095; --jacket-hi:#A9ACB0; --jacket-sh:#6A6E73; --tee:#141517;
-  --glasses:#141414; --lens:#FFFFFF; --mouth:#5A2A22; --teeth:#F4EFE8;
-  --note:#D2573A; --note-2:#C24C31; --note-edge:#95391F; --note-in:#F2A984; --note-ink:#FFF1E8;
 
   --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em;
   --f-body:"Onest", "Helvetica Neue", Arial, sans-serif;
@@ -51,14 +37,6 @@
     --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
     --show-sun:block; --show-moon:none;
 
-    --stage-hi:#1D2024; --stage-lo:#0B0C0D; --floor:#17191C;
-    --car-top:#30353B; --car-bot:#0B0C0E; --car-edge:#EAE6DC; --edge-mid:.3; --edge-end:.05; --car-line:#8C9096;
-    --chrome:#B9BDC2; --glass:#07080A; --glass-hi:#3E464F; --cabin:#131518; --cabin-far:#3A4048; --halo:#4A525B; --seat:#1C1E21;
-    --pillar:#0D0F11; --well:#040405; --lamp:#0E1013;
-    --tire:#0A0B0C; --tire-wall:#1E2124; --rim:#B8BCC1; --rim-shade:#6C7177; --rim-dark:#121416; --rim-blur:#6F7479;
-    --disc:#3A3E43; --disc-hole:#17191B; --caliper:#C8AD7F;
-    --head:#FFF6E2; --beam:#FFF1D0; --beam-strength:.3; --tail:#E0402F;
-    --shadow:#000000; --shadow-strength:.9;
   }
 }
 :root[data-theme="dark"]{
@@ -70,14 +48,6 @@
   --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
   --show-sun:block; --show-moon:none;
 
-  --stage-hi:#1D2024; --stage-lo:#0B0C0D; --floor:#17191C;
-  --car-top:#30353B; --car-bot:#0B0C0E; --car-edge:#EAE6DC; --edge-mid:.3; --edge-end:.05; --car-line:#8C9096;
-  --chrome:#B9BDC2; --glass:#07080A; --glass-hi:#3E464F; --cabin:#131518; --cabin-far:#3A4048; --halo:#4A525B; --seat:#1C1E21;
-  --pillar:#0D0F11; --well:#040405; --lamp:#0E1013;
-  --tire:#0A0B0C; --tire-wall:#1E2124; --rim:#B8BCC1; --rim-shade:#6C7177; --rim-dark:#121416; --rim-blur:#6F7479;
-  --disc:#3A3E43; --disc-hole:#17191B; --caliper:#C8AD7F;
-  --head:#FFF6E2; --beam:#FFF1D0; --beam-strength:.3; --tail:#E0402F;
-  --shadow:#000000; --shadow-strength:.9;
 }
 
 /* ============ База ============ */
@@ -147,101 +117,29 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
   .fact:nth-child(n+3){border-top:1px solid var(--line)}
 }
 
-/* ============ Сцена: студия, Mercedes, водитель ============ */
-.stage{position:relative;width:100%;max-width:100%;aspect-ratio:4 / 3;overflow:hidden;background:var(--stage-lo);background:radial-gradient(80% 62% at 50% 40%,var(--stage-hi),var(--stage-lo) 74%);border:1px solid var(--line);border-radius:6px;transition:background-color .4s,border-color .4s}
-.scene{display:block;width:100%;height:100%}
-.replay{position:absolute;right:12px;bottom:12px;width:36px;height:36px;background:var(--surface);background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text-2)}
+/* ============ Сцена: фото-кадры, камеру ведет скрипт ============ */
+/* Фото сняты в темной студии, поэтому экран сцены темный в обеих темах */
+.stage{position:relative;width:100%;max-width:100%;aspect-ratio:3 / 2;overflow:hidden;isolation:isolate;background:#0A0B0C;border:1px solid var(--line);border-radius:6px}
+.shot{position:absolute;inset:0;opacity:0}
+.shot-money{opacity:1}
+.frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);will-change:transform}
+.frame-43{width:100%;aspect-ratio:4 / 3}
+.frame-169{height:100%;aspect-ratio:16 / 9}
+.frame img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none}
+.frame .layer{opacity:0}
+/* Обод колеса вырезан кругом из того же кадра: центр 1148×954, радиус 411 на исходнике 2304×1728 */
+.rim,.rim-blur{position:absolute;left:31.99%;top:31.42%;width:35.68%;aspect-ratio:1;border-radius:50%}
+.rim{background:url("assets/hero/wheel.webp") 49.73% 59.93% / 280.29% auto no-repeat;will-change:transform}
+.rim-blur{background:radial-gradient(circle,#2E3134 0 13%,#8A8E93 21%,#9DA1A6 62%,#B7BBBF 93%,transparent 100%);opacity:0}
+.headlight{position:absolute;left:83.52%;top:55.32%;width:8%;aspect-ratio:2.4;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,251,240,.95),rgba(255,244,222,.4) 50%,transparent);mix-blend-mode:screen;opacity:0}
+.beam{position:absolute;left:84%;top:55%;width:36%;height:22%;transform:translateY(-50%);background:radial-gradient(ellipse at 0 50%,rgba(255,244,222,.22),transparent 70%);mix-blend-mode:screen;opacity:0}
+.glass-edge{position:absolute;left:22%;top:0;width:62%;height:.5%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4) 18%,rgba(255,255,255,.4) 82%,transparent);opacity:0}
+.glint{position:absolute;left:47.75%;top:33.7%;width:20.25%;height:9%;overflow:hidden;border-radius:30%;mix-blend-mode:screen;opacity:0}
+.glint i{position:absolute;top:-60%;left:0;width:28%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-120%) rotate(18deg)}
+.stage-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 50%,transparent 58%,rgba(0,0,0,.38))}
+.replay{position:absolute;right:12px;bottom:12px;z-index:2;width:36px;height:36px;background:rgba(18,20,22,.7);color:#D8DADD;border-color:rgba(255,255,255,.25)}
+.replay:hover{border-color:#FFFFFF}
 .replay svg{width:15px;height:15px}
-
-.s-body-top{stop-color:var(--car-top)}
-.s-body-bot{stop-color:var(--car-bot)}
-.s-edge{stop-color:var(--car-edge)}
-.s-edge-mid{stop-opacity:var(--edge-mid)}
-.s-edge-end{stop-opacity:var(--edge-end)}
-.s-glass{stop-color:var(--glass)}
-.s-glass-hi{stop-color:var(--glass-hi)}
-.s-beam{stop-color:var(--beam)}
-.s-beam-0{stop-opacity:var(--beam-strength)}
-.s-shadow{stop-color:var(--shadow)}
-.s-shadow-0{stop-opacity:var(--shadow-strength)}
-.s-floor{stop-color:var(--floor)}
-.s-tire-wall{stop-color:var(--tire-wall)}
-.s-tire{stop-color:var(--tire)}
-
-.horizon{stroke:var(--line-strong);stroke-width:1;opacity:.6;vector-effect:non-scaling-stroke}
-.contact{fill:var(--shadow);opacity:var(--shadow-strength);filter:url(#f-blur)}
-.ground-light{fill:var(--beam);opacity:.4;filter:url(#f-blur-lg)}
-.shell{stroke-width:1.4;stroke-linejoin:round}
-.well{fill:var(--well)}
-.arch-hi{fill:none;stroke:var(--car-edge);stroke-opacity:.28;stroke-width:1.4}
-.crease{fill:none;stroke:var(--car-edge);stroke-opacity:.42;stroke-width:1.1;stroke-linecap:round}
-.crease-lo{fill:none;stroke:var(--car-edge);stroke-opacity:.18;stroke-width:1;stroke-linecap:round}
-.cline{fill:none;stroke:var(--car-line);stroke-opacity:.45;stroke-width:1;stroke-linecap:round}
-.chrome{fill:none;stroke:var(--chrome);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.chrome-thin{fill:none;stroke:var(--chrome);stroke-width:1.4;stroke-linecap:round}
-.glass-edge{fill:none;stroke:var(--glass-hi);stroke-width:1.6}
-.glass-streak{fill:#FFFFFF;opacity:.05}
-.cabin{fill:var(--cabin)}
-.cabin-far{fill:var(--cabin-far);opacity:.6}
-.seat{fill:var(--seat)}
-.halo{fill:var(--halo);opacity:.55;filter:url(#f-blur-lg)}
-.pillar{fill:var(--pillar)}
-.divider{fill:none;stroke:var(--pillar);stroke-width:5}
-.mirror{stroke:var(--car-edge);stroke-opacity:.45;stroke-width:1}
-.mirror-arm{fill:none;stroke:var(--pillar);stroke-width:6;stroke-linecap:round}
-.lamp{fill:var(--lamp);stroke:var(--chrome);stroke-opacity:.5;stroke-width:.8}
-.drl{fill:none;stroke:var(--head);stroke-width:1.8;stroke-linecap:round}
-.drl-glow{fill:none;stroke:var(--head);stroke-width:5;stroke-linecap:round;opacity:.8;filter:url(#f-blur)}
-.tail-led{fill:none;stroke:var(--tail);stroke-width:1.8;stroke-linecap:round}
-.tail-glow{fill:none;stroke:var(--tail);stroke-width:6;stroke-linecap:round;filter:url(#f-blur)}
-
-.tire-ring{fill:none;stroke:var(--tire-wall);stroke-width:1}
-.tire-hi{fill:none;stroke:#FFFFFF;stroke-opacity:.09;stroke-width:5;stroke-linecap:round}
-.barrel{fill:var(--rim-dark)}
-.disc{fill:var(--disc)}
-.disc-holes{fill:none;stroke:var(--disc-hole);stroke-width:2.2;stroke-dasharray:1.2 5.2;stroke-linecap:round}
-.disc-hat{fill:var(--rim-dark)}
-.caliper{fill:var(--caliper);stroke:var(--caliper);stroke-width:4;stroke-linejoin:round}
-.caliper-hi{fill:none;stroke:#FFFFFF;stroke-opacity:.3;stroke-width:1.4;stroke-linecap:round}
-.rim-lip{fill:none;stroke:var(--rim);stroke-width:3}
-.rim-lip-in{fill:none;stroke:var(--rim-shade);stroke-width:1}
-.spokes path{fill:var(--rim);stroke:var(--rim-shade);stroke-width:.5}
-.hub{fill:var(--rim)}
-.lug,.valve{fill:var(--rim-shade)}
-.cap{fill:var(--rim-dark);stroke:var(--rim-shade);stroke-width:1}
-.rim-blur{fill:var(--rim-blur)}
-
-.m-skin{fill:var(--skin)}
-.m-shade{fill:var(--skin-sh);opacity:.35}
-.m-neck{fill:var(--skin-sh)}
-.m-hair{fill:var(--hair)}
-.m-hair-line{fill:none;stroke:#4A392D;stroke-width:3;stroke-linecap:round;opacity:.7}
-.m-brow{fill:none;stroke:var(--hair);stroke-width:6;stroke-linecap:round}
-.m-iris{fill:#2A1F18}
-.m-lid{fill:none;stroke:#2A1F18;stroke-width:3.2;stroke-linecap:round}
-.m-crease,.m-nose{fill:none;stroke:var(--skin-sh);stroke-linecap:round}
-.m-crease{stroke-width:2}
-.m-nose{stroke-width:3}
-.m-beard{fill:var(--beard)}
-.m-stache{fill:var(--beard-dk)}
-.m-mouth{fill:var(--mouth)}
-.m-teeth{fill:var(--teeth)}
-.m-glasses{fill:var(--lens);fill-opacity:.07;stroke:var(--glasses);stroke-width:4.5}
-.m-glint{fill:none;stroke:#FFFFFF;stroke-opacity:.55;stroke-width:2.5;stroke-linecap:round}
-.m-jacket{fill:var(--jacket)}
-.m-collar{fill:var(--jacket-hi)}
-.m-seam{fill:none;stroke:var(--jacket-sh);stroke-width:3}
-.m-tee{fill:var(--tee)}
-.sleeve{fill:none;stroke:var(--jacket);stroke-width:13;stroke-linecap:round;stroke-linejoin:round}
-.cuff{fill:none;stroke:var(--jacket-sh);stroke-width:2;stroke-linecap:round}
-.hand{fill:var(--skin)}
-.thumb{fill:none;stroke:var(--skin);stroke-width:4.5;stroke-linecap:round}
-.knuckle{fill:none;stroke:var(--skin-sh);stroke-width:1.1;stroke-linecap:round}
-.note{fill:var(--note);stroke:var(--note-edge);stroke-width:.6}
-.note-b{fill:var(--note-2)}
-.note-in{fill:none;stroke:var(--note-in);stroke-width:.8;opacity:.8}
-.note-mark{fill:var(--note-in);opacity:.55}
-.note-num{font:700 8.5px var(--f-body);fill:var(--note-ink)}
 
 /* ============ Карточка заявки ============ */
 .lead-card{padding:clamp(22px,2.6vw,32px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:0 40px 80px -48px rgba(0,0,0,.45);transition:background-color .4s,border-color .4s}
@@ -370,299 +268,140 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
       </div>
 
       <div class="hero-grid">
-        <div class="stage">
-          <svg class="scene" id="scene" viewBox="0 0 1000 750" role="img" aria-label="Автомобиль подъезжает, водитель опускает стекло и с улыбкой передает деньги">
-            <defs>
-              <linearGradient id="g-body" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="s-body-top"/>
-                <stop offset="1" class="s-body-bot"/>
-              </linearGradient>
-              <linearGradient id="g-edge" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" class="s-edge"/>
-                <stop offset=".5" class="s-edge s-edge-mid"/>
-                <stop offset="1" class="s-edge s-edge-end"/>
-              </linearGradient>
-              <linearGradient id="g-glass" x1="0" y1="0" x2=".6" y2="1">
-                <stop offset="0" class="s-glass-hi"/>
-                <stop offset=".5" class="s-glass"/>
-                <stop offset="1" class="s-glass"/>
-              </linearGradient>
-              <linearGradient id="g-beam" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" class="s-beam s-beam-0"/>
-                <stop offset="1" class="s-beam" stop-opacity="0"/>
-              </linearGradient>
-              <radialGradient id="g-shadow">
-                <stop offset="0" class="s-shadow s-shadow-0"/>
-                <stop offset="1" class="s-shadow" stop-opacity="0"/>
-              </radialGradient>
-              <linearGradient id="g-floor" gradientUnits="userSpaceOnUse" x1="0" y1="380" x2="0" y2="760">
-                <stop offset="0" class="s-floor"/>
-                <stop offset="1" class="s-floor" stop-opacity="0"/>
-              </linearGradient>
-              <radialGradient id="g-tire">
-                <stop offset=".68" class="s-tire-wall"/>
-                <stop offset=".9" class="s-tire"/>
-                <stop offset="1" class="s-tire"/>
-              </radialGradient>
-              <filter id="f-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="4"/></filter>
-              <filter id="f-blur-lg" x="-60%" y="-400%" width="220%" height="900%"><feGaussianBlur stdDeviation="10"/></filter>
-              <clipPath id="clip-win" clipPathUnits="userSpaceOnUse">
-                <path d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190L592 190Z"/>
-              </clipPath>
-
-              <!-- Колесо: 20" многоспицевый диск, суппорт неподвижен, диск и спицы вращаются -->
-              <g id="wheel">
-                <circle r="72" fill="url(#g-tire)"/>
-                <circle class="tire-ring" r="66"/>
-                <path class="tire-hi" d="M-62 -36A72 72 0 0 1 -26 -67"/>
-                <circle class="barrel" r="50"/>
-                <g id="w-disc">
-                  <circle class="disc" r="41"/>
-                  <circle class="disc-holes" r="36"/>
-                  <circle class="disc-holes" r="31" transform="rotate(10)"/>
-                  <circle class="disc-hat" r="23"/>
-                </g>
-                <path class="caliper" d="M-40.8 -19A45 45 0 0 1 -11.6 -43.5L-7.8 -29A30 30 0 0 0 -27.2 -12.7Z"/>
-                <path class="caliper-hi" d="M-37 -21A41 41 0 0 1 -14 -38"/>
-                <g id="w-spokes">
-                  <circle class="rim-lip" r="48.5"/>
-                  <circle class="rim-lip-in" r="45.8"/>
-                  <g class="spokes">
-                    <path d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(36)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(72)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(108)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(144)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(180)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(216)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(252)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(288)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                    <path transform="rotate(324)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
-                  </g>
-                  <circle class="hub" r="16"/>
-                  <circle class="lug" cx="0" cy="-10.5" r="2.2"/>
-                  <circle class="lug" cx="10" cy="-3.2" r="2.2"/>
-                  <circle class="lug" cx="6.2" cy="8.5" r="2.2"/>
-                  <circle class="lug" cx="-6.2" cy="8.5" r="2.2"/>
-                  <circle class="lug" cx="-10" cy="-3.2" r="2.2"/>
-                  <circle class="cap" r="6.5"/>
-                  <rect class="valve" x="-1.3" y="-45.5" width="2.6" height="4.5" rx="1"/>
-                </g>
-                <circle id="w-blur" class="rim-blur" r="47" opacity="0"/>
-              </g>
-            </defs>
-
-            <!-- Камера: итоговый кадр прописан в разметке, скрипт проигрывает путь к нему -->
-            <g id="cam" transform="translate(500 375) scale(1.8) translate(-730 -210)">
-              <rect x="-4000" y="380" width="9000" height="2000" fill="url(#g-floor)"/>
-              <line class="horizon" x1="-4000" y1="380.5" x2="5000" y2="380.5"/>
-
-              <g id="car" transform="translate(0 0)">
-                <ellipse cx="600" cy="382" rx="540" ry="16" fill="url(#g-shadow)"/>
-                <ellipse class="contact" cx="318" cy="380" rx="62" ry="5"/>
-                <ellipse class="contact" cx="916" cy="380" rx="62" ry="5"/>
-
-                <g id="beam">
-                  <path d="M1092 250L1900 190V380H1380Z" fill="url(#g-beam)"/>
-                  <ellipse class="ground-light" cx="1480" cy="380" rx="280" ry="7"/>
-                </g>
-
-                <g id="car-body">
-                  <path class="well" d="M387 352A82 82 0 1 0 249 352Z"/>
-                  <path class="well" d="M985 352A82 82 0 1 0 847 352Z"/>
-                  <path class="shell" fill="url(#g-body)" stroke="url(#g-edge)" d="M142 352C118 350 104 336 102 316L100 262C100 228 110 196 128 182C170 176 220 172 262 168C320 146 380 112 440 98C500 86 596 82 648 96C690 112 760 170 812 190C900 198 1010 208 1068 220C1088 226 1100 244 1102 264C1104 290 1100 318 1092 334C1086 346 1072 352 1052 352L985 352A82 82 0 1 0 847 352L387 352A82 82 0 1 0 249 352Z"/>
-
-                  <path class="arch-hi" d="M387 352A82 82 0 1 0 249 352M985 352A82 82 0 1 0 847 352"/>
-                  <path class="crease" d="M1026 226C880 206 560 198 240 198"/>
-                  <path class="crease-lo" d="M842 252C740 250 600 256 444 280"/>
-                  <path class="cline" d="M800 194C806 240 812 290 824 346"/>
-                  <path class="cline" d="M584 192L590 348"/>
-                  <path class="cline" d="M426 192C430 250 424 290 412 348"/>
-                  <path class="cline" d="M1046 334C1066 334 1084 328 1094 318"/>
-                  <path class="cline" d="M102 300H126"/>
-                  <path class="chrome-thin" d="M398 338H836"/>
-                  <path class="chrome" d="M1101 264C1104 278 1104 298 1099 312"/>
-                  <path class="chrome" d="M116 334L176 338"/>
-                  <path class="chrome" d="M708 214H744M506 212H540"/>
-
-                  <!-- Остекление -->
-                  <path fill="url(#g-glass)" d="M316 182C352 160 400 124 452 110C510 98 590 96 640 106C676 118 716 150 776 190L330 190C322 190 314 188 316 182Z"/>
-                  <g clip-path="url(#clip-win)">
-                    <path class="cabin" d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190L592 190Z"/>
-                    <path class="cabin-far" d="M600 106C640 108 680 118 716 146L730 170H600Z"/>
-                    <path class="seat" d="M608 122C614 112 636 110 644 120L648 190H604Z"/>
-                    <g id="man" transform="translate(650 140) scale(.3)">
-                      <ellipse class="halo" cx="0" cy="-20" rx="92" ry="104"/>
-                      <path class="m-jacket" d="M-130 250L-126 150C-118 120 -84 104 -44 98L44 98C84 104 118 120 126 150L130 250Z"/>
-                      <path class="m-tee" d="M-40 98C-26 114 26 114 40 98L34 250L-34 250Z"/>
-                      <path class="m-seam" d="M-40 98L-34 250M40 98L34 250"/>
-                      <path class="m-collar" d="M-48 95L-18 108L-36 140Z"/>
-                      <path class="m-collar" d="M48 95L18 108L36 140Z"/>
-                      <path class="m-neck" d="M-24 50L24 50L26 100C12 110 -12 110 -26 100Z"/>
-                      <g id="man-head" transform="rotate(-5 0 60)">
-                        <ellipse class="m-skin" cx="-58" cy="-4" rx="10" ry="17"/>
-                        <ellipse class="m-skin" cx="58" cy="-4" rx="10" ry="17"/>
-                        <path class="m-skin" d="M0 -80C40 -80 58 -52 58 -12C58 28 44 62 0 70C-44 62 -58 28 -58 -12C-58 -52 -40 -80 0 -80Z"/>
-                        <path class="m-shade" d="M58 -12C58 28 44 62 0 70C30 56 44 26 46 -12C46 -40 40 -60 26 -74C48 -64 58 -40 58 -12Z"/>
-                        <path class="m-hair" d="M-60 -18C-64 -64 -34 -100 4 -100C46 -100 66 -66 60 -18C58 -34 54 -48 44 -56C26 -68 -22 -68 -44 -56C-54 -48 -58 -34 -60 -18Z"/>
-                        <path class="m-hair-line" d="M-34 -84C-12 -94 18 -94 38 -82"/>
-                        <path class="m-brow" d="M-42 -30C-34 -37 -20 -37 -11 -32M42 -30C34 -37 20 -37 11 -32"/>
-                        <ellipse class="m-iris" cx="-27" cy="-11" rx="5" ry="4.5"/>
-                        <ellipse class="m-iris" cx="27" cy="-11" rx="5" ry="4.5"/>
-                        <path class="m-lid" d="M-38 -13C-33 -19 -21 -19 -16 -13M38 -13C33 -19 21 -19 16 -13"/>
-                        <path class="m-crease" d="M-36 -2C-30 1 -22 1 -17 -3M36 -2C30 1 22 1 17 -3"/>
-                        <path class="m-nose" d="M2 -8C5 5 9 14 5 20C1 23 -5 22 -8 18"/>
-                        <path class="m-beard" d="M-58 -8C-52 8 -44 18 -32 24C-18 28 18 28 32 24C44 18 52 8 58 -8C60 36 42 72 0 80C-42 72 -60 36 -58 -8Z"/>
-                        <path class="m-mouth" d="M-22 36C-12 54 12 54 22 36C12 40 -12 40 -22 36Z"/>
-                        <path class="m-teeth" d="M-18 38C-10 42 10 42 18 38L16 43C8 46 -8 46 -16 43Z"/>
-                        <path class="m-stache" d="M-26 30C-16 23 -5 25 0 28C5 25 16 23 26 30C17 34 6 34 0 32C-6 34 -17 34 -26 30Z"/>
-                        <g class="m-glasses">
-                          <rect x="-51" y="-27" width="42" height="30" rx="9"/>
-                          <rect x="9" y="-27" width="42" height="30" rx="9"/>
-                          <path fill="none" d="M-9 -15C-4 -19 4 -19 9 -15M-51 -17L-60 -14M51 -17L60 -14"/>
-                        </g>
-                        <path class="m-glint" d="M-44 -20L-35 -25M16 -20L25 -25"/>
-                      </g>
-                    </g>
-                    <g id="win-glass" transform="translate(0 96)">
-                      <path fill="url(#g-glass)" d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190L592 190Z"/>
-                      <path class="glass-streak" d="M680 116L716 140L660 190L618 190Z"/>
-                      <path class="glass-edge" d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190"/>
-                    </g>
-                  </g>
-                  <path class="pillar" d="M572 100L594 101L592 190L572 190Z"/>
-                  <path class="divider" d="M422 112L428 190"/>
-                  <path class="chrome" d="M316 182C352 160 400 124 452 110C510 98 590 96 640 106C676 118 716 150 776 190L330 190C322 190 314 188 316 182Z"/>
-
-                  <!-- Зеркало -->
-                  <path class="mirror-arm" d="M784 192L794 186"/>
-                  <path class="mirror" fill="url(#g-body)" d="M786 186C788 174 802 168 822 170C830 171 833 178 830 186C818 192 800 194 786 186Z"/>
-                  <path class="chrome-thin" d="M796 189C808 190 820 188 829 184"/>
-
-                  <!-- Фары и фонари -->
-                  <path class="lamp" d="M1024 222C1052 224 1074 232 1092 247L1086 256C1068 245 1048 239 1028 236Z"/>
-                  <g id="lights">
-                    <path class="drl-glow" d="M1032 227C1054 229 1072 236 1086 247"/>
-                    <path class="drl" d="M1032 227C1054 229 1072 236 1086 247"/>
-                    <path class="drl" d="M1044 236H1050M1056 238H1062M1068 241L1073 243"/>
-                  </g>
-                  <path class="lamp" d="M110 206C114 198 124 192 140 190L232 184L234 194L144 202C128 204 118 210 112 218Z"/>
-                  <g id="tail" opacity=".55">
-                    <path class="tail-glow" d="M118 205C124 199 132 196 144 195L228 189"/>
-                    <path class="tail-led" d="M118 205C124 199 132 196 144 195L228 189"/>
-                  </g>
-
-                  <!-- Рука водителя с деньгами -->
-                  <g id="arm">
-                    <path class="sleeve" d="M683 178L711 193L727 205"/>
-                    <path class="cuff" d="M722 199L717 208"/>
-                    <g transform="translate(733 207) scale(1.15) translate(-733 -207)">
-                      <g transform="rotate(-18 733 207)">
-                        <rect class="note note-b" x="730" y="194" width="62" height="26" rx="1.5"/>
-                        <rect class="note-in" x="733" y="197" width="56" height="20" rx="1"/>
-                      </g>
-                      <g transform="rotate(-4 733 207)">
-                        <rect class="note" x="730" y="194" width="62" height="26" rx="1.5"/>
-                        <rect class="note-in" x="733" y="197" width="56" height="20" rx="1"/>
-                        <circle class="note-mark" cx="744" cy="207" r="6"/>
-                      </g>
-                      <g transform="rotate(10 733 207)">
-                        <rect class="note" x="730" y="194" width="62" height="26" rx="1.5"/>
-                        <rect class="note-in" x="733" y="197" width="56" height="20" rx="1"/>
-                        <circle class="note-mark" cx="744" cy="207" r="6"/>
-                        <text class="note-num" x="787" y="210" text-anchor="end">5000</text>
-                      </g>
-                    </g>
-                    <ellipse class="hand" cx="733" cy="208" rx="7.5" ry="6.5"/>
-                    <path class="thumb" d="M729 202C733 197 740 197 744 201"/>
-                    <path class="knuckle" d="M728 212C731 214 736 214 739 212"/>
-                  </g>
-                </g>
-
-                <use href="#wheel" x="318" y="308"/>
-                <use href="#wheel" x="916" y="308"/>
-              </g>
-            </g>
-          </svg>
+        <div class="stage" id="stage" role="img" aria-label="Колесо Mercedes крупным планом, машина останавливается, водитель в черных очках опускает стекло, улыбается и протягивает деньги">
+          <div class="shot" id="shot-wheel">
+            <div class="frame frame-43 frame-wheel" id="frame-wheel">
+              <img src="assets/hero/wheel.webp" alt="" width="1600" height="1200" fetchpriority="high">
+              <div class="rim-blur" id="rim-blur"></div>
+              <div class="rim" id="rim"></div>
+            </div>
+          </div>
+          <div class="shot" id="shot-wide">
+            <div class="frame frame-169" id="frame-wide">
+              <img src="assets/hero/wide.webp" alt="" width="2560" height="1440">
+              <span class="beam" id="beam"></span>
+              <span class="headlight" id="headlight"></span>
+            </div>
+          </div>
+          <div class="shot" id="shot-window">
+            <div class="frame frame-43" id="frame-window">
+              <img src="assets/hero/closed.webp" alt="" width="1600" height="1200">
+              <img class="layer" id="img-open" src="assets/hero/open.webp" alt="" width="1600" height="1200">
+              <img class="layer" id="img-smile" src="assets/hero/smile.webp" alt="" width="1600" height="1200">
+              <span class="glass-edge" id="glass-edge"></span>
+              <span class="glint" id="glint"><i></i></span>
+            </div>
+          </div>
+          <div class="shot shot-money" id="shot-money">
+            <div class="frame frame-43" id="frame-money">
+              <img src="assets/hero/money.webp" alt="" width="1600" height="1200">
+            </div>
+          </div>
+          <div class="stage-vignette"></div>
           <button class="icon-btn replay" type="button" id="scene-replay" aria-label="Повторить анимацию" title="Повторить анимацию">
             <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
           </button>
           <script>
-          /* Сценарий: колесо крупным планом → отъезд камеры → стекло опускается → водитель передает деньги */
+          /* Сценарий: колесо заезжает крупным планом → камера отъезжает до всей машины, загораются фары →
+             окно водителя, стекло опускается → голливудская улыбка, блик по очкам → деньги навстречу зрителю.
+             Без скрипта и при reduced motion виден финальный кадр с деньгами. */
           (function () {
-            var svg = document.getElementById('scene');
-            if (!svg || !svg.getBoundingClientRect) return;
-            function el(id) { return document.getElementById(id); }
-            var cam = el('cam'), car = el('car'), body = el('car-body'), disc = el('w-disc'), spokes = el('w-spokes'),
-                blur = el('w-blur'), glass = el('win-glass'), arm = el('arm'), head = el('man-head'),
-                lights = el('lights'), beam = el('beam'), tail = el('tail');
-            var R = 72, D = 520;
-            var TL = { d0: .15, d1: 1.95, z0: 2.35, z1: 3.75, l0: 3.5, w0: 4.1, w1: 5.0, h0: 4.9, h1: 5.6, p0: 4.6, p1: 6.0, a0: 5.4, a1: 6.4, end: 6.5 };
-            var C0 = { x: 916, y: 300, z: 3.4 }, C1 = { x: 600, y: 240, z: .86 }, C2;
-            function pickC2() { C2 = svg.getBoundingClientRect().width < 520 ? { x: 690, y: 182, z: 2.5 } : { x: 730, y: 210, z: 1.8 }; }
+            var stage = document.getElementById('stage');
+            if (!stage) return;
+            function $(id) { return document.getElementById(id); }
+            var sWheel = $('shot-wheel'), sWide = $('shot-wide'), sWin = $('shot-window'), sMoney = $('shot-money');
+            var fWheel = $('frame-wheel'), fWide = $('frame-wide'), fWin = $('frame-window'), fMoney = $('frame-money');
+            var rim = $('rim'), rimBlur = $('rim-blur'), head = $('headlight'), beam = $('beam');
+            var open = $('img-open'), smile = $('img-smile'), edge = $('glass-edge'), glint = $('glint'), bar = glint.firstElementChild;
+            var TL = { d0: .1, d1: 2.2, z0: 2.4, z1: 4.0, l0: 3.7, p0: 4.35, p1: 5.1, w0: 5.2, w1: 6.2, s0: 6.3, s1: 6.8, g0: 6.9, g1: 7.5, m0: 7.6, m1: 8.4, end: 8.5 };
+            var W = 0;
             function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
             function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
             function lerp(a, b, p) { return a + (b - a) * p; }
             function io(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
-            function back(p) { var c = 1.5; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
-            function mix(a, b, p) { return { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), z: Math.exp(lerp(Math.log(a.z), Math.log(b.z), p)) }; }
-            function f(n) { return Math.round(n * 100) / 100; }
+            function mix(a, b, p) { return { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), s: Math.exp(lerp(Math.log(a.s), Math.log(b.s), p)) }; }
+            function op(el, v) { el.style.opacity = v; }
+            /* Камера: точка (fx, fy) кадра встает в центр сцены с увеличением s, dx сдвигает кадр по горизонтали */
+            function cam(el, fx, fy, s, dx) {
+              el.style.transform = 'translate(-50%,-50%) translate(' + (dx || 0).toFixed(1) + 'px,0) translate(' +
+                (-s * (fx - .5) * 100).toFixed(3) + '%,' + (-s * (fy - .5) * 100).toFixed(3) + '%) scale(' + s.toFixed(4) + ')';
+            }
+            function mask(el, value) { el.style.webkitMaskImage = value; el.style.maskImage = value; }
 
             function render(t) {
-              /* Заезд: равномерное торможение, колесо катится без проскальзывания */
-              var dur = TL.d1 - TL.d0, pd = seg(t, TL.d0, TL.d1);
-              var x = -D * (1 - pd) * (1 - pd);
-              var v = 2 * D * (1 - pd) / dur;
-              car.setAttribute('transform', 'translate(' + f(x) + ' 0)');
-              var rot = 'rotate(' + f(x / R * 57.2958) + ')';
-              disc.setAttribute('transform', rot);
-              spokes.setAttribute('transform', rot);
-              var b = clamp((v - 150) / 350, 0, 1);
-              blur.setAttribute('opacity', f(b * .75));
-              spokes.setAttribute('opacity', f(1 - b * .55));
-              /* Кузов клюет носом при торможении и покачивается после остановки */
-              var s = t - TL.d1;
-              var pitch = s < 0 ? .5 * clamp((t - TL.d0) / .2, 0, 1) : .5 * Math.exp(-3.2 * s) * Math.cos(8.5 * s);
-              body.setAttribute('transform', 'rotate(' + pitch.toFixed(3) + ' 600 380)');
-              /* Камера */
-              var c = t < TL.p0 ? mix(C0, C1, io(seg(t, TL.z0, TL.z1))) : mix(C1, C2, io(seg(t, TL.p0, TL.p1)));
-              cam.setAttribute('transform', 'translate(500 375) scale(' + c.z.toFixed(4) + ') translate(' + f(-c.x) + ' ' + f(-c.y) + ')');
-              /* Свет */
+              /* 1. Колесо: камера едет рядом с машиной, обод крутится и равномерно тормозит.
+                 Кадр увеличен в 1.4 раза и сдвигается не больше чем на 0.2 ширины, поэтому край фото не виден */
+              var pd = seg(t, TL.d0, TL.d1), e = (1 - pd) * (1 - pd);
+              cam(fWheel, .5, .5, 1.4, -W * .2 * e);
+              rim.style.transform = 'rotate(' + (-900 * e).toFixed(2) + 'deg)';
+              var b = clamp((1 - pd) * 1.4 - .25, 0, 1);
+              rim.style.filter = b > .02 ? 'blur(' + (b * 2.2).toFixed(2) + 'px)' : 'none';
+              op(rimBlur, (b * .5).toFixed(3));
+              op(sWheel, t < TL.z0 + .6 ? 1 : 0);
+
+              /* 2. Общий план: отъезд от колеса, фары, наезд к окну */
+              /* старт: колесо общего плана совпадает по месту и размеру с колесом крупного плана */
+              var c = mix({ x: .7705, y: .6382, s: 5.114 }, { x: .5, y: .5, s: 1 }, io(seg(t, TL.z0, TL.z1)));
+              c = mix(c, { x: .56, y: .45, s: 1.35 }, io(seg(t, TL.p0, TL.p1)));
+              cam(fWide, c.x, c.y, c.s);
+              op(sWide, seg(t, TL.z0, TL.z0 + .35).toFixed(3));
               var pl = t - TL.l0;
-              lights.setAttribute('opacity', pl < 0 ? 0 : pl < .08 ? 1 : pl < .18 ? .2 : 1);
-              beam.setAttribute('opacity', f(seg(t, TL.l0 + .2, TL.l0 + 1.2)));
-              tail.setAttribute('opacity', t > TL.d0 && t < TL.d1 + .5 ? 1 : .55);
-              /* Стекло, водитель, деньги */
-              glass.setAttribute('transform', 'translate(0 ' + f(96 * io(seg(t, TL.w0, TL.w1))) + ')');
-              head.setAttribute('transform', 'rotate(' + f(-5 * io(seg(t, TL.h0, TL.h1))) + ' 0 60)');
-              var pa = seg(t, TL.a0, TL.a1), ea = back(pa);
-              arm.setAttribute('opacity', f(clamp(pa * 5, 0, 1)));
-              arm.setAttribute('transform', 'rotate(' + f(lerp(24, 0, ea)) + ' 683 178) translate(683 178) scale(' + f(lerp(.35, 1, ea)) + ') translate(-683 -178)');
+              op(head, pl < 0 ? 0 : pl < .07 ? 1 : pl < .16 ? .25 : 1);
+              op(beam, (seg(t, TL.l0 + .2, TL.l0 + 1.1) * .9).toFixed(3));
+
+              /* 3. Окно: стекло опускается сверху вниз, затем улыбка и блик по очкам */
+              op(sWin, seg(t, TL.p0 + .25, TL.p1).toFixed(3));
+              var ws = lerp(1.1, 1, io(seg(t, TL.p0 + .25, TL.p1 + .3))) * lerp(1, 1.05, seg(t, TL.p1, TL.m1)) +
+                .012 * Math.sin(Math.PI * seg(t, TL.s0, TL.s1 + .2));
+              cam(fWin, .5, .5, ws);
+              var pw = io(seg(t, TL.w0, TL.w1)), P = lerp(8, 92, pw);
+              if (pw <= 0) { op(open, 0); mask(open, ''); }
+              else if (pw >= 1) { op(open, 1); mask(open, ''); }
+              else { op(open, 1); mask(open, 'linear-gradient(to bottom,#000 ' + (P - 3).toFixed(2) + '%,transparent ' + (P + 3).toFixed(2) + '%)'); }
+              edge.style.top = P.toFixed(2) + '%';
+              op(edge, pw > 0 && pw < 1 && P < 80 ? .9 : 0);
+              op(smile, seg(t, TL.s0, TL.s1).toFixed(3));
+              var pg = seg(t, TL.g0, TL.g1);
+              op(glint, pg > 0 && pg < 1 ? 1 : 0);
+              bar.style.transform = 'translateX(' + lerp(-120, 380, pg).toFixed(1) + '%) rotate(18deg)';
+
+              /* 4. Деньги: кадр плавно приближается, будто купюры протягивают зрителю */
+              var pm = seg(t, TL.m0, TL.m1);
+              op(sMoney, pm.toFixed(3));
+              cam(fMoney, .5, .5, lerp(1, 1.06, 1 - Math.pow(1 - pm, 3)));
             }
 
             var raf = 0, start = 0, playing = false;
+            function idle() {
+              /* После сценария кадр продолжает очень медленно приближаться */
+              fMoney.style.transition = 'transform 14s linear';
+              cam(fMoney, .5, .5, 1.12);
+            }
             function frame(now) {
               if (!start) start = now;
               var t = (now - start) / 1000;
               render(Math.min(t, TL.end));
-              if (t < TL.end) raf = requestAnimationFrame(frame); else playing = false;
+              if (t < TL.end) raf = requestAnimationFrame(frame);
+              else { playing = false; requestAnimationFrame(idle); }
+            }
+            function ready() {
+              var imgs = Array.prototype.slice.call(stage.querySelectorAll('img'));
+              var all = Promise.all(imgs.map(function (img) { return img.decode ? img.decode().catch(function () {}) : Promise.resolve(); }));
+              return Promise.race([all, new Promise(function (r) { setTimeout(r, 5000); })]);
             }
             function play() {
               cancelAnimationFrame(raf);
-              pickC2();
-              start = 0; playing = true;
+              W = stage.clientWidth;
+              fMoney.style.transition = '';
+              playing = true; start = 0;
               render(0);
-              raf = requestAnimationFrame(frame);
+              ready().then(function () { raf = requestAnimationFrame(frame); });
             }
             var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            pickC2();
+            W = stage.clientWidth;
             if (reduce) render(TL.end); else play();
-            el('scene-replay').addEventListener('click', play);
-            window.addEventListener('resize', function () {
-              var z = C2.z;
-              pickC2();
-              if (!playing && z !== C2.z) render(TL.end);
-            });
+            $('scene-replay').addEventListener('click', play);
+            window.addEventListener('resize', function () { W = stage.clientWidth; if (!playing) render(TL.end); });
           })();
           </script>
         </div>
