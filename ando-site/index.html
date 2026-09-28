@@ -6,77 +6,85 @@
 <title>ANDO перекидка</title>
 <meta name="description" content="Срочный выкуп автомобилей за один день. Оценка за 15 минут, бесплатный выезд эксперта, деньги в день сделки.">
 <meta name="theme-color" content="#0B0C0D">
-<script>try{var l=localStorage.getItem('ando-look');if(l==='gallery'||l==='heritage')document.documentElement.setAttribute('data-look',l)}catch(e){}</script>
+<script>try{var t=localStorage.getItem('ando-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Onest:wght@400;500;600&family=Roboto+Condensed:wght@500;600&family=Unbounded:wght@300;400&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@300;400&display=swap">
 <style>
-/* ============ Токены: Noir (основной вариант) ============ */
+/* ============ Светлая тема (Gallery) и общие токены ============ */
 :root{
-  color-scheme:dark;
-  --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
-  --line:#25292D; --line-strong:#3A3F45;
-  --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#6E7277;
-  --accent:#C8AD7F; --danger:#E26D5A;
-  --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
-  --plate:#F7F7F4; --plate-ink:#111111; --plate-line:#151515;
-
-  --car-top:#2C3035; --car-bot:#0C0D0F; --car-edge:#EAE6DC; --car-line:#8C9096;
-  --edge-mid:.28; --edge-end:.04;
-  --glass:#060708; --glass-hi:#3B424A; --pillar:#141619; --well:#040405;
-  --tire:#070708; --tire-edge:#2A2D31; --rim:#A9ADB2; --rim-dark:#131517; --disc:#2B2E32; --caliper:#C8AD7F;
-  --head:#FFF6E2; --beam:#FFF1D0; --beam-strength:.34; --tail:#D23B2F;
-  --shadow:#000000; --shadow-strength:.9;
-
-  --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em; --display-scale:1;
-  --f-body:"Onest", "Helvetica Neue", Arial, sans-serif;
-  --f-plate:"Roboto Condensed", "Arial Narrow", Arial, sans-serif;
-  --radius:2px;
-
-  --drive-dur:2.6s; --drive-ease:cubic-bezier(.17,.84,.24,1); --drive-delay:.35s;
-}
-/* ============ Вариант Gallery: светлый, швейцарский ============ */
-:root[data-look="gallery"]{
   color-scheme:light;
   --bg:#EFF0EE; --surface:#FFFFFF; --surface-2:#E5E7E4;
   --line:#D5D8D4; --line-strong:#AEB2AD;
-  --text:#101214; --text-2:#4A4F54; --text-3:#7D8287;
+  --text:#101214; --text-2:#4A4F54; --text-3:#6B7076;
   --accent:#2446A6; --danger:#B3261E;
   --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
+  --show-sun:none; --show-moon:block;
 
-  --car-top:#FFFFFF; --car-bot:#D9DCD8; --car-edge:#101214; --car-line:#5E6369;
-  --edge-mid:.9; --edge-end:.75;
-  --glass:#C3C9CE; --glass-hi:#F6F8FA; --pillar:#1A1C1F; --well:#2C3034;
-  --tire:#17191B; --tire-edge:#17191B; --rim:#D5D8DB; --rim-dark:#3A3E43; --disc:#8D9297; --caliper:#2446A6;
-  --head:#2446A6; --beam:#2446A6; --beam-strength:.12; --tail:#C23A2E;
-  --shadow:#5F666C; --shadow-strength:.3;
+  --stage-hi:#FFFFFF; --stage-lo:#E1E3E0; --floor:#CDD1CC;
+  --car-top:#FFFFFF; --car-bot:#D0D4CF; --car-edge:#2A2E33; --edge-mid:.5; --edge-end:.3; --car-line:#5E6369;
+  --chrome:#8E949A; --glass:#1C2126; --glass-hi:#8894A0; --cabin:#1A1D21; --cabin-far:#7C8690; --halo:#9AA3AC; --seat:#2A2D31;
+  --pillar:#15171A; --well:#26292D; --lamp:#15181B;
+  --tire:#16181A; --tire-wall:#2E3236; --rim:#D2D5D8; --rim-shade:#83888E; --rim-dark:#2C3035; --rim-blur:#A5AAAF;
+  --disc:#6E7378; --disc-hole:#3A3E42; --caliper:#2446A6;
+  --head:#FFFFFF; --beam:#2446A6; --beam-strength:.1; --tail:#D0392B;
+  --shadow:#4E555B; --shadow-strength:.35;
 
-  --f-display:"Onest", "Helvetica Neue", Arial, sans-serif; --display-weight:500; --display-track:-0.035em; --display-scale:1.08;
+  /* Водитель и купюры: реальные предметы, в обеих темах одинаковые */
+  --skin:#E2B08F; --skin-sh:#C28667; --hair:#2A1E16; --beard:#3A2A1F; --beard-dk:#261A13;
+  --jacket:#8C9095; --jacket-hi:#A9ACB0; --jacket-sh:#6A6E73; --tee:#141517;
+  --glasses:#141414; --lens:#FFFFFF; --mouth:#5A2A22; --teeth:#F4EFE8;
+  --note:#D2573A; --note-2:#C24C31; --note-edge:#95391F; --note-in:#F2A984; --note-ink:#FFF1E8;
+
+  --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em;
+  --f-body:"Onest", "Helvetica Neue", Arial, sans-serif;
+  --radius:2px;
 }
-/* ============ Вариант Heritage: British racing green, латунь ============ */
-:root[data-look="heritage"]{
+/* ============ Тёмная тема (Noir) ============ */
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
+    --line:#25292D; --line-strong:#3A3F45;
+    --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#767A7F;
+    --accent:#C8AD7F; --danger:#E26D5A;
+    --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
+    --show-sun:block; --show-moon:none;
+
+    --stage-hi:#1D2024; --stage-lo:#0B0C0D; --floor:#17191C;
+    --car-top:#30353B; --car-bot:#0B0C0E; --car-edge:#EAE6DC; --edge-mid:.3; --edge-end:.05; --car-line:#8C9096;
+    --chrome:#B9BDC2; --glass:#07080A; --glass-hi:#3E464F; --cabin:#131518; --cabin-far:#3A4048; --halo:#4A525B; --seat:#1C1E21;
+    --pillar:#0D0F11; --well:#040405; --lamp:#0E1013;
+    --tire:#0A0B0C; --tire-wall:#1E2124; --rim:#B8BCC1; --rim-shade:#6C7177; --rim-dark:#121416; --rim-blur:#6F7479;
+    --disc:#3A3E43; --disc-hole:#17191B; --caliper:#C8AD7F;
+    --head:#FFF6E2; --beam:#FFF1D0; --beam-strength:.3; --tail:#E0402F;
+    --shadow:#000000; --shadow-strength:.9;
+  }
+}
+:root[data-theme="dark"]{
   color-scheme:dark;
-  --bg:#0D1713; --surface:#12201A; --surface-2:#182921;
-  --line:#243830; --line-strong:#375046;
-  --text:#EEE8DA; --text-2:#B3AE9E; --text-3:#7C887E;
-  --accent:#BE9A5E; --danger:#E07A62;
-  --cta:#EEE8DA; --cta-ink:#0D1713; --cta-hover:#FFFFFF;
+  --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
+  --line:#25292D; --line-strong:#3A3F45;
+  --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#767A7F;
+  --accent:#C8AD7F; --danger:#E26D5A;
+  --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
+  --show-sun:block; --show-moon:none;
 
-  --car-top:#2B5144; --car-bot:#08110E; --car-edge:#EDE2C8; --car-line:#8FA398;
-  --edge-mid:.3; --edge-end:.05;
-  --glass:#050A08; --glass-hi:#34483F; --pillar:#0E1C17; --well:#030605;
-  --tire:#050706; --tire-edge:#22302A; --rim:#BDC0B8; --rim-dark:#0F1612; --disc:#27302C; --caliper:#BE9A5E;
-  --head:#FFF0CF; --beam:#FFE8B8; --beam-strength:.3; --tail:#C0392B;
+  --stage-hi:#1D2024; --stage-lo:#0B0C0D; --floor:#17191C;
+  --car-top:#30353B; --car-bot:#0B0C0E; --car-edge:#EAE6DC; --edge-mid:.3; --edge-end:.05; --car-line:#8C9096;
+  --chrome:#B9BDC2; --glass:#07080A; --glass-hi:#3E464F; --cabin:#131518; --cabin-far:#3A4048; --halo:#4A525B; --seat:#1C1E21;
+  --pillar:#0D0F11; --well:#040405; --lamp:#0E1013;
+  --tire:#0A0B0C; --tire-wall:#1E2124; --rim:#B8BCC1; --rim-shade:#6C7177; --rim-dark:#121416; --rim-blur:#6F7479;
+  --disc:#3A3E43; --disc-hole:#17191B; --caliper:#C8AD7F;
+  --head:#FFF6E2; --beam:#FFF1D0; --beam-strength:.3; --tail:#E0402F;
   --shadow:#000000; --shadow-strength:.9;
-
-  --f-display:"Cormorant Garamond", Georgia, "Times New Roman", serif; --display-weight:500; --display-track:-0.01em; --display-scale:1.22;
 }
 
 /* ============ База ============ */
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:88px}
-body{margin:0;padding-bottom:84px;background:var(--bg);color:var(--text);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;transition:background-color .4s ease,color .4s ease}
+body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;transition:background-color .4s ease,color .4s ease}
 img,svg{max-width:100%}
 a{color:inherit}
 button{font:inherit;color:inherit}
@@ -86,8 +94,8 @@ button{font:inherit;color:inherit}
 
 .eyebrow{margin:0;font:500 12px/1.4 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text-3)}
 .display{margin:0;font-family:var(--f-display);font-weight:var(--display-weight);letter-spacing:var(--display-track);line-height:1.08;text-wrap:balance}
-h1.display{font-size:calc(clamp(32px,4.6vw,62px) * var(--display-scale))}
-h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
+h1.display{font-size:clamp(30px,4.3vw,62px)}
+h2.display{font-size:clamp(26px,3.2vw,44px)}
 .lead{margin:0;max-width:34em;font-size:clamp(16px,1.35vw,18px);color:var(--text-2);text-wrap:pretty}
 
 /* ============ Кнопки ============ */
@@ -101,10 +109,15 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .btn[disabled]{opacity:.6;cursor:progress}
 .arrow{width:18px;height:10px;flex:none;transition:transform .25s}
 .btn:hover .arrow{transform:translateX(4px)}
+.icon-btn{display:grid;place-items:center;flex:none;width:40px;height:40px;padding:0;background:transparent;color:var(--text);border:1px solid var(--line-strong);border-radius:50%;cursor:pointer;transition:border-color .2s}
+.icon-btn:hover{border-color:var(--text)}
+.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.i-sun{display:var(--show-sun)}
+.i-moon{display:var(--show-moon)}
 
 /* ============ Шапка ============ */
 .site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:saturate(140%) blur(14px);backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid var(--line);transition:background-color .4s}
-.site-header .wrap{display:flex;align-items:center;gap:28px;height:72px}
+.site-header .wrap{display:flex;align-items:center;gap:24px;height:72px}
 .brand{display:flex;align-items:center;gap:14px;color:var(--text);text-decoration:none}
 .wordmark{display:block;height:17px;width:auto}
 .brand-sub{padding-left:14px;border-left:1px solid var(--line-strong);font:500 10px/1 var(--f-body);letter-spacing:.24em;text-transform:uppercase;color:var(--text-3)}
@@ -112,28 +125,21 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .nav a{font-size:14px;color:var(--text-2);text-decoration:none;transition:color .2s}
 .nav a:hover{color:var(--text)}
 .header-phone{font-size:14px;font-weight:500;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
-@media (max-width:980px){.nav{display:none}.header-phone{margin-left:auto}}
-@media (max-width:620px){.header-phone{display:none}.header-cta{margin-left:auto}}
+@media (max-width:1060px){.nav{display:none}.header-phone{margin-left:auto}}
+@media (max-width:640px){.header-phone{display:none}.theme-btn{margin-left:auto}.site-header .wrap{gap:12px}}
 @media (max-width:380px){.brand-sub{display:none}}
 
 /* ============ Первый экран ============ */
-.hero{overflow-x:clip;padding-top:clamp(32px,6vw,72px)}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-areas:"copy form" "stage form";column-gap:clamp(32px,5vw,72px);row-gap:clamp(12px,2vw,24px)}
-.hero-copy{grid-area:copy;display:grid;gap:22px;align-content:start}
-.hero-meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin:4px 0 0;padding:0;list-style:none;font-size:13px;color:var(--text-3)}
-.hero-meta li{display:flex;align-items:center;gap:8px}
-.hero-meta li::before{content:"";width:5px;height:5px;border:1px solid var(--accent);transform:rotate(45deg)}
-.stage{grid-area:stage;align-self:end;position:relative}
-.hero-grid > .lead-card{grid-area:form;align-self:center;position:relative;z-index:2}
-@media (max-width:980px){
-  .hero-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "stage" "form"}
-  .stage{margin-block:8px 12px}
-}
+.hero{padding-top:clamp(28px,5vw,56px)}
+.hero-head{display:grid;gap:16px;margin-bottom:clamp(24px,3.5vw,40px)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:clamp(24px,3.5vw,48px);align-items:center}
+.hero-side{display:grid;gap:24px}
+@media (max-width:980px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
 
 .facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(36px,5vw,64px);border-top:1px solid var(--line)}
 .fact{display:grid;gap:10px;align-content:start;padding:28px 24px 34px 0}
 .fact + .fact{padding-left:24px;border-left:1px solid var(--line)}
-.fact b{font:var(--display-weight) calc(clamp(26px,2.5vw,36px) * var(--display-scale))/1 var(--f-display);letter-spacing:var(--display-track);font-variant-numeric:tabular-nums}
+.fact b{font:var(--display-weight) clamp(26px,2.5vw,36px)/1 var(--f-display);letter-spacing:var(--display-track);font-variant-numeric:tabular-nums}
 .fact span{font-size:14px;line-height:1.45;color:var(--text-2)}
 @media (max-width:760px){
   .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -141,9 +147,12 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
   .fact:nth-child(n+3){border-top:1px solid var(--line)}
 }
 
-/* ============ Машина (SVG) ============ */
-.car-svg{display:block;width:100%;height:auto;overflow:visible}
-.horizon{stroke:var(--line-strong);stroke-width:1}
+/* ============ Сцена: студия, Mercedes, водитель ============ */
+.stage{position:relative;width:100%;max-width:100%;aspect-ratio:4 / 3;overflow:hidden;background:var(--stage-lo);background:radial-gradient(80% 62% at 50% 40%,var(--stage-hi),var(--stage-lo) 74%);border:1px solid var(--line);border-radius:6px;transition:background-color .4s,border-color .4s}
+.scene{display:block;width:100%;height:100%}
+.replay{position:absolute;right:12px;bottom:12px;width:36px;height:36px;background:var(--surface);background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text-2)}
+.replay svg{width:15px;height:15px}
+
 .s-body-top{stop-color:var(--car-top)}
 .s-body-bot{stop-color:var(--car-bot)}
 .s-edge{stop-color:var(--car-edge)}
@@ -155,58 +164,89 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .s-beam-0{stop-opacity:var(--beam-strength)}
 .s-shadow{stop-color:var(--shadow)}
 .s-shadow-0{stop-opacity:var(--shadow-strength)}
+.s-floor{stop-color:var(--floor)}
+.s-tire-wall{stop-color:var(--tire-wall)}
+.s-tire{stop-color:var(--tire)}
+
+.horizon{stroke:var(--line-strong);stroke-width:1;opacity:.6;vector-effect:non-scaling-stroke}
+.contact{fill:var(--shadow);opacity:var(--shadow-strength);filter:url(#f-blur)}
+.ground-light{fill:var(--beam);opacity:.4;filter:url(#f-blur-lg)}
 .shell{stroke-width:1.4;stroke-linejoin:round}
-.glass{stroke:var(--car-line);stroke-opacity:.35;stroke-width:.8}
-.pillar{fill:var(--pillar)}
 .well{fill:var(--well)}
-.cline{fill:none;stroke:var(--car-line);stroke-width:1;stroke-opacity:.4;stroke-linecap:round}
-.crease{fill:none;stroke:var(--car-edge);stroke-width:1;stroke-opacity:.38;stroke-linecap:round}
-.handle{fill:none;stroke:var(--car-line);stroke-width:2.4;stroke-linecap:round;stroke-opacity:.75}
-.mirror{fill:var(--car-top);stroke:var(--car-edge);stroke-opacity:.5;stroke-width:1}
-.head{fill:var(--head)}
-.tail{fill:var(--tail)}
-.glow{filter:url(#car-blur)}
-.ground-light{fill:var(--beam);opacity:.45;filter:url(#car-blur-lg)}
-.tire{fill:var(--tire);stroke:var(--tire-edge);stroke-width:1.2}
-.tire-wall{fill:none;stroke:var(--tire-edge);stroke-width:1}
-.rim-face{fill:var(--rim-dark)}
+.arch-hi{fill:none;stroke:var(--car-edge);stroke-opacity:.28;stroke-width:1.4}
+.crease{fill:none;stroke:var(--car-edge);stroke-opacity:.42;stroke-width:1.1;stroke-linecap:round}
+.crease-lo{fill:none;stroke:var(--car-edge);stroke-opacity:.18;stroke-width:1;stroke-linecap:round}
+.cline{fill:none;stroke:var(--car-line);stroke-opacity:.45;stroke-width:1;stroke-linecap:round}
+.chrome{fill:none;stroke:var(--chrome);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.chrome-thin{fill:none;stroke:var(--chrome);stroke-width:1.4;stroke-linecap:round}
+.glass-edge{fill:none;stroke:var(--glass-hi);stroke-width:1.6}
+.glass-streak{fill:#FFFFFF;opacity:.05}
+.cabin{fill:var(--cabin)}
+.cabin-far{fill:var(--cabin-far);opacity:.6}
+.seat{fill:var(--seat)}
+.halo{fill:var(--halo);opacity:.55;filter:url(#f-blur-lg)}
+.pillar{fill:var(--pillar)}
+.divider{fill:none;stroke:var(--pillar);stroke-width:5}
+.mirror{stroke:var(--car-edge);stroke-opacity:.45;stroke-width:1}
+.mirror-arm{fill:none;stroke:var(--pillar);stroke-width:6;stroke-linecap:round}
+.lamp{fill:var(--lamp);stroke:var(--chrome);stroke-opacity:.5;stroke-width:.8}
+.drl{fill:none;stroke:var(--head);stroke-width:1.8;stroke-linecap:round}
+.drl-glow{fill:none;stroke:var(--head);stroke-width:5;stroke-linecap:round;opacity:.8;filter:url(#f-blur)}
+.tail-led{fill:none;stroke:var(--tail);stroke-width:1.8;stroke-linecap:round}
+.tail-glow{fill:none;stroke:var(--tail);stroke-width:6;stroke-linecap:round;filter:url(#f-blur)}
+
+.tire-ring{fill:none;stroke:var(--tire-wall);stroke-width:1}
+.tire-hi{fill:none;stroke:#FFFFFF;stroke-opacity:.09;stroke-width:5;stroke-linecap:round}
+.barrel{fill:var(--rim-dark)}
 .disc{fill:var(--disc)}
-.disc-ring{fill:none;stroke:var(--rim-dark);stroke-width:1.5;stroke-dasharray:2 4}
-.caliper{fill:var(--caliper);stroke:var(--caliper);stroke-width:3;stroke-linejoin:round}
-.spoke,.hub{fill:var(--rim)}
-.hub-cap{fill:var(--rim-dark)}
-.rim-lip{fill:none;stroke:var(--rim);stroke-width:2.5}
-.trail{stroke:var(--car-edge);stroke-width:1;stroke-linecap:round}
+.disc-holes{fill:none;stroke:var(--disc-hole);stroke-width:2.2;stroke-dasharray:1.2 5.2;stroke-linecap:round}
+.disc-hat{fill:var(--rim-dark)}
+.caliper{fill:var(--caliper);stroke:var(--caliper);stroke-width:4;stroke-linejoin:round}
+.caliper-hi{fill:none;stroke:#FFFFFF;stroke-opacity:.3;stroke-width:1.4;stroke-linecap:round}
+.rim-lip{fill:none;stroke:var(--rim);stroke-width:3}
+.rim-lip-in{fill:none;stroke:var(--rim-shade);stroke-width:1}
+.spokes path{fill:var(--rim);stroke:var(--rim-shade);stroke-width:.5}
+.hub{fill:var(--rim)}
+.lug,.valve{fill:var(--rim-shade)}
+.cap{fill:var(--rim-dark);stroke:var(--rim-shade);stroke-width:1}
+.rim-blur{fill:var(--rim-blur)}
 
-/* Покой (итоговое состояние): фары горят, стоп-сигналы приглушены */
-.trails{opacity:0}
-.tail-g{opacity:.6}
-
-/* Заезд: кузов и колеса двигаются с одной кривой, поэтому колеса катятся без проскальзывания */
-.car{animation:drive var(--drive-dur) var(--drive-ease) var(--drive-delay) both}
-.rim{transform-box:fill-box;transform-origin:center;animation:spin var(--drive-dur) var(--drive-ease) var(--drive-delay) both}
-.body{transform-box:fill-box;transform-origin:50% 100%;animation:settle 1.3s cubic-bezier(.3,.6,.3,1) 1.95s both}
-.tail-g{animation:brake var(--drive-dur) linear var(--drive-delay) both}
-.head-g{animation:lights 1s linear 2.6s both}
-.beam-g{animation:fade-in 1.6s ease-out 2.8s both}
-.trails{animation:trails 1.5s ease-out var(--drive-delay) both}
-@keyframes drive{from{transform:translateX(-1300px)}to{transform:translateX(0)}}
-@keyframes spin{from{transform:rotate(-1241deg)}to{transform:rotate(0deg)}}
-@keyframes settle{0%{transform:rotate(0deg)}35%{transform:rotate(.8deg)}68%{transform:rotate(-.3deg)}100%{transform:rotate(0deg)}}
-@keyframes brake{0%,38%{opacity:.35}52%,90%{opacity:1}100%{opacity:.6}}
-@keyframes lights{0%{opacity:.1}14%{opacity:1}24%{opacity:.25}40%,100%{opacity:1}}
-@keyframes fade-in{from{opacity:0}to{opacity:1}}
-@keyframes trails{from{opacity:.75}to{opacity:0}}
-.stage.is-reset *{animation:none!important}
-@media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
-  .stage *{animation:none!important}
-}
+.m-skin{fill:var(--skin)}
+.m-shade{fill:var(--skin-sh);opacity:.35}
+.m-neck{fill:var(--skin-sh)}
+.m-hair{fill:var(--hair)}
+.m-hair-line{fill:none;stroke:#4A392D;stroke-width:3;stroke-linecap:round;opacity:.7}
+.m-brow{fill:none;stroke:var(--hair);stroke-width:6;stroke-linecap:round}
+.m-iris{fill:#2A1F18}
+.m-lid{fill:none;stroke:#2A1F18;stroke-width:3.2;stroke-linecap:round}
+.m-crease,.m-nose{fill:none;stroke:var(--skin-sh);stroke-linecap:round}
+.m-crease{stroke-width:2}
+.m-nose{stroke-width:3}
+.m-beard{fill:var(--beard)}
+.m-stache{fill:var(--beard-dk)}
+.m-mouth{fill:var(--mouth)}
+.m-teeth{fill:var(--teeth)}
+.m-glasses{fill:var(--lens);fill-opacity:.07;stroke:var(--glasses);stroke-width:4.5}
+.m-glint{fill:none;stroke:#FFFFFF;stroke-opacity:.55;stroke-width:2.5;stroke-linecap:round}
+.m-jacket{fill:var(--jacket)}
+.m-collar{fill:var(--jacket-hi)}
+.m-seam{fill:none;stroke:var(--jacket-sh);stroke-width:3}
+.m-tee{fill:var(--tee)}
+.sleeve{fill:none;stroke:var(--jacket);stroke-width:13;stroke-linecap:round;stroke-linejoin:round}
+.cuff{fill:none;stroke:var(--jacket-sh);stroke-width:2;stroke-linecap:round}
+.hand{fill:var(--skin)}
+.thumb{fill:none;stroke:var(--skin);stroke-width:4.5;stroke-linecap:round}
+.knuckle{fill:none;stroke:var(--skin-sh);stroke-width:1.1;stroke-linecap:round}
+.note{fill:var(--note);stroke:var(--note-edge);stroke-width:.6}
+.note-b{fill:var(--note-2)}
+.note-in{fill:none;stroke:var(--note-in);stroke-width:.8;opacity:.8}
+.note-mark{fill:var(--note-in);opacity:.55}
+.note-num{font:700 8.5px var(--f-body);fill:var(--note-ink)}
 
 /* ============ Карточка заявки ============ */
-.lead-card{padding:clamp(22px,2.6vw,36px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:0 40px 80px -48px rgba(0,0,0,.55);transition:background-color .4s,border-color .4s}
-.card-title{margin:0 0 6px;font:var(--display-weight) calc(21px * var(--display-scale))/1.25 var(--f-display);letter-spacing:var(--display-track)}
-.card-sub{margin:0 0 26px;font-size:14px;line-height:1.5;color:var(--text-2)}
+.lead-card{padding:clamp(22px,2.6vw,32px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:0 40px 80px -48px rgba(0,0,0,.45);transition:background-color .4s,border-color .4s}
+.card-title{margin:0 0 20px;font:var(--display-weight) 20px/1.25 var(--f-display);letter-spacing:var(--display-track)}
+.card-sub{margin:-12px 0 24px;font-size:14px;line-height:1.5;color:var(--text-2)}
 .form-stack{display:grid;gap:18px}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
 .form-grid .span-2{grid-column:1 / -1}
@@ -224,22 +264,10 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .form-note{margin:0;font-size:12.5px;line-height:1.5;color:var(--text-3)}
 .form-note a{color:var(--text-2)}
 
-/* Российский госномер: 520 × 112 мм, белое поле, черная рамка, флаг */
-.plate{display:grid;grid-template-columns:minmax(0,1fr) auto;height:64px;background:var(--plate);color:var(--plate-ink);border:1px solid rgba(0,0,0,.28);border-radius:8px;box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--plate-line);transition:box-shadow .2s}
-.plate:focus-within{box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--plate-line),0 0 0 2px var(--accent)}
-.field.has-error .plate{box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--plate-line),0 0 0 2px var(--danger)}
-.plate-num{width:100%;min-width:0;height:100%;padding:2px 8px 0 18px;background:transparent;color:inherit;border:0;font:600 34px/1 var(--f-plate);letter-spacing:.12em;text-transform:uppercase}
-.plate-num::placeholder,.plate-region::placeholder{color:#B2B2AE}
-.plate-num:focus,.plate-region:focus{outline:none}
-.plate-reg{display:grid;grid-template-rows:1fr auto;justify-items:center;align-items:center;margin:5px 5px 5px 0;padding:3px 12px 6px;border-left:2px solid var(--plate-line)}
-.plate-region{width:3.1ch;padding:0;background:transparent;color:inherit;border:0;font:600 25px/1 var(--f-plate);text-align:center}
-.plate-rus{display:flex;align-items:center;gap:4px;font:600 9px/1 var(--f-plate);letter-spacing:.08em}
-.flag{width:14px;height:9px;border:1px solid rgba(0,0,0,.3);background:linear-gradient(#FFFFFF 0 33.3%,#1C3FAA 33.3% 66.6%,#D52B1E 66.6%)}
-
 .done{display:grid;gap:14px;justify-items:start}
-.done-mark{width:44px;height:44px;border:1px solid var(--accent);border-radius:50%;display:grid;place-items:center;color:var(--accent)}
+.done-mark{display:grid;place-items:center;width:44px;height:44px;color:var(--accent);border:1px solid var(--accent);border-radius:50%}
 .done-mark svg{width:18px;height:18px}
-.done h3{margin:0;font:var(--display-weight) calc(21px * var(--display-scale))/1.25 var(--f-display)}
+.done h3{margin:0;font:var(--display-weight) 20px/1.25 var(--f-display)}
 .done p{margin:0;color:var(--text-2)}
 
 /* ============ Секции ============ */
@@ -248,20 +276,18 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .section-titles{display:grid;gap:18px}
 @media (max-width:860px){.section-head{grid-template-columns:minmax(0,1fr)}}
 
-/* Шаги */
 .steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:clamp(44px,5vw,72px) 0 0;padding:0;list-style:none}
 .step{display:grid;gap:14px;align-content:start}
 .step > :not(.step-rail){padding-right:clamp(16px,3vw,40px)}
 .step-time{font:500 12px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
 .step-rail{position:relative;height:1px;margin:6px 0 14px;background:var(--line-strong)}
-.step-rail::before{content:"";position:absolute;left:0;top:-4px;width:9px;height:9px;border-radius:50%;background:var(--bg);border:1px solid var(--accent);transition:background-color .4s}
-.step:last-child .step-rail::after{content:"";position:absolute;right:0;top:-4px;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.step-rail::before{content:"";position:absolute;left:0;top:-4px;width:9px;height:9px;background:var(--bg);border:1px solid var(--accent);border-radius:50%;transition:background-color .4s}
+.step:last-child .step-rail::after{content:"";position:absolute;right:0;top:-4px;width:9px;height:9px;background:var(--accent);border-radius:50%}
 .step-no{font:var(--display-weight) 14px/1 var(--f-display);color:var(--text-3);font-variant-numeric:tabular-nums}
-.step h3{margin:0;font:var(--display-weight) calc(22px * var(--display-scale))/1.25 var(--f-display);letter-spacing:var(--display-track)}
+.step h3{margin:0;font:var(--display-weight) 22px/1.25 var(--f-display);letter-spacing:var(--display-track)}
 .step p{margin:0;max-width:30em;color:var(--text-2)}
 @media (max-width:860px){.steps{grid-template-columns:minmax(0,1fr);gap:44px}}
 
-/* Сравнение */
 .table-wrap{margin-top:clamp(44px,5vw,64px);overflow-x:auto;border-top:1px solid var(--line)}
 .compare{width:100%;min-width:720px;border-collapse:collapse;font-size:15px;line-height:1.5}
 .compare th,.compare td{padding:20px 20px 20px 0;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
@@ -271,7 +297,6 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .compare .is-ando{padding-left:20px;background:var(--surface);color:var(--text);transition:background-color .4s}
 .compare thead .is-ando{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
 
-/* Какие авто выкупаем */
 .cond{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:clamp(44px,5vw,64px);background:var(--line);border:1px solid var(--line)}
 .cond-item{display:grid;gap:10px;align-content:start;padding:clamp(22px,2.6vw,36px);background:var(--bg);transition:background-color .4s}
 .cond-item h3{margin:0;font:500 17px/1.35 var(--f-body)}
@@ -279,7 +304,6 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 @media (max-width:860px){.cond{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.cond{grid-template-columns:minmax(0,1fr)}}
 
-/* Вопросы */
 .faq-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px 72px;align-items:start}
 .faq-grid .section-titles{position:sticky;top:120px}
 .faq{border-top:1px solid var(--line)}
@@ -293,30 +317,18 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
 .faq .answer{margin:0;padding-bottom:26px;max-width:62ch;color:var(--text-2)}
 @media (max-width:860px){.faq-grid{grid-template-columns:minmax(0,1fr)}.faq-grid .section-titles{position:static}}
 
-/* Финальная заявка */
 .cta-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px clamp(40px,6vw,96px);align-items:start}
 .contacts{display:grid;gap:26px;margin-top:40px}
-.contact-phone{font:var(--display-weight) calc(clamp(24px,2.6vw,34px) * var(--display-scale))/1.1 var(--f-display);letter-spacing:var(--display-track);text-decoration:none;font-variant-numeric:tabular-nums}
+.contact-phone{font:var(--display-weight) clamp(24px,2.6vw,34px)/1.1 var(--f-display);letter-spacing:var(--display-track);text-decoration:none;font-variant-numeric:tabular-nums}
 .contact-row{display:flex;flex-wrap:wrap;gap:12px}
 .meta-list{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--text-2)}
 @media (max-width:860px){.cta-grid{grid-template-columns:minmax(0,1fr)}}
 
-/* Подвал */
 .site-footer{padding-block:40px;border-top:1px solid var(--line);font-size:13px;color:var(--text-3)}
 .site-footer .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
 .footer-links{display:flex;flex-wrap:wrap;gap:8px 24px}
 .footer-links a{color:var(--text-2);text-decoration:none}
 .footer-links a:hover{color:var(--text)}
-
-/* ============ Панель выбора оформления (убрать перед запуском) ============ */
-.looks{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:2px;max-width:calc(100% - 32px);padding:5px;transform:translateX(-50%);background:var(--surface);background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:999px;box-shadow:0 16px 40px -16px rgba(0,0,0,.5)}
-.looks-label{padding:0 10px 0 12px;font:500 11px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);white-space:nowrap}
-.look-btn{height:32px;padding:0 14px;background:transparent;border:0;border-radius:999px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;white-space:nowrap}
-.look-btn:hover{color:var(--text)}
-.look-btn[aria-pressed="true"]{background:var(--text);color:var(--bg)}
-.look-replay{display:grid;place-items:center;width:32px;padding:0;margin-left:4px;border-left:1px solid var(--line);border-radius:0 999px 999px 0}
-.look-replay svg{width:15px;height:15px}
-@media (max-width:480px){.looks-label{display:none}.look-btn{padding:0 11px}}
 </style>
 </head>
 <body>
@@ -341,177 +353,351 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
     </nav>
     <!-- Замените номер телефона -->
     <a class="header-phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
-    <a class="btn btn-primary btn-sm header-cta" href="#lead">Оценить авто</a>
+    <button class="icon-btn theme-btn" type="button" id="theme-toggle" aria-label="Сменить тему">
+      <svg class="i-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.5V4M10 16v2.5M1.5 10H4M16 10h2.5M4 4l1.8 1.8M14.2 14.2 16 16M4 16l1.8-1.8M14.2 5.8 16 4"/></svg>
+    </button>
+    <a class="btn btn-primary btn-sm header-cta" href="#hero-form">Оценить авто</a>
   </div>
 </header>
 
 <main id="top">
   <section class="hero" aria-labelledby="hero-title">
     <div class="wrap">
-      <div class="hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow">Срочный выкуп автомобилей</p>
-          <h1 class="display" id="hero-title">Выкупим ваш автомобиль за&nbsp;один день</h1>
-          <p class="lead">Назовем цену за 15 минут. Эксперт приедет на осмотр туда, где удобно вам. Деньги в день сделки, наличными или на карту.</p>
-          <ul class="hero-meta">
-            <li>Договор купли-продажи</li>
-            <li>Проверка по базам ГИБДД и ФНП</li>
-            <li>Выезд эксперта бесплатно</li>
-          </ul>
-        </div>
+      <div class="hero-head">
+        <p class="eyebrow">Срочный выкуп автомобилей</p>
+        <h1 class="display" id="hero-title">Выкупим ваш автомобиль за&nbsp;один день</h1>
+      </div>
 
-        <div class="stage" aria-hidden="true">
-          <svg class="car-svg" viewBox="0 0 1000 300">
+      <div class="hero-grid">
+        <div class="stage">
+          <svg class="scene" id="scene" viewBox="0 0 1000 750" role="img" aria-label="Автомобиль подъезжает, водитель опускает стекло и с улыбкой передает деньги">
             <defs>
-              <linearGradient id="car-body" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="g-body" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" class="s-body-top"/>
                 <stop offset="1" class="s-body-bot"/>
               </linearGradient>
-              <linearGradient id="car-edge" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="g-edge" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" class="s-edge"/>
                 <stop offset=".5" class="s-edge s-edge-mid"/>
                 <stop offset="1" class="s-edge s-edge-end"/>
               </linearGradient>
-              <linearGradient id="car-glass" x1="0" y1="0" x2="1" y2="1">
+              <linearGradient id="g-glass" x1="0" y1="0" x2=".6" y2="1">
                 <stop offset="0" class="s-glass-hi"/>
-                <stop offset=".45" class="s-glass"/>
+                <stop offset=".5" class="s-glass"/>
                 <stop offset="1" class="s-glass"/>
               </linearGradient>
-              <linearGradient id="car-beam" x1="0" y1="0" x2="1" y2="0">
+              <linearGradient id="g-beam" x1="0" y1="0" x2="1" y2="0">
                 <stop offset="0" class="s-beam s-beam-0"/>
                 <stop offset="1" class="s-beam" stop-opacity="0"/>
               </linearGradient>
-              <radialGradient id="car-shadow">
+              <radialGradient id="g-shadow">
                 <stop offset="0" class="s-shadow s-shadow-0"/>
                 <stop offset="1" class="s-shadow" stop-opacity="0"/>
               </radialGradient>
-              <filter id="car-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="4"/></filter>
-              <filter id="car-blur-lg" x="-50%" y="-400%" width="200%" height="900%"><feGaussianBlur stdDeviation="9"/></filter>
+              <linearGradient id="g-floor" gradientUnits="userSpaceOnUse" x1="0" y1="380" x2="0" y2="760">
+                <stop offset="0" class="s-floor"/>
+                <stop offset="1" class="s-floor" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="g-tire">
+                <stop offset=".68" class="s-tire-wall"/>
+                <stop offset=".9" class="s-tire"/>
+                <stop offset="1" class="s-tire"/>
+              </radialGradient>
+              <filter id="f-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="4"/></filter>
+              <filter id="f-blur-lg" x="-60%" y="-400%" width="220%" height="900%"><feGaussianBlur stdDeviation="10"/></filter>
+              <clipPath id="clip-win" clipPathUnits="userSpaceOnUse">
+                <path d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190L592 190Z"/>
+              </clipPath>
+
+              <!-- Колесо: 20" многоспицевый диск, суппорт неподвижен, диск и спицы вращаются -->
+              <g id="wheel">
+                <circle r="72" fill="url(#g-tire)"/>
+                <circle class="tire-ring" r="66"/>
+                <path class="tire-hi" d="M-62 -36A72 72 0 0 1 -26 -67"/>
+                <circle class="barrel" r="50"/>
+                <g id="w-disc">
+                  <circle class="disc" r="41"/>
+                  <circle class="disc-holes" r="36"/>
+                  <circle class="disc-holes" r="31" transform="rotate(10)"/>
+                  <circle class="disc-hat" r="23"/>
+                </g>
+                <path class="caliper" d="M-40.8 -19A45 45 0 0 1 -11.6 -43.5L-7.8 -29A30 30 0 0 0 -27.2 -12.7Z"/>
+                <path class="caliper-hi" d="M-37 -21A41 41 0 0 1 -14 -38"/>
+                <g id="w-spokes">
+                  <circle class="rim-lip" r="48.5"/>
+                  <circle class="rim-lip-in" r="45.8"/>
+                  <g class="spokes">
+                    <path d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(36)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(72)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(108)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(144)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(180)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(216)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(252)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(288)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                    <path transform="rotate(324)" d="M-1 -15L-3.4 -15L-8.6 -45.4L-3.8 -45.9ZM1 -15L3.4 -15L8.6 -45.4L3.8 -45.9Z"/>
+                  </g>
+                  <circle class="hub" r="16"/>
+                  <circle class="lug" cx="0" cy="-10.5" r="2.2"/>
+                  <circle class="lug" cx="10" cy="-3.2" r="2.2"/>
+                  <circle class="lug" cx="6.2" cy="8.5" r="2.2"/>
+                  <circle class="lug" cx="-6.2" cy="8.5" r="2.2"/>
+                  <circle class="lug" cx="-10" cy="-3.2" r="2.2"/>
+                  <circle class="cap" r="6.5"/>
+                  <rect class="valve" x="-1.3" y="-45.5" width="2.6" height="4.5" rx="1"/>
+                </g>
+                <circle id="w-blur" class="rim-blur" r="47" opacity="0"/>
+              </g>
             </defs>
 
-            <line class="horizon" x1="-3000" y1="270.5" x2="4000" y2="270.5"/>
+            <!-- Камера: итоговый кадр прописан в разметке, скрипт проигрывает путь к нему -->
+            <g id="cam" transform="translate(500 375) scale(1.8) translate(-730 -210)">
+              <rect x="-4000" y="380" width="9000" height="2000" fill="url(#g-floor)"/>
+              <line class="horizon" x1="-4000" y1="380.5" x2="5000" y2="380.5"/>
 
-            <g class="car">
-              <g class="trails">
-                <line class="trail" x1="-30" y1="96" x2="-420" y2="96"/>
-                <line class="trail" x1="-10" y1="170" x2="-300" y2="170"/>
-                <line class="trail" x1="-40" y1="232" x2="-520" y2="232"/>
-              </g>
+              <g id="car" transform="translate(0 0)">
+                <ellipse cx="600" cy="382" rx="540" ry="16" fill="url(#g-shadow)"/>
+                <ellipse class="contact" cx="318" cy="380" rx="62" ry="5"/>
+                <ellipse class="contact" cx="916" cy="380" rx="62" ry="5"/>
 
-              <ellipse cx="506" cy="271" rx="500" ry="12" fill="url(#car-shadow)"/>
-
-              <g class="beam-g">
-                <path d="M948 160L1680 116V270H1180Z" fill="url(#car-beam)"/>
-                <ellipse class="ground-light" cx="1260" cy="270" rx="240" ry="5"/>
-              </g>
-
-              <g class="body">
-                <path class="well" d="M304 252A68 68 0 1 0 196 252Z"/>
-                <path class="well" d="M826 252A68 68 0 1 0 718 252Z"/>
-                <path class="shell" fill="url(#car-body)" stroke="url(#car-edge)" d="M74 252C58 248 50 232 50 212C50 188 56 146 78 128C110 122 140 118 172 112C262 84 350 50 452 42C522 36 584 44 628 66C668 88 704 108 734 116C812 124 888 134 930 146C954 152 962 170 962 190C962 214 958 236 946 252L826 252A68 68 0 1 0 718 252L304 252A68 68 0 1 0 196 252Z"/>
-                <path class="glass" fill="url(#car-glass)" d="M262 108C330 84 390 58 462 52C524 48 576 56 612 74C642 90 668 104 688 114Z"/>
-                <path class="pillar" d="M486 50H498L506 112H494Z"/>
-                <path class="crease" d="M84 140C300 124 600 118 916 148"/>
-                <path class="cline" d="M688 116C692 160 694 200 694 236"/>
-                <path class="cline" d="M500 114L504 238"/>
-                <path class="cline" d="M322 110C330 150 328 200 322 236"/>
-                <path class="cline" d="M312 238H706"/>
-                <path class="cline" d="M904 226C926 226 944 222 956 214"/>
-                <path class="cline" d="M64 236C90 240 140 242 186 242"/>
-                <path class="handle" d="M556 132H586M380 130H408"/>
-                <path class="mirror" d="M692 118C694 106 710 100 724 102L722 116Z"/>
-                <g class="head-g">
-                  <path class="head glow" d="M898 150C918 152 936 157 950 165L950 171C934 164 916 159 900 157Z"/>
-                  <path class="head" d="M898 150C918 152 936 157 950 165L950 171C934 164 916 159 900 157Z"/>
+                <g id="beam">
+                  <path d="M1092 250L1900 190V380H1380Z" fill="url(#g-beam)"/>
+                  <ellipse class="ground-light" cx="1480" cy="380" rx="280" ry="7"/>
                 </g>
-                <g class="tail-g">
-                  <path class="tail glow" d="M62 156C74 149 88 145 106 141L106 147C90 150 76 155 64 162Z"/>
-                  <path class="tail" d="M62 156C74 149 88 145 106 141L106 147C90 150 76 155 64 162Z"/>
-                </g>
-              </g>
 
-              <g transform="translate(250 210)">
-                <circle class="tire" r="60"/>
-                <circle class="tire-wall" r="49"/>
-                <circle class="rim-face" r="44"/>
-                <circle class="disc" r="33"/>
-                <circle class="disc-ring" r="27"/>
-                <path class="caliper" d="M-31.7 -14.8A35 35 0 0 1 -14.8 -31.7L-10.6 -22.7A25 25 0 0 0 -22.7 -10.6Z"/>
-                <g class="rim">
-                  <circle class="rim-lip" r="43"/>
-                  <path class="spoke" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(72)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(144)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(216)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(288)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <circle class="hub" r="11"/>
-                  <circle class="hub-cap" r="5"/>
-                </g>
-              </g>
+                <g id="car-body">
+                  <path class="well" d="M387 352A82 82 0 1 0 249 352Z"/>
+                  <path class="well" d="M985 352A82 82 0 1 0 847 352Z"/>
+                  <path class="shell" fill="url(#g-body)" stroke="url(#g-edge)" d="M142 352C118 350 104 336 102 316L100 262C100 228 110 196 128 182C170 176 220 172 262 168C320 146 380 112 440 98C500 86 596 82 648 96C690 112 760 170 812 190C900 198 1010 208 1068 220C1088 226 1100 244 1102 264C1104 290 1100 318 1092 334C1086 346 1072 352 1052 352L985 352A82 82 0 1 0 847 352L387 352A82 82 0 1 0 249 352Z"/>
 
-              <g transform="translate(772 210)">
-                <circle class="tire" r="60"/>
-                <circle class="tire-wall" r="49"/>
-                <circle class="rim-face" r="44"/>
-                <circle class="disc" r="33"/>
-                <circle class="disc-ring" r="27"/>
-                <path class="caliper" d="M-31.7 -14.8A35 35 0 0 1 -14.8 -31.7L-10.6 -22.7A25 25 0 0 0 -22.7 -10.6Z"/>
-                <g class="rim">
-                  <circle class="rim-lip" r="43"/>
-                  <path class="spoke" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(72)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(144)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(216)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <path class="spoke" transform="rotate(288)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
-                  <circle class="hub" r="11"/>
-                  <circle class="hub-cap" r="5"/>
+                  <path class="arch-hi" d="M387 352A82 82 0 1 0 249 352M985 352A82 82 0 1 0 847 352"/>
+                  <path class="crease" d="M1026 226C880 206 560 198 240 198"/>
+                  <path class="crease-lo" d="M842 252C740 250 600 256 444 280"/>
+                  <path class="cline" d="M800 194C806 240 812 290 824 346"/>
+                  <path class="cline" d="M584 192L590 348"/>
+                  <path class="cline" d="M426 192C430 250 424 290 412 348"/>
+                  <path class="cline" d="M1046 334C1066 334 1084 328 1094 318"/>
+                  <path class="cline" d="M102 300H126"/>
+                  <path class="chrome-thin" d="M398 338H836"/>
+                  <path class="chrome" d="M1101 264C1104 278 1104 298 1099 312"/>
+                  <path class="chrome" d="M116 334L176 338"/>
+                  <path class="chrome" d="M708 214H744M506 212H540"/>
+
+                  <!-- Остекление -->
+                  <path fill="url(#g-glass)" d="M316 182C352 160 400 124 452 110C510 98 590 96 640 106C676 118 716 150 776 190L330 190C322 190 314 188 316 182Z"/>
+                  <g clip-path="url(#clip-win)">
+                    <path class="cabin" d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190L592 190Z"/>
+                    <path class="cabin-far" d="M600 106C640 108 680 118 716 146L730 170H600Z"/>
+                    <path class="seat" d="M608 122C614 112 636 110 644 120L648 190H604Z"/>
+                    <g id="man" transform="translate(650 140) scale(.3)">
+                      <ellipse class="halo" cx="0" cy="-20" rx="92" ry="104"/>
+                      <path class="m-jacket" d="M-130 250L-126 150C-118 120 -84 104 -44 98L44 98C84 104 118 120 126 150L130 250Z"/>
+                      <path class="m-tee" d="M-40 98C-26 114 26 114 40 98L34 250L-34 250Z"/>
+                      <path class="m-seam" d="M-40 98L-34 250M40 98L34 250"/>
+                      <path class="m-collar" d="M-48 95L-18 108L-36 140Z"/>
+                      <path class="m-collar" d="M48 95L18 108L36 140Z"/>
+                      <path class="m-neck" d="M-24 50L24 50L26 100C12 110 -12 110 -26 100Z"/>
+                      <g id="man-head" transform="rotate(-5 0 60)">
+                        <ellipse class="m-skin" cx="-58" cy="-4" rx="10" ry="17"/>
+                        <ellipse class="m-skin" cx="58" cy="-4" rx="10" ry="17"/>
+                        <path class="m-skin" d="M0 -80C40 -80 58 -52 58 -12C58 28 44 62 0 70C-44 62 -58 28 -58 -12C-58 -52 -40 -80 0 -80Z"/>
+                        <path class="m-shade" d="M58 -12C58 28 44 62 0 70C30 56 44 26 46 -12C46 -40 40 -60 26 -74C48 -64 58 -40 58 -12Z"/>
+                        <path class="m-hair" d="M-60 -18C-64 -64 -34 -100 4 -100C46 -100 66 -66 60 -18C58 -34 54 -48 44 -56C26 -68 -22 -68 -44 -56C-54 -48 -58 -34 -60 -18Z"/>
+                        <path class="m-hair-line" d="M-34 -84C-12 -94 18 -94 38 -82"/>
+                        <path class="m-brow" d="M-42 -30C-34 -37 -20 -37 -11 -32M42 -30C34 -37 20 -37 11 -32"/>
+                        <ellipse class="m-iris" cx="-27" cy="-11" rx="5" ry="4.5"/>
+                        <ellipse class="m-iris" cx="27" cy="-11" rx="5" ry="4.5"/>
+                        <path class="m-lid" d="M-38 -13C-33 -19 -21 -19 -16 -13M38 -13C33 -19 21 -19 16 -13"/>
+                        <path class="m-crease" d="M-36 -2C-30 1 -22 1 -17 -3M36 -2C30 1 22 1 17 -3"/>
+                        <path class="m-nose" d="M2 -8C5 5 9 14 5 20C1 23 -5 22 -8 18"/>
+                        <path class="m-beard" d="M-58 -8C-52 8 -44 18 -32 24C-18 28 18 28 32 24C44 18 52 8 58 -8C60 36 42 72 0 80C-42 72 -60 36 -58 -8Z"/>
+                        <path class="m-mouth" d="M-22 36C-12 54 12 54 22 36C12 40 -12 40 -22 36Z"/>
+                        <path class="m-teeth" d="M-18 38C-10 42 10 42 18 38L16 43C8 46 -8 46 -16 43Z"/>
+                        <path class="m-stache" d="M-26 30C-16 23 -5 25 0 28C5 25 16 23 26 30C17 34 6 34 0 32C-6 34 -17 34 -26 30Z"/>
+                        <g class="m-glasses">
+                          <rect x="-51" y="-27" width="42" height="30" rx="9"/>
+                          <rect x="9" y="-27" width="42" height="30" rx="9"/>
+                          <path fill="none" d="M-9 -15C-4 -19 4 -19 9 -15M-51 -17L-60 -14M51 -17L60 -14"/>
+                        </g>
+                        <path class="m-glint" d="M-44 -20L-35 -25M16 -20L25 -25"/>
+                      </g>
+                    </g>
+                    <g id="win-glass" transform="translate(0 96)">
+                      <path fill="url(#g-glass)" d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190L592 190Z"/>
+                      <path class="glass-streak" d="M680 116L716 140L660 190L618 190Z"/>
+                      <path class="glass-edge" d="M592 101C608 101 626 103 640 106C676 118 716 150 776 190"/>
+                    </g>
+                  </g>
+                  <path class="pillar" d="M572 100L594 101L592 190L572 190Z"/>
+                  <path class="divider" d="M422 112L428 190"/>
+                  <path class="chrome" d="M316 182C352 160 400 124 452 110C510 98 590 96 640 106C676 118 716 150 776 190L330 190C322 190 314 188 316 182Z"/>
+
+                  <!-- Зеркало -->
+                  <path class="mirror-arm" d="M784 192L794 186"/>
+                  <path class="mirror" fill="url(#g-body)" d="M786 186C788 174 802 168 822 170C830 171 833 178 830 186C818 192 800 194 786 186Z"/>
+                  <path class="chrome-thin" d="M796 189C808 190 820 188 829 184"/>
+
+                  <!-- Фары и фонари -->
+                  <path class="lamp" d="M1024 222C1052 224 1074 232 1092 247L1086 256C1068 245 1048 239 1028 236Z"/>
+                  <g id="lights">
+                    <path class="drl-glow" d="M1032 227C1054 229 1072 236 1086 247"/>
+                    <path class="drl" d="M1032 227C1054 229 1072 236 1086 247"/>
+                    <path class="drl" d="M1044 236H1050M1056 238H1062M1068 241L1073 243"/>
+                  </g>
+                  <path class="lamp" d="M110 206C114 198 124 192 140 190L232 184L234 194L144 202C128 204 118 210 112 218Z"/>
+                  <g id="tail" opacity=".55">
+                    <path class="tail-glow" d="M118 205C124 199 132 196 144 195L228 189"/>
+                    <path class="tail-led" d="M118 205C124 199 132 196 144 195L228 189"/>
+                  </g>
+
+                  <!-- Рука водителя с деньгами -->
+                  <g id="arm">
+                    <path class="sleeve" d="M683 178L711 193L727 205"/>
+                    <path class="cuff" d="M722 199L717 208"/>
+                    <g transform="translate(733 207) scale(1.15) translate(-733 -207)">
+                      <g transform="rotate(-18 733 207)">
+                        <rect class="note note-b" x="730" y="194" width="62" height="26" rx="1.5"/>
+                        <rect class="note-in" x="733" y="197" width="56" height="20" rx="1"/>
+                      </g>
+                      <g transform="rotate(-4 733 207)">
+                        <rect class="note" x="730" y="194" width="62" height="26" rx="1.5"/>
+                        <rect class="note-in" x="733" y="197" width="56" height="20" rx="1"/>
+                        <circle class="note-mark" cx="744" cy="207" r="6"/>
+                      </g>
+                      <g transform="rotate(10 733 207)">
+                        <rect class="note" x="730" y="194" width="62" height="26" rx="1.5"/>
+                        <rect class="note-in" x="733" y="197" width="56" height="20" rx="1"/>
+                        <circle class="note-mark" cx="744" cy="207" r="6"/>
+                        <text class="note-num" x="787" y="210" text-anchor="end">5000</text>
+                      </g>
+                    </g>
+                    <ellipse class="hand" cx="733" cy="208" rx="7.5" ry="6.5"/>
+                    <path class="thumb" d="M729 202C733 197 740 197 744 201"/>
+                    <path class="knuckle" d="M728 212C731 214 736 214 739 212"/>
+                  </g>
                 </g>
+
+                <use href="#wheel" x="318" y="308"/>
+                <use href="#wheel" x="916" y="308"/>
               </g>
             </g>
           </svg>
+          <button class="icon-btn replay" type="button" id="scene-replay" aria-label="Повторить анимацию" title="Повторить анимацию">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
+          </button>
+          <script>
+          /* Сценарий: колесо крупным планом → отъезд камеры → стекло опускается → водитель передает деньги */
+          (function () {
+            var svg = document.getElementById('scene');
+            if (!svg || !svg.getBoundingClientRect) return;
+            function el(id) { return document.getElementById(id); }
+            var cam = el('cam'), car = el('car'), body = el('car-body'), disc = el('w-disc'), spokes = el('w-spokes'),
+                blur = el('w-blur'), glass = el('win-glass'), arm = el('arm'), head = el('man-head'),
+                lights = el('lights'), beam = el('beam'), tail = el('tail');
+            var R = 72, D = 520;
+            var TL = { d0: .15, d1: 1.95, z0: 2.35, z1: 3.75, l0: 3.5, w0: 4.1, w1: 5.0, h0: 4.9, h1: 5.6, p0: 4.6, p1: 6.0, a0: 5.4, a1: 6.4, end: 6.5 };
+            var C0 = { x: 916, y: 300, z: 3.4 }, C1 = { x: 600, y: 240, z: .86 }, C2;
+            function pickC2() { C2 = svg.getBoundingClientRect().width < 520 ? { x: 690, y: 182, z: 2.5 } : { x: 730, y: 210, z: 1.8 }; }
+            function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+            function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
+            function lerp(a, b, p) { return a + (b - a) * p; }
+            function io(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
+            function back(p) { var c = 1.5; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
+            function mix(a, b, p) { return { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), z: Math.exp(lerp(Math.log(a.z), Math.log(b.z), p)) }; }
+            function f(n) { return Math.round(n * 100) / 100; }
+
+            function render(t) {
+              /* Заезд: равномерное торможение, колесо катится без проскальзывания */
+              var dur = TL.d1 - TL.d0, pd = seg(t, TL.d0, TL.d1);
+              var x = -D * (1 - pd) * (1 - pd);
+              var v = 2 * D * (1 - pd) / dur;
+              car.setAttribute('transform', 'translate(' + f(x) + ' 0)');
+              var rot = 'rotate(' + f(x / R * 57.2958) + ')';
+              disc.setAttribute('transform', rot);
+              spokes.setAttribute('transform', rot);
+              var b = clamp((v - 150) / 350, 0, 1);
+              blur.setAttribute('opacity', f(b * .75));
+              spokes.setAttribute('opacity', f(1 - b * .55));
+              /* Кузов клюет носом при торможении и покачивается после остановки */
+              var s = t - TL.d1;
+              var pitch = s < 0 ? .5 * clamp((t - TL.d0) / .2, 0, 1) : .5 * Math.exp(-3.2 * s) * Math.cos(8.5 * s);
+              body.setAttribute('transform', 'rotate(' + pitch.toFixed(3) + ' 600 380)');
+              /* Камера */
+              var c = t < TL.p0 ? mix(C0, C1, io(seg(t, TL.z0, TL.z1))) : mix(C1, C2, io(seg(t, TL.p0, TL.p1)));
+              cam.setAttribute('transform', 'translate(500 375) scale(' + c.z.toFixed(4) + ') translate(' + f(-c.x) + ' ' + f(-c.y) + ')');
+              /* Свет */
+              var pl = t - TL.l0;
+              lights.setAttribute('opacity', pl < 0 ? 0 : pl < .08 ? 1 : pl < .18 ? .2 : 1);
+              beam.setAttribute('opacity', f(seg(t, TL.l0 + .2, TL.l0 + 1.2)));
+              tail.setAttribute('opacity', t > TL.d0 && t < TL.d1 + .5 ? 1 : .55);
+              /* Стекло, водитель, деньги */
+              glass.setAttribute('transform', 'translate(0 ' + f(96 * io(seg(t, TL.w0, TL.w1))) + ')');
+              head.setAttribute('transform', 'rotate(' + f(-5 * io(seg(t, TL.h0, TL.h1))) + ' 0 60)');
+              var pa = seg(t, TL.a0, TL.a1), ea = back(pa);
+              arm.setAttribute('opacity', f(clamp(pa * 5, 0, 1)));
+              arm.setAttribute('transform', 'rotate(' + f(lerp(24, 0, ea)) + ' 683 178) translate(683 178) scale(' + f(lerp(.35, 1, ea)) + ') translate(-683 -178)');
+            }
+
+            var raf = 0, start = 0, playing = false;
+            function frame(now) {
+              if (!start) start = now;
+              var t = (now - start) / 1000;
+              render(Math.min(t, TL.end));
+              if (t < TL.end) raf = requestAnimationFrame(frame); else playing = false;
+            }
+            function play() {
+              cancelAnimationFrame(raf);
+              pickC2();
+              start = 0; playing = true;
+              render(0);
+              raf = requestAnimationFrame(frame);
+            }
+            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            pickC2();
+            if (reduce) render(TL.end); else play();
+            el('scene-replay').addEventListener('click', play);
+            window.addEventListener('resize', function () {
+              var z = C2.z;
+              pickC2();
+              if (!playing && z !== C2.z) render(TL.end);
+            });
+          })();
+          </script>
         </div>
 
-        <aside class="lead-card" aria-labelledby="hero-form-title">
-          <form class="lead-form" id="form-hero" novalidate>
-            <h2 class="card-title" id="hero-form-title">Узнать цену выкупа</h2>
-            <p class="card-sub">По госномеру эксперт заранее проверит историю автомобиля и подготовит предварительную цену.</p>
-            <div class="form-stack">
-              <div class="field" data-plate-field>
-                <label class="label" for="plate-num">Госномер</label>
-                <div class="plate">
-                  <input class="plate-num" id="plate-num" name="plate" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="А777АА" aria-describedby="plate-err">
-                  <div class="plate-reg">
-                    <input class="plate-region" id="plate-region" name="region" inputmode="numeric" autocomplete="off" placeholder="77" aria-label="Код региона">
-                    <span class="plate-rus">RUS <i class="flag"></i></span>
-                  </div>
+        <div class="hero-side">
+          <p class="lead">Назовем цену за 15 минут. Эксперт приедет на осмотр туда, где удобно вам. Деньги в день сделки, наличными или на карту.</p>
+          <div class="lead-card" id="hero-form">
+            <form class="lead-form" id="form-hero" novalidate>
+              <h2 class="card-title">Узнать цену выкупа</h2>
+              <div class="form-stack">
+                <div class="field">
+                  <label class="label" for="hero-model">Марка, модель, год</label>
+                  <input class="input" id="hero-model" name="model" autocomplete="off" placeholder="Например, Mercedes E 200, 2019">
+                  <span class="err" aria-live="polite"></span>
                 </div>
-                <span class="err" id="plate-err" aria-live="polite"></span>
+                <div class="field">
+                  <label class="label" for="hero-phone">Телефон</label>
+                  <input class="input" id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+                  <span class="err" aria-live="polite"></span>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">
+                  Получить оценку
+                  <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
+                </button>
+                <p class="form-note">Перезвоним в течение 15 минут. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
               </div>
-              <div class="field" data-model-field hidden>
-                <label class="label" for="hero-model">Марка, модель, год</label>
-                <input class="input" id="hero-model" name="model" autocomplete="off" placeholder="Toyota Camry, 2019">
-                <span class="err" aria-live="polite"></span>
-              </div>
-              <button class="linkish" type="button" data-toggle-plate>Нет номера? Укажите марку и модель</button>
-              <div class="field">
-                <label class="label" for="hero-phone">Телефон</label>
-                <input class="input" id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
-                <span class="err" aria-live="polite"></span>
-              </div>
-              <button class="btn btn-primary btn-block" type="submit">
-                Получить оценку
-                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
-              </button>
-              <p class="form-note">Перезвоним в течение 15 минут. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
+            </form>
+            <div class="done" hidden tabindex="-1">
+              <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
+              <h3>Заявка принята</h3>
+              <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
+              <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
             </div>
-          </form>
-          <div class="done" hidden tabindex="-1">
-            <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
-            <h3>Заявка принята</h3>
-            <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
-            <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
           </div>
-        </aside>
+        </div>
       </div>
 
       <div class="facts">
@@ -538,7 +724,7 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
           <span class="step-rail"></span>
           <span class="step-no">01</span>
           <h3>Заявка и оценка</h3>
-          <p>Оставляете госномер или марку и модель. Эксперт перезванивает и называет предварительную цену по рыночным данным.</p>
+          <p>Оставляете марку, модель и телефон. Эксперт перезванивает, уточняет комплектацию и состояние и называет предварительную цену по рыночным данным.</p>
         </li>
         <li class="step">
           <span class="step-time">≈ 40 минут</span>
@@ -670,7 +856,7 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
           <div class="form-grid">
             <div class="field span-2">
               <label class="label" for="final-model">Марка и модель</label>
-              <input class="input" id="final-model" name="model" autocomplete="off" placeholder="BMW X5" data-required="Укажите марку и модель">
+              <input class="input" id="final-model" name="model" autocomplete="off" placeholder="Например, BMW X5">
               <span class="err" aria-live="polite"></span>
             </div>
             <div class="field">
@@ -729,93 +915,32 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
   </div>
 </footer>
 
-<!-- Панель выбора оформления: нужна только на время согласования дизайна -->
-<div class="looks" role="group" aria-label="Вариант оформления">
-  <span class="looks-label">Оформление</span>
-  <button class="look-btn" type="button" data-look-btn="noir" aria-pressed="true">Noir</button>
-  <button class="look-btn" type="button" data-look-btn="gallery" aria-pressed="false">Gallery</button>
-  <button class="look-btn" type="button" data-look-btn="heritage" aria-pressed="false">Heritage</button>
-  <button class="look-btn look-replay" type="button" data-replay aria-label="Повторить анимацию заезда" title="Повторить анимацию">
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
-  </button>
-</div>
-
 <script>
 (function () {
   var root = document.documentElement;
 
-  /* ---------- Варианты оформления ---------- */
-  var LOOKS = ['noir', 'gallery', 'heritage'];
-  var lookBtns = Array.prototype.slice.call(document.querySelectorAll('[data-look-btn]'));
+  /* ---------- Светлая и темная тема ---------- */
+  var themeBtn = document.getElementById('theme-toggle');
   var themeMeta = document.querySelector('meta[name="theme-color"]');
-  function setLook(look, save) {
-    if (look === 'noir') root.removeAttribute('data-look'); else root.setAttribute('data-look', look);
-    lookBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-look-btn') === look)); });
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function currentTheme() {
+    var t = root.getAttribute('data-theme');
+    if (t === 'light' || t === 'dark') return t;
+    return mq && mq.matches ? 'dark' : 'light';
+  }
+  function syncTheme() {
+    var t = currentTheme();
+    themeBtn.setAttribute('aria-label', t === 'dark' ? 'Включить светлую тему' : 'Включить темную тему');
     if (themeMeta) themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim());
-    if (save) { try { localStorage.setItem('ando-look', look); } catch (e) {} }
   }
-  var current = root.getAttribute('data-look');
-  setLook(LOOKS.indexOf(current) > -1 ? current : 'noir', false);
-  lookBtns.forEach(function (b) {
-    b.addEventListener('click', function () { setLook(b.getAttribute('data-look-btn'), true); });
+  themeBtn.addEventListener('click', function () {
+    var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('ando-theme', next); } catch (e) {}
+    syncTheme();
   });
-
-  /* ---------- Повтор анимации заезда ---------- */
-  var stage = document.querySelector('.stage');
-  function replay() {
-    stage.classList.add('is-reset');
-    void stage.getBoundingClientRect();
-    stage.classList.remove('is-reset');
-  }
-  document.querySelectorAll('[data-replay]').forEach(function (b) { b.addEventListener('click', replay); });
-
-  /* ---------- Госномер: 12 букв, совпадающих с латиницей ---------- */
-  var LAT = { A: 'А', B: 'В', E: 'Е', K: 'К', M: 'М', H: 'Н', O: 'О', P: 'Р', C: 'С', T: 'Т', Y: 'У', X: 'Х' };
-  var LETTERS = 'АВЕКМНОРСТУХ';
-  function parsePlate(raw) {
-    var v = raw.toUpperCase().replace(/Ё/g, 'Е');
-    var plate = '', rest = '';
-    for (var i = 0; i < v.length; i++) {
-      var ch = LAT[v[i]] || v[i];
-      if (plate.length < 6) {
-        var pos = plate.length;
-        var ok = (pos === 0 || pos >= 4) ? LETTERS.indexOf(ch) > -1 : /[0-9]/.test(ch);
-        if (ok) plate += ch;
-      } else if (/[0-9]/.test(ch)) {
-        rest += ch;
-      }
-    }
-    return { plate: plate, rest: rest.slice(0, 3) };
-  }
-  var plateNum = document.getElementById('plate-num');
-  var plateRegion = document.getElementById('plate-region');
-  plateNum.addEventListener('input', function (e) {
-    var p = parsePlate(plateNum.value);
-    plateNum.value = p.plate;
-    if (p.rest) plateRegion.value = p.rest;
-    var inserting = !e.inputType || e.inputType.indexOf('insert') === 0;
-    if (inserting && p.plate.length === 6) plateRegion.focus();
-  });
-  plateRegion.addEventListener('input', function () {
-    plateRegion.value = plateRegion.value.replace(/\D/g, '').slice(0, 3);
-  });
-  plateRegion.addEventListener('keydown', function (e) {
-    if (e.key === 'Backspace' && plateRegion.value === '') plateNum.focus();
-  });
-
-  /* Переключение: госномер или марка/модель */
-  var heroForm = document.getElementById('form-hero');
-  var plateField = heroForm.querySelector('[data-plate-field]');
-  var modelField = heroForm.querySelector('[data-model-field]');
-  var toggleBtn = heroForm.querySelector('[data-toggle-plate]');
-  var useModel = false;
-  toggleBtn.addEventListener('click', function () {
-    useModel = !useModel;
-    plateField.hidden = useModel;
-    modelField.hidden = !useModel;
-    toggleBtn.textContent = useModel ? 'Указать госномер' : 'Нет номера? Укажите марку и модель';
-    (useModel ? modelField.querySelector('input') : plateNum).focus();
-  });
+  if (mq && mq.addEventListener) mq.addEventListener('change', syncTheme);
+  syncTheme();
 
   /* ---------- Телефон: +7 (XXX) XXX-XX-XX ---------- */
   function phoneDigits(v) {
@@ -865,6 +990,9 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
   function checkPhone(input) {
     return setError(input, phoneDigits(input.value).length === 11 ? '' : 'Введите номер полностью: +7 и 10 цифр');
   }
+  function checkModel(input) {
+    return setError(input, input.value.trim().length >= 2 ? '' : 'Укажите марку и модель');
+  }
 
   function sendLead(data) {
     /* Сюда подключается реальная отправка заявки: Telegram-бот, CRM или почта
@@ -887,9 +1015,8 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
       form.reset();
       card.querySelector('.done').hidden = true;
       form.hidden = false;
-      var btn = form.querySelector('[type="submit"]');
-      btn.disabled = false;
-      form.querySelector('input:not([hidden])').focus();
+      form.querySelector('[type="submit"]').disabled = false;
+      form.querySelector('input').focus();
     });
   });
 
@@ -905,37 +1032,26 @@ h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
     });
   }
 
-  var heroPhone = document.getElementById('hero-phone');
-  var heroModel = document.getElementById('hero-model');
-  submitWith(heroForm, function () {
+  var hModel = document.getElementById('hero-model');
+  var hPhone = document.getElementById('hero-phone');
+  submitWith(document.getElementById('form-hero'), function () {
     var bad = null;
-    if (useModel) {
-      if (!setError(heroModel, heroModel.value.trim().length >= 2 ? '' : 'Укажите марку и модель')) bad = bad || heroModel;
-    } else {
-      var okPlate = /^[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}$/.test(plateNum.value) && /^\d{2,3}$/.test(plateRegion.value);
-      if (!setError(plateNum, okPlate ? '' : 'Формат: буква, три цифры, две буквы и код региона, например А777АА 77')) bad = bad || plateNum;
-    }
-    if (!checkPhone(heroPhone)) bad = bad || heroPhone;
+    if (!checkModel(hModel)) bad = bad || hModel;
+    if (!checkPhone(hPhone)) bad = bad || hPhone;
     return bad;
   }, function () {
-    return {
-      source: 'hero',
-      plate: useModel ? '' : plateNum.value + ' ' + plateRegion.value,
-      model: useModel ? heroModel.value.trim() : '',
-      phone: heroPhone.value
-    };
+    return { source: 'hero', model: hModel.value.trim(), phone: hPhone.value };
   });
 
-  var finalForm = document.getElementById('form-final');
   var fModel = document.getElementById('final-model');
   var fYear = document.getElementById('final-year');
   var fMileage = document.getElementById('final-mileage');
   var fPhone = document.getElementById('final-phone');
-  submitWith(finalForm, function () {
+  submitWith(document.getElementById('form-final'), function () {
     var bad = null;
     var year = parseInt(fYear.value, 10);
     var maxYear = new Date().getFullYear() + 1;
-    if (!setError(fModel, fModel.value.trim().length >= 2 ? '' : 'Укажите марку и модель')) bad = bad || fModel;
+    if (!checkModel(fModel)) bad = bad || fModel;
     if (!setError(fYear, (!fYear.value || (year >= 1960 && year <= maxYear)) ? '' : 'Год от 1960 до ' + maxYear)) bad = bad || fYear;
     if (!checkPhone(fPhone)) bad = bad || fPhone;
     return bad;
