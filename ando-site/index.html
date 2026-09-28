@@ -19,6 +19,7 @@
   --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#767A7F;
   --accent:#C8AD7F; --danger:#E26D5A;
   --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
+  --shiny-bg:#050607; --shiny-bg-subtle:#2A2D31; --shiny-fg:#F2F0EA; --shiny-hl:#C8AD7F; --shiny-hl-subtle:#EFE2C4;
   --show-sun:block; --show-moon:none;
 
   --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em;
@@ -34,6 +35,7 @@
   --text:#101214; --text-2:#4A4F54; --text-3:#6B7076;
   --accent:#2446A6; --danger:#B3261E;
   --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
+  --shiny-bg:#101214; --shiny-bg-subtle:#2C3036; --shiny-fg:#F4F5F3; --shiny-hl:#5B7BE0; --shiny-hl-subtle:#B7C6F5;
   --show-sun:none; --show-moon:block;
 }
 
@@ -56,11 +58,35 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 
 /* ============ Кнопки ============ */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:12px;height:56px;padding:0 28px;border:1px solid transparent;border-radius:var(--radius);font:500 15px/1 var(--f-body);letter-spacing:.01em;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background-color .25s,color .25s,border-color .25s}
-.btn-primary{position:relative;overflow:hidden;isolation:isolate;background:var(--cta);color:var(--cta-ink)}
-.btn-primary:hover{background:var(--cta-hover)}
-/* Блик, пробегающий по кнопке при наведении */
-.btn-primary::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.5) 50%,transparent 65%);transform:translateX(-100%);transition:transform .9s var(--ease)}
-.btn-primary:hover::after{transform:translateX(100%)}
+/* Основная кнопка: темная капсула, по контуру бежит блик, внутри мерцают точки.
+   При наведении блик растягивается и разгоняется, изнутри поднимается свечение */
+@property --gradient-angle{syntax:"<angle>";initial-value:0deg;inherits:false}
+@property --gradient-angle-offset{syntax:"<angle>";initial-value:0deg;inherits:false}
+@property --gradient-percent{syntax:"<percentage>";initial-value:5%;inherits:false}
+@property --gradient-shine{syntax:"<color>";initial-value:white;inherits:false}
+.btn-primary{
+  --animation:gradient-angle linear infinite;--duration:3s;--shadow-size:2px;--transition:800ms cubic-bezier(.25,1,.5,1);
+  position:relative;overflow:hidden;isolation:isolate;outline-offset:4px;border:1px solid transparent;border-radius:360px;color:var(--shiny-fg);
+  background:linear-gradient(var(--shiny-bg),var(--shiny-bg)) padding-box,
+    conic-gradient(from calc(var(--gradient-angle) - var(--gradient-angle-offset)),transparent,var(--shiny-hl) var(--gradient-percent),var(--gradient-shine) calc(var(--gradient-percent) * 2),var(--shiny-hl) calc(var(--gradient-percent) * 3),transparent calc(var(--gradient-percent) * 4)) border-box;
+  box-shadow:inset 0 0 0 1px var(--shiny-bg-subtle);
+  transition:var(--transition);transition-property:--gradient-angle-offset,--gradient-percent,--gradient-shine;
+}
+.btn-primary::before,.btn-primary::after,.btn-primary>.btn-label::before{content:"";pointer-events:none;position:absolute;inset-inline-start:50%;inset-block-start:50%;translate:-50% -50%;z-index:-1}
+.btn-primary:active{translate:0 1px}
+/* Точки */
+.btn-primary::before{--size:calc(100% - var(--shadow-size) * 3);--position:2px;--space:calc(var(--position) * 2);width:var(--size);height:var(--size);background:radial-gradient(circle at var(--position) var(--position),#fff calc(var(--position) / 4),transparent 0) padding-box;background-size:var(--space) var(--space);background-repeat:space;-webkit-mask-image:conic-gradient(from calc(var(--gradient-angle) + 45deg),#000,transparent 10% 90%,#000);mask-image:conic-gradient(from calc(var(--gradient-angle) + 45deg),#000,transparent 10% 90%,#000);border-radius:inherit;opacity:.4}
+/* Мерцание внутри */
+.btn-primary::after{--animation:shimmer linear infinite;width:100%;aspect-ratio:1;background:linear-gradient(-50deg,transparent,var(--shiny-hl),transparent);-webkit-mask-image:radial-gradient(circle at bottom,transparent 40%,#000);mask-image:radial-gradient(circle at bottom,transparent 40%,#000);opacity:.6}
+.btn-label{display:inline-flex;align-items:center;justify-content:center;gap:12px;z-index:1}
+.btn-primary>.btn-label::before{--size:calc(100% + 1rem);width:var(--size);height:var(--size);box-shadow:inset 0 -1ex 2rem 4px var(--shiny-hl);opacity:0;transition:opacity var(--transition);animation:calc(var(--duration) * 1.5) breathe linear infinite}
+.btn-primary,.btn-primary::before,.btn-primary::after{animation:var(--animation) var(--duration),var(--animation) calc(var(--duration) / .4) reverse paused;animation-composition:add}
+.btn-primary:is(:hover,:focus-visible){--gradient-percent:20%;--gradient-angle-offset:95deg;--gradient-shine:var(--shiny-hl-subtle)}
+.btn-primary:is(:hover,:focus-visible),.btn-primary:is(:hover,:focus-visible)::before,.btn-primary:is(:hover,:focus-visible)::after{animation-play-state:running}
+.btn-primary:is(:hover,:focus-visible)>.btn-label::before{opacity:1}
+@keyframes gradient-angle{to{--gradient-angle:360deg}}
+@keyframes shimmer{to{rotate:360deg}}
+@keyframes breathe{from,to{scale:1}50%{scale:1.2}}
 .btn-ghost{background:transparent;color:var(--text);border-color:var(--line-strong)}
 .btn-ghost:hover{border-color:var(--text)}
 .btn-sm{height:40px;padding:0 18px;font-size:14px}
@@ -101,7 +127,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 
 /* ============ Сцена: фото-кадры на всю ширину, камеру ведет скрипт ============ */
 /* Фото сняты в темной студии, поэтому сцена темная в обеих темах */
-.stage{position:relative;width:100%;height:min(70vh,60vw);height:clamp(260px,min(70svh,60vw),820px);overflow:hidden;isolation:isolate;background:#0A0B0C;container-type:size}
+.stage{position:relative;width:100%;height:min(58vh,56vw);height:clamp(240px,min(58svh,56vw),760px);overflow:hidden;isolation:isolate;background:#0A0B0C;container-type:size}
 @media (max-width:640px){.stage{height:78vw}}
 .shot{position:absolute;inset:0;opacity:0}
 .shot-window{opacity:1}
@@ -125,9 +151,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .stage-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 50%,transparent 58%,rgba(0,0,0,.38))}
 /* Затемнение сверху, чтобы шапка читалась поверх любого кадра */
 .stage-top{position:absolute;inset:0 0 auto;height:30%;pointer-events:none;background:linear-gradient(rgba(5,6,7,.65),transparent)}
-.replay{position:absolute;right:clamp(16px,4vw,48px);bottom:16px;z-index:2;width:36px;height:36px;background:rgba(18,20,22,.7);color:#D8DADD;border-color:rgba(255,255,255,.25)}
-.replay:hover{border-color:#FFFFFF}
-.replay svg{width:15px;height:15px}
 .scroll-cue{position:absolute;left:50%;bottom:18px;z-index:2;display:grid;justify-items:center;gap:10px;transform:translateX(-50%);color:rgba(242,240,234,.72);font:500 10px/1 var(--f-body);letter-spacing:.32em;text-transform:uppercase;text-decoration:none}
 .scroll-cue i{position:relative;overflow:hidden;width:1px;height:36px;background:rgba(242,240,234,.2)}
 .scroll-cue i::after{content:"";position:absolute;left:0;top:-40%;width:1px;height:40%;background:#F2F0EA;animation:cue 2.2s cubic-bezier(.6,0,.4,1) infinite}
@@ -135,8 +158,8 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 @media (max-width:640px){.scroll-cue{display:none}}
 
 /* ============ Первый экран под сценой ============ */
-.hero-body{padding-top:clamp(36px,5vw,72px)}
-.hero-title{margin:14px 0 0;font:500 clamp(36px,6.6vw,104px)/.98 var(--f-display);letter-spacing:-.02em;text-transform:uppercase;text-wrap:balance}
+.hero-body{padding-top:clamp(24px,3vw,44px)}
+.hero-title{margin:10px 0 0;font:500 clamp(34px,6vw,96px)/.98 var(--f-display);letter-spacing:-.02em;text-transform:uppercase;text-wrap:balance}
 .hero-title .w{display:inline-block;overflow:hidden;vertical-align:top;padding-bottom:.06em}
 .hero-title .w > span{display:inline-block}
 .hero-title .accent{color:var(--accent)}
@@ -269,7 +292,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .logo-wheel,.brand:hover .logo-wheel,.scroll-cue i::after,.stage.idle .glint i{animation:none}
-  .btn-primary::after{display:none}
+  .btn-primary,.btn-primary::before,.btn-primary::after,.btn-primary>.btn-label::before{animation:none}
 }
 </style>
 </head>
@@ -305,7 +328,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       <svg class="i-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9Z"/></svg>
       <svg class="i-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.5V4M10 16v2.5M1.5 10H4M16 10h2.5M4 4l1.8 1.8M14.2 14.2 16 16M4 16l1.8-1.8M14.2 5.8 16 4"/></svg>
     </button>
-    <a class="btn btn-primary btn-sm header-cta" href="#hero-form">Оценить авто</a>
+    <a class="btn btn-primary btn-sm header-cta" href="#hero-form"><span class="btn-label">Оценить авто</span></a>
   </div>
 </header>
 
@@ -337,9 +360,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       <div class="stage-vignette"></div>
       <div class="stage-top"></div>
       <a class="scroll-cue" href="#hero-content"><span>Листайте</span><i></i></a>
-      <button class="icon-btn replay" type="button" id="scene-replay" aria-label="Повторить анимацию" title="Повторить анимацию">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
-      </button>
       <script>
       /* Сценарий: колесо крупным планом → камера отъезжает до всей машины, загораются фары →
          окно водителя, стекло опускается → голливудская улыбка и блик по очкам.
@@ -456,7 +476,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
         }
         var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
         if (reduce) { measure(); render(TL.end); } else play();
-        $('scene-replay').addEventListener('click', play);
         window.addEventListener('resize', function () {
           measure();
           if (playing) return;
@@ -508,8 +527,8 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
                 <span class="err" aria-live="polite"></span>
               </div>
               <button class="btn btn-primary btn-block" type="submit">
-                Получить оценку
-                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
+                <span class="btn-label">Получить оценку
+                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg></span>
               </button>
               <p class="form-note">Оценка бесплатна и ни к чему не обязывает. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
             </div>
@@ -662,8 +681,8 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
           <a class="contact-phone" href="tel:+79890853177">+7 (989) 085-31-77</a>
           <div class="contact-row">
             <a class="btn btn-primary btn-sm" href="https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E" target="_blank" rel="noopener">
-              <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.4s-3.1 6.4-7.5 6.4c-.9 0-1.8-.1-2.6-.4L3.5 17l1.1-3.4C3.3 12.5 2.5 11 2.5 9.4 2.5 5.9 5.6 3 10 3Z"/></svg>
-              Написать в MAX
+              <span class="btn-label"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.4s-3.1 6.4-7.5 6.4c-.9 0-1.8-.1-2.6-.4L3.5 17l1.1-3.4C3.3 12.5 2.5 11 2.5 9.4 2.5 5.9 5.6 3 10 3Z"/></svg>
+              Написать в MAX</span>
             </a>
             <!-- Telegram добавим, когда будет ссылка -->
           </div>
@@ -702,8 +721,8 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
             </div>
             <div class="span-2">
               <button class="btn btn-primary btn-block" type="submit">
-                Отправить заявку
-                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
+                <span class="btn-label">Отправить заявку
+                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg></span>
               </button>
             </div>
             <p class="form-note span-2">Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
