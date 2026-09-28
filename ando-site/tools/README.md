@@ -5,8 +5,11 @@
 
 ## Что нужно в среде
 
-- Переменная окружения `ARK_API_KEY` с ключом Seedream.
-- Доступ к хосту `ark.ap-southeast.bytepluses.com` (BytePlus) или `ark.cn-beijing.volces.com` (Volcengine).
+- Ключ Seedream одним из способов:
+  - API credential в настройках облачной среды (тип Bearer, хост `ark.ap-southeast.bytepluses.com`):
+    ключ подставляет прокси, доступ к хосту открывается сам, `ARK_API_KEY` не нужен;
+  - или переменная окружения `ARK_API_KEY` плюс хост в Network access → Custom → Allowed domains.
+- Хост API: `ark.ap-southeast.bytepluses.com` (BytePlus) или `ark.cn-beijing.volces.com` (Volcengine).
   Для Volcengine также задать `ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3`
   и `SEEDREAM_MODEL=doubao-seedream-4-0-250828`.
 - Фото лица в `ando-site/tools/ref/` (папка в `.gitignore`, в репозиторий не коммитить).

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Кадры для анимации ANDO через Seedream (BytePlus ModelArk или Volcengine Ark).
 
-Ключ читается из переменной окружения ARK_API_KEY. В коде и в репозитории его быть не должно.
+Ключ берется из переменной окружения ARK_API_KEY. Если ее нет, заголовок Authorization не отправляется:
+так работает облачная среда Claude Code, где ключ добавлен как API credential и прокси подставляет его сам.
+В коде и в репозитории ключа быть не должно.
 
 Порядок работы:
   1) python3 seedream_frames.py start --face ref/face1.jpg --face ref/face2.jpg
@@ -14,7 +16,7 @@
 Проверить запросы без отправки: добавьте --dry-run.
 
 Переменные окружения:
-  ARK_API_KEY     ключ API (обязательно)
+  ARK_API_KEY     ключ API (не нужен, если ключ подставляет прокси среды)
   ARK_BASE_URL    по умолчанию https://ark.ap-southeast.bytepluses.com/api/v3 (BytePlus);
                   для Volcengine: https://ark.cn-beijing.volces.com/api/v3
   SEEDREAM_MODEL  по умолчанию seedream-4-0-250828; для Volcengine doubao-seedream-4-0-250828.
@@ -124,7 +126,7 @@ class Client:
         self.dry_run = dry_run
         self.key = os.environ.get("ARK_API_KEY", "")
         if not dry_run and not self.key:
-            sys.exit("Не задан ARK_API_KEY. Пример: ARK_API_KEY=ваш_ключ python3 seedream_frames.py start ...")
+            print("ARK_API_KEY не задан: отправляю без ключа, его должен подставить прокси среды (API credential).")
         self.out.mkdir(parents=True, exist_ok=True)
 
     def generate(self, name, prompt, size, images=()):
@@ -153,11 +155,10 @@ class Client:
             if pause:
                 print("   повтор через %d с" % pause, flush=True)
                 time.sleep(pause)
-            req = urllib.request.Request(
-                BASE_URL + "/images/generations",
-                data=body,
-                headers={"Content-Type": "application/json", "Authorization": "Bearer " + self.key},
-            )
+            headers = {"Content-Type": "application/json"}
+            if self.key:
+                headers["Authorization"] = "Bearer " + self.key
+            req = urllib.request.Request(BASE_URL + "/images/generations", data=body, headers=headers)
             try:
                 with urllib.request.urlopen(req, timeout=300) as resp:
                     result = json.loads(resp.read())
@@ -166,7 +167,11 @@ class Client:
                 detail = err.read().decode("utf-8", "replace")
                 if err.code in (429, 500, 502, 503, 504) and attempt < 3:
                     continue
-                sys.exit("Ошибка API %d при генерации %s:\n%s" % (err.code, name, detail))
+                hint = ""
+                if err.code in (401, 403):
+                    hint = ("\nКлюч не принят. Проверьте ARK_API_KEY или API credential в настройках среды "
+                            "(хост %s)." % BASE_URL.split("/")[2])
+                sys.exit("Ошибка API %d при генерации %s:\n%s%s" % (err.code, name, detail, hint))
             except urllib.error.URLError as err:
                 if attempt < 3:
                     continue
