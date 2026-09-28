@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ANDO AUTO</title>
-<meta name="description" content="ANDO AUTO: срочный выкуп автомобилей за один день. Оценка за 15 минут, бесплатный выезд эксперта, расчет в день сделки.">
-<meta name="theme-color" content="#0B0C0D">
+<meta name="description" content="ANDO AUTO: срочный выкуп автомобилей за один день и продажа проверенных машин из наличия.">
+<meta name="theme-color" content="#0A0A0B">
 <script>(function(){var d=document.documentElement;try{if(localStorage.getItem('ando-theme')==='light')d.setAttribute('data-scheme','light')}catch(e){}if('IntersectionObserver' in window&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('js')})()</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +14,13 @@
 /* ============ Темная тема (Noir): по умолчанию ============ */
 :root{
   color-scheme:dark;
-  --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
-  --line:#25292D; --line-strong:#3A3F45;
-  --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#767A7F;
-  --accent:#C8AD7F; --danger:#E26D5A;
-  --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
-  --dot:rgba(236,234,228,.075);
-  --shiny-bg:#050607; --shiny-bg-subtle:#2A2D31; --shiny-fg:#F2F0EA; --shiny-hl:#C8AD7F; --shiny-hl-subtle:#EFE2C4;
+  --bg:#0A0A0B; --surface:#121214; --surface-2:#1A1A1D;
+  --line:#26262A; --line-strong:#3A3A40;
+  --text:#F2F2F3; --text-2:#A1A1A8; --text-3:#80808A;
+  --accent:#F2F2F3; --danger:#E26D5A;
+  --cta:#F2F2F3; --cta-ink:#0A0A0B; --cta-hover:#FFFFFF;
+  --dot:rgba(255,255,255,.07);
+  --shiny-bg:#050506; --shiny-bg-subtle:#2A2A2F; --shiny-fg:#F5F5F6; --shiny-hl:#C7CBD2; --shiny-hl-subtle:#FFFFFF;
   --show-sun:block; --show-moon:none;
 
   --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em;
@@ -31,13 +31,13 @@
 /* ============ Светлая тема (Gallery): по кнопке в шапке ============ */
 :root[data-scheme="light"]{
   color-scheme:light;
-  --bg:#EFF0EE; --surface:#FFFFFF; --surface-2:#E5E7E4;
-  --line:#D5D8D4; --line-strong:#AEB2AD;
-  --text:#101214; --text-2:#4A4F54; --text-3:#6B7076;
-  --accent:#2446A6; --danger:#B3261E;
-  --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
-  --dot:rgba(16,18,20,.13);
-  --shiny-bg:#101214; --shiny-bg-subtle:#2C3036; --shiny-fg:#F4F5F3; --shiny-hl:#5B7BE0; --shiny-hl-subtle:#B7C6F5;
+  --bg:#F4F4F5; --surface:#FFFFFF; --surface-2:#E9E9EC;
+  --line:#DCDCE0; --line-strong:#B4B4BB;
+  --text:#111113; --text-2:#4A4A52; --text-3:#6B6B73;
+  --accent:#111113; --danger:#B3261E;
+  --cta:#111113; --cta-ink:#F7F7F8; --cta-hover:#2A2A2F;
+  --dot:rgba(17,17,19,.12);
+  --shiny-bg:#111113; --shiny-bg-subtle:#34343A; --shiny-fg:#F7F7F8; --shiny-hl:#9EA3AB; --shiny-hl-subtle:#E6E8EB;
   --show-sun:none; --show-moon:block;
 }
 
@@ -107,7 +107,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .site-header{position:fixed;top:0;left:0;right:0;z-index:20;padding-top:env(safe-area-inset-top,0px);background:transparent;border-bottom:1px solid transparent;transition:background-color .4s,border-color .4s,-webkit-backdrop-filter .4s,backdrop-filter .4s}
 .site-header.scrolled{background:var(--bg);background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:saturate(140%) blur(14px);backdrop-filter:saturate(140%) blur(14px);border-bottom-color:var(--line)}
 /* Над темной сценой шапка всегда светлая, в любой теме */
-.site-header:not(.scrolled){--text:#F2F0EA;--text-2:rgba(242,240,234,.8);--text-3:rgba(242,240,234,.62);--line-strong:rgba(255,255,255,.3);--cta:#F2F0EA;--cta-ink:#0B0C0D;--cta-hover:#FFFFFF}
+.site-header:not(.scrolled){--text:#F2F2F3;--text-2:rgba(242,242,243,.8);--text-3:rgba(242,242,243,.62);--line-strong:rgba(255,255,255,.3);--cta:#F2F2F3;--cta-ink:#0A0A0B;--cta-hover:#FFFFFF}
 .site-header .wrap{display:flex;align-items:center;gap:24px;height:72px}
 .brand{display:flex;align-items:center;gap:14px;color:var(--text);text-decoration:none}
 .wordmark{display:block;height:18px;width:auto;overflow:visible}
@@ -124,7 +124,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .header-phone{font-size:14px;font-weight:500;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
 .call-btn{display:none}
 @media (max-width:1100px){.nav{display:none}.header-phone{margin-left:auto}}
-@media (max-width:640px){.header-phone{display:none}.call-btn{display:grid;margin-left:auto}.site-header .wrap{gap:10px}.header-cta{padding:0 14px}}
+@media (max-width:640px){.header-phone{display:none}.call-btn{display:grid;margin-left:auto}.site-header .wrap{gap:10px}}
 @media (max-width:400px){.brand-sub{display:none}}
 
 /* ============ Сцена: фото-кадры на всю ширину, камеру ведет скрипт ============ */
@@ -142,7 +142,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .rim,.rim-blur{position:absolute;left:31.99%;top:31.42%;width:35.68%;aspect-ratio:1;border-radius:50%}
 .rim{background-position:49.73% 59.93%;background-size:280.29% auto;background-repeat:no-repeat;will-change:transform}
 .rim-blur{background:radial-gradient(circle,#2E3134 0 13%,#8A8E93 21%,#9DA1A6 62%,#B7BBBF 93%,transparent 100%);opacity:0}
-.headlight{position:absolute;left:83.52%;top:55.32%;width:8%;aspect-ratio:2.4;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,251,240,.95),rgba(255,244,222,.4) 50%,transparent);mix-blend-mode:screen;opacity:0}
+.headlight{position:absolute;left:83.52%;top:55.32%;width:8%;aspect-ratio:2.4;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,255,255,.95),rgba(236,242,255,.4) 50%,transparent);mix-blend-mode:screen;opacity:0}
 .glass-edge{position:absolute;left:22%;top:0;width:62%;height:.5%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4) 18%,rgba(255,255,255,.4) 82%,transparent);opacity:0}
 .glint{position:absolute;left:47.5%;top:33%;width:21%;height:10.5%;overflow:hidden;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent);mix-blend-mode:screen;opacity:0}
 .glint i{position:absolute;top:-60%;left:0;width:34%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.42) 50%,transparent);filter:blur(2px);transform:translateX(-120%) rotate(18deg)}
@@ -153,57 +153,25 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .stage-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 50%,transparent 58%,rgba(0,0,0,.38))}
 /* Затемнение сверху, чтобы шапка читалась поверх любого кадра */
 .stage-top{position:absolute;inset:0 0 auto;height:30%;pointer-events:none;background:linear-gradient(rgba(5,6,7,.65),transparent)}
-.scroll-cue{position:absolute;left:50%;bottom:18px;z-index:2;display:grid;justify-items:center;gap:10px;transform:translateX(-50%);color:rgba(242,240,234,.72);font:500 10px/1 var(--f-body);letter-spacing:.32em;text-transform:uppercase;text-decoration:none}
-.scroll-cue i{position:relative;overflow:hidden;width:1px;height:36px;background:rgba(242,240,234,.2)}
-.scroll-cue i::after{content:"";position:absolute;left:0;top:-40%;width:1px;height:40%;background:#F2F0EA;animation:cue 2.2s cubic-bezier(.6,0,.4,1) infinite}
-@keyframes cue{to{top:100%}}
-@media (max-width:640px){.scroll-cue{display:none}}
 
 /* ============ Первый экран под сценой: по центру, слово в заголовке сменяется ============ */
 .hero-body{padding-top:clamp(24px,3vw,44px)}
 .hero-center{display:grid;justify-items:center;gap:clamp(18px,2.2vw,28px);text-align:center}
-.hero-pill{display:inline-flex;align-items:center;gap:14px;height:38px;padding:0 16px;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:8px;font:500 14px/1 var(--f-body);text-decoration:none;transition:border-color .2s}
-.hero-pill:hover{border-color:var(--line-strong)}
-.hero-pill:hover .arrow{transform:translateX(4px)}
-.hero-title{margin:0;font:500 clamp(34px,6vw,96px)/.98 var(--f-display);letter-spacing:-.02em;text-transform:uppercase;text-wrap:balance}
+.hero-title{margin:0;font:400 clamp(34px,6vw,96px)/.98 var(--f-display);letter-spacing:-.02em;text-transform:uppercase;text-wrap:balance}
 .hero-line{display:block}
-.rotator{position:relative;display:flex;justify-content:center;overflow:hidden;padding:.06em 0 .1em;color:var(--accent);font-weight:600}
+.rotator{position:relative;display:flex;justify-content:center;overflow:hidden;padding:.06em 0 .1em;font-weight:700}
 .rot-word{position:absolute;white-space:nowrap;opacity:0;will-change:transform,opacity}
 .rot-word.is-first{opacity:1}
 .hero-lead{max-width:40em;margin-inline:auto}
 .hero-cta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px 18px}
 .hero-cta .btn-ghost{border-radius:360px}
-.hero-or{font-size:14px;color:var(--text-3)}
 @media (max-width:560px){.hero-cta{flex-direction:column;align-self:stretch;gap:8px}.hero-cta .btn{width:100%}}
-.trust{display:grid;gap:10px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--text-2)}
-.trust li{display:flex;align-items:center;gap:12px}
-.trust li::before{content:"";flex:none;width:6px;height:6px;border:1px solid var(--accent);transform:rotate(45deg)}
-.trust-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px}
 .hero-form-card{max-width:960px;margin:clamp(40px,5vw,64px) auto 0}
+.hero-form-card .form-note{margin-top:14px}
 .form-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:16px;align-items:start}
 .form-row .btn{margin-top:21px}
-.hero-form-card .form-note{margin-top:14px}
 @media (max-width:760px){.form-row{grid-template-columns:minmax(0,1fr)}.form-row .btn{margin-top:4px;width:100%}}
 
-.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(40px,5vw,72px);border-top:1px solid var(--line)}
-.fact{display:grid;gap:10px;align-content:start;padding:28px 24px 34px 0}
-.fact + .fact{padding-left:24px;border-left:1px solid var(--line)}
-.fact b{font:var(--display-weight) clamp(28px,2.8vw,40px)/1 var(--f-display);letter-spacing:var(--display-track);font-variant-numeric:tabular-nums;white-space:nowrap}
-.fact span{font-size:14px;line-height:1.45;color:var(--text-2)}
-@media (max-width:760px){
-  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .fact:nth-child(3){padding-left:0;border-left:0}
-  .fact:nth-child(n+3){border-top:1px solid var(--line)}
-}
-
-/* ============ Окно «Заказать звонок» ============ */
-.callback{width:min(440px,calc(100% - 32px));max-width:none;max-height:none;padding:0;margin:auto;border:0;background:transparent;color:var(--text);overflow:visible}
-.callback::backdrop{background:rgba(5,6,7,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-.callback[open]{animation:fade-up .45s var(--ease)}
-.callback .lead-card{position:relative}
-.callback .card-title{padding-right:44px}
-.callback-close{position:absolute;top:16px;right:16px;width:36px;height:36px}
-.callback-close svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
 
 /* ============ Карточка заявки ============ */
 .lead-card{padding:clamp(22px,2.6vw,32px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:0 40px 80px -48px rgba(0,0,0,.45);transition:background-color .4s,border-color .4s}
@@ -251,25 +219,23 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .step p{margin:0;max-width:30em;color:var(--text-2)}
 @media (max-width:860px){.steps{grid-template-columns:minmax(0,1fr);gap:44px}}
 
-.table-wrap{margin-top:clamp(44px,5vw,64px);overflow-x:auto;border-top:1px solid var(--line)}
-.compare{width:100%;min-width:720px;border-collapse:collapse;font-size:15px;line-height:1.5}
-.compare th,.compare td{padding:20px 20px 20px 0;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);transition:background-color .25s}
-.compare thead th{padding-top:24px;font:500 12px/1.3 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
-.compare tbody th{width:22%;font-weight:500;color:var(--text)}
-.compare td{width:26%;color:var(--text-2)}
-.compare .is-ando{padding-left:20px;background:var(--surface);color:var(--text)}
-.compare thead .is-ando{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
-.compare tbody tr:hover th,.compare tbody tr:hover td:not(.is-ando){background:var(--surface-2)}
 
-.cond{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:clamp(44px,5vw,64px);background:var(--line);border:1px solid var(--line)}
+.cond{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:clamp(44px,5vw,64px);background:var(--line);border:1px solid var(--line)}
 .cond-item{position:relative;display:grid;gap:10px;align-content:start;padding:clamp(22px,2.6vw,36px);background:var(--bg);transition:background-color .35s}
 .cond-item::before{content:"";position:absolute;left:0;top:0;width:100%;height:1px;background:var(--accent);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--ease)}
 .cond-item:hover{background:var(--surface)}
 .cond-item:hover::before{transform:scaleX(1)}
 .cond-item h3{margin:0;font:500 17px/1.35 var(--f-body)}
 .cond-item p{margin:0;font-size:15px;color:var(--text-2)}
-@media (max-width:860px){.cond{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:980px){.cond{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:560px){.cond{grid-template-columns:minmax(0,1fr)}}
+
+.channels{display:flex;flex-wrap:wrap;gap:12px;margin-top:clamp(36px,4vw,56px)}
+.channel{border-radius:360px}
+.channel .ico{width:18px;height:18px}
+.channel[aria-disabled="true"]{opacity:.5;cursor:default;pointer-events:none}
+.soon{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+@media (max-width:560px){.channel{flex:1 1 100%}}
 
 .faq-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px 72px;align-items:start}
 .faq-grid .section-titles{position:sticky;top:120px}
@@ -286,13 +252,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .faq details[open] .answer{animation:fade-up .5s var(--ease)}
 @media (max-width:860px){.faq-grid{grid-template-columns:minmax(0,1fr)}.faq-grid .section-titles{position:static}}
 
-.cta-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px clamp(40px,6vw,96px);align-items:start}
-.contacts{display:grid;gap:26px;margin-top:40px}
-.contact-phone{font:var(--display-weight) clamp(26px,2.8vw,38px)/1.1 var(--f-display);letter-spacing:var(--display-track);text-decoration:none;font-variant-numeric:tabular-nums;transition:color .2s}
-.contact-phone:hover{color:var(--accent)}
-.contact-row{display:flex;flex-wrap:wrap;gap:12px}
-.meta-list{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--text-2)}
-@media (max-width:860px){.cta-grid{grid-template-columns:minmax(0,1fr)}}
 
 .site-footer{padding-block:40px;border-top:1px solid var(--line);font-size:13px;color:var(--text-3)}
 .site-footer .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
@@ -309,7 +268,7 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 @keyframes fade-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .logo-wheel,.brand:hover .logo-wheel,.scroll-cue i::after,.stage.idle .glint i{animation:none}
+  .logo-wheel,.brand:hover .logo-wheel,.stage.idle .glint i{animation:none}
   .btn-primary,.btn-primary::before,.btn-primary::after,.btn-primary>.btn-label::before{animation:none}
 }
 </style>
@@ -333,9 +292,9 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       <span class="brand-sub">AUTO</span>
     </a>
     <nav class="nav" aria-label="Разделы">
-      <a href="#process">Как мы работаем</a>
-      <a href="#compare">Преимущества</a>
+      <a href="#process">Выкуп</a>
       <a href="#cars">Какие авто</a>
+      <a href="#stock">В продаже</a>
       <a href="#faq">Вопросы</a>
     </nav>
     <a class="header-phone" href="tel:+79890853177">+7 (989) 085-31-77</a>
@@ -346,7 +305,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       <svg class="i-moon" viewBox="0 0 20 20" aria-hidden="true"><path d="M16.5 12.4A7 7 0 0 1 7.6 3.5a7 7 0 1 0 8.9 8.9Z"/></svg>
       <svg class="i-sun" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.6"/><path d="M10 1.5V4M10 16v2.5M1.5 10H4M16 10h2.5M4 4l1.8 1.8M14.2 14.2 16 16M4 16l1.8-1.8M14.2 5.8 16 4"/></svg>
     </button>
-    <a class="btn btn-primary btn-sm header-cta" href="#hero-form"><span class="btn-label">Оценить авто</span></a>
   </div>
 </header>
 
@@ -377,7 +335,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       </div>
       <div class="stage-vignette"></div>
       <div class="stage-top"></div>
-      <a class="scroll-cue" href="#hero-content"><span>Листайте</span><i></i></a>
       <script>
       /* Сценарий: колесо крупным планом → камера отъезжает до всей машины, загораются фары →
          окно водителя, стекло опускается → голливудская улыбка и блик по очкам.
@@ -508,36 +465,25 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 
     <div class="wrap hero-body" id="hero-content">
       <div class="hero-center">
-        <a class="hero-pill" href="#cars" data-reveal>Берем авто после ДТП и не на ходу
-          <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
-        </a>
         <h1 class="hero-title" id="hero-title" data-reveal style="--d:.05s">
           <span class="hero-line">Срочный выкуп</span>
           <span class="rotator" aria-hidden="true">&nbsp;<span class="rot-word is-first">авто</span><span class="rot-word">за 1 день</span><span class="rot-word">без торга</span><span class="rot-word">наличными</span><span class="rot-word">с выездом</span></span>
           <span class="sr-only">авто</span>
         </h1>
-        <p class="lead hero-lead" data-reveal style="--d:.1s">Оценим автомобиль за 15 минут, приедем туда, где удобно вам, и рассчитаемся в день сделки. Наличными или на карту, без торга и скрытых удержаний.</p>
+        <p class="lead hero-lead" data-reveal style="--d:.1s">Выкупаем машины у владельцев и продаем проверенные из наличия.</p>
         <div class="hero-cta" data-reveal style="--d:.2s">
-          <a class="btn btn-primary" href="#hero-form"><span class="btn-label">Оценить авто
+          <a class="btn btn-primary" href="#sell"><span class="btn-label">Продать авто
             <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg></span></a>
-          <span class="hero-or">или</span>
-          <button class="btn btn-ghost" type="button" id="callback-open" aria-haspopup="dialog">Заказать звонок
-            <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h2.6l1.3 3.6-1.8 1.2a9 9 0 0 0 5.1 5.1l1.2-1.8 3.6 1.3v2.6a1.7 1.7 0 0 1-1.8 1.7A14.3 14.3 0 0 1 3.8 4.3 1.7 1.7 0 0 1 5.5 2.5Z"/></svg>
-          </button>
+          <a class="btn btn-ghost" href="#stock">Машины в продаже</a>
         </div>
-        <ul class="trust trust-row" data-reveal style="--d:.3s">
-          <li>Официальный договор купли-продажи</li>
-          <li>Проверка по базам ГИБДД и реестру залогов</li>
-          <li>Выезд эксперта бесплатно</li>
-        </ul>
       </div>
 
-      <div class="lead-card hero-form-card" id="hero-form" data-reveal style="--d:.15s">
+      <div class="lead-card hero-form-card" id="sell" data-reveal style="--d:.15s">
         <form class="lead-form" id="form-hero" novalidate>
-          <h2 class="card-title">Узнайте цену за 15 минут</h2>
+          <h2 class="card-title">Продать автомобиль</h2>
           <div class="form-row">
             <div class="field">
-              <label class="label" for="hero-model">Марка, модель, год</label>
+              <label class="label" for="hero-model">Марка и модель</label>
               <input class="input" id="hero-model" name="model" autocomplete="off" placeholder="Например, Mercedes E 200, 2019">
               <span class="err" aria-live="polite"></span>
             </div>
@@ -547,93 +493,51 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
               <span class="err" aria-live="polite"></span>
             </div>
             <button class="btn btn-primary" type="submit">
-              <span class="btn-label">Получить оценку
-              <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg></span>
+              <span class="btn-label">Заказать звонок
+              <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h2.6l1.3 3.6-1.8 1.2a9 9 0 0 0 5.1 5.1l1.2-1.8 3.6 1.3v2.6a1.7 1.7 0 0 1-1.8 1.7A14.3 14.3 0 0 1 3.8 4.3 1.7 1.7 0 0 1 5.5 2.5Z"/></svg></span>
             </button>
           </div>
-          <p class="form-note">Оценка бесплатна и ни к чему не обязывает. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
+          <p class="form-note">Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
         </form>
-          <div class="done" hidden tabindex="-1">
-            <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
-            <h3>Заявка принята</h3>
-            <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
-            <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
-          </div>
-      </div>
-
-      <div class="facts">
-        <div class="fact" data-reveal data-count><b data-to="15" data-suffix=" мин">15 мин</b><span>на предварительную оценку</span></div>
-        <div class="fact" data-reveal data-count style="--d:.1s"><b data-to="40" data-suffix=" мин">40 мин</b><span>на осмотр и диагностику</span></div>
-        <div class="fact" data-reveal data-count style="--d:.2s"><b data-to="1" data-from="7" data-suffix=" день">1 день</b><span>от звонка до денег на руках</span></div>
-        <div class="fact" data-reveal data-count style="--d:.3s"><b data-to="0" data-from="5000" data-suffix=" ₽">0 ₽</b><span>комиссий и платы за выезд</span></div>
+        <div class="done" hidden tabindex="-1">
+          <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
+          <h3>Заявка принята</h3>
+          <p>Перезвоним на <span data-done-phone></span>.</p>
+          <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
+        </div>
       </div>
     </div>
   </section>
 
   <section class="section" id="process" aria-labelledby="process-title">
     <div class="wrap">
-      <div class="section-head" data-reveal>
-        <div class="section-titles">
-          <p class="eyebrow">Как мы работаем</p>
-          <h2 class="display" id="process-title">Три шага. Один день.</h2>
-        </div>
-        <p class="lead">Проверку, документы и оформление мы берем на себя. От вас нужны только автомобиль и документы на него.</p>
+      <div class="section-titles" data-reveal>
+        <p class="eyebrow">Выкуп</p>
+        <h2 class="display" id="process-title">Три шага. Один день.</h2>
       </div>
       <ol class="steps">
         <li class="step" data-reveal>
           <span class="step-time">≈ 15 минут</span>
           <span class="step-rail"></span>
           <span class="step-no">01</span>
-          <h3>Заявка и оценка</h3>
-          <p>Оставьте марку, модель и телефон. Эксперт перезвонит, уточнит детали и назовет предварительную цену по актуальному рынку.</p>
+          <h3>Звонок</h3>
+          <p>Эксперт уточнит комплектацию и состояние и назовет предварительную цену.</p>
         </li>
         <li class="step" data-reveal style="--d:.15s">
           <span class="step-time">≈ 40 минут</span>
           <span class="step-rail"></span>
           <span class="step-no">02</span>
           <h3>Осмотр</h3>
-          <p>Приедем домой, в офис или на парковку. Проверим кузов толщиномером, проведем диагностику и сверим автомобиль по базам ГИБДД и реестру залогов.</p>
+          <p>Приедем домой, в офис или на парковку. Проверим кузов, проведем диагностику и сверим машину по базам ГИБДД и реестру залогов.</p>
         </li>
         <li class="step" data-reveal style="--d:.3s">
           <span class="step-time">В тот же день</span>
           <span class="step-rail"></span>
           <span class="step-no">03</span>
-          <h3>Сделка и расчет</h3>
-          <p>Подписываем договор купли-продажи и сразу рассчитываемся, наличными или переводом. Регистрацию берем на себя.</p>
+          <h3>Сделка</h3>
+          <p>Подписываем договор и сразу рассчитываемся, наличными или переводом. Регистрацию берем на себя.</p>
         </li>
       </ol>
-    </div>
-  </section>
-
-  <section class="section" id="compare" aria-labelledby="compare-title">
-    <div class="wrap">
-      <div class="section-head" data-reveal>
-        <div class="section-titles">
-          <p class="eyebrow">Преимущества</p>
-          <h2 class="display" id="compare-title">Почему выбирают ANDO AUTO</h2>
-        </div>
-        <p class="lead">Частное объявление отнимает недели звонков и торга. Трейд-ин быстрый, но ниже рынка. Мы объединили скорость сделки и честную цену.</p>
-      </div>
-      <div class="table-wrap" role="region" aria-labelledby="compare-title" tabindex="0" data-reveal style="--d:.1s">
-        <table class="compare">
-          <thead>
-            <tr>
-              <th scope="col"><span class="sr-only">Параметр</span></th>
-              <th scope="col">Частное объявление</th>
-              <th scope="col">Трейд-ин у дилера</th>
-              <th scope="col" class="is-ando">ANDO AUTO</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><th scope="row">Срок продажи</th><td>От нескольких недель до месяцев</td><td>1–2 дня</td><td class="is-ando">1 день</td></tr>
-            <tr><th scope="row">Итоговая цена</th><td>Рыночная, минус торг на осмотре</td><td>Ниже рынка, в зачет нового автомобиля</td><td class="is-ando">Фиксируется после осмотра и не меняется</td></tr>
-            <tr><th scope="row">Звонки и показы</th><td>Десятки звонков и показов незнакомым людям</td><td>Не нужны</td><td class="is-ando">Один звонок эксперта</td></tr>
-            <tr><th scope="row">Автомобиль в кредите</th><td>Покупатели чаще отказываются</td><td>Зависит от дилера</td><td class="is-ando">Выкупаем и сами закрываем долг перед банком</td></tr>
-            <tr><th scope="row">Документы</th><td>Готовите сами</td><td>Готовит дилер</td><td class="is-ando">Договор и регистрацию берем на себя</td></tr>
-            <tr><th scope="row">Расчет</th><td>Как договоритесь с покупателем</td><td>Зачет в стоимость нового автомобиля</td><td class="is-ando">Наличными или на карту в день сделки</td></tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   </section>
 
@@ -641,18 +545,34 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
     <div class="wrap">
       <div class="section-head" data-reveal>
         <div class="section-titles">
-          <p class="eyebrow">Какие автомобили мы выкупаем</p>
+          <p class="eyebrow">Какие авто выкупаем</p>
           <h2 class="display" id="cars-title">Любой автомобиль. Любая история.</h2>
         </div>
-        <p class="lead">Состояние влияет на цену, но не на наше решение. Если автомобиль можно законно оформить, мы его выкупим.</p>
+        <p class="lead">Состояние влияет на цену, но не на наше решение. Если машину можно законно оформить, мы ее выкупим.</p>
       </div>
       <div class="cond">
         <div class="cond-item" data-reveal><h3>В кредите или в залоге</h3><p>Закроем долг перед банком напрямую, разницу выплатим вам.</p></div>
-        <div class="cond-item" data-reveal style="--d:.08s"><h3>После ДТП</h3><p>Оценим с учетом ремонта, без скрытых вычетов на сделке.</p></div>
+        <div class="cond-item" data-reveal style="--d:.08s"><h3>После ДТП</h3><p>Оценим с учетом ремонта, без скрытых вычетов.</p></div>
         <div class="cond-item" data-reveal style="--d:.16s"><h3>Не на ходу</h3><p>Заберем на эвакуаторе за наш счет.</p></div>
-        <div class="cond-item" data-reveal style="--d:.08s"><h3>С большим пробегом</h3><p>Пробег учитываем в цене, но не отказываем из-за него.</p></div>
-        <div class="cond-item" data-reveal style="--d:.16s"><h3>Любой марки и года</h3><p>От городских седанов до премиальных внедорожников.</p></div>
-        <div class="cond-item" data-reveal style="--d:.24s"><h3>Когда деньги нужны сегодня</h3><p>Приедем в день обращения и рассчитаемся на месте.</p></div>
+        <div class="cond-item" data-reveal style="--d:.24s"><h3>С большим пробегом</h3><p>Учтем пробег в цене, но не откажем из-за него.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="stock" aria-labelledby="stock-title">
+    <div class="wrap">
+      <div class="section-head" data-reveal>
+        <div class="section-titles">
+          <p class="eyebrow">Продажа</p>
+          <h2 class="display" id="stock-title">Машины в продаже</h2>
+        </div>
+        <p class="lead">Каталог с фото, ценами и фильтрами ведем в каналах. Выбирайте, где вам удобнее.</p>
+      </div>
+      <div class="channels" data-reveal style="--d:.1s">
+        <!-- Когда появятся каналы в Telegram и VK: вставьте ссылку в href, уберите aria-disabled, title и «скоро» -->
+        <a class="btn btn-ghost channel" aria-disabled="true" title="Канал скоро откроется"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M17.5 3.5 2.5 9.3l5 1.9 1.9 5.3 2.8-3.4 3.7 2.8 1.6-12.4ZM7.5 11.2l7.3-5.4-5.4 6.9"/></svg>Telegram <span class="soon">скоро</span></a>
+        <a class="btn btn-primary channel" href="https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E" target="_blank" rel="noopener"><span class="btn-label"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.4s-3.1 6.4-7.5 6.4c-.9 0-1.8-.1-2.6-.4L3.5 17l1.1-3.4C3.3 12.5 2.5 11 2.5 9.4 2.5 5.9 5.6 3 10 3Z"/></svg>MAX</span></a>
+        <a class="btn btn-ghost channel" aria-disabled="true" title="Канал скоро откроется"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="2.5" width="15" height="15" rx="4"/><path d="M5.5 7c.4 3.6 2.4 6 5.5 6V10.6c1.2.2 2.1 1.1 2.5 2.4M11 10.6c1-.2 2-1.2 2.4-3.1M8.8 7v5"/></svg>ВКонтакте <span class="soon">скоро</span></a>
       </div>
     </div>
   </section>
@@ -666,93 +586,20 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       <div class="faq" data-reveal style="--d:.1s">
         <details>
           <summary>Как формируется цена?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Мы анализируем реальные сделки и актуальные предложения по вашей модели, учитываем комплектацию, пробег и состояние. Цену называем до встречи и прозрачно объясняем, из чего она складывается.</p>
+          <p class="answer">Смотрим реальные сделки и актуальные предложения по вашей модели, учитываем комплектацию, пробег и состояние. Объясняем, из чего складывается сумма.</p>
         </details>
         <details>
           <summary>Может ли цена измениться после осмотра?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Предварительная оценка строится по вашему описанию. После осмотра эксперт называет окончательную сумму, и на сделке она уже не меняется.</p>
-        </details>
-        <details>
-          <summary>Как я получу деньги?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Наличными в момент подписания договора или переводом на карту. Способ выбираете вы.</p>
+          <p class="answer">Предварительная цена строится по вашему описанию. После осмотра эксперт называет окончательную сумму, и на сделке она уже не меняется.</p>
         </details>
         <details>
           <summary>Какие документы понадобятся?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Паспорт собственника, СТС, ПТС (бумажный или электронный) и все комплекты ключей. Если автомобиль в залоге, возьмите кредитный договор.</p>
+          <p class="answer">Паспорт собственника, СТС, ПТС (бумажный или электронный) и все комплекты ключей. Если машина в залоге, возьмите кредитный договор.</p>
         </details>
         <details>
-          <summary>Можно ли продать автомобиль в кредите?<span class="plus" aria-hidden="true"></span></summary>
-          <p class="answer">Да. Мы гасим остаток долга напрямую банку, снимаем обременение и выплачиваем вам разницу.</p>
+          <summary>Можно ли посмотреть машину перед покупкой?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Да. Выберите автомобиль в каталоге и напишите нам: договоримся о показе и тест-драйве.</p>
         </details>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="lead" aria-labelledby="lead-title">
-    <div class="wrap cta-grid">
-      <div data-reveal>
-        <div class="section-titles">
-          <p class="eyebrow">Оценка</p>
-          <h2 class="display" id="lead-title">Узнайте стоимость вашего автомобиля сегодня</h2>
-          <p class="lead">Оставьте заявку, позвоните или напишите в MAX. Эксперт свяжется с вами в течение 15 минут.</p>
-        </div>
-        <div class="contacts">
-          <a class="contact-phone" href="tel:+79890853177">+7 (989) 085-31-77</a>
-          <div class="contact-row">
-            <a class="btn btn-primary btn-sm" href="https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E" target="_blank" rel="noopener">
-              <span class="btn-label"><svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3c4.4 0 7.5 2.9 7.5 6.4s-3.1 6.4-7.5 6.4c-.9 0-1.8-.1-2.6-.4L3.5 17l1.1-3.4C3.3 12.5 2.5 11 2.5 9.4 2.5 5.9 5.6 3 10 3Z"/></svg>
-              Написать в MAX</span>
-            </a>
-            <!-- Telegram добавим, когда будет ссылка -->
-          </div>
-          <!-- Уточните часы работы и зону выезда -->
-          <ul class="meta-list">
-            <li>Ежедневно, 9:00–21:00</li>
-            <li>Выезд эксперта по городу и области</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="lead-card" data-reveal style="--d:.15s">
-        <form class="lead-form" id="form-final" novalidate>
-          <h3 class="card-title">Заявка на выкуп</h3>
-          <p class="card-sub">Чем подробнее данные, тем точнее предварительная оценка.</p>
-          <div class="form-grid">
-            <div class="field span-2">
-              <label class="label" for="final-model">Марка и модель</label>
-              <input class="input" id="final-model" name="model" autocomplete="off" placeholder="Например, BMW X5">
-              <span class="err" aria-live="polite"></span>
-            </div>
-            <div class="field">
-              <label class="label" for="final-year">Год выпуска</label>
-              <input class="input" id="final-year" name="year" inputmode="numeric" autocomplete="off" placeholder="2020" data-year>
-              <span class="err" aria-live="polite"></span>
-            </div>
-            <div class="field">
-              <label class="label" for="final-mileage">Пробег, км</label>
-              <input class="input" id="final-mileage" name="mileage" inputmode="numeric" autocomplete="off" placeholder="85 000" data-mileage>
-              <span class="err" aria-live="polite"></span>
-            </div>
-            <div class="field span-2">
-              <label class="label" for="final-phone">Телефон</label>
-              <input class="input" id="final-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
-              <span class="err" aria-live="polite"></span>
-            </div>
-            <div class="span-2">
-              <button class="btn btn-primary btn-block" type="submit">
-                <span class="btn-label">Отправить заявку
-                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg></span>
-              </button>
-            </div>
-            <p class="form-note span-2">Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
-          </div>
-        </form>
-        <div class="done" hidden tabindex="-1">
-          <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
-          <h3>Заявка принята</h3>
-          <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
-          <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
-        </div>
       </div>
     </div>
   </section>
@@ -783,32 +630,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
   </div>
 </footer>
 
-<dialog class="callback" id="callback" aria-labelledby="callback-title">
-  <div class="lead-card">
-    <button class="icon-btn callback-close" type="button" data-close aria-label="Закрыть">
-      <svg viewBox="0 0 14 14" aria-hidden="true"><path d="M1 1l12 12M13 1 1 13"/></svg>
-    </button>
-    <form class="lead-form" id="form-callback" novalidate>
-      <h2 class="card-title" id="callback-title">Перезвоним за 15 минут</h2>
-      <p class="card-sub">Оставьте номер: эксперт позвонит и ответит на вопросы о выкупе.</p>
-      <div class="form-stack">
-        <div class="field">
-          <label class="label" for="cb-phone">Телефон</label>
-          <input class="input" id="cb-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
-          <span class="err" aria-live="polite"></span>
-        </div>
-        <button class="btn btn-primary btn-block" type="submit"><span class="btn-label">Перезвоните мне</span></button>
-        <p class="form-note">Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>. Или позвоните сами: <a href="tel:+79890853177">+7 (989) 085-31-77</a></p>
-      </div>
-    </form>
-    <div class="done" hidden tabindex="-1">
-      <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
-      <h3>Заявка принята</h3>
-      <p>Перезвоним на <span data-done-phone></span> в течение 15 минут.</p>
-      <button class="linkish" type="button" data-close>Закрыть</button>
-    </div>
-  </div>
-</dialog>
 
 <script>
 (function () {
@@ -846,29 +667,13 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  /* ---------- Появление блоков и счетчики ---------- */
-  function fmt(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' '); }
-  function countUp(box) {
-    var b = box.querySelector('b[data-to]');
-    if (!b) return;
-    var to = +b.getAttribute('data-to'), from = +(b.getAttribute('data-from') || 0), suffix = b.getAttribute('data-suffix') || '';
-    var t0 = 0, dur = 1600;
-    b.textContent = fmt(from) + suffix;
-    function step(now) {
-      if (!t0) t0 = now;
-      var p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3);
-      b.textContent = fmt(Math.round(from + (to - from) * e)) + suffix;
-      if (p < 1) requestAnimationFrame(step);
-    }
-    setTimeout(function () { requestAnimationFrame(step); }, 250);
-  }
+  /* ---------- Появление блоков ---------- */
   if (root.classList.contains('js')) {
     var io = new IntersectionObserver(function (entries) {
       entries.forEach(function (en) {
         if (!en.isIntersecting) return;
         en.target.classList.add('in');
         io.unobserve(en.target);
-        if (en.target.hasAttribute('data-count')) countUp(en.target);
       });
     }, { rootMargin: '0px 0px -8% 0px', threshold: .12 });
     Array.prototype.forEach.call(document.querySelectorAll('[data-reveal]'), function (el) { io.observe(el); });
@@ -948,17 +753,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
     });
   });
 
-  /* Год и пробег */
-  document.querySelectorAll('[data-year]').forEach(function (el) {
-    el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, '').slice(0, 4); });
-  });
-  document.querySelectorAll('[data-mileage]').forEach(function (el) {
-    el.addEventListener('input', function () {
-      var d = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 7);
-      el.value = d.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-    });
-  });
-
   /* ---------- Отправка ---------- */
   function setError(input, msg) {
     var field = input.closest('.field');
@@ -970,9 +764,6 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
   }
   function checkPhone(input) {
     return setError(input, phoneDigits(input.value).length === 11 ? '' : 'Введите номер полностью: +7 и 10 цифр');
-  }
-  function checkModel(input) {
-    return setError(input, input.value.trim().length >= 2 ? '' : 'Укажите марку и модель');
   }
 
   function sendLead(data) {
@@ -1016,65 +807,9 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
   var hModel = document.getElementById('hero-model');
   var hPhone = document.getElementById('hero-phone');
   submitWith(document.getElementById('form-hero'), function () {
-    var bad = null;
-    if (!checkModel(hModel)) bad = bad || hModel;
-    if (!checkPhone(hPhone)) bad = bad || hPhone;
-    return bad;
+    return checkPhone(hPhone) ? null : hPhone;
   }, function () {
     return { source: 'hero', model: hModel.value.trim(), phone: hPhone.value };
-  });
-
-  var fModel = document.getElementById('final-model');
-  var fYear = document.getElementById('final-year');
-  var fMileage = document.getElementById('final-mileage');
-  var fPhone = document.getElementById('final-phone');
-  submitWith(document.getElementById('form-final'), function () {
-    var bad = null;
-    var year = parseInt(fYear.value, 10);
-    var maxYear = new Date().getFullYear() + 1;
-    if (!checkModel(fModel)) bad = bad || fModel;
-    if (!setError(fYear, (!fYear.value || (year >= 1960 && year <= maxYear)) ? '' : 'Год от 1960 до ' + maxYear)) bad = bad || fYear;
-    if (!checkPhone(fPhone)) bad = bad || fPhone;
-    return bad;
-  }, function () {
-    return {
-      source: 'final',
-      model: fModel.value.trim(),
-      year: fYear.value,
-      mileage: fMileage.value.replace(/\D/g, ''),
-      phone: fPhone.value
-    };
-  });
-
-  /* ---------- Заказ звонка ---------- */
-  var cbDialog = document.getElementById('callback');
-  var cbForm = document.getElementById('form-callback');
-  var cbPhone = document.getElementById('cb-phone');
-  document.getElementById('callback-open').addEventListener('click', function () {
-    if (!cbDialog.showModal) {
-      /* Браузер без окон: ведем к форме на странице */
-      location.hash = 'hero-form';
-      hPhone.focus();
-      return;
-    }
-    var done = cbDialog.querySelector('.done');
-    if (!done.hidden) {
-      cbForm.reset();
-      done.hidden = true;
-      cbForm.hidden = false;
-      cbForm.querySelector('[type="submit"]').disabled = false;
-    }
-    cbDialog.showModal();
-    cbPhone.focus();
-  });
-  cbDialog.addEventListener('click', function (e) {
-    /* Закрываем по крестику, по клику мимо карточки и при переходе по ссылке-якорю */
-    if (e.target === cbDialog || e.target.closest('[data-close]') || e.target.closest('a[href^="#"]')) cbDialog.close();
-  });
-  submitWith(cbForm, function () {
-    return checkPhone(cbPhone) ? null : cbPhone;
-  }, function () {
-    return { source: 'callback', phone: cbPhone.value };
   });
 
   /* Снимаем ошибку, как только поле исправлено */
