@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Хронология ANDO AUTO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<style>
+/* Фирменная темная тема ANDO AUTO: страница намеренно одна, темная, как сайт по умолчанию */
+:root{
+  color-scheme:dark;
+  --bg:#0E0F11;
+  --text:#ECEAE4;
+  --muted:#A9ACB2;
+  --line:rgba(236,234,228,.14);
+  --accent:#C8AD7F;
+  --display:'Unbounded','Arial Black',Arial,sans-serif;
+  --body:'Onest','Helvetica Neue',Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased}
+main{overflow-x:clip}
+h1,h2,h4,p{margin:0}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+/* ---------- Вступление ---------- */
+.lead{padding-block:clamp(72px,14vh,160px) clamp(56px,10vh,112px);padding-inline:max(16px,5vw);display:grid;gap:clamp(20px,3vw,36px)}
+.eyebrow{font-size:13px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+.lead h1{font-family:var(--display);font-weight:600;font-size:clamp(34px,6vw,88px);line-height:1.02;letter-spacing:-.02em;max-width:14ch;text-wrap:balance}
+.lede{max-width:52ch;font-size:clamp(17px,1.4vw,21px);line-height:1.5;color:var(--muted)}
+.stats{list-style:none;margin:0;padding:clamp(20px,2.4vw,32px) 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(16px,3vw,48px);max-width:1100px}
+.stats li{display:grid;gap:8px}
+.stats span{font-size:14px;color:var(--muted)}
+.stats b{font-family:var(--display);font-weight:500;font-size:clamp(20px,2.2vw,32px);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.cue{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.cue svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+@media (max-width:700px){.stats{grid-template-columns:1fr}}
+
+/* ---------- Хронология: секция закреплена, дорожка едет вбок ---------- */
+.journey{position:relative;width:100%;height:200vw;background:var(--bg);color:var(--text)}
+.journey__pin{position:sticky;top:0;height:100vh;width:100%;padding-top:10%;overflow:hidden}
+.journey__track{flex-shrink:0;margin-right:2vw;display:flex;height:30vw;width:240vw;align-items:center;gap:5vw;padding:0 5vw}
+@media (min-width:601px){.journey__pin{display:flex;align-items:center;padding-top:0}}
+.journey__photo{height:100%;width:30vw;overflow:hidden;border-radius:1vw}
+.journey__photo img{display:block;width:100%;height:100%;max-width:none;object-fit:cover}
+.journey__board{position:relative;height:100%;width:100%}
+.journey__axis{position:absolute;left:0;top:49%;width:100%;display:flex;align-items:center}
+.axis-dot{height:.8vw;width:.8vw;border-radius:9999px;background:var(--accent)}
+.journey-line{height:1px;width:0%;border-radius:9999px;background:var(--accent)}
+.journey__half{display:flex;height:50%;width:100%;align-items:center;justify-content:flex-start}
+.journey__half--top{gap:.5vw}
+.journey__title-col{height:100%;width:20%;padding-top:2vw}
+.journey__title{width:65%;font-family:var(--display);font-weight:500;font-size:3vw;line-height:.95;letter-spacing:-.02em}
+.journey__row{width:100%;display:flex;height:100%}
+.journey__row--top{column-gap:15vw}
+.journey__row--bottom{column-gap:20vw;margin-left:7vw}
+.journey__period-col{width:34%;padding-top:2vw;height:100%}
+.journey__period{font-size:1.65vw;line-height:1;color:var(--muted)}
+.item{position:relative;height:100%;padding:0 3vw}
+.item--top{width:30vw}
+.item--bottom{width:25vw}
+.item__rail{position:absolute;left:0;top:0;bottom:0;width:100%;height:100%}
+.item__rail--bottom{top:auto;bottom:-1%}
+.item__dot{position:relative;width:1vw;height:1vw;margin-left:-.5vw;border-radius:50%;background:var(--accent)}
+.item__stem{height:94%;width:1px;border-radius:9999px;background:var(--accent)}
+.item__text{display:flex;flex-direction:column;gap:1vw}
+.item__text--top{margin-top:-1vw}
+.item__text--bottom{height:100%;width:100%;justify-content:flex-end}
+.item__when{font-weight:500;font-size:2.5vw;line-height:1}
+.item__what{width:90%;font-size:1.5vw;line-height:1.15;color:var(--muted)}
+
+@media (max-width:600px){
+  .journey{height:400vh}
+  .journey__pin{top:5%}
+  .journey__track{height:80vh;width:800vw;padding:0 7vw}
+  .journey__photo{height:65vw;width:85vw;border-radius:5vw}
+  .axis-dot{height:2vw;width:2vw}
+  .journey__title-col{height:fit-content;padding-top:5vw}
+  .journey__title{font-size:8.5vw}
+  .journey__row--top{column-gap:40vw}
+  .journey__row--bottom{column-gap:40vw;margin-left:7vw}
+  .journey__period-col{padding-top:5vw;width:30%}
+  .journey__period{font-size:4.2vw}
+  .item--top{display:flex;flex-direction:column;width:70vw;padding:0 7vw}
+  .item--bottom{width:70vw;padding:0 7vw}
+  .item__rail--bottom .item__stem{height:100%}
+  .item__dot{width:2.5vw;height:2.5vw;margin-left:-1.25vw}
+  .item__text--top{margin-top:-2vw}
+  .item__when{font-size:6.4vw}
+  .item__what{font-size:4.8vw}
+}
+
+/* Без GSAP хронология остается видимой: дорожку можно пролистать пальцем */
+.no-gsap .journey{height:auto}
+.no-gsap .journey__pin{position:static;height:auto;overflow-x:auto;padding-block:48px}
+.no-gsap .journey-line{width:98%}
+
+/* ---------- Итог ---------- */
+.outro{padding-block:clamp(72px,12vh,140px);padding-inline:max(16px,5vw);display:grid;gap:clamp(18px,2.4vw,28px);border-top:1px solid var(--line)}
+.outro h2{font-family:var(--display);font-weight:600;font-size:clamp(28px,4.4vw,64px);line-height:1.05;letter-spacing:-.02em;max-width:18ch;text-wrap:balance}
+.outro p{max-width:52ch;font-size:clamp(17px,1.4vw,21px);line-height:1.5;color:var(--muted)}
+.contacts{display:flex;flex-wrap:wrap;align-items:baseline;gap:12px 32px;padding-top:8px}
+.phone{font-family:var(--display);font-weight:500;font-size:clamp(20px,2vw,28px);font-variant-numeric:tabular-nums;user-select:all}
+.contacts a{font-size:18px;text-underline-offset:4px}
+
+@media (prefers-reduced-motion:reduce){.cue svg{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <section class="lead" aria-labelledby="lead-title">
+    <p class="eyebrow">ANDO AUTO · план для инвестора</p>
+    <h1 id="lead-title">Как будет расти ANDO AUTO</h1>
+    <p class="lede">Первый год по месяцам: от пилота на четырех машинах до 20 сделок в месяц. Цифры те же, что в плане для инвестора.</p>
+    <ul class="stats">
+      <li><span>Машин в обороте</span><b>4 → 8 → 14</b></li>
+      <li><span>Сделок в месяц</span><b>4 → 10 → 20</b></li>
+      <li><span>Дней до продажи</span><b>30 → 25 → 21</b></li>
+    </ul>
+    <p class="cue"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v11M3.5 8.5 8 13l4.5-4.5"/></svg>Листайте вниз: этапы откроются по очереди</p>
+  </section>
+
+  <section class="journey" id="journey" aria-label="Хронология роста с октября 2026 по сентябрь 2027">
+    <div class="journey__pin">
+      <div class="journey__track" id="journey-track">
+        <div class="journey__photo">
+          <img src="assets/hero/smile.webp" alt="Водитель в черных очках улыбается из окна Mercedes" width="1600" height="1200" draggable="false">
+        </div>
+
+        <div class="journey__board">
+          <div class="journey__axis" aria-hidden="true">
+            <div class="axis-dot"></div>
+            <div class="journey-line"></div>
+            <div class="axis-dot"></div>
+          </div>
+
+          <div class="journey__half journey__half--top">
+            <div class="journey__title-col">
+              <h2 class="journey__title">Хронология роста</h2>
+            </div>
+            <div class="journey__row journey__row--top">
+              <div class="item item--top" data-item="m1">
+                <div class="item__rail" aria-hidden="true"><div class="item__dot"></div><div class="item__stem"></div></div>
+                <div class="item__text item__text--top">
+                  <h4 class="item__when">Октябрь 2026</h4>
+                  <p class="item__what">Старт: 4 машины в обороте, объявления на Авито, Дроме и Авто.ру</p>
+                </div>
+              </div>
+              <div class="item item--top" data-item="m3">
+                <div class="item__rail" aria-hidden="true"><div class="item__dot"></div><div class="item__stem"></div></div>
+                <div class="item__text item__text--top">
+                  <h4 class="item__when">Декабрь 2026</h4>
+                  <p class="item__what">Итог пилота: 10+ сделок, продажа до 30 дней, маржа от 7%</p>
+                </div>
+              </div>
+              <div class="item item--top" data-item="m5">
+                <div class="item__rail" aria-hidden="true"><div class="item__dot"></div><div class="item__stem"></div></div>
+                <div class="item__text item__text--top">
+                  <h4 class="item__when">Март 2027</h4>
+                  <p class="item__what">8 машин в обороте, 10 сделок в месяц, партнеры: СТО и эвакуаторы</p>
+                </div>
+              </div>
+              <div class="item item--top" data-item="m7">
+                <div class="item__rail" aria-hidden="true"><div class="item__dot"></div><div class="item__stem"></div></div>
+                <div class="item__text item__text--top">
+                  <h4 class="item__when">Сентябрь 2027</h4>
+                  <p class="item__what">20 сделок в месяц, продажа до 21 дня, 40% заявок не с площадок</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="journey__half">
+            <div class="journey__period-col">
+              <p class="journey__period">Октябрь 2026 — сентябрь 2027</p>
+            </div>
+            <div class="journey__row journey__row--bottom">
+              <div class="item item--bottom" data-item="m2">
+                <div class="item__rail item__rail--bottom" aria-hidden="true"><div class="item__stem"></div><div class="item__dot"></div></div>
+                <div class="item__text item__text--bottom">
+                  <h4 class="item__when">Ноябрь 2026</h4>
+                  <p class="item__what">Первые сделки и отчет по каждой машине, карточки на Картах и 2ГИС</p>
+                </div>
+              </div>
+              <div class="item item--bottom" data-item="m4">
+                <div class="item__rail item__rail--bottom" aria-hidden="true"><div class="item__stem"></div><div class="item__dot"></div></div>
+                <div class="item__text item__text--bottom">
+                  <h4 class="item__when">Январь 2027</h4>
+                  <p class="item__what">Второй транш и мини-приложение с каталогом в Telegram и MAX</p>
+                </div>
+              </div>
+              <div class="item item--bottom" data-item="m6">
+                <div class="item__rail item__rail--bottom" aria-hidden="true"><div class="item__stem"></div><div class="item__dot"></div></div>
+                <div class="item__text item__text--bottom">
+                  <h4 class="item__when">Июнь 2027</h4>
+                  <p class="item__what">Третий транш: до 14 машин, второй менеджер, продажа на комиссии</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="outro" aria-labelledby="outro-title">
+    <p class="eyebrow">Итог первого года</p>
+    <h2 id="outro-title">20 сделок в месяц к сентябрю 2027</h2>
+    <p>14 машин в обороте, срок продажи до 21 дня. Каждый следующий транш — только после выполненных целей предыдущего этапа.</p>
+    <div class="contacts">
+      <span class="phone">+7 (989) 085-31-77</span>
+      <a href="https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E" target="_blank" rel="noopener">Написать в MAX</a>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script>
+/* Та же механика, что у компонента Timeline: секция закреплена, дорожка едет влево,
+   ось прорисовывается, у каждого этапа вырастает стебель, появляется точка и выезжают строки текста */
+(function () {
+  var root = document.documentElement;
+  if (!window.gsap || !window.ScrollTrigger || !window.SplitText) { root.classList.add('no-gsap'); return; }
+  gsap.registerPlugin(ScrollTrigger, SplitText);
+
+  var section = document.getElementById('journey');
+  var track = document.getElementById('journey-track');
+  var order = ['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7'];
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var D = 1.4; /* длительность появления этапа, как duration у компонента */
+
+  function init() {
+    var mobile = window.innerWidth < 600;
+
+    gsap.timeline({
+      scrollTrigger: { trigger: section, start: 'top top', end: mobile ? '82% 50%' : '92% bottom', scrub: true },
+      defaults: { ease: 'none' }
+    }).fromTo(track, { xPercent: 0 }, { xPercent: mobile ? -57 : -65 });
+
+    var lineWidth = mobile ? '65%' : '98%';
+    if (reduce) { gsap.set('.journey-line', { width: lineWidth }); return; }
+
+    gsap.fromTo('.journey-line', { width: '0%' }, {
+      width: lineWidth, ease: 'none',
+      scrollTrigger: { trigger: section, start: mobile ? 'top 30%' : 'top 25%', end: mobile ? '80% 50%' : '92% bottom', scrub: true }
+    });
+
+    var pos = mobile
+      ? [[22, 32], [28, 38], [36, 46], [45, 55], [52, 62], [60, 70], [69, 79]]
+      : [[6, 26], [16, 36], [26, 46], [35, 55], [45, 65], [55, 75], [65, 85]];
+
+    order.forEach(function (id, i) {
+      var item = section.querySelector('[data-item="' + id + '"]');
+      var stem = item.querySelector('.item__stem');
+      var dot = item.querySelector('.item__dot');
+      var isTop = item.classList.contains('item--top');
+      var when = new SplitText(item.querySelector('.item__when'), { type: 'lines', mask: 'lines' });
+      var what = new SplitText(item.querySelector('.item__what'), { type: 'lines', mask: 'lines' });
+
+      gsap.set(stem, { scaleY: 0, transformOrigin: isTop ? '50% 100%' : '50% 0%' });
+      gsap.set(dot, { scale: 0 });
+
+      gsap.timeline({
+        scrollTrigger: { trigger: section, start: pos[i][0] + '% 30%', end: pos[i][1] + '% 50%', scrub: true }
+      })
+        .to(stem, { scaleY: 1, duration: D * 0.4 })
+        .to(dot, { scale: 1, duration: D * 0.4 }, '<')
+        .fromTo(when.lines, { y: 100 }, { y: 0, delay: -0.8 * D, duration: D, stagger: 0.02, ease: 'power2.out' })
+        .fromTo(what.lines, { y: 100 }, { y: 0, duration: D, stagger: 0.02, ease: 'power2.out' }, '<');
+    });
+
+    window.addEventListener('resize', function () { ScrollTrigger.refresh(); });
+  }
+
+  var fontsReady = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  fontsReady.then(init, init);
+})();
+</script>
+</body>
+</html>
