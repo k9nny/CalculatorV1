@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ANDO перекидка</title>
+<meta name="description" content="Срочный выкуп автомобилей за один день. Оценка за 15 минут, бесплатный выезд эксперта, деньги в день сделки.">
+<meta name="theme-color" content="#0B0C0D">
+<script>try{var l=localStorage.getItem('ando-look');if(l==='gallery'||l==='heritage')document.documentElement.setAttribute('data-look',l)}catch(e){}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Onest:wght@400;500;600&family=Roboto+Condensed:wght@500;600&family=Unbounded:wght@300;400&display=swap">
+<style>
+/* ============ Токены: Noir (основной вариант) ============ */
+:root{
+  color-scheme:dark;
+  --bg:#0B0C0D; --surface:#121416; --surface-2:#1A1D20;
+  --line:#25292D; --line-strong:#3A3F45;
+  --text:#ECEAE4; --text-2:#A3A6A9; --text-3:#6E7277;
+  --accent:#C8AD7F; --danger:#E26D5A;
+  --cta:#ECEAE4; --cta-ink:#0B0C0D; --cta-hover:#FFFFFF;
+  --plate:#F7F7F4; --plate-ink:#111111; --plate-line:#151515;
+
+  --car-top:#2C3035; --car-bot:#0C0D0F; --car-edge:#EAE6DC; --car-line:#8C9096;
+  --edge-mid:.28; --edge-end:.04;
+  --glass:#060708; --glass-hi:#3B424A; --pillar:#141619; --well:#040405;
+  --tire:#070708; --tire-edge:#2A2D31; --rim:#A9ADB2; --rim-dark:#131517; --disc:#2B2E32; --caliper:#C8AD7F;
+  --head:#FFF6E2; --beam:#FFF1D0; --beam-strength:.34; --tail:#D23B2F;
+  --shadow:#000000; --shadow-strength:.9;
+
+  --f-display:"Unbounded", "Arial", sans-serif; --display-weight:300; --display-track:-0.015em; --display-scale:1;
+  --f-body:"Onest", "Helvetica Neue", Arial, sans-serif;
+  --f-plate:"Roboto Condensed", "Arial Narrow", Arial, sans-serif;
+  --radius:2px;
+
+  --drive-dur:2.6s; --drive-ease:cubic-bezier(.17,.84,.24,1); --drive-delay:.35s;
+}
+/* ============ Вариант Gallery: светлый, швейцарский ============ */
+:root[data-look="gallery"]{
+  color-scheme:light;
+  --bg:#EFF0EE; --surface:#FFFFFF; --surface-2:#E5E7E4;
+  --line:#D5D8D4; --line-strong:#AEB2AD;
+  --text:#101214; --text-2:#4A4F54; --text-3:#7D8287;
+  --accent:#2446A6; --danger:#B3261E;
+  --cta:#101214; --cta-ink:#F4F5F3; --cta-hover:#2446A6;
+
+  --car-top:#FFFFFF; --car-bot:#D9DCD8; --car-edge:#101214; --car-line:#5E6369;
+  --edge-mid:.9; --edge-end:.75;
+  --glass:#C3C9CE; --glass-hi:#F6F8FA; --pillar:#1A1C1F; --well:#2C3034;
+  --tire:#17191B; --tire-edge:#17191B; --rim:#D5D8DB; --rim-dark:#3A3E43; --disc:#8D9297; --caliper:#2446A6;
+  --head:#2446A6; --beam:#2446A6; --beam-strength:.12; --tail:#C23A2E;
+  --shadow:#5F666C; --shadow-strength:.3;
+
+  --f-display:"Onest", "Helvetica Neue", Arial, sans-serif; --display-weight:500; --display-track:-0.035em; --display-scale:1.08;
+}
+/* ============ Вариант Heritage: British racing green, латунь ============ */
+:root[data-look="heritage"]{
+  color-scheme:dark;
+  --bg:#0D1713; --surface:#12201A; --surface-2:#182921;
+  --line:#243830; --line-strong:#375046;
+  --text:#EEE8DA; --text-2:#B3AE9E; --text-3:#7C887E;
+  --accent:#BE9A5E; --danger:#E07A62;
+  --cta:#EEE8DA; --cta-ink:#0D1713; --cta-hover:#FFFFFF;
+
+  --car-top:#2B5144; --car-bot:#08110E; --car-edge:#EDE2C8; --car-line:#8FA398;
+  --edge-mid:.3; --edge-end:.05;
+  --glass:#050A08; --glass-hi:#34483F; --pillar:#0E1C17; --well:#030605;
+  --tire:#050706; --tire-edge:#22302A; --rim:#BDC0B8; --rim-dark:#0F1612; --disc:#27302C; --caliper:#BE9A5E;
+  --head:#FFF0CF; --beam:#FFE8B8; --beam-strength:.3; --tail:#C0392B;
+  --shadow:#000000; --shadow-strength:.9;
+
+  --f-display:"Cormorant Garamond", Georgia, "Times New Roman", serif; --display-weight:500; --display-track:-0.01em; --display-scale:1.22;
+}
+
+/* ============ База ============ */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;padding-bottom:84px;background:var(--bg);color:var(--text);font:400 16px/1.6 var(--f-body);-webkit-font-smoothing:antialiased;transition:background-color .4s ease,color .4s ease}
+img,svg{max-width:100%}
+a{color:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{width:100%;max-width:1280px;margin-inline:auto;padding-inline:clamp(16px,4vw,48px)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+
+.eyebrow{margin:0;font:500 12px/1.4 var(--f-body);letter-spacing:.18em;text-transform:uppercase;color:var(--text-3)}
+.display{margin:0;font-family:var(--f-display);font-weight:var(--display-weight);letter-spacing:var(--display-track);line-height:1.08;text-wrap:balance}
+h1.display{font-size:calc(clamp(32px,4.6vw,62px) * var(--display-scale))}
+h2.display{font-size:calc(clamp(26px,3.2vw,44px) * var(--display-scale))}
+.lead{margin:0;max-width:34em;font-size:clamp(16px,1.35vw,18px);color:var(--text-2);text-wrap:pretty}
+
+/* ============ Кнопки ============ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:14px;height:56px;padding:0 28px;border:1px solid transparent;border-radius:var(--radius);font:500 15px/1 var(--f-body);letter-spacing:.01em;text-decoration:none;white-space:nowrap;cursor:pointer;transition:background-color .25s,color .25s,border-color .25s}
+.btn-primary{background:var(--cta);color:var(--cta-ink)}
+.btn-primary:hover{background:var(--cta-hover)}
+.btn-ghost{background:transparent;color:var(--text);border-color:var(--line-strong)}
+.btn-ghost:hover{border-color:var(--text)}
+.btn-sm{height:40px;padding:0 18px;font-size:14px}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.6;cursor:progress}
+.arrow{width:18px;height:10px;flex:none;transition:transform .25s}
+.btn:hover .arrow{transform:translateX(4px)}
+
+/* ============ Шапка ============ */
+.site-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);background:color-mix(in srgb,var(--bg) 84%,transparent);-webkit-backdrop-filter:saturate(140%) blur(14px);backdrop-filter:saturate(140%) blur(14px);border-bottom:1px solid var(--line);transition:background-color .4s}
+.site-header .wrap{display:flex;align-items:center;gap:28px;height:72px}
+.brand{display:flex;align-items:center;gap:14px;color:var(--text);text-decoration:none}
+.wordmark{display:block;height:17px;width:auto}
+.brand-sub{padding-left:14px;border-left:1px solid var(--line-strong);font:500 10px/1 var(--f-body);letter-spacing:.24em;text-transform:uppercase;color:var(--text-3)}
+.nav{display:flex;gap:28px;margin-left:auto}
+.nav a{font-size:14px;color:var(--text-2);text-decoration:none;transition:color .2s}
+.nav a:hover{color:var(--text)}
+.header-phone{font-size:14px;font-weight:500;color:var(--text);text-decoration:none;font-variant-numeric:tabular-nums;white-space:nowrap}
+@media (max-width:980px){.nav{display:none}.header-phone{margin-left:auto}}
+@media (max-width:620px){.header-phone{display:none}.header-cta{margin-left:auto}}
+@media (max-width:380px){.brand-sub{display:none}}
+
+/* ============ Первый экран ============ */
+.hero{overflow-x:clip;padding-top:clamp(32px,6vw,72px)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-areas:"copy form" "stage form";column-gap:clamp(32px,5vw,72px);row-gap:clamp(12px,2vw,24px)}
+.hero-copy{grid-area:copy;display:grid;gap:22px;align-content:start}
+.hero-meta{display:flex;flex-wrap:wrap;gap:8px 22px;margin:4px 0 0;padding:0;list-style:none;font-size:13px;color:var(--text-3)}
+.hero-meta li{display:flex;align-items:center;gap:8px}
+.hero-meta li::before{content:"";width:5px;height:5px;border:1px solid var(--accent);transform:rotate(45deg)}
+.stage{grid-area:stage;align-self:end;position:relative}
+.hero-grid > .lead-card{grid-area:form;align-self:center;position:relative;z-index:2}
+@media (max-width:980px){
+  .hero-grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "stage" "form"}
+  .stage{margin-block:8px 12px}
+}
+
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(36px,5vw,64px);border-top:1px solid var(--line)}
+.fact{display:grid;gap:10px;align-content:start;padding:28px 24px 34px 0}
+.fact + .fact{padding-left:24px;border-left:1px solid var(--line)}
+.fact b{font:var(--display-weight) calc(clamp(26px,2.5vw,36px) * var(--display-scale))/1 var(--f-display);letter-spacing:var(--display-track);font-variant-numeric:tabular-nums}
+.fact span{font-size:14px;line-height:1.45;color:var(--text-2)}
+@media (max-width:760px){
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fact:nth-child(3){padding-left:0;border-left:0}
+  .fact:nth-child(n+3){border-top:1px solid var(--line)}
+}
+
+/* ============ Машина (SVG) ============ */
+.car-svg{display:block;width:100%;height:auto;overflow:visible}
+.horizon{stroke:var(--line-strong);stroke-width:1}
+.s-body-top{stop-color:var(--car-top)}
+.s-body-bot{stop-color:var(--car-bot)}
+.s-edge{stop-color:var(--car-edge)}
+.s-edge-mid{stop-opacity:var(--edge-mid)}
+.s-edge-end{stop-opacity:var(--edge-end)}
+.s-glass{stop-color:var(--glass)}
+.s-glass-hi{stop-color:var(--glass-hi)}
+.s-beam{stop-color:var(--beam)}
+.s-beam-0{stop-opacity:var(--beam-strength)}
+.s-shadow{stop-color:var(--shadow)}
+.s-shadow-0{stop-opacity:var(--shadow-strength)}
+.shell{stroke-width:1.4;stroke-linejoin:round}
+.glass{stroke:var(--car-line);stroke-opacity:.35;stroke-width:.8}
+.pillar{fill:var(--pillar)}
+.well{fill:var(--well)}
+.cline{fill:none;stroke:var(--car-line);stroke-width:1;stroke-opacity:.4;stroke-linecap:round}
+.crease{fill:none;stroke:var(--car-edge);stroke-width:1;stroke-opacity:.38;stroke-linecap:round}
+.handle{fill:none;stroke:var(--car-line);stroke-width:2.4;stroke-linecap:round;stroke-opacity:.75}
+.mirror{fill:var(--car-top);stroke:var(--car-edge);stroke-opacity:.5;stroke-width:1}
+.head{fill:var(--head)}
+.tail{fill:var(--tail)}
+.glow{filter:url(#car-blur)}
+.ground-light{fill:var(--beam);opacity:.45;filter:url(#car-blur-lg)}
+.tire{fill:var(--tire);stroke:var(--tire-edge);stroke-width:1.2}
+.tire-wall{fill:none;stroke:var(--tire-edge);stroke-width:1}
+.rim-face{fill:var(--rim-dark)}
+.disc{fill:var(--disc)}
+.disc-ring{fill:none;stroke:var(--rim-dark);stroke-width:1.5;stroke-dasharray:2 4}
+.caliper{fill:var(--caliper);stroke:var(--caliper);stroke-width:3;stroke-linejoin:round}
+.spoke,.hub{fill:var(--rim)}
+.hub-cap{fill:var(--rim-dark)}
+.rim-lip{fill:none;stroke:var(--rim);stroke-width:2.5}
+.trail{stroke:var(--car-edge);stroke-width:1;stroke-linecap:round}
+
+/* Покой (итоговое состояние): фары горят, стоп-сигналы приглушены */
+.trails{opacity:0}
+.tail-g{opacity:.6}
+
+/* Заезд: кузов и колеса двигаются с одной кривой, поэтому колеса катятся без проскальзывания */
+.car{animation:drive var(--drive-dur) var(--drive-ease) var(--drive-delay) both}
+.rim{transform-box:fill-box;transform-origin:center;animation:spin var(--drive-dur) var(--drive-ease) var(--drive-delay) both}
+.body{transform-box:fill-box;transform-origin:50% 100%;animation:settle 1.3s cubic-bezier(.3,.6,.3,1) 1.95s both}
+.tail-g{animation:brake var(--drive-dur) linear var(--drive-delay) both}
+.head-g{animation:lights 1s linear 2.6s both}
+.beam-g{animation:fade-in 1.6s ease-out 2.8s both}
+.trails{animation:trails 1.5s ease-out var(--drive-delay) both}
+@keyframes drive{from{transform:translateX(-1300px)}to{transform:translateX(0)}}
+@keyframes spin{from{transform:rotate(-1241deg)}to{transform:rotate(0deg)}}
+@keyframes settle{0%{transform:rotate(0deg)}35%{transform:rotate(.8deg)}68%{transform:rotate(-.3deg)}100%{transform:rotate(0deg)}}
+@keyframes brake{0%,38%{opacity:.35}52%,90%{opacity:1}100%{opacity:.6}}
+@keyframes lights{0%{opacity:.1}14%{opacity:1}24%{opacity:.25}40%,100%{opacity:1}}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+@keyframes trails{from{opacity:.75}to{opacity:0}}
+.stage.is-reset *{animation:none!important}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .stage *{animation:none!important}
+}
+
+/* ============ Карточка заявки ============ */
+.lead-card{padding:clamp(22px,2.6vw,36px);background:var(--surface);border:1px solid var(--line);border-radius:4px;box-shadow:0 40px 80px -48px rgba(0,0,0,.55);transition:background-color .4s,border-color .4s}
+.card-title{margin:0 0 6px;font:var(--display-weight) calc(21px * var(--display-scale))/1.25 var(--f-display);letter-spacing:var(--display-track)}
+.card-sub{margin:0 0 26px;font-size:14px;line-height:1.5;color:var(--text-2)}
+.form-stack{display:grid;gap:18px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.form-grid .span-2{grid-column:1 / -1}
+@media (max-width:480px){.form-grid{grid-template-columns:minmax(0,1fr)}}
+.field{display:grid;gap:8px;align-content:start}
+.label{font:500 11px/1.2 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--text-3)}
+.input{width:100%;height:56px;padding:0 16px;background:var(--bg);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius);font:400 17px/1 var(--f-body);font-variant-numeric:tabular-nums;transition:border-color .2s,box-shadow .2s,background-color .4s}
+.input::placeholder{color:var(--text-3)}
+.input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.field.has-error .input{border-color:var(--danger);box-shadow:0 0 0 1px var(--danger)}
+.err{font-size:13px;line-height:1.4;color:var(--danger)}
+.err:empty{display:none}
+.linkish{justify-self:start;padding:0;background:none;border:0;font-size:13px;color:var(--text-2);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px;cursor:pointer}
+.linkish:hover{color:var(--text)}
+.form-note{margin:0;font-size:12.5px;line-height:1.5;color:var(--text-3)}
+.form-note a{color:var(--text-2)}
+
+/* Российский госномер: 520 × 112 мм, белое поле, черная рамка, флаг */
+.plate{display:grid;grid-template-columns:minmax(0,1fr) auto;height:64px;background:var(--plate);color:var(--plate-ink);border:1px solid rgba(0,0,0,.28);border-radius:8px;box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--plate-line);transition:box-shadow .2s}
+.plate:focus-within{box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--plate-line),0 0 0 2px var(--accent)}
+.field.has-error .plate{box-shadow:inset 0 0 0 3px var(--plate),inset 0 0 0 5px var(--plate-line),0 0 0 2px var(--danger)}
+.plate-num{width:100%;min-width:0;height:100%;padding:2px 8px 0 18px;background:transparent;color:inherit;border:0;font:600 34px/1 var(--f-plate);letter-spacing:.12em;text-transform:uppercase}
+.plate-num::placeholder,.plate-region::placeholder{color:#B2B2AE}
+.plate-num:focus,.plate-region:focus{outline:none}
+.plate-reg{display:grid;grid-template-rows:1fr auto;justify-items:center;align-items:center;margin:5px 5px 5px 0;padding:3px 12px 6px;border-left:2px solid var(--plate-line)}
+.plate-region{width:3.1ch;padding:0;background:transparent;color:inherit;border:0;font:600 25px/1 var(--f-plate);text-align:center}
+.plate-rus{display:flex;align-items:center;gap:4px;font:600 9px/1 var(--f-plate);letter-spacing:.08em}
+.flag{width:14px;height:9px;border:1px solid rgba(0,0,0,.3);background:linear-gradient(#FFFFFF 0 33.3%,#1C3FAA 33.3% 66.6%,#D52B1E 66.6%)}
+
+.done{display:grid;gap:14px;justify-items:start}
+.done-mark{width:44px;height:44px;border:1px solid var(--accent);border-radius:50%;display:grid;place-items:center;color:var(--accent)}
+.done-mark svg{width:18px;height:18px}
+.done h3{margin:0;font:var(--display-weight) calc(21px * var(--display-scale))/1.25 var(--f-display)}
+.done p{margin:0;color:var(--text-2)}
+
+/* ============ Секции ============ */
+.section{padding-block:clamp(72px,10vw,136px);border-top:1px solid var(--line)}
+.section-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 48px;align-items:end}
+.section-titles{display:grid;gap:18px}
+@media (max-width:860px){.section-head{grid-template-columns:minmax(0,1fr)}}
+
+/* Шаги */
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:clamp(44px,5vw,72px) 0 0;padding:0;list-style:none}
+.step{display:grid;gap:14px;align-content:start}
+.step > :not(.step-rail){padding-right:clamp(16px,3vw,40px)}
+.step-time{font:500 12px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.step-rail{position:relative;height:1px;margin:6px 0 14px;background:var(--line-strong)}
+.step-rail::before{content:"";position:absolute;left:0;top:-4px;width:9px;height:9px;border-radius:50%;background:var(--bg);border:1px solid var(--accent);transition:background-color .4s}
+.step:last-child .step-rail::after{content:"";position:absolute;right:0;top:-4px;width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.step-no{font:var(--display-weight) 14px/1 var(--f-display);color:var(--text-3);font-variant-numeric:tabular-nums}
+.step h3{margin:0;font:var(--display-weight) calc(22px * var(--display-scale))/1.25 var(--f-display);letter-spacing:var(--display-track)}
+.step p{margin:0;max-width:30em;color:var(--text-2)}
+@media (max-width:860px){.steps{grid-template-columns:minmax(0,1fr);gap:44px}}
+
+/* Сравнение */
+.table-wrap{margin-top:clamp(44px,5vw,64px);overflow-x:auto;border-top:1px solid var(--line)}
+.compare{width:100%;min-width:720px;border-collapse:collapse;font-size:15px;line-height:1.5}
+.compare th,.compare td{padding:20px 20px 20px 0;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+.compare thead th{padding-top:24px;font:500 12px/1.3 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+.compare tbody th{width:22%;font-weight:500;color:var(--text)}
+.compare td{width:26%;color:var(--text-2)}
+.compare .is-ando{padding-left:20px;background:var(--surface);color:var(--text);transition:background-color .4s}
+.compare thead .is-ando{color:var(--accent);box-shadow:inset 0 2px 0 var(--accent)}
+
+/* Какие авто выкупаем */
+.cond{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:clamp(44px,5vw,64px);background:var(--line);border:1px solid var(--line)}
+.cond-item{display:grid;gap:10px;align-content:start;padding:clamp(22px,2.6vw,36px);background:var(--bg);transition:background-color .4s}
+.cond-item h3{margin:0;font:500 17px/1.35 var(--f-body)}
+.cond-item p{margin:0;font-size:15px;color:var(--text-2)}
+@media (max-width:860px){.cond{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.cond{grid-template-columns:minmax(0,1fr)}}
+
+/* Вопросы */
+.faq-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:40px 72px;align-items:start}
+.faq-grid .section-titles{position:sticky;top:120px}
+.faq{border-top:1px solid var(--line)}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 0;font:500 clamp(16px,1.5vw,18px)/1.4 var(--f-body);list-style:none;cursor:pointer}
+.faq summary::-webkit-details-marker{display:none}
+.plus{position:relative;flex:none;width:14px;height:14px}
+.plus::before,.plus::after{content:"";position:absolute;left:0;top:50%;width:14px;height:1.5px;margin-top:-.75px;background:var(--text-2);transition:transform .3s}
+.plus::after{transform:rotate(90deg)}
+.faq details[open] .plus::after{transform:rotate(0deg)}
+.faq .answer{margin:0;padding-bottom:26px;max-width:62ch;color:var(--text-2)}
+@media (max-width:860px){.faq-grid{grid-template-columns:minmax(0,1fr)}.faq-grid .section-titles{position:static}}
+
+/* Финальная заявка */
+.cta-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:48px clamp(40px,6vw,96px);align-items:start}
+.contacts{display:grid;gap:26px;margin-top:40px}
+.contact-phone{font:var(--display-weight) calc(clamp(24px,2.6vw,34px) * var(--display-scale))/1.1 var(--f-display);letter-spacing:var(--display-track);text-decoration:none;font-variant-numeric:tabular-nums}
+.contact-row{display:flex;flex-wrap:wrap;gap:12px}
+.meta-list{display:grid;gap:6px;margin:0;padding:0;list-style:none;font-size:14px;color:var(--text-2)}
+@media (max-width:860px){.cta-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Подвал */
+.site-footer{padding-block:40px;border-top:1px solid var(--line);font-size:13px;color:var(--text-3)}
+.site-footer .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+.footer-links{display:flex;flex-wrap:wrap;gap:8px 24px}
+.footer-links a{color:var(--text-2);text-decoration:none}
+.footer-links a:hover{color:var(--text)}
+
+/* ============ Панель выбора оформления (убрать перед запуском) ============ */
+.looks{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:2px;max-width:calc(100% - 32px);padding:5px;transform:translateX(-50%);background:var(--surface);background:color-mix(in srgb,var(--surface) 90%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border:1px solid var(--line-strong);border-radius:999px;box-shadow:0 16px 40px -16px rgba(0,0,0,.5)}
+.looks-label{padding:0 10px 0 12px;font:500 11px/1 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);white-space:nowrap}
+.look-btn{height:32px;padding:0 14px;background:transparent;border:0;border-radius:999px;font-size:13px;font-weight:500;color:var(--text-2);cursor:pointer;white-space:nowrap}
+.look-btn:hover{color:var(--text)}
+.look-btn[aria-pressed="true"]{background:var(--text);color:var(--bg)}
+.look-replay{display:grid;place-items:center;width:32px;padding:0;margin-left:4px;border-left:1px solid var(--line);border-radius:0 999px 999px 0}
+.look-replay svg{width:15px;height:15px}
+@media (max-width:480px){.looks-label{display:none}.look-btn{padding:0 11px}}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="ANDO перекидка, на главную">
+      <svg class="wordmark" viewBox="0 0 112 22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <polyline points="1,21 12,1 23,21"/>
+        <polyline points="32,21 32,1 52,21 52,1"/>
+        <path d="M61 1H71A10 10 0 0 1 71 21H61Z"/>
+        <circle cx="100" cy="11" r="10"/>
+        <circle cx="100" cy="11" r="2.4" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="brand-sub">перекидка</span>
+    </a>
+    <nav class="nav" aria-label="Разделы">
+      <a href="#process">Как проходит выкуп</a>
+      <a href="#compare">Сравнение</a>
+      <a href="#cars">Какие авто</a>
+      <a href="#faq">Вопросы</a>
+    </nav>
+    <!-- Замените номер телефона -->
+    <a class="header-phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
+    <a class="btn btn-primary btn-sm header-cta" href="#lead">Оценить авто</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Срочный выкуп автомобилей</p>
+          <h1 class="display" id="hero-title">Выкупим ваш автомобиль за&nbsp;один день</h1>
+          <p class="lead">Назовем цену за 15 минут. Эксперт приедет на осмотр туда, где удобно вам. Деньги в день сделки, наличными или на карту.</p>
+          <ul class="hero-meta">
+            <li>Договор купли-продажи</li>
+            <li>Проверка по базам ГИБДД и ФНП</li>
+            <li>Выезд эксперта бесплатно</li>
+          </ul>
+        </div>
+
+        <div class="stage" aria-hidden="true">
+          <svg class="car-svg" viewBox="0 0 1000 300">
+            <defs>
+              <linearGradient id="car-body" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" class="s-body-top"/>
+                <stop offset="1" class="s-body-bot"/>
+              </linearGradient>
+              <linearGradient id="car-edge" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" class="s-edge"/>
+                <stop offset=".5" class="s-edge s-edge-mid"/>
+                <stop offset="1" class="s-edge s-edge-end"/>
+              </linearGradient>
+              <linearGradient id="car-glass" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" class="s-glass-hi"/>
+                <stop offset=".45" class="s-glass"/>
+                <stop offset="1" class="s-glass"/>
+              </linearGradient>
+              <linearGradient id="car-beam" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0" class="s-beam s-beam-0"/>
+                <stop offset="1" class="s-beam" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="car-shadow">
+                <stop offset="0" class="s-shadow s-shadow-0"/>
+                <stop offset="1" class="s-shadow" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="car-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="4"/></filter>
+              <filter id="car-blur-lg" x="-50%" y="-400%" width="200%" height="900%"><feGaussianBlur stdDeviation="9"/></filter>
+            </defs>
+
+            <line class="horizon" x1="-3000" y1="270.5" x2="4000" y2="270.5"/>
+
+            <g class="car">
+              <g class="trails">
+                <line class="trail" x1="-30" y1="96" x2="-420" y2="96"/>
+                <line class="trail" x1="-10" y1="170" x2="-300" y2="170"/>
+                <line class="trail" x1="-40" y1="232" x2="-520" y2="232"/>
+              </g>
+
+              <ellipse cx="506" cy="271" rx="500" ry="12" fill="url(#car-shadow)"/>
+
+              <g class="beam-g">
+                <path d="M948 160L1680 116V270H1180Z" fill="url(#car-beam)"/>
+                <ellipse class="ground-light" cx="1260" cy="270" rx="240" ry="5"/>
+              </g>
+
+              <g class="body">
+                <path class="well" d="M304 252A68 68 0 1 0 196 252Z"/>
+                <path class="well" d="M826 252A68 68 0 1 0 718 252Z"/>
+                <path class="shell" fill="url(#car-body)" stroke="url(#car-edge)" d="M74 252C58 248 50 232 50 212C50 188 56 146 78 128C110 122 140 118 172 112C262 84 350 50 452 42C522 36 584 44 628 66C668 88 704 108 734 116C812 124 888 134 930 146C954 152 962 170 962 190C962 214 958 236 946 252L826 252A68 68 0 1 0 718 252L304 252A68 68 0 1 0 196 252Z"/>
+                <path class="glass" fill="url(#car-glass)" d="M262 108C330 84 390 58 462 52C524 48 576 56 612 74C642 90 668 104 688 114Z"/>
+                <path class="pillar" d="M486 50H498L506 112H494Z"/>
+                <path class="crease" d="M84 140C300 124 600 118 916 148"/>
+                <path class="cline" d="M688 116C692 160 694 200 694 236"/>
+                <path class="cline" d="M500 114L504 238"/>
+                <path class="cline" d="M322 110C330 150 328 200 322 236"/>
+                <path class="cline" d="M312 238H706"/>
+                <path class="cline" d="M904 226C926 226 944 222 956 214"/>
+                <path class="cline" d="M64 236C90 240 140 242 186 242"/>
+                <path class="handle" d="M556 132H586M380 130H408"/>
+                <path class="mirror" d="M692 118C694 106 710 100 724 102L722 116Z"/>
+                <g class="head-g">
+                  <path class="head glow" d="M898 150C918 152 936 157 950 165L950 171C934 164 916 159 900 157Z"/>
+                  <path class="head" d="M898 150C918 152 936 157 950 165L950 171C934 164 916 159 900 157Z"/>
+                </g>
+                <g class="tail-g">
+                  <path class="tail glow" d="M62 156C74 149 88 145 106 141L106 147C90 150 76 155 64 162Z"/>
+                  <path class="tail" d="M62 156C74 149 88 145 106 141L106 147C90 150 76 155 64 162Z"/>
+                </g>
+              </g>
+
+              <g transform="translate(250 210)">
+                <circle class="tire" r="60"/>
+                <circle class="tire-wall" r="49"/>
+                <circle class="rim-face" r="44"/>
+                <circle class="disc" r="33"/>
+                <circle class="disc-ring" r="27"/>
+                <path class="caliper" d="M-31.7 -14.8A35 35 0 0 1 -14.8 -31.7L-10.6 -22.7A25 25 0 0 0 -22.7 -10.6Z"/>
+                <g class="rim">
+                  <circle class="rim-lip" r="43"/>
+                  <path class="spoke" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(72)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(144)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(216)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(288)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <circle class="hub" r="11"/>
+                  <circle class="hub-cap" r="5"/>
+                </g>
+              </g>
+
+              <g transform="translate(772 210)">
+                <circle class="tire" r="60"/>
+                <circle class="tire-wall" r="49"/>
+                <circle class="rim-face" r="44"/>
+                <circle class="disc" r="33"/>
+                <circle class="disc-ring" r="27"/>
+                <path class="caliper" d="M-31.7 -14.8A35 35 0 0 1 -14.8 -31.7L-10.6 -22.7A25 25 0 0 0 -22.7 -10.6Z"/>
+                <g class="rim">
+                  <circle class="rim-lip" r="43"/>
+                  <path class="spoke" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(72)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(144)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(216)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <path class="spoke" transform="rotate(288)" d="M-2.2 -10L-5.6 -9.4L-10.5 -42L-4.6 -42.6ZM2.2 -10L5.6 -9.4L10.5 -42L4.6 -42.6Z"/>
+                  <circle class="hub" r="11"/>
+                  <circle class="hub-cap" r="5"/>
+                </g>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <aside class="lead-card" aria-labelledby="hero-form-title">
+          <form class="lead-form" id="form-hero" novalidate>
+            <h2 class="card-title" id="hero-form-title">Узнать цену выкупа</h2>
+            <p class="card-sub">По госномеру эксперт заранее проверит историю автомобиля и подготовит предварительную цену.</p>
+            <div class="form-stack">
+              <div class="field" data-plate-field>
+                <label class="label" for="plate-num">Госномер</label>
+                <div class="plate">
+                  <input class="plate-num" id="plate-num" name="plate" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="А777АА" aria-describedby="plate-err">
+                  <div class="plate-reg">
+                    <input class="plate-region" id="plate-region" name="region" inputmode="numeric" autocomplete="off" placeholder="77" aria-label="Код региона">
+                    <span class="plate-rus">RUS <i class="flag"></i></span>
+                  </div>
+                </div>
+                <span class="err" id="plate-err" aria-live="polite"></span>
+              </div>
+              <div class="field" data-model-field hidden>
+                <label class="label" for="hero-model">Марка, модель, год</label>
+                <input class="input" id="hero-model" name="model" autocomplete="off" placeholder="Toyota Camry, 2019">
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <button class="linkish" type="button" data-toggle-plate>Нет номера? Укажите марку и модель</button>
+              <div class="field">
+                <label class="label" for="hero-phone">Телефон</label>
+                <input class="input" id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <button class="btn btn-primary btn-block" type="submit">
+                Получить оценку
+                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
+              </button>
+              <p class="form-note">Перезвоним в течение 15 минут. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
+            </div>
+          </form>
+          <div class="done" hidden tabindex="-1">
+            <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
+            <h3>Заявка принята</h3>
+            <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
+            <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
+          </div>
+        </aside>
+      </div>
+
+      <div class="facts">
+        <div class="fact"><b>15 мин</b><span>предварительная оценка по телефону</span></div>
+        <div class="fact"><b>40 мин</b><span>осмотр и диагностика на месте</span></div>
+        <div class="fact"><b>1 день</b><span>от заявки до денег на руках</span></div>
+        <div class="fact"><b>0 ₽</b><span>комиссия и выезд эксперта</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="process" aria-labelledby="process-title">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-titles">
+          <p class="eyebrow">Как проходит выкуп</p>
+          <h2 class="display" id="process-title">Три шага от заявки до денег</h2>
+        </div>
+        <p class="lead">Большинство сделок укладывается в один день. Вы не встречаетесь с перекупщиками и не отвечаете на звонки по объявлению.</p>
+      </div>
+      <ol class="steps">
+        <li class="step">
+          <span class="step-time">≈ 15 минут</span>
+          <span class="step-rail"></span>
+          <span class="step-no">01</span>
+          <h3>Заявка и оценка</h3>
+          <p>Оставляете госномер или марку и модель. Эксперт перезванивает и называет предварительную цену по рыночным данным.</p>
+        </li>
+        <li class="step">
+          <span class="step-time">≈ 40 минут</span>
+          <span class="step-rail"></span>
+          <span class="step-no">02</span>
+          <h3>Осмотр</h3>
+          <p>Приезжаем домой, в офис или на парковку. Проверяем кузов толщиномером, делаем диагностику, сверяем автомобиль по базам ГИБДД и реестру залогов.</p>
+        </li>
+        <li class="step">
+          <span class="step-time">В тот же день</span>
+          <span class="step-rail"></span>
+          <span class="step-no">03</span>
+          <h3>Сделка и деньги</h3>
+          <p>Подписываем договор купли-продажи. Деньги наличными или переводом сразу после подписания, регистрацию берем на себя.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section" id="compare" aria-labelledby="compare-title">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-titles">
+          <p class="eyebrow">Сравнение</p>
+          <h2 class="display" id="compare-title">Три способа продать автомобиль</h2>
+        </div>
+        <p class="lead">Объявление дает рыночную цену, но отнимает недели. Трейд-ин быстрый, но дешевый. Мы берем скорость трейд-ина и честную оценку.</p>
+      </div>
+      <div class="table-wrap" role="region" aria-labelledby="compare-title" tabindex="0">
+        <table class="compare">
+          <thead>
+            <tr>
+              <th scope="col"><span class="sr-only">Параметр</span></th>
+              <th scope="col">Объявление</th>
+              <th scope="col">Трейд-ин у дилера</th>
+              <th scope="col" class="is-ando">ANDO</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Срок продажи</th><td>От нескольких недель до месяцев</td><td>1–2 дня</td><td class="is-ando">1 день</td></tr>
+            <tr><th scope="row">Итоговая цена</th><td>Рыночная, минус торг на осмотре</td><td>Ниже рынка, обычно в зачет новой машины</td><td class="is-ando">Фиксируем после осмотра, на сделке не меняется</td></tr>
+            <tr><th scope="row">Звонки и показы</th><td>Десятки звонков, показы незнакомым людям</td><td>Не нужны</td><td class="is-ando">Один звонок эксперта</td></tr>
+            <tr><th scope="row">Авто в кредите</th><td>Покупатели чаще отказываются</td><td>Зависит от дилера</td><td class="is-ando">Выкупаем, сами закрываем долг перед банком</td></tr>
+            <tr><th scope="row">Документы</th><td>Готовите сами</td><td>Готовит дилер</td><td class="is-ando">Готовим договор, регистрацию берем на себя</td></tr>
+            <tr><th scope="row">Оплата</th><td>Как договоритесь с покупателем</td><td>Зачет в стоимость нового авто</td><td class="is-ando">Наличными или на карту в день сделки</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="cars" aria-labelledby="cars-title">
+    <div class="wrap">
+      <div class="section-head">
+        <div class="section-titles">
+          <p class="eyebrow">Какие автомобили выкупаем</p>
+          <h2 class="display" id="cars-title">Любые, в том числе со сложной историей</h2>
+        </div>
+        <p class="lead">Состояние влияет на цену, но не на решение. Если автомобиль можно оформить по закону, мы его выкупим.</p>
+      </div>
+      <div class="cond">
+        <div class="cond-item"><h3>В кредите или в залоге</h3><p>Гасим остаток долга банку, разницу выплачиваем вам.</p></div>
+        <div class="cond-item"><h3>После ДТП</h3><p>Оцениваем с учетом ремонта, без скрытых вычетов на сделке.</p></div>
+        <div class="cond-item"><h3>Не на ходу</h3><p>Забираем на эвакуаторе, доставку оплачиваем сами.</p></div>
+        <div class="cond-item"><h3>С большим пробегом</h3><p>Пробег учитываем в цене, но не отказываем из-за него.</p></div>
+        <div class="cond-item"><h3>Любой марки и года</h3><p>От бюджетных седанов до премиальных внедорожников.</p></div>
+        <div class="cond-item"><h3>Когда деньги нужны сегодня</h3><p>Приезжаем в день обращения и рассчитываемся на месте.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="faq" aria-labelledby="faq-title">
+    <div class="wrap faq-grid">
+      <div class="section-titles">
+        <p class="eyebrow">Вопросы</p>
+        <h2 class="display" id="faq-title">Коротко о главном</h2>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Как вы определяете цену?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Смотрим цены реальных продаж и объявлений на такие же автомобили, учитываем комплектацию, пробег и состояние. Цифру называем до встречи и объясняем, из чего она складывается.</p>
+        </details>
+        <details>
+          <summary>Может ли цена измениться после осмотра?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Предварительная цена считается по вашему описанию. После осмотра эксперт называет точную сумму, и на сделке она уже не меняется.</p>
+        </details>
+        <details>
+          <summary>Как я получу деньги?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Наличными в момент подписания договора или переводом на карту. Выбираете вы.</p>
+        </details>
+        <details>
+          <summary>Какие документы нужны?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Паспорт собственника, СТС, ПТС (бумажный или электронный) и все комплекты ключей. Если автомобиль в залоге, добавьте кредитный договор.</p>
+        </details>
+        <details>
+          <summary>Можно продать автомобиль в кредите?<span class="plus" aria-hidden="true"></span></summary>
+          <p class="answer">Да. Мы гасим остаток долга напрямую банку, снимаем залог и выплачиваем вам разницу.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="lead" aria-labelledby="lead-title">
+    <div class="wrap cta-grid">
+      <div>
+        <div class="section-titles">
+          <p class="eyebrow">Оценка</p>
+          <h2 class="display" id="lead-title">Узнайте цену своего автомобиля сегодня</h2>
+          <p class="lead">Оставьте заявку или позвоните. Оценка бесплатная и ни к чему не обязывает.</p>
+        </div>
+        <!-- Замените телефон, ссылки на мессенджеры и часы работы -->
+        <div class="contacts">
+          <a class="contact-phone" href="tel:+79000000000">+7 (900) 000-00-00</a>
+          <div class="contact-row">
+            <a class="btn btn-ghost btn-sm" href="https://t.me/" target="_blank" rel="noopener">Telegram</a>
+            <a class="btn btn-ghost btn-sm" href="https://wa.me/" target="_blank" rel="noopener">WhatsApp</a>
+          </div>
+          <ul class="meta-list">
+            <li>Ежедневно, 9:00–21:00</li>
+            <li>Выезд эксперта по городу и области</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="lead-card">
+        <form class="lead-form" id="form-final" novalidate>
+          <h3 class="card-title">Заявка на выкуп</h3>
+          <p class="card-sub">Чем точнее данные, тем точнее предварительная цена.</p>
+          <div class="form-grid">
+            <div class="field span-2">
+              <label class="label" for="final-model">Марка и модель</label>
+              <input class="input" id="final-model" name="model" autocomplete="off" placeholder="BMW X5" data-required="Укажите марку и модель">
+              <span class="err" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label class="label" for="final-year">Год выпуска</label>
+              <input class="input" id="final-year" name="year" inputmode="numeric" autocomplete="off" placeholder="2020" data-year>
+              <span class="err" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label class="label" for="final-mileage">Пробег, км</label>
+              <input class="input" id="final-mileage" name="mileage" inputmode="numeric" autocomplete="off" placeholder="85 000" data-mileage>
+              <span class="err" aria-live="polite"></span>
+            </div>
+            <div class="field span-2">
+              <label class="label" for="final-phone">Телефон</label>
+              <input class="input" id="final-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+              <span class="err" aria-live="polite"></span>
+            </div>
+            <div class="span-2">
+              <button class="btn btn-primary btn-block" type="submit">
+                Отправить заявку
+                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
+              </button>
+            </div>
+            <p class="form-note span-2">Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
+          </div>
+        </form>
+        <div class="done" hidden tabindex="-1">
+          <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
+          <h3>Заявка принята</h3>
+          <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
+          <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="ANDO перекидка, наверх">
+      <svg class="wordmark" viewBox="0 0 112 22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">
+        <polyline points="1,21 12,1 23,21"/>
+        <polyline points="32,21 32,1 52,21 52,1"/>
+        <path d="M61 1H71A10 10 0 0 1 71 21H61Z"/>
+        <circle cx="100" cy="11" r="10"/>
+        <circle cx="100" cy="11" r="2.4" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="brand-sub">перекидка</span>
+    </a>
+    <!-- Замените реквизиты и добавьте ссылку на документ политики -->
+    <span>© 2026 ANDO перекидка · ИП Фамилия И. О., ИНН 000000000000</span>
+    <div class="footer-links">
+      <a href="#privacy" id="privacy">Политика обработки персональных данных</a>
+      <a href="#top">Наверх</a>
+    </div>
+  </div>
+</footer>
+
+<!-- Панель выбора оформления: нужна только на время согласования дизайна -->
+<div class="looks" role="group" aria-label="Вариант оформления">
+  <span class="looks-label">Оформление</span>
+  <button class="look-btn" type="button" data-look-btn="noir" aria-pressed="true">Noir</button>
+  <button class="look-btn" type="button" data-look-btn="gallery" aria-pressed="false">Gallery</button>
+  <button class="look-btn" type="button" data-look-btn="heritage" aria-pressed="false">Heritage</button>
+  <button class="look-btn look-replay" type="button" data-replay aria-label="Повторить анимацию заезда" title="Повторить анимацию">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
+  </button>
+</div>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  /* ---------- Варианты оформления ---------- */
+  var LOOKS = ['noir', 'gallery', 'heritage'];
+  var lookBtns = Array.prototype.slice.call(document.querySelectorAll('[data-look-btn]'));
+  var themeMeta = document.querySelector('meta[name="theme-color"]');
+  function setLook(look, save) {
+    if (look === 'noir') root.removeAttribute('data-look'); else root.setAttribute('data-look', look);
+    lookBtns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-look-btn') === look)); });
+    if (themeMeta) themeMeta.setAttribute('content', getComputedStyle(root).getPropertyValue('--bg').trim());
+    if (save) { try { localStorage.setItem('ando-look', look); } catch (e) {} }
+  }
+  var current = root.getAttribute('data-look');
+  setLook(LOOKS.indexOf(current) > -1 ? current : 'noir', false);
+  lookBtns.forEach(function (b) {
+    b.addEventListener('click', function () { setLook(b.getAttribute('data-look-btn'), true); });
+  });
+
+  /* ---------- Повтор анимации заезда ---------- */
+  var stage = document.querySelector('.stage');
+  function replay() {
+    stage.classList.add('is-reset');
+    void stage.getBoundingClientRect();
+    stage.classList.remove('is-reset');
+  }
+  document.querySelectorAll('[data-replay]').forEach(function (b) { b.addEventListener('click', replay); });
+
+  /* ---------- Госномер: 12 букв, совпадающих с латиницей ---------- */
+  var LAT = { A: 'А', B: 'В', E: 'Е', K: 'К', M: 'М', H: 'Н', O: 'О', P: 'Р', C: 'С', T: 'Т', Y: 'У', X: 'Х' };
+  var LETTERS = 'АВЕКМНОРСТУХ';
+  function parsePlate(raw) {
+    var v = raw.toUpperCase().replace(/Ё/g, 'Е');
+    var plate = '', rest = '';
+    for (var i = 0; i < v.length; i++) {
+      var ch = LAT[v[i]] || v[i];
+      if (plate.length < 6) {
+        var pos = plate.length;
+        var ok = (pos === 0 || pos >= 4) ? LETTERS.indexOf(ch) > -1 : /[0-9]/.test(ch);
+        if (ok) plate += ch;
+      } else if (/[0-9]/.test(ch)) {
+        rest += ch;
+      }
+    }
+    return { plate: plate, rest: rest.slice(0, 3) };
+  }
+  var plateNum = document.getElementById('plate-num');
+  var plateRegion = document.getElementById('plate-region');
+  plateNum.addEventListener('input', function (e) {
+    var p = parsePlate(plateNum.value);
+    plateNum.value = p.plate;
+    if (p.rest) plateRegion.value = p.rest;
+    var inserting = !e.inputType || e.inputType.indexOf('insert') === 0;
+    if (inserting && p.plate.length === 6) plateRegion.focus();
+  });
+  plateRegion.addEventListener('input', function () {
+    plateRegion.value = plateRegion.value.replace(/\D/g, '').slice(0, 3);
+  });
+  plateRegion.addEventListener('keydown', function (e) {
+    if (e.key === 'Backspace' && plateRegion.value === '') plateNum.focus();
+  });
+
+  /* Переключение: госномер или марка/модель */
+  var heroForm = document.getElementById('form-hero');
+  var plateField = heroForm.querySelector('[data-plate-field]');
+  var modelField = heroForm.querySelector('[data-model-field]');
+  var toggleBtn = heroForm.querySelector('[data-toggle-plate]');
+  var useModel = false;
+  toggleBtn.addEventListener('click', function () {
+    useModel = !useModel;
+    plateField.hidden = useModel;
+    modelField.hidden = !useModel;
+    toggleBtn.textContent = useModel ? 'Указать госномер' : 'Нет номера? Укажите марку и модель';
+    (useModel ? modelField.querySelector('input') : plateNum).focus();
+  });
+
+  /* ---------- Телефон: +7 (XXX) XXX-XX-XX ---------- */
+  function phoneDigits(v) {
+    var d = v.replace(/\D/g, '');
+    if (d.charAt(0) === '8') d = '7' + d.slice(1);
+    if (d && d.charAt(0) !== '7') d = '7' + d;
+    return d.slice(0, 11);
+  }
+  function formatPhone(d) {
+    var p = d.slice(1), s = '+7';
+    if (p.length) s += ' (' + p.slice(0, 3);
+    if (p.length >= 3) s += ')';
+    if (p.length > 3) s += ' ' + p.slice(3, 6);
+    if (p.length > 6) s += '-' + p.slice(6, 8);
+    if (p.length > 8) s += '-' + p.slice(8, 10);
+    return s;
+  }
+  document.querySelectorAll('[data-phone]').forEach(function (el) {
+    el.addEventListener('focus', function () { if (!el.value) el.value = '+7 '; });
+    el.addEventListener('blur', function () { if (phoneDigits(el.value).length <= 1) el.value = ''; });
+    el.addEventListener('input', function (e) {
+      if (e.inputType && e.inputType.indexOf('delete') === 0) return;
+      el.value = formatPhone(phoneDigits(el.value));
+    });
+  });
+
+  /* Год и пробег */
+  document.querySelectorAll('[data-year]').forEach(function (el) {
+    el.addEventListener('input', function () { el.value = el.value.replace(/\D/g, '').slice(0, 4); });
+  });
+  document.querySelectorAll('[data-mileage]').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var d = el.value.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 7);
+      el.value = d.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    });
+  });
+
+  /* ---------- Отправка ---------- */
+  function setError(input, msg) {
+    var field = input.closest('.field');
+    field.classList.toggle('has-error', !!msg);
+    var err = field.querySelector('.err');
+    if (err) err.textContent = msg || '';
+    if (msg) input.setAttribute('aria-invalid', 'true'); else input.removeAttribute('aria-invalid');
+    return !msg;
+  }
+  function checkPhone(input) {
+    return setError(input, phoneDigits(input.value).length === 11 ? '' : 'Введите номер полностью: +7 и 10 цифр');
+  }
+
+  function sendLead(data) {
+    /* Сюда подключается реальная отправка заявки: Telegram-бот, CRM или почта
+       через серверный обработчик. Пока заявка никуда не уходит. */
+    return Promise.resolve(data);
+  }
+
+  function showDone(form, phone) {
+    var card = form.parentElement;
+    var done = card.querySelector('.done');
+    done.querySelector('[data-done-phone]').textContent = formatPhone(phoneDigits(phone));
+    form.hidden = true;
+    done.hidden = false;
+    done.focus();
+  }
+  document.querySelectorAll('[data-reset]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var card = b.closest('.lead-card');
+      var form = card.querySelector('form');
+      form.reset();
+      card.querySelector('.done').hidden = true;
+      form.hidden = false;
+      var btn = form.querySelector('[type="submit"]');
+      btn.disabled = false;
+      form.querySelector('input:not([hidden])').focus();
+    });
+  });
+
+  function submitWith(form, validate, collect) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var firstBad = validate();
+      if (firstBad) { firstBad.focus(); return; }
+      var btn = form.querySelector('[type="submit"]');
+      btn.disabled = true;
+      var data = collect();
+      sendLead(data).then(function () { showDone(form, data.phone); }, function () { btn.disabled = false; });
+    });
+  }
+
+  var heroPhone = document.getElementById('hero-phone');
+  var heroModel = document.getElementById('hero-model');
+  submitWith(heroForm, function () {
+    var bad = null;
+    if (useModel) {
+      if (!setError(heroModel, heroModel.value.trim().length >= 2 ? '' : 'Укажите марку и модель')) bad = bad || heroModel;
+    } else {
+      var okPlate = /^[АВЕКМНОРСТУХ]\d{3}[АВЕКМНОРСТУХ]{2}$/.test(plateNum.value) && /^\d{2,3}$/.test(plateRegion.value);
+      if (!setError(plateNum, okPlate ? '' : 'Формат: буква, три цифры, две буквы и код региона, например А777АА 77')) bad = bad || plateNum;
+    }
+    if (!checkPhone(heroPhone)) bad = bad || heroPhone;
+    return bad;
+  }, function () {
+    return {
+      source: 'hero',
+      plate: useModel ? '' : plateNum.value + ' ' + plateRegion.value,
+      model: useModel ? heroModel.value.trim() : '',
+      phone: heroPhone.value
+    };
+  });
+
+  var finalForm = document.getElementById('form-final');
+  var fModel = document.getElementById('final-model');
+  var fYear = document.getElementById('final-year');
+  var fMileage = document.getElementById('final-mileage');
+  var fPhone = document.getElementById('final-phone');
+  submitWith(finalForm, function () {
+    var bad = null;
+    var year = parseInt(fYear.value, 10);
+    var maxYear = new Date().getFullYear() + 1;
+    if (!setError(fModel, fModel.value.trim().length >= 2 ? '' : 'Укажите марку и модель')) bad = bad || fModel;
+    if (!setError(fYear, (!fYear.value || (year >= 1960 && year <= maxYear)) ? '' : 'Год от 1960 до ' + maxYear)) bad = bad || fYear;
+    if (!checkPhone(fPhone)) bad = bad || fPhone;
+    return bad;
+  }, function () {
+    return {
+      source: 'final',
+      model: fModel.value.trim(),
+      year: fYear.value,
+      mileage: fMileage.value.replace(/\D/g, ''),
+      phone: fPhone.value
+    };
+  });
+
+  /* Снимаем ошибку, как только поле исправлено */
+  document.querySelectorAll('.lead-form input').forEach(function (el) {
+    el.addEventListener('input', function () {
+      var field = el.closest('.field');
+      if (field && field.classList.contains('has-error')) setError(el, '');
+    });
+  });
+})();
+</script>
+</body>
+</html>
