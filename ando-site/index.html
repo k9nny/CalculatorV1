@@ -100,10 +100,8 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 @media (max-width:380px){.brand-sub{display:none}}
 
 /* ============ Первый экран ============ */
-.hero{padding-top:clamp(28px,5vw,56px)}
-.hero-head{display:grid;gap:16px;margin-bottom:clamp(24px,3.5vw,40px)}
-.hero-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:clamp(24px,3.5vw,48px);align-items:center}
-.hero-side{display:grid;gap:24px}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:32px clamp(32px,6vw,96px);align-items:start;padding-top:clamp(32px,5vw,64px)}
+.hero-copy{display:grid;gap:20px;align-content:start}
 @media (max-width:980px){.hero-grid{grid-template-columns:minmax(0,1fr)}}
 
 .facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:clamp(36px,5vw,64px);border-top:1px solid var(--line)}
@@ -117,27 +115,32 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
   .fact:nth-child(n+3){border-top:1px solid var(--line)}
 }
 
-/* ============ Сцена: фото-кадры, камеру ведет скрипт ============ */
-/* Фото сняты в темной студии, поэтому экран сцены темный в обеих темах */
-.stage{position:relative;width:100%;max-width:100%;aspect-ratio:3 / 2;overflow:hidden;isolation:isolate;background:#0A0B0C;border:1px solid var(--line);border-radius:6px}
+/* ============ Сцена: фото-кадры на всю ширину, камеру ведет скрипт ============ */
+/* Фото сняты в темной студии, поэтому сцена темная в обеих темах */
+.stage{position:relative;width:100%;height:min(78vh,62vw);height:clamp(240px,min(78svh,62vw),860px);overflow:hidden;isolation:isolate;background:#0A0B0C;container-type:size}
+@media (max-width:640px){.stage{height:75vw}}
 .shot{position:absolute;inset:0;opacity:0}
-.shot-money{opacity:1}
-.frame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);will-change:transform}
-.frame-43{width:100%;aspect-ratio:4 / 3}
-.frame-169{height:100%;aspect-ratio:16 / 9}
+.shot-window{opacity:1}
+.frame{position:absolute;left:50%;top:50%;width:100%;transform:translate(-50%,-50%);will-change:transform}
+/* Кадр всегда накрывает сцену целиком, как object-fit: cover */
+.frame-43{aspect-ratio:4 / 3;width:max(100cqw,133.334cqh)}
+.frame-169{aspect-ratio:16 / 9;width:max(100cqw,177.778cqh)}
 .frame img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none}
-.frame .layer{opacity:0}
 /* Обод колеса вырезан кругом из того же кадра: центр 1148×954, радиус 411 на исходнике 2304×1728 */
 .rim,.rim-blur{position:absolute;left:31.99%;top:31.42%;width:35.68%;aspect-ratio:1;border-radius:50%}
 .rim{background-position:49.73% 59.93%;background-size:280.29% auto;background-repeat:no-repeat;will-change:transform}
 .rim-blur{background:radial-gradient(circle,#2E3134 0 13%,#8A8E93 21%,#9DA1A6 62%,#B7BBBF 93%,transparent 100%);opacity:0}
 .headlight{position:absolute;left:83.52%;top:55.32%;width:8%;aspect-ratio:2.4;border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(255,251,240,.95),rgba(255,244,222,.4) 50%,transparent);mix-blend-mode:screen;opacity:0}
-.beam{position:absolute;left:84%;top:55%;width:36%;height:22%;transform:translateY(-50%);background:radial-gradient(ellipse at 0 50%,rgba(255,244,222,.22),transparent 70%);mix-blend-mode:screen;opacity:0}
 .glass-edge{position:absolute;left:22%;top:0;width:62%;height:.5%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4) 18%,rgba(255,255,255,.4) 82%,transparent);opacity:0}
-.glint{position:absolute;left:47.75%;top:33.7%;width:20.25%;height:9%;overflow:hidden;border-radius:30%;mix-blend-mode:screen;opacity:0}
-.glint i{position:absolute;top:-60%;left:0;width:28%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-120%) rotate(18deg)}
+.glint{position:absolute;left:47.5%;top:33%;width:21%;height:10.5%;overflow:hidden;-webkit-mask-image:radial-gradient(closest-side,#000 55%,transparent);mask-image:radial-gradient(closest-side,#000 55%,transparent);mix-blend-mode:screen;opacity:0}
+.glint i{position:absolute;top:-60%;left:0;width:34%;height:220%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.42) 50%,transparent);filter:blur(2px);transform:translateX(-120%) rotate(18deg)}
+/* После сценария по очкам изредка проходит блик */
+.stage.idle .glint{opacity:1}
+.stage.idle .glint i{animation:glint 7s ease-in-out 1.5s infinite}
+@keyframes glint{0%{transform:translateX(-120%) rotate(18deg)}12%,100%{transform:translateX(380%) rotate(18deg)}}
+@media (prefers-reduced-motion:reduce){.stage.idle .glint i{animation:none}}
 .stage-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 95% at 50% 50%,transparent 58%,rgba(0,0,0,.38))}
-.replay{position:absolute;right:12px;bottom:12px;z-index:2;width:36px;height:36px;background:rgba(18,20,22,.7);color:#D8DADD;border-color:rgba(255,255,255,.25)}
+.replay{position:absolute;right:clamp(16px,4vw,48px);bottom:16px;z-index:2;width:36px;height:36px;background:rgba(18,20,22,.7);color:#D8DADD;border-color:rgba(255,255,255,.25)}
 .replay:hover{border-color:#FFFFFF}
 .replay svg{width:15px;height:15px}
 
@@ -261,191 +264,195 @@ h2.display{font-size:clamp(26px,3.2vw,44px)}
 
 <main id="top">
   <section class="hero" aria-labelledby="hero-title">
-    <div class="wrap">
-      <div class="hero-head">
-        <p class="eyebrow">Срочный выкуп автомобилей</p>
-        <h1 class="display" id="hero-title">Выкупим ваш автомобиль за&nbsp;один день</h1>
-      </div>
-
-      <div class="hero-grid">
-        <div class="stage" id="stage" role="img" aria-label="Колесо Mercedes крупным планом, машина останавливается, водитель в черных очках опускает стекло, улыбается и протягивает деньги">
-          <div class="shot" id="shot-wheel">
-            <div class="frame frame-43 frame-wheel" id="frame-wheel">
-              <img id="img-wheel" src="assets/hero/wheel.webp" alt="" width="1600" height="1200" fetchpriority="high">
-              <div class="rim-blur" id="rim-blur"></div>
-              <div class="rim" id="rim"></div>
-            </div>
-          </div>
-          <div class="shot" id="shot-wide">
-            <div class="frame frame-169" id="frame-wide">
-              <img src="assets/hero/wide.webp" alt="" width="2560" height="1440">
-              <span class="beam" id="beam"></span>
-              <span class="headlight" id="headlight"></span>
-            </div>
-          </div>
-          <div class="shot" id="shot-window">
-            <div class="frame frame-43" id="frame-window">
-              <img src="assets/hero/closed.webp" alt="" width="1600" height="1200">
-              <img class="layer" id="img-open" src="assets/hero/open.webp" alt="" width="1600" height="1200">
-              <img class="layer" id="img-smile" src="assets/hero/smile.webp" alt="" width="1600" height="1200">
-              <span class="glass-edge" id="glass-edge"></span>
-              <span class="glint" id="glint"><i></i></span>
-            </div>
-          </div>
-          <div class="shot shot-money" id="shot-money">
-            <div class="frame frame-43" id="frame-money">
-              <img src="assets/hero/money.webp" alt="" width="1600" height="1200">
-            </div>
-          </div>
-          <div class="stage-vignette"></div>
-          <button class="icon-btn replay" type="button" id="scene-replay" aria-label="Повторить анимацию" title="Повторить анимацию">
-            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
-          </button>
-          <script>
-          /* Сценарий: колесо заезжает крупным планом → камера отъезжает до всей машины, загораются фары →
-             окно водителя, стекло опускается → голливудская улыбка, блик по очкам → деньги навстречу зрителю.
-             Без скрипта и при reduced motion виден финальный кадр с деньгами. */
-          (function () {
-            var stage = document.getElementById('stage');
-            if (!stage) return;
-            function $(id) { return document.getElementById(id); }
-            var sWheel = $('shot-wheel'), sWide = $('shot-wide'), sWin = $('shot-window'), sMoney = $('shot-money');
-            var fWheel = $('frame-wheel'), fWide = $('frame-wide'), fWin = $('frame-window'), fMoney = $('frame-money');
-            var rim = $('rim'), rimBlur = $('rim-blur'), head = $('headlight'), beam = $('beam');
-            var open = $('img-open'), smile = $('img-smile'), edge = $('glass-edge'), glint = $('glint'), bar = glint.firstElementChild;
-            var wheelImg = $('img-wheel');
-            /* Обод берет картинку из того же кадра, что и колесо, поэтому файл грузится один раз */
-            rim.style.backgroundImage = 'url("' + (wheelImg.currentSrc || wheelImg.src) + '")';
-            var TL = { d0: .1, d1: 2.2, z0: 2.4, z1: 4.0, l0: 3.7, p0: 4.35, p1: 5.1, w0: 5.2, w1: 6.2, s0: 6.3, s1: 6.8, g0: 6.9, g1: 7.5, m0: 7.6, m1: 8.4, end: 8.5 };
-            var W = 0;
-            function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
-            function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
-            function lerp(a, b, p) { return a + (b - a) * p; }
-            function io(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
-            function mix(a, b, p) { return { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), s: Math.exp(lerp(Math.log(a.s), Math.log(b.s), p)) }; }
-            function op(el, v) { el.style.opacity = v; }
-            /* Камера: точка (fx, fy) кадра встает в центр сцены с увеличением s, dx сдвигает кадр по горизонтали */
-            function cam(el, fx, fy, s, dx) {
-              el.style.transform = 'translate(-50%,-50%) translate(' + (dx || 0).toFixed(1) + 'px,0) translate(' +
-                (-s * (fx - .5) * 100).toFixed(3) + '%,' + (-s * (fy - .5) * 100).toFixed(3) + '%) scale(' + s.toFixed(4) + ')';
-            }
-            function mask(el, value) { el.style.webkitMaskImage = value; el.style.maskImage = value; }
-
-            function render(t) {
-              /* 1. Колесо: камера едет рядом с машиной, обод крутится и равномерно тормозит.
-                 Кадр увеличен в 1.4 раза и сдвигается не больше чем на 0.2 ширины, поэтому край фото не виден */
-              var pd = seg(t, TL.d0, TL.d1), e = (1 - pd) * (1 - pd);
-              cam(fWheel, .5, .5, 1.4, -W * .2 * e);
-              rim.style.transform = 'rotate(' + (-900 * e).toFixed(2) + 'deg)';
-              var b = clamp((1 - pd) * 1.4 - .25, 0, 1);
-              rim.style.filter = b > .02 ? 'blur(' + (b * 2.2).toFixed(2) + 'px)' : 'none';
-              op(rimBlur, (b * .5).toFixed(3));
-              op(sWheel, t < TL.z0 + .6 ? 1 : 0);
-
-              /* 2. Общий план: отъезд от колеса, фары, наезд к окну */
-              /* старт: колесо общего плана совпадает по месту и размеру с колесом крупного плана */
-              var c = mix({ x: .7705, y: .6382, s: 5.114 }, { x: .5, y: .5, s: 1 }, io(seg(t, TL.z0, TL.z1)));
-              c = mix(c, { x: .56, y: .45, s: 1.35 }, io(seg(t, TL.p0, TL.p1)));
-              cam(fWide, c.x, c.y, c.s);
-              op(sWide, seg(t, TL.z0, TL.z0 + .35).toFixed(3));
-              var pl = t - TL.l0;
-              op(head, pl < 0 ? 0 : pl < .07 ? 1 : pl < .16 ? .25 : 1);
-              op(beam, (seg(t, TL.l0 + .2, TL.l0 + 1.1) * .9).toFixed(3));
-
-              /* 3. Окно: стекло опускается сверху вниз, затем улыбка и блик по очкам */
-              op(sWin, seg(t, TL.p0 + .25, TL.p1).toFixed(3));
-              var ws = lerp(1.1, 1, io(seg(t, TL.p0 + .25, TL.p1 + .3))) * lerp(1, 1.05, seg(t, TL.p1, TL.m1)) +
-                .012 * Math.sin(Math.PI * seg(t, TL.s0, TL.s1 + .2));
-              cam(fWin, .5, .5, ws);
-              var pw = io(seg(t, TL.w0, TL.w1)), P = lerp(8, 92, pw);
-              if (pw <= 0) { op(open, 0); mask(open, ''); }
-              else if (pw >= 1) { op(open, 1); mask(open, ''); }
-              else { op(open, 1); mask(open, 'linear-gradient(to bottom,#000 ' + (P - 3).toFixed(2) + '%,transparent ' + (P + 3).toFixed(2) + '%)'); }
-              edge.style.top = P.toFixed(2) + '%';
-              op(edge, pw > 0 && pw < 1 && P < 80 ? .9 : 0);
-              op(smile, seg(t, TL.s0, TL.s1).toFixed(3));
-              var pg = seg(t, TL.g0, TL.g1);
-              op(glint, pg > 0 && pg < 1 ? 1 : 0);
-              bar.style.transform = 'translateX(' + lerp(-120, 380, pg).toFixed(1) + '%) rotate(18deg)';
-
-              /* 4. Деньги: кадр плавно приближается, будто купюры протягивают зрителю */
-              var pm = seg(t, TL.m0, TL.m1);
-              op(sMoney, pm.toFixed(3));
-              if (pm >= 1) { op(sWide, 0); op(sWin, 0); }
-              cam(fMoney, .5, .5, lerp(1, 1.06, 1 - Math.pow(1 - pm, 3)));
-            }
-
-            var raf = 0, start = 0, playing = false;
-            function idle() {
-              /* После сценария кадр продолжает очень медленно приближаться */
-              fMoney.style.transition = 'transform 14s linear';
-              cam(fMoney, .5, .5, 1.12);
-            }
-            function frame(now) {
-              if (!start) start = now;
-              var t = (now - start) / 1000;
-              render(Math.min(t, TL.end));
-              if (t < TL.end) raf = requestAnimationFrame(frame);
-              else { playing = false; requestAnimationFrame(idle); }
-            }
-            /* true, если все кадры загрузились; иначе анимацию не запускаем, чтобы не было пустых бликов */
-            function ready() {
-              var imgs = Array.prototype.slice.call(stage.querySelectorAll('img'));
-              var all = Promise.all(imgs.map(function (img) {
-                return (img.decode ? img.decode() : Promise.resolve()).then(function () { return img.naturalWidth > 0; }, function () { return false; });
-              })).then(function (list) { return list.every(Boolean); });
-              return Promise.race([all, new Promise(function (r) { setTimeout(function () { r(false); }, 8000); })]);
-            }
-            function play() {
-              cancelAnimationFrame(raf);
-              W = stage.clientWidth;
-              fMoney.style.transition = '';
-              playing = true; start = 0;
-              render(0);
-              ready().then(function (ok) {
-                if (ok) { raf = requestAnimationFrame(frame); return; }
-                playing = false;
-                render(TL.end);
-              });
-            }
-            var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            W = stage.clientWidth;
-            if (reduce) render(TL.end); else play();
-            $('scene-replay').addEventListener('click', play);
-            window.addEventListener('resize', function () { W = stage.clientWidth; if (!playing) render(TL.end); });
-          })();
-          </script>
+    <div class="stage" id="stage" role="img" aria-label="Колесо Mercedes крупным планом, машина останавливается, водитель в черных очках опускает стекло и улыбается">
+      <div class="shot" id="shot-wheel">
+        <div class="frame frame-43" id="frame-wheel">
+          <img id="img-wheel" src="assets/hero/wheel.webp" alt="" width="1600" height="1200" fetchpriority="high">
+          <div class="rim-blur" id="rim-blur"></div>
+          <div class="rim" id="rim"></div>
         </div>
+      </div>
+      <div class="shot" id="shot-wide">
+        <div class="frame frame-169" id="frame-wide">
+          <img src="assets/hero/wide.webp" alt="" width="2560" height="1440">
+          <span class="headlight" id="headlight"></span>
+        </div>
+      </div>
+      <div class="shot shot-window" id="shot-window">
+        <div class="frame frame-43" id="frame-window">
+          <img src="assets/hero/closed.webp" alt="" width="1600" height="1200">
+          <img id="img-open" src="assets/hero/open.webp" alt="" width="1600" height="1200">
+          <img id="img-smile" src="assets/hero/smile.webp" alt="" width="1600" height="1200">
+          <span class="glass-edge" id="glass-edge"></span>
+          <span class="glint" id="glint"><i></i></span>
+        </div>
+      </div>
+      <div class="stage-vignette"></div>
+      <button class="icon-btn replay" type="button" id="scene-replay" aria-label="Повторить анимацию" title="Повторить анимацию">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8A5.5 5.5 0 1 1 11.9 4.1M13.5 1.5V4.5H10.5"/></svg>
+      </button>
+      <script>
+      /* Сценарий: колесо крупным планом → камера отъезжает до всей машины, загораются фары →
+         окно водителя, стекло опускается → голливудская улыбка и блик по очкам.
+         Без скрипта и при reduced motion виден финальный кадр с улыбкой. */
+      (function () {
+        var stage = document.getElementById('stage');
+        if (!stage) return;
+        function $(id) { return document.getElementById(id); }
+        var sWheel = $('shot-wheel'), sWide = $('shot-wide'), sWin = $('shot-window');
+        var fWheel = $('frame-wheel'), fWide = $('frame-wide'), fWin = $('frame-window');
+        var rim = $('rim'), rimBlur = $('rim-blur'), head = $('headlight');
+        var open = $('img-open'), smile = $('img-smile'), edge = $('glass-edge'), glint = $('glint'), bar = glint.firstElementChild;
+        var wheelImg = $('img-wheel');
+        /* Обод берет картинку из того же кадра, что и колесо, поэтому файл грузится один раз */
+        rim.style.backgroundImage = 'url("' + (wheelImg.currentSrc || wheelImg.src) + '")';
+        var TL = { d0: .1, d1: 2.2, z0: 2.4, z1: 4.0, l0: 3.7, p0: 4.35, p1: 5.1, w0: 5.2, w1: 6.2, s0: 6.3, s1: 6.8, g0: 6.9, g1: 7.5, end: 7.6 };
+        var W = 0, H = 0, S1 = 1.4, SLIDE = 0, C0 = { x: .77, y: .64, s: 4 };
+        function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+        function seg(t, a, b) { return clamp((t - a) / (b - a), 0, 1); }
+        function lerp(a, b, p) { return a + (b - a) * p; }
+        function io(p) { return p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2; }
+        function mix(a, b, p) { return { x: lerp(a.x, b.x, p), y: lerp(a.y, b.y, p), s: Math.exp(lerp(Math.log(a.s), Math.log(b.s), p)) }; }
+        function op(el, v) { el.style.opacity = v; }
+        /* Камера: точка (fx, fy) кадра встает в центр сцены с увеличением s, dx сдвигает кадр по горизонтали */
+        function cam(el, fx, fy, s, dx) {
+          el.style.transform = 'translate(-50%,-50%) translate(' + (dx || 0).toFixed(1) + 'px,0) translate(' +
+            (-s * (fx - .5) * 100).toFixed(3) + '%,' + (-s * (fy - .5) * 100).toFixed(3) + '%) scale(' + s.toFixed(4) + ')';
+        }
+        function mask(el, value) { el.style.webkitMaskImage = value; el.style.maskImage = value; }
 
-        <div class="hero-side">
+        /* Размеры сцены меняются с экраном, поэтому масштаб крупного плана и стартовая камера общего плана
+           считаются заново: колесо общего плана встает точно на место и в размер колеса крупного плана */
+        function measure() {
+          W = stage.clientWidth; H = stage.clientHeight;
+          var fw1 = fWheel.offsetWidth, fh1 = fWheel.offsetHeight, fw2 = fWide.offsetWidth, fh2 = fWide.offsetHeight;
+          S1 = Math.max(1, .72 * H / (.4734 * fh1)); /* обод занимает около 72% высоты сцены */
+          SLIDE = Math.max(0, Math.min(.2 * W, (S1 * fw1 - W) / 2));
+          var ox = S1 * (.4983 - .5) * fw1, oy = S1 * (.5521 - .5) * fh1, r1 = .2367 * fh1 * S1;
+          var s2 = r1 / (.0729 * fh2);
+          C0 = { x: .7701 - ox / (s2 * fw2), y: .6542 - oy / (s2 * fh2), s: s2 };
+        }
+
+        function render(t) {
+          /* 1. Колесо: камера едет рядом с машиной, обод крутится и равномерно тормозит */
+          var pd = seg(t, TL.d0, TL.d1), e = (1 - pd) * (1 - pd);
+          cam(fWheel, .5, .5, S1, -SLIDE * e);
+          rim.style.transform = 'rotate(' + (-900 * e).toFixed(2) + 'deg)';
+          var b = clamp((1 - pd) * 1.4 - .25, 0, 1);
+          rim.style.filter = b > .02 ? 'blur(' + (b * 2.2).toFixed(2) + 'px)' : 'none';
+          op(rimBlur, (b * .5).toFixed(3));
+          op(sWheel, t < TL.z0 + .6 ? 1 : 0);
+
+          /* 2. Общий план: отъезд от колеса, фары, наезд к окну */
+          var c = mix(C0, { x: .5, y: .5, s: 1 }, io(seg(t, TL.z0, TL.z1)));
+          c = mix(c, { x: .56, y: .45, s: 1.35 }, io(seg(t, TL.p0, TL.p1)));
+          cam(fWide, c.x, c.y, c.s);
+          op(sWide, t >= TL.end ? 0 : seg(t, TL.z0, TL.z0 + .35).toFixed(3));
+          var pl = t - TL.l0;
+          op(head, pl < 0 ? 0 : pl < .07 ? 1 : pl < .16 ? .25 : 1);
+
+          /* 3. Окно: стекло опускается сверху вниз, затем улыбка и блик по очкам */
+          op(sWin, seg(t, TL.p0 + .25, TL.p1).toFixed(3));
+          var ws = lerp(1.1, 1, io(seg(t, TL.p0 + .25, TL.p1 + .3))) * lerp(1, 1.04, seg(t, TL.p1, TL.end)) +
+            .012 * Math.sin(Math.PI * seg(t, TL.s0, TL.s1 + .2));
+          cam(fWin, .5, .48, ws);
+          var pw = io(seg(t, TL.w0, TL.w1)), P = lerp(8, 92, pw);
+          if (pw <= 0) { op(open, 0); mask(open, ''); }
+          else if (pw >= 1) { op(open, 1); mask(open, ''); }
+          else { op(open, 1); mask(open, 'linear-gradient(to bottom,#000 ' + (P - 3).toFixed(2) + '%,transparent ' + (P + 3).toFixed(2) + '%)'); }
+          edge.style.top = P.toFixed(2) + '%';
+          op(edge, pw > 0 && pw < 1 && P < 80 ? .9 : 0);
+          op(smile, seg(t, TL.s0, TL.s1).toFixed(3));
+          var pg = seg(t, TL.g0, TL.g1);
+          op(glint, pg > 0 && pg < 1 ? 1 : 0);
+          bar.style.transform = 'translateX(' + lerp(-120, 380, pg).toFixed(1) + '%) rotate(18deg)';
+        }
+
+        var raf = 0, start = 0, playing = false;
+        function idle() {
+          /* После сценария кадр очень медленно приближается, по очкам изредка проходит блик */
+          fWin.style.transition = 'transform 16s linear';
+          cam(fWin, .5, .48, 1.1);
+          glint.style.opacity = '';
+          bar.style.transform = '';
+          stage.classList.add('idle');
+        }
+        function frame(now) {
+          if (!start) start = now;
+          var t = (now - start) / 1000;
+          render(Math.min(t, TL.end));
+          if (t < TL.end) raf = requestAnimationFrame(frame);
+          else { playing = false; requestAnimationFrame(idle); }
+        }
+        /* true, если все кадры загрузились; иначе анимацию не запускаем, чтобы не было пустых бликов */
+        function ready() {
+          var imgs = Array.prototype.slice.call(stage.querySelectorAll('img'));
+          var all = Promise.all(imgs.map(function (img) {
+            return (img.decode ? img.decode() : Promise.resolve()).then(function () { return img.naturalWidth > 0; }, function () { return false; });
+          })).then(function (list) { return list.every(Boolean); });
+          return Promise.race([all, new Promise(function (r) { setTimeout(function () { r(false); }, 8000); })]);
+        }
+        function play() {
+          cancelAnimationFrame(raf);
+          stage.classList.remove('idle');
+          fWin.style.transition = '';
+          measure();
+          playing = true; start = 0;
+          render(0);
+          ready().then(function (ok) {
+            if (ok) { raf = requestAnimationFrame(frame); return; }
+            playing = false;
+            render(TL.end);
+          });
+        }
+        var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduce) { measure(); render(TL.end); } else play();
+        $('scene-replay').addEventListener('click', play);
+        window.addEventListener('resize', function () {
+          measure();
+          if (playing) return;
+          var wasIdle = stage.classList.contains('idle');
+          fWin.style.transition = '';
+          render(TL.end);
+          if (wasIdle) idle();
+        });
+      })();
+      </script>
+    </div>
+
+    <div class="wrap">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">Срочный выкуп автомобилей</p>
+          <h1 class="display" id="hero-title">Выкупим ваш автомобиль за&nbsp;один день</h1>
           <p class="lead">Назовем цену за 15 минут. Эксперт приедет на осмотр туда, где удобно вам. Деньги в день сделки, наличными или на карту.</p>
-          <div class="lead-card" id="hero-form">
-            <form class="lead-form" id="form-hero" novalidate>
-              <h2 class="card-title">Узнать цену выкупа</h2>
-              <div class="form-stack">
-                <div class="field">
-                  <label class="label" for="hero-model">Марка, модель, год</label>
-                  <input class="input" id="hero-model" name="model" autocomplete="off" placeholder="Например, Mercedes E 200, 2019">
-                  <span class="err" aria-live="polite"></span>
-                </div>
-                <div class="field">
-                  <label class="label" for="hero-phone">Телефон</label>
-                  <input class="input" id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
-                  <span class="err" aria-live="polite"></span>
-                </div>
-                <button class="btn btn-primary btn-block" type="submit">
-                  Получить оценку
-                  <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
-                </button>
-                <p class="form-note">Перезвоним в течение 15 минут. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
+        </div>
+        <div class="lead-card" id="hero-form">
+          <form class="lead-form" id="form-hero" novalidate>
+            <h2 class="card-title">Узнать цену выкупа</h2>
+            <div class="form-stack">
+              <div class="field">
+                <label class="label" for="hero-model">Марка, модель, год</label>
+                <input class="input" id="hero-model" name="model" autocomplete="off" placeholder="Например, Mercedes E 200, 2019">
+                <span class="err" aria-live="polite"></span>
               </div>
-            </form>
-            <div class="done" hidden tabindex="-1">
-              <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
-              <h3>Заявка принята</h3>
-              <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
-              <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
+              <div class="field">
+                <label class="label" for="hero-phone">Телефон</label>
+                <input class="input" id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
+                <span class="err" aria-live="polite"></span>
+              </div>
+              <button class="btn btn-primary btn-block" type="submit">
+                Получить оценку
+                <svg class="arrow" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="M0 5H17M12.5 .5 17 5l-4.5 4.5"/></svg>
+              </button>
+              <p class="form-note">Перезвоним в течение 15 минут. Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
             </div>
+          </form>
+          <div class="done" hidden tabindex="-1">
+            <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
+            <h3>Заявка принята</h3>
+            <p>Эксперт перезвонит на <span data-done-phone></span> в течение 15 минут и назовет предварительную цену.</p>
+            <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
           </div>
         </div>
       </div>
