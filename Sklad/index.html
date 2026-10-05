@@ -243,6 +243,10 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 .sz td{padding:4px 8px 4px 0;border-top:1px solid var(--line);vertical-align:middle}
 .sz td.size{font:700 15px var(--f-mono);width:70px}
 .sz .qin{width:80px}
+.qin.man{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 12%,var(--surface));font-weight:700}
+.x.undo{font-size:18px;color:var(--gold-ink)}
+.manbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:12px;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--gold) 10%,var(--surface));border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line));font-size:14px}
+.manbar p{margin:0;flex:1 1 280px}
 .plus{display:flex;gap:6px;align-items:center;margin-top:8px}
 .plus .in{width:110px;padding:7px 9px;font-size:14px}
 .plus .btn{min-height:36px;padding:7px 10px;font-size:13px}
@@ -1090,6 +1094,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
         <div class="segleg" id="segleg"></div>
       </div>
       <div class="notice" id="dayPending" hidden></div>
+      <div class="notice" id="dayGone" hidden></div>
       <div class="card" id="dayCard" hidden>
         <div class="lhead">
           <div class="seg" role="group" aria-label="Фильтр отправлений" id="daySeg">
@@ -1097,6 +1102,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
             <button type="button" data-f="pick" aria-pressed="false">Собирать</button>
             <button type="button" data-f="wait" aria-pressed="false">Ждут мешок</button>
             <button type="button" data-f="short" aria-pressed="false">Не хватает</button>
+            <button type="button" data-f="gone" aria-pressed="false" hidden>Нет в новом листе</button>
           </div>
           <input class="in search" id="daySearch" type="search" placeholder="Отправление или артикул" aria-label="Поиск по отправлениям">
         </div>
@@ -1130,6 +1136,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
           <button class="btn" type="button" id="buyPdfAll"><svg class="ic"><use href="#i-doc"/></svg>Все заказы с фото (PDF)</button>
           <button class="btn" type="button" id="buyExport"><svg class="ic"><use href="#i-dl"/></svg>Скачать Excel</button>
         </div>
+        <div class="manbar" id="manBar" hidden></div>
         <div class="confirm" id="buyConfirm" hidden></div>
       </div>
       <div class="card twbar" id="twBar" hidden></div>
@@ -1556,7 +1563,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-05.1';
+const APP_VERSION = '2026-10-05.2';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -1852,14 +1859,17 @@ const draft = new PMap('receipt', {
 // one line of an order: shipment s, article a, qty q; got = already given (from stock or a bag), w = {purchase id: qty awaited}
 const lines = new PMap('lines', {
   key: it => { const ak = akey(it.a); return ak ? (it.s ? String(it.s) : 'r' + it.i) + '|' + ak : null; },
-  pack: it => [it.s, it.a, it.n, it.q, it.got, it.w, it.d, it.i],
-  unpack: r => ({s: r[0] ? String(r[0]) : '', a: String(r[1] ?? ''), n: r[2] ? String(r[2]) : '', q: Number(r[3]) || 0, got: Number(r[4]) || 0, w: r[5] && typeof r[5] === 'object' && !Array.isArray(r[5]) ? {...r[5]} : {}, d: Number(r[6]) || 0, i: Number(r[7]) || 0}),
-  merge: (c, it) => { c.q = round(c.q + it.q); c.got = round(c.got + (it.got || 0)); for (const [p, v] of Object.entries(it.w || {})) c.w[p] = round((c.w[p] || 0) + v); if (!c.n && it.n) c.n = it.n; },
+  pack: it => [it.s, it.a, it.n, it.q, it.got, it.w, it.d, it.i, it.v || ''],
+  unpack: r => ({s: r[0] ? String(r[0]) : '', a: String(r[1] ?? ''), n: r[2] ? String(r[2]) : '', q: Number(r[3]) || 0, got: Number(r[4]) || 0, w: r[5] && typeof r[5] === 'object' && !Array.isArray(r[5]) ? {...r[5]} : {}, d: Number(r[6]) || 0, i: Number(r[7]) || 0, v: r[8] ? String(r[8]) : ''}),
+  merge: (c, it) => { c.q = round(c.q + it.q); c.got = round(c.got + (it.got || 0)); for (const [p, v] of Object.entries(it.w || {})) c.w[p] = round((c.w[p] || 0) + v); if (!c.n && it.n) c.n = it.n; if ((it.v || '') > (c.v || '')) c.v = it.v; },
 });
 const maps = [stock, draft, lines];
+// v: the date (yyyy-mm-dd) of the latest list the shipment was in. A shipment that the newest day's lists no longer have
+// was shipped or cancelled: it no longer takes stock and is not bought for
+const isGone = ln => !!ln.s && !!ln.v && ln.got < ln.q && !!DAYM.iso && ln.v < DAYM.iso;
 const wsum = ln => { let s = 0; for (const v of Object.values(ln.w)) s += v; return round(s); };
 
-let LOG = [], DAYM = {date: '', file: '', at: 0, expected: 0, ships: 0}, RET = [];
+let LOG = [], DAYM = {date: '', iso: '', file: '', at: 0, expected: 0, ships: 0}, RET = [];
 let PO = new Map();               // order draft: article key → {a, n, q (null = as needed), add}
 let SENT = new Map();             // pavilion → when its order was sent to the supplier
 const SKIP = {m: new Set(), p: new Set()};   // taken out of this purchase with ×: model keys and pavilions
@@ -2038,7 +2048,7 @@ function subscribe() {
   });
   Backend.watchColl('photo', (docs, fromCache) => { for (const d of docs) if (d.data && d.data.k && d.data.img) { setPhoto(String(d.data.k), String(d.data.img)); PHOTO_V.set(String(d.data.k), Number(d.data.v) || 1); } if (!fromCache) first('photo'); render(); });
   Backend.watchDoc('meta/log', d => { first('log'); if (d && Array.isArray(d.entries) && !docPending('meta/log')) { LOG = d.entries.slice(0, 300); render(); } });
-  Backend.watchDoc('meta/day', d => { first('day'); if (d && !docPending('meta/day')) { DAYM = {date: String(d.date || ''), file: String(d.file || ''), at: +d.at || 0, expected: +d.expected || 0, ships: +d.ships || 0}; render(); } });
+  Backend.watchDoc('meta/day', d => { first('day'); if (d && !docPending('meta/day')) { DAYM = {date: String(d.date || ''), iso: String(d.iso || ''), file: String(d.file || ''), at: +d.at || 0, expected: +d.expected || 0, ships: +d.ships || 0}; render(); } });
   Backend.watchDoc('meta/po', d => {
     first('po');
     if (!d || docPending('meta/po')) return;
@@ -2644,7 +2654,10 @@ function renderImport() {
   if (isOrders) {
     const known = s.lines.filter(l => l.s && lines.items.has(l.s + '|' + akey(l.a))).length;
     if (known) h += `<div>${cnt(known, W.row)} уже есть в программе — они не задвоятся.</div>`;
-    if (m.ship < 0) h += `<div class="warnline">Нет колонки с номером отправления: при повторной загрузке того же листа строки задвоятся.</div>`;
+    if (s.lines.length && s.lines.every(l => !l.s)) {
+      const day = DAYM.iso ? [...lines.items.values()].filter(ln => ln.s && ln.v === DAYM.iso).length : 0;
+      h += `<div class="warnline">В этом листе нет номеров отправлений — это сводный лист по товарам. Он заменит прошлый такой же лист, но не обычный лист подбора.${day ? ` <b>В программе уже есть обычный лист за ${esc(isoRu(DAYM.iso))}: если этот сводный лист за тот же день, заказы задвоятся — тогда не загружайте его.</b>` : ''} Лучше загружать обычный лист подбора — по отправлениям.</div>`;
+    }
   }
   if (isHist) {
     const dated = s.lines.filter(l => l.dt), canc = dated.filter(l => l.st && CANCEL_RX.test(l.st)).length;
@@ -2779,7 +2792,7 @@ function plan() {
   const free = new Map();
   for (const [k, it] of stock.items) if (it.q > 0) free.set(k, it.q);
   const open = [];
-  for (const [k, ln] of lines.items) { const need = round(ln.q - ln.got - wsum(ln)); if (need > 0) open.push({k, ln, need}); }
+  for (const [k, ln] of lines.items) { if (isGone(ln)) continue; const need = round(ln.q - ln.got - wsum(ln)); if (need > 0) open.push({k, ln, need}); }
   open.sort((a, b) => byAge(a.ln, b.ln));
   const res = new Map();
   for (const {k, ln, need} of open) {
@@ -2791,12 +2804,13 @@ function plan() {
 }
 function lineState(k, ln, p) {
   if (ln.got >= ln.q) return 'ready';
+  if (isGone(ln)) return 'gone';
   const r = p.get(k);
   if (r && r.short > 0) return 'short';
   if (wsum(ln) > 0) return 'wait';
   return r && r.take > 0 ? 'stock' : 'ready';
 }
-const RANK = {short: 0, wait: 1, stock: 2, ready: 3};
+const RANK = {short: 0, wait: 1, stock: 2, ready: 3, gone: 4};
 function shipsOf(p) {
   const ships = new Map();
   for (const [k, ln] of lines.items) {
@@ -2807,6 +2821,8 @@ function shipsOf(p) {
     if (RANK[st] < RANK[e.state]) e.state = st;
     e.d = Math.min(e.d, ln.d);
   }
+  // not in the newest list: the whole shipment has gone, whatever its other lines say
+  for (const e of ships.values()) if (e.state !== 'gone' && e.lines.some(x => x.st === 'gone')) e.state = 'gone';
   return ships;
 }
 function shortage(p) {
@@ -2834,7 +2850,7 @@ function buyRows(p, all) {
     const order = po && po.q != null ? po.q : need;
     const pa = parseArt(a), skip = SKIP.p.has(pa.pav) ? 'p' : SKIP.m.has(pa.mkey) ? 'm' : '';
     if (skip && !all) continue;
-    rows.push({ak, a, n, need, order, add: !!(po && po.add), ...pa, skip});
+    rows.push({ak, a, n, need, order, add: !!(po && po.add), man: !!(po && po.q != null && need > 0 && po.q !== need), ...pa, skip});
   }
   return rows;
 }
@@ -2969,23 +2985,46 @@ function splitTwin(mk) {
 
 function loadList(inLines, info) {
   const day = tick();
+  const date = info.date || new Date().toLocaleDateString('ru-RU'), iso = parseDay(date) || isoToday();
+  const prevIso = DAYM.iso || parseDay(DAYM.date) || '', prevDate = DAYM.date;
   const incoming = new Set(inLines.map(l => l.s ? l.s + '|' + akey(l.a) : ''));
   // shipments given out earlier and missing from the new list have left the warehouse
   for (const [k, ln] of [...lines.items]) if (ln.got >= ln.q && !incoming.has(k)) lines.remove(k);
+  // saved before lines knew their list's date: they were in the previous list
+  for (const ln of lines.items.values()) if (!ln.v) ln.v = prevIso || '0';
+  // a list by products (without shipment numbers) replaces the previous such list; bags already ordered for it stay
+  const byProduct = inLines.length > 0 && inLines.every(l => !l.s);
+  const carry = new Map();
+  if (byProduct) for (const [k, ln] of [...lines.items]) if (!ln.s) {
+    const ak = akey(ln.a), w = carry.get(ak) || carry.set(ak, {}).get(ak);
+    for (const [pid, v] of Object.entries(ln.w)) w[pid] = round((w[pid] || 0) + v);
+    lines.remove(k);
+  }
   let added = 0, dup = 0;
   inLines.forEach((l, idx) => {
     const k = l.s ? l.s + '|' + akey(l.a) : null;
     if (k && lines.items.has(k)) {
       const ex = lines.items.get(k);
       if (ex.d === day) ex.q = round(ex.q + l.q); else dup++;
+      if (iso > (ex.v || '')) ex.v = iso;
       lines.touch(k); return;
     }
-    lines.put({s: l.s, a: l.a, n: l.n, q: l.q, got: 0, w: {}, d: day, i: day + idx});
+    const w = {}, c = !l.s && carry.get(akey(l.a));
+    if (c) { let room = l.q; for (const [pid, v] of Object.entries(c)) { const g = Math.min(room, v); if (g > 0) { w[pid] = g; c[pid] = round(v - g); room = round(room - g); } } }
+    lines.put({s: l.s, a: l.a, n: l.n, q: l.q, got: 0, w, d: day, i: day + idx, v: iso});
     added++;
   });
+  lines.touchAll();
   const ships = new Set(inLines.map(l => l.s).filter(Boolean)).size;
-  DAYM = {date: info.date || new Date().toLocaleDateString('ru-RU'), file: info.file, at: day, expected: info.expected || 0, ships};
+  DAYM = {date, iso: iso > prevIso ? iso : prevIso, file: info.file, at: day, expected: info.expected || 0, ships};
   saveMeta('meta/day');
+  // a list of a new day: what was typed into «Заказать», taken out with × or marked as sent was for the old orders
+  let reset = null;
+  if (prevIso && iso > prevIso && (PO.size || SKIP.m.size || SKIP.p.size || SENT.size)) {
+    reset = {po: PO, skip: {m: SKIP.m, p: SKIP.p}, sent: SENT};
+    PO = new Map(); SKIP.m = new Set(); SKIP.p = new Set(); SENT = new Map(); saveMeta('meta/po');
+    log(`Новый день (${date}): правки закупки от ${prevDate} сброшены`);
+  }
   // sales history for later analysis
   const agg = new Map();
   for (const l of inLines) { const k = normKey(l.a); const e = agg.get(k); if (e) e[1] = round(e[1] + l.q); else agg.set(k, [l.a, l.q]); }
@@ -2997,7 +3036,10 @@ function loadList(inLines, info) {
   const old = [...lines.items.values()].filter(ln => ln.d < day && ln.got < ln.q).length;
   log(`Лист подбора ${DAYM.date}: ${cnt(ships || inLines.length, ships ? W.ship : W.row)}, новых строк ${fmt(added)}${dup ? `, уже были ${fmt(dup)}` : ''}${old ? `; с прошлых дней ждут ${fmt(old)}` : ''}`);
   diag('list', DAYM.date, {added, dup, ships, expected: info.expected || 0, old, total: lines.items.size, stock: stock.items.size});
-  toast(`Лист загружен: ${cnt(added, W.row)}${dup ? `, ${fmt(dup)} уже были в программе` : ''}`);
+  const gone = [...lines.items.values()].filter(isGone).length;
+  const msg = `Лист загружен: ${cnt(added, W.row)}${dup ? `, ${fmt(dup)} уже были в программе` : ''}${gone ? `. ${cnt(gone, ['отправления', 'отправлений', 'отправлений'])} с прошлых дней в нём нет` : ''}`;
+  if (reset) toast(`${msg}. Количества, которые вы вписывали в закупку ${prevDate}, сброшены — закупка посчитана заново по новому листу.`, 12000, {label: 'Вернуть правки', fn: () => { PO = reset.po; SKIP.m = reset.skip.m; SKIP.p = reset.skip.p; SENT = reset.sent; saveMeta('meta/po'); render(); toast('Правки закупки вернулись'); }});
+  else toast(msg);
 }
 
 function commit() {
@@ -3047,7 +3089,7 @@ function commit() {
 
 function recvPreview(pur) {
   const want = new Map();
-  for (const ln of lines.items.values()) { const w = ln.w[pur.id]; if (w) { const ak = akey(ln.a); want.set(ak, round((want.get(ak) || 0) + w)); } }
+  for (const ln of lines.items.values()) { const w = ln.w[pur.id]; if (w && !isGone(ln)) { const ak = akey(ln.a); want.set(ak, round((want.get(ak) || 0) + w)); } }
   let toOrd = 0, toStock = 0, unc = 0, ord = 0, got = 0;
   const diff = [];
   for (const l of pur.lines) {
@@ -3066,6 +3108,8 @@ function receive(pur, bulk) {
   const rep = {ord: 0, got: 0, toOrd: 0, toStock: 0, rows: [], extra: pur.extra.map(e => [e.a, e.q, e.to]), unc: []};
   if (bulk) rep.asis = 1;
   const waitBy = new Map();
+  // a shipment that has gone no longer waits: what came for it goes to stock
+  for (const [k, ln] of lines.items) if (ln.w[pur.id] && isGone(ln)) { delete ln.w[pur.id]; lines.touch(k); }
   for (const [k, ln] of lines.items) if (ln.w[pur.id]) { const ak = akey(ln.a); (waitBy.get(ak) || waitBy.set(ak, []).get(ak)).push({k, ln}); }
   for (const arr of waitBy.values()) arr.sort((a, b) => byAge(a.ln, b.ln));
   for (const l of pur.lines) {
@@ -3420,10 +3464,15 @@ function renderDay(p, ships) {
   $('#dayEmpty').hidden = has; $('#dayTiles').hidden = !has; $('#dayCard').hidden = !has;
   $('#dayMeta').innerHTML = DAYM.at ? `<span>Последний лист: <b>${esc(DAYM.date)}</b> · ${esc(trunc(DAYM.file, 80))} · загружен ${when(DAYM.at)}</span>` + (DAYM.expected && DAYM.ships && DAYM.expected !== DAYM.ships ? `<span class="chip warn">прочитано ${fmt(DAYM.ships)} из ${fmt(DAYM.expected)}</span>` : '') : '';
   if (!has) { $('#dayPending').hidden = true; return; }
-  const all = [...ships.values()];
-  const c = {pick: 0, wait: 0, short: 0, old: 0, stockPend: 0};
+  const every = [...ships.values()], all = every.filter(s => s.state !== 'gone');
+  const c = {pick: 0, wait: 0, short: 0, old: 0, stockPend: 0, gone: every.length - all.length};
   let shortQ = 0, pendQ = 0;
   for (const s of all) { if (s.state === 'ready' || s.state === 'stock') c.pick++; else c[s.state]++; if (s.d < DAYM.at) c.old++; if (s.lines.some(x => x.st === 'stock')) c.stockPend++; }
+  // shipments from earlier lists that the newest day's lists no longer have
+  const gn = $('#dayGone'), lastRu = DAYM.iso ? isoRu(DAYM.iso) : DAYM.date;
+  gn.hidden = !c.gone;
+  if (c.gone) gn.innerHTML = `<p><b>${cnt(c.gone, W.ship)} с прошлых дней нет в листе за ${esc(lastRu)}.</b> Скорее всего, их уже отправили или покупатель отменил заказ. Программа больше не держит под них товар и не покупает его. Если вы ещё не загрузили лист второго магазина, загрузите — его отправления вернутся сами.</p><button class="btn" type="button" data-f-go="gone">Показать</button><button class="btn" type="button" data-gone-clear>Убрать их из программы</button>`;
+  const gb = $('#daySeg [data-f="gone"]'); gb.hidden = !c.gone; if (!c.gone && ui.dayF === 'gone') ui.dayF = 'all';
   for (const r of p.values()) { shortQ += r.short; pendQ += r.take; }
   roll($('#tAll'), all.length); $('#tAllS').textContent = c.old ? `с прошлых дней: ${fmt(c.old)}` : cnt(all.length, W.ship);
   roll($('#tPick'), c.pick); $('#tPickS').textContent = c.stockPend ? `ещё не списано со склада: ${fmt(c.stockPend)}` : 'товар отложен';
@@ -3439,8 +3488,8 @@ function renderDay(p, ships) {
   pend.hidden = !pendQ;
   if (pendQ) pend.innerHTML = `<p>Под ${cnt(c.stockPend, W.ship)} есть товар на складе (${fmt(round(pendQ))} шт.), но он ещё не списан. Он спишется, когда вы оформите закупку${shortQ ? '' : ' или нажмёте «Списать со склада»'}.</p>` +
     (shortQ ? `<button class="btn primary" type="button" data-go="buy">К закупке</button>` : `<button class="btn primary" type="button" data-commit>Списать со склада</button>`);
-  $$('#daySeg button').forEach(b => { const f = b.dataset.f; b.setAttribute('aria-pressed', String(f === ui.dayF)); b.textContent = `${{all: 'Все', pick: 'Собирать', wait: 'Ждут мешок', short: 'Не хватает'}[f]} · ${fmt(f === 'all' ? all.length : c[f])}`; });
-  let list = all.filter(s => ui.dayF === 'all' || (ui.dayF === 'pick' ? (s.state === 'ready' || s.state === 'stock') : s.state === ui.dayF));
+  $$('#daySeg button').forEach(b => { const f = b.dataset.f; b.setAttribute('aria-pressed', String(f === ui.dayF)); b.textContent = `${{all: 'Все', pick: 'Собирать', wait: 'Ждут мешок', short: 'Не хватает', gone: 'Нет в новом листе'}[f]} · ${fmt(f === 'all' ? all.length : c[f])}`; });
+  let list = (ui.dayF === 'gone' ? every : all).filter(s => ui.dayF === 'all' || (ui.dayF === 'pick' ? (s.state === 'ready' || s.state === 'stock') : s.state === ui.dayF));
   if (ui.dayQ) list = list.filter(s => matches(ui.dayQ, s.sid, ...s.lines.map(x => x.ln.a), ...s.lines.map(x => x.ln.n)));
   list.sort((a, b) => (RANK[a.state] - RANK[b.state]) || (a.d - b.d) || coll.compare(a.sid, b.sid));
   const shown = list.slice(0, ui.dayLimit);
@@ -3450,6 +3499,7 @@ function renderDay(p, ships) {
     if (x.st === 'ready') return '<span class="chip good">к сборке</span>';
     if (x.st === 'stock') return '<span class="chip good">со склада</span>';
     if (x.st === 'wait') return `<span class="chip warn">ждёт мешок</span><span class="alias">${esc(purLabel(x.ln))}</span>`;
+    if (x.st === 'gone') return `<span class="chip plain">нет в листе за ${esc(lastRu)}</span>`;
     return `<span class="chip bad">не хватает${x.ln.q > 1 ? ` ${fmt(r.short)} шт.` : ''}</span>`;
   };
   const html = [];
@@ -3509,13 +3559,17 @@ function renderBuy(p, rows) {
       </div></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
       ${m.moved || tn ? `<div class="mnote">${m.moved ? `<span class="tagm">из ${esc(m.moved)}</span><span>перенесено в этот павильон</span><button class="lnk" type="button" data-unmove="${esc(m.mkey)}">вернуть в ${esc(m.moved)}</button>` : ''}${tn}</div>` : ''}
       <table class="sz"><thead><tr><th>Размер</th><th class="num">Нужно</th><th class="num">Заказать</th><th></th></tr></thead><tbody>
-      ${m.rows.map(r => `<tr><td class="size">${esc(sizeShow(r.size) || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : ''}</td></tr>`).join('')}
+      ${m.rows.map(r => `<tr><td class="size">${esc(sizeShow(r.size) || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin${r.man ? ' man' : ''}" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"${r.man ? ` title="Вписано вручную, по заказам нужно ${fmt(r.need)}"` : ''}></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : r.man ? `<button class="x undo" type="button" data-unedit="${esc(r.ak)}" title="Вернуть ${fmt(r.need)}, сколько нужно по заказам" aria-label="Вернуть ${fmt(r.need)} для ${esc(r.a)}">↺</button>` : ''}</td></tr>`).join('')}
       </tbody></table>
       <div class="plus"><input class="in" data-size-for="${esc(m.model)}" placeholder="размер" aria-label="Добавить размер к ${esc(m.model)}"><button class="btn" type="button" data-add-size="${esc(m.model)}">+ размер</button></div>
     </div></div>`; }).join('')}
     ${pavNav(pv)}
   </article>`).join('');
   setBody($('#buyList'), out || `<div class="card"><p class="empty" style="margin:0">Сейчас докупать нечего. Если хотите взять товар на склад, добавьте артикул выше.</p></div>`);
+  // quantities typed by hand into «Заказать»: visible, and one button puts back what the orders need
+  const allRows = buyRows(p, true), manN = allRows.filter(r => r.man).length, addN = allRows.filter(r => r.add && !r.need).length;
+  $('#manBar').hidden = !(manN || addN);
+  setBody($('#manBar'), manN || addN ? `<p>${manN ? `Вручную изменено ${cnt(manN, ['количество', 'количества', 'количеств'])} — такие поля в жёлтой рамке.` : ''}${addN ? ` Добавлено вручную ${cnt(addN, W.art)} сверх заказов.` : ''}</p><button class="btn" type="button" data-unedit-all>Сбросить правки</button>` : '');
   // taken out with ×: one tap brings it back
   const sk = buyRows(p, true).filter(r => r.skip), skP = new Map(), skM = new Map();
   for (const r of sk) {
@@ -3753,7 +3807,7 @@ function toast(msg, ms = 3800, action) {
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel],[data-skip-m],[data-skip-p],[data-unskip-m],[data-unskip-p],[data-unskip-all],[data-move],[data-unmove],[data-twin],[data-recv-asis]');
+  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel],[data-skip-m],[data-skip-p],[data-unskip-m],[data-unskip-p],[data-unskip-all],[data-move],[data-unmove],[data-twin],[data-recv-asis],[data-unedit],[data-unedit-all]');
   if (!t) return;
   if (t.dataset.skipM || t.dataset.skipP != null) { skipIt(t); return; }
   if (t.dataset.unskipM || t.dataset.unskipP != null || t.hasAttribute('data-unskip-all')) {
@@ -3763,6 +3817,13 @@ document.addEventListener('click', e => {
   if (t.dataset.move) { openMove(t.dataset.move); return; }
   if (t.dataset.unmove) { const mv = MOVE.get(t.dataset.unmove); if (mv) moveModel(t.dataset.unmove, mv.from, 0, mv.from); return; }
   if (t.dataset.twin) { openTwins(t.dataset.twin === '*' ? '' : t.dataset.twin); return; }
+  if (t.dataset.unedit) { const po = PO.get(t.dataset.unedit); if (po) { if (po.add) po.q = null; else PO.delete(t.dataset.unedit); saveMeta('meta/po'); render(); } return; }
+  if (t.hasAttribute('data-unedit-all')) {
+    const was = new Map([...PO].map(([k, e]) => [k, {...e}]));
+    PO = new Map(); saveMeta('meta/po'); log('Сброшены ручные правки закупки'); render();
+    toast('Правки сброшены: закупка посчитана по заказам', 8000, {label: 'Вернуть', fn: () => { PO = was; saveMeta('meta/po'); render(); }});
+    return;
+  }
   if (t.dataset.recvAsis) { askAsIs(t.dataset.recvAsis, t.closest('#pane-recv') ? '#recvGoConfirm' : '#goConfirm'); return; }
   if (t.hasAttribute('data-order-all')) { openOrder(null); return; }
   if (t.hasAttribute('data-order-pav')) { openOrder([t.dataset.orderPav]); return; }
@@ -3819,12 +3880,24 @@ $('#dayBody').addEventListener('click', e => {
   const back = round(ls.reduce((s, [, ln]) => s + ln.got, 0));
   confirmIn('#dayConfirm', `Убрать отправление <b>${esc(sid)}</b> (например, покупатель отменил заказ)?${back ? ` Товар, уже списанный под него (${fmt(back)} шт.), вернётся на склад.` : ''}`, 'Убрать', () => cancelShipment(sid), true);
 });
+$('#dayGone').addEventListener('click', e => {
+  if (e.target.closest('[data-f-go]')) { ui.dayF = 'gone'; ui.dayLimit = 300; render(); $('#dayCard').scrollIntoView({behavior: motionOk() ? 'smooth' : 'auto', block: 'start'}); return; }
+  if (!e.target.closest('[data-gone-clear]')) return;
+  const gone = [...lines.items].filter(([, ln]) => isGone(ln)), n = new Set(gone.map(([k, ln]) => ln.s || k)).size;
+  confirmIn('#dayConfirm', `Убрать из программы ${cnt(n, W.ship)}, которых нет в листе за ${esc(DAYM.iso ? isoRu(DAYM.iso) : DAYM.date)}? Склад и закупки не изменятся.`, 'Убрать', () => {
+    const snap = takeSnap();
+    for (const [k] of gone) lines.remove(k);
+    if (ui.dayF === 'gone') ui.dayF = 'all';
+    log(`Убраны отправления, которых нет в новом листе: ${fmt(n)}`);
+    toastUndo(`Убрано ${cnt(n, W.ship)}`, snap, 'уборка старых отправлений');
+  }, true);
+});
 $('#dayClear').addEventListener('click', () => {
   confirmIn('#dayConfirm', `Убрать все ${cnt(shipsOf(plan()).size, W.ship)} из программы? Склад и закупки не изменятся.`, 'Убрать все', () => { lines.clear(); log('Убраны все отправления'); }, true);
 });
 $('#dayExport').addEventListener('click', () => {
   const p = plan(), rows = [];
-  const name = {ready: 'к сборке', stock: 'со склада (не списано)', wait: 'ждёт мешок', short: 'не хватает'};
+  const name = {ready: 'к сборке', stock: 'со склада (не списано)', wait: 'ждёт мешок', short: 'не хватает', gone: 'нет в новом листе'};
   for (const s of [...shipsOf(p).values()].sort((a, b) => (RANK[a.state] - RANK[b.state]) || coll.compare(a.sid, b.sid)))
     for (const x of s.lines) rows.push([x.ln.s, x.ln.a, x.ln.n, x.ln.q, name[x.st], Object.keys(x.ln.w).map(id => { const pu = PUR.get(id); return pu ? `${pu.pav} ${dm(pu.at)}` : ''; }).join(', ')]);
   saveTable(`Отправления ${DAYM.date || today()}`, [{name: 'Отправления', cols: [22, 28, 50, 6, 22, 16], rows: [['Отправление', 'Артикул', 'Наименование', 'Шт.', 'Статус', 'Закупка'], ...rows]}]);
@@ -4443,7 +4516,7 @@ const greeting = () => { const h = new Date().getHours(); return h < 5 ? 'Доб
 const rubShort = n => n >= 1e6 ? `${nf.format(Math.round(n / 1e5) / 10)} млн ₽` : n >= 1e4 ? `${nf.format(Math.round(n / 1e3))} тыс. ₽` : rub(n);
 const RING_R = [103, 77, 51];
 function homeData(p, ships, rows, go) {
-  const D = {all: ships.size, pick: 0, wait: 0, short: 0, shortQ: 0, pendQ: 0};
+  const D = {all: [...ships.values()].filter(sh => sh.state !== 'gone').length, pick: 0, wait: 0, short: 0, shortQ: 0, pendQ: 0};
   for (const sh of ships.values()) { if (sh.state === 'ready' || sh.state === 'stock') D.pick++; else if (sh.state === 'wait') D.wait++; else if (sh.state === 'short') D.short++; }
   for (const r of p.values()) { D.shortQ += r.short; D.pendQ += r.take; }
   D.pavs = groupModels(rows).filter(pv => pv.order > 0).sort((a, b) => b.order - a.order);
@@ -5241,7 +5314,7 @@ async function start() {
 }
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
-  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, shortModel, sizeShow};
+  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow};
 start();
 })();
 </script>
