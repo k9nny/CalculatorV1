@@ -252,7 +252,7 @@ textarea.paste{min-height:200px;font:13px/1.45 var(--f-mono);resize:vertical}
 .go .sum{color:var(--muted);font-size:14px;margin-right:auto}
 .go .btn{min-height:38px;padding:8px 12px}
 .goall{display:flex;justify-content:flex-end}
-.cnt{display:grid;grid-template-columns:64px 1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.cnt{display:grid;grid-template-columns:minmax(64px,auto) 1fr auto;gap:8px 12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
 .cnt .size{font:700 18px var(--f-mono)}
 .cnt .ord{color:var(--muted);font-size:14px}
 .cnt.ok .ord{color:var(--good);font-weight:600}
@@ -1344,6 +1344,12 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
         <label class="opt"><input type="checkbox" id="optPav"><div><b>Первая часть артикула — павильон</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> павильон — <code class="k">A04</code>. По нему закупка делится на части. Последняя часть, если это размер (<code class="k">42</code>, <code class="k">3XL</code>), всегда считается размером.</span></div></label>
       </div>
       <div class="card">
+        <h2>Размеры: буквы и цифры</h2>
+        <p class="hint">Один магазин пишет размер буквой, другой цифрой. По этой таблице программа считает их одним размером: заказы и остатки складываются, а в закупке, приёмке и заказе поставщику видны оба названия, например «M/44».</p>
+        <label class="fld mt" style="max-width:560px">Таблица размеров<input class="in mono" id="optSizes" spellcheck="false" autocomplete="off"></label>
+        <p class="hint small">Через запятую: буква=цифра. XXL и 2XL, XXXL и 3XL — одно и то же. Если очистить поле, буквы и цифры снова будут разными размерами.</p>
+      </div>
+      <div class="card">
         <h2>Как сравнивать артикулы</h2>
         <p class="hint">Один и тот же товар в разных файлах бывает записан по-разному. Эти правила помогают понять, что это один артикул. Большие и маленькие буквы не различаются никогда.</p>
         <label class="opt"><input type="checkbox" id="optLatin"><div><b>Русские и английские буквы — одно и то же</b><span>Похожие буквы <code class="k">А В Е К М Н О Р С Т У Х</code> считаются одинаковыми: <code class="k">АВ-12</code> на русском = <code class="k">AB-12</code> на английском.</span></div></label>
@@ -1550,12 +1556,13 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-09-27.2';
+const APP_VERSION = '2026-10-05.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
 /* ---------- article normalisation ---------- */
-const DEF = {latin: true, zeros: true, punct: true, pav: true, price: true, supplier: 'ТЦ Москва', anDays: 3, anLead: 1, anWin: 14, deadDays: 30};
+const DEF = {latin: true, zeros: true, punct: true, pav: true, price: true, supplier: 'ТЦ Москва', anDays: 3, anLead: 1, anWin: 14, deadDays: 30, sizes: 'S=42, M=44, L=46, XL=48, 2XL=50, 3XL=52', kv: 0};
+const KEYV = 2;   // how article keys are built; data saved with an older kv is re-keyed once
 const NUMS = {anDays: [1, 30], anLead: [0, 14], anWin: [3, 90], deadDays: [7, 180]};
 let S = {...DEF};
 const CYR = {'А':'A','В':'B','Е':'E','Ё':'E','К':'K','М':'M','Н':'H','О':'O','Р':'P','С':'C','Т':'T','У':'Y','Х':'X'};
@@ -1595,7 +1602,7 @@ function normPav(p) {
   return m ? m[1] + m[2] : t;
 }
 const artCache = new Map(), modCache = new Map();
-const clearArt = () => { artCache.clear(); modCache.clear(); };
+const clearArt = () => { artCache.clear(); modCache.clear(); keyCache.clear(); };
 // the article as written: pavilion, model, size and the price inside it
 function parseRaw(a) {
   const s = String(a ?? '').trim();
@@ -1638,11 +1645,19 @@ function parseArt(a) {
   return x;
 }
 // the key an article is counted under: a twin counts as the same size of its main model
+const keyCache = new Map();
 function akey(a) {
-  const k = normKey(a);
-  if (!k || !TWIN.size) return k;
-  const r = parseRaw(a), t = TWIN.get(r.mkey);
-  return t ? normKey(parseRaw(t.a).model + (r.size ? '-' + r.size : '')) : k;
+  const s = String(a ?? '');
+  let k = keyCache.get(s);
+  if (k !== undefined) return k;
+  k = normKey(s);
+  if (k) {
+    const r = parseRaw(s), t = TWIN.size ? TWIN.get(r.mkey) : null;
+    if (t || r.size) k = normKey((t ? parseRaw(t.a).model : r.model) + (r.size ? '-' + sizeKey(r.size) : ''));
+  }
+  if (keyCache.size > 50000) keyCache.clear();
+  keyCache.set(s, k);
+  return k;
 }
 // the article to show for a twin: the main model's, same size
 function canonArt(a) {
@@ -1657,7 +1672,29 @@ function pavParts(parts) {
 // model without the pavilion: A04-LM9-Ser-1900 → LM9-Ser-1900
 const shortModel = model => { const parts = String(model).split('-'), pn = pavParts(parts); return pn && parts.length > pn ? parts.slice(pn).join('-') : model; };
 const SZR = {XXS: 0, XS: 1, S: 2, M: 3, L: 4, XL: 5, XXL: 6, '2XL': 6, XXXL: 7, '3XL': 7, '4XL': 8, XXXXL: 8, '5XL': 9, '6XL': 10};
-function sizeRank(sz) { const u = latinUp(sz).replace(/\s+/g, ''); if (u in SZR) return SZR[u]; const n = parseFloat(u); return isFinite(n) ? 100 + n : 1000; }
+// a letter size and a number size from the table in «Настройках» are one size: «S=42, M=44, L=46…»
+const szNorm = sz => { const u = latinUp(sz).replace(/\s+/g, ''); return ({XXL: '2XL', XXXL: '3XL', XXXXL: '4XL'})[u] || u; };
+const SZT = {src: null, l2n: new Map(), n2l: new Map()};
+function sizeTable() {
+  if (SZT.src === S.sizes) return SZT;
+  SZT.src = S.sizes; SZT.l2n = new Map(); SZT.n2l = new Map();
+  for (const part of String(S.sizes || '').split(/[,;\n]+/)) {
+    const m = part.match(/^\s*([^=:\s]+)\s*[=:]\s*(\d{2,3})\s*$/); if (!m) continue;
+    const l = szNorm(m[1]); if (!/^\d?X{0,4}[SML]$|^XXS$/.test(l)) continue;
+    SZT.l2n.set(l, m[2]); if (!SZT.n2l.has(m[2])) SZT.n2l.set(m[2], l);
+  }
+  return SZT;
+}
+// the size as it is counted: a letter from the table becomes its number (M → 44)
+const sizeKey = sz => { const u = szNorm(sz); return sizeTable().l2n.get(u) || u; };
+// both names of a size for people: «M/44»
+const sizeShow = sz => { if (!sz) return ''; const u = szNorm(sz), t = sizeTable(), n = t.l2n.get(u); if (n) return `${u}/${n}`; const l = t.n2l.get(u); return l ? `${l}/${u}` : String(sz).trim(); };
+function sizeRank(sz) {
+  const u = szNorm(String(sz ?? '').split('/')[0]), n = sizeTable().l2n.get(u);   // «M/44» sorts as M
+  if (n) return 100 + +n;
+  if (u in SZR) return 138 + 2 * SZR[u];   // letters not in the table: S=42 … 4XL=54
+  const x = parseFloat(u); return isFinite(x) ? 100 + x : 1000;
+}
 const bySize = (a, b) => (sizeRank(a) - sizeRank(b)) || coll.compare(a, b);
 const pavLabel = p => p ? `Павильон ${p}` : 'Без павильона';
 const priceOf = a => S.price ? parseArt(a).price : 0;
@@ -1751,22 +1788,26 @@ class PMap {
   rekey() { const all = [...this.items.values()]; this.items.clear(); for (const it of all) this.quiet(it); }
   total() { let s = 0; for (const it of this.items.values()) s += it.q; return round(s); }
   applyRemote(docs) {
-    let changed = false;
+    // first drop what the changed buckets held, then put all their items back: an item saved under an older key
+    // may now belong to another bucket, and must not be dropped by that bucket coming later in the same load
+    const fresh = [];
     for (const d of docs) {
       const b = Number(String(d.id).slice(1));
       if (!Number.isInteger(b) || b < 0 || b >= NB) continue;
       if (this.dirty.has(b) || this.inflight.has(b) || d.data === this.seen[b]) continue;
       this.seen[b] = d.data;
-      for (const k of [...this.items.keys()]) if (this.bucket(k) === b) this.items.delete(k);
-      for (const r of (d.data && Array.isArray(d.data.items) ? d.data.items : [])) {
-        if (!Array.isArray(r)) continue;
-        const it = this.o.unpack(r);
-        this.quiet(it);
-        const t = it.t || it.i || 0; if (t > SEQ) SEQ = t;
-      }
-      changed = true;
+      fresh.push([b, d.data]);
     }
-    return changed;
+    if (!fresh.length) return false;
+    const bs = new Set(fresh.map(x => x[0]));
+    for (const k of [...this.items.keys()]) if (bs.has(this.bucket(k))) this.items.delete(k);
+    for (const [, data] of fresh) for (const r of (data && Array.isArray(data.items) ? data.items : [])) {
+      if (!Array.isArray(r)) continue;
+      const it = this.o.unpack(r);
+      this.quiet(it);
+      const t = it.t || it.i || 0; if (t > SEQ) SEQ = t;
+    }
+    return true;
   }
   async flush() {
     clearTimeout(this.timer);
@@ -1961,6 +2002,26 @@ const photoDocId = mk => 'p' + hash(mk).toString(36) + '_' + mk.length;
 function subscribe() {
   const first = k => { if (!ready[k]) { ready[k] = true; checkReady(); } };
   const onColl = (m, rk) => (docs, fromCache) => { const ch = m.applyRemote(docs); if (!fromCache) first(rk); if (ch) render(); };
+  // settings and the twins first: they decide the keys the saved items are filed under
+  Backend.watchDoc('meta/settings', d => {
+    first('settings');
+    if (!d || docPending('meta/settings')) return;
+    const ns = {...DEF};
+    for (const k of ['latin', 'zeros', 'punct', 'pav', 'price']) if (typeof d[k] === 'boolean') ns[k] = d[k];
+    for (const [k, [lo, hi]] of Object.entries(NUMS)) if (Number.isFinite(+d[k])) ns[k] = Math.min(hi, Math.max(lo, Math.round(+d[k])));
+    if (typeof d.supplier === 'string' && d.supplier.trim()) ns.supplier = d.supplier;
+    if (typeof d.sizes === 'string') ns.sizes = d.sizes;
+    if (Number.isFinite(+d.kv)) ns.kv = +d.kv;
+    const rekey = ns.latin !== S.latin || ns.zeros !== S.zeros || ns.punct !== S.punct || ns.sizes !== S.sizes;
+    S = ns; clearArt(); if (rekey) rekeyAll(false);
+    renderSettings(); render();
+  });
+  Backend.watchDoc('meta/models', d => {
+    first('models');
+    if (!d || docPending('meta/models')) return;
+    if (loadModels(d)) rekeyAll(false);
+    render();
+  });
   Backend.watchColl('stock', onColl(stock, 'stock'));
   Backend.watchColl('receipt', onColl(draft, 'receipt'));
   Backend.watchColl('lines', onColl(lines, 'lines'));
@@ -1976,17 +2037,6 @@ function subscribe() {
     render();
   });
   Backend.watchColl('photo', (docs, fromCache) => { for (const d of docs) if (d.data && d.data.k && d.data.img) { setPhoto(String(d.data.k), String(d.data.img)); PHOTO_V.set(String(d.data.k), Number(d.data.v) || 1); } if (!fromCache) first('photo'); render(); });
-  Backend.watchDoc('meta/settings', d => {
-    first('settings');
-    if (!d || docPending('meta/settings')) return;
-    const ns = {...DEF};
-    for (const k of ['latin', 'zeros', 'punct', 'pav', 'price']) if (typeof d[k] === 'boolean') ns[k] = d[k];
-    for (const [k, [lo, hi]] of Object.entries(NUMS)) if (Number.isFinite(+d[k])) ns[k] = Math.min(hi, Math.max(lo, Math.round(+d[k])));
-    if (typeof d.supplier === 'string' && d.supplier.trim()) ns.supplier = d.supplier;
-    const rekey = ns.latin !== S.latin || ns.zeros !== S.zeros || ns.punct !== S.punct;
-    S = ns; clearArt(); if (rekey) rekeyAll(false);
-    renderSettings(); render();
-  });
   Backend.watchDoc('meta/log', d => { first('log'); if (d && Array.isArray(d.entries) && !docPending('meta/log')) { LOG = d.entries.slice(0, 300); render(); } });
   Backend.watchDoc('meta/day', d => { first('day'); if (d && !docPending('meta/day')) { DAYM = {date: String(d.date || ''), file: String(d.file || ''), at: +d.at || 0, expected: +d.expected || 0, ships: +d.ships || 0}; render(); } });
   Backend.watchDoc('meta/po', d => {
@@ -2012,12 +2062,6 @@ function subscribe() {
     for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) putSup(r);
     render();
   });
-  Backend.watchDoc('meta/models', d => {
-    first('models');
-    if (!d || docPending('meta/models')) return;
-    if (loadModels(d)) rekeyAll(false);
-    render();
-  });
   Backend.watchDoc('meta/returns', d => {
     first('ret');
     if (!d || docPending('meta/returns')) return;
@@ -2036,6 +2080,7 @@ function checkReady() {
   diag('start', `v${APP_VERSION} ${Backend.kind}`, {ua: navigator.userAgent.slice(0, 200), scr: [screen.width, screen.height, devicePixelRatio], vp: [innerWidth, innerHeight], loadMs: Math.round(performance.now() - T0), stock: stock.items.size, lines: lines.items.size, going: [...PUR.values()].filter(x => x.st === 'go').length, photos: PHOTO.size, check: chk});
   if (chk.neg || chk.over || chk.orphan) diag('check', 'странные данные', chk);
   if (ui.tab === 'an' || ui.tab === 'home') loadHist();
+  if ((S.kv || 0) < KEYV) { rekeyAll(true); S = {...S, kv: KEYV}; saveMeta('meta/settings'); diag('rekey', 'kv ' + KEYV, {stock: stock.items.size, lines: lines.items.size}); render(); }
   setTimeout(cleanup, 8000);
   if (lsOk() && !lsGet(TOUR_KEY)) setTimeout(() => { if ($('#imp').hidden && $('#cpy').hidden) tourStart(true); }, 700);
 }
@@ -3092,7 +3137,7 @@ const isoToday = () => isoOf(new Date());
 const isoAdd = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoOf(d); };
 const isoDiff = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / DAYMS);
 const isoRu = iso => iso.split('-').reverse().join('.');
-const canonSize = sz => { const u = latinUp(sz).replace(/\s+/g, ''); return ({XXL: '2XL', XXXL: '3XL', XXXXL: '4XL'})[u] || u || '—'; };
+const canonSize = sz => sizeShow(szNorm(sz)) || '—';
 function parseDay(v) {
   const t = String(v ?? '').trim();
   let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -3131,7 +3176,7 @@ function analyze() {
   A.effW = Math.max(1, Math.min(S.anWin, span)); A.eff7 = Math.max(1, Math.min(7, span));
   for (const [iso, day] of HIST) {
     if (iso < startW || iso > end) continue;
-    for (const [k0, [a, q]] of day) { const k = TWIN.size ? akey(a) : k0; let e = A.arts.get(k); if (!e) A.arts.set(k, e = {k, a, sold: 0, sold7: 0}); e.sold += q; if (iso >= start7) { e.sold7 += q; A.total7 += q; } }
+    for (const [k0, [a, q]] of day) { const k = akey(a) || k0; let e = A.arts.get(k); if (!e) A.arts.set(k, e = {k, a, sold: 0, sold7: 0}); e.sold += q; if (iso >= start7) { e.sold7 += q; A.total7 += q; } }
   }
   for (const e of A.arts.values()) e.rate = 0.6 * (e.sold7 / A.eff7) + 0.4 * (e.sold / A.effW);
   return A;
@@ -3237,7 +3282,7 @@ function renderAn(p) {
   $('#anBuyAll').disabled = !sug.length;
   $('#anBuySum').textContent = sug.length ? `${fmt(sugQ)} шт. · ${cnt(sug.length, W.art)}` : '';
   setBody($('#anBuy'), pavs.map(pv => `<div class="mt"><div class="row"><b>${esc(pavLabel(pv.pav))}</b><span class="sum">взять ${fmt(pv.order)} шт.${S.price ? ` · ≈ ${rub(pv.list.reduce((s, m) => s + m.rows.reduce((a, r) => a + r.order * priceOf(r.a), 0), 0))}` : ''}</span><button class="btn" type="button" data-an-add="${esc(pv.pav)}">В закупку</button></div>
-    ${pv.list.map(m => `<div class="arow">${thumb(m.mkey, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="why">${m.rows.map(r => `<b>${esc(r.size || 'шт')}</b>: продаётся ${rateTxt(r.rate)}, есть ${fmt(r.have)}, взять ${fmt(r.order)}`).join(' · ')}</div></div><div class="tot">${fmt(m.rows.reduce((s, r) => s + r.order, 0))}<small>шт.</small></div></div>`).join('')}</div>`).join('') || `<p class="hint" style="margin:0">${has ? 'Сейчас впрок докупать нечего: того, что лежит и едет, хватает.' : 'Появится, когда будет история продаж.'}</p>`);
+    ${pv.list.map(m => `<div class="arow">${thumb(m.mkey, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="why">${m.rows.map(r => `<b>${esc(sizeShow(r.size) || 'шт')}</b>: продаётся ${rateTxt(r.rate)}, есть ${fmt(r.have)}, взять ${fmt(r.order)}`).join(' · ')}</div></div><div class="tot">${fmt(m.rows.reduce((s, r) => s + r.order, 0))}<small>шт.</small></div></div>`).join('')}</div>`).join('') || `<p class="hint" style="margin:0">${has ? 'Сейчас впрок докупать нечего: того, что лежит и едет, хватает.' : 'Появится, когда будет история продаж.'}</p>`);
   // stale stock
   const dead = [];
   for (const [k, it] of stock.items) {
@@ -3255,7 +3300,7 @@ function renderAn(p) {
   $('#anDeadSum').textContent = dead.length ? `${fmt(dead.reduce((s, d) => s + d.it.q, 0))} шт.${deadMoney ? ` · ≈ ${rub(deadMoney)}` : ''}` : '';
   setBody($('#anDeadList'), dl.map(g => {
     const worst = g.idle >= S.deadDays ? `не продаётся ${g.idle} ${plural(g.idle, W.day)} — снизить цену` : g.noSales ? `за ${A.effW} ${plural(A.effW, W.day)} ни одной продажи — снизить цену` : g.idle >= oldDays() ? `без продаж ${g.idle} ${plural(g.idle, W.day)} — присмотреться к цене` : 'запаса слишком много — не докупать, можно снизить цену';
-    return `<div class="arow">${thumb(g.mkey, 'sm', true)}<div>${g.pav ? `<span class="pavtag">${esc(g.pav)}</span> ` : ''}<span class="art">${esc(shortModel(g.model))}</span>${g.n ? `<span class="nm">${esc(g.n)}</span>` : ''}<div class="why"><b>${esc(worst)}</b></div><div class="szchips">${g.rows.sort((a, b) => bySize(a.pa.size, b.pa.size)).map(d => `<span class="szc${d.idle >= S.deadDays || d.noSales ? ' dead' : d.idle >= oldDays() ? ' old' : ''}">${esc(d.pa.size || 'шт')} · ${fmt(d.it.q)}${d.noSales ? ' · 0 продаж' : d.idle ? ` · ${d.idle} дн.` : ''}${Number.isFinite(d.cover) && d.cover > 60 ? ` · на ${Math.round(d.cover)} дн.` : ''}</span>`).join('')}</div></div><div class="tot">${fmt(g.q)}<small>${g.money ? '≈ ' + rub(g.money) : 'шт.'}</small></div></div>`;
+    return `<div class="arow">${thumb(g.mkey, 'sm', true)}<div>${g.pav ? `<span class="pavtag">${esc(g.pav)}</span> ` : ''}<span class="art">${esc(shortModel(g.model))}</span>${g.n ? `<span class="nm">${esc(g.n)}</span>` : ''}<div class="why"><b>${esc(worst)}</b></div><div class="szchips">${g.rows.sort((a, b) => bySize(a.pa.size, b.pa.size)).map(d => `<span class="szc${d.idle >= S.deadDays || d.noSales ? ' dead' : d.idle >= oldDays() ? ' old' : ''}">${esc(sizeShow(d.pa.size) || 'шт')} · ${fmt(d.it.q)}${d.noSales ? ' · 0 продаж' : d.idle ? ` · ${d.idle} дн.` : ''}${Number.isFinite(d.cover) && d.cover > 60 ? ` · на ${Math.round(d.cover)} дн.` : ''}</span>`).join('')}</div></div><div class="tot">${fmt(g.q)}<small>${g.money ? '≈ ' + rub(g.money) : 'шт.'}</small></div></div>`;
   }).join('') || '<p class="hint" style="margin:0">Залежавшегося товара нет.</p>');
   // selling well but missing
   const sh = shortage(p), nm = names(), hot = [];
@@ -3329,7 +3374,7 @@ function sheetName(n, sizes) {
 function pavText(pv) {
   const models = orderModels(pv);
   const total = round(models.reduce((s, x) => s + x.rows.reduce((a, r) => a + r.order, 0), 0));
-  return [`Заказ ${today()} · ${pavLabel(pv.pav)}`, ...models.map(x => `${x.code}${x.name ? ` (${trunc(x.name, 40)})` : ''}: ${x.rows.map(r => `${r.size || 'шт'} — ${fmt(r.order)}`).join(', ')}`), `Итого: ${fmt(total)} шт.`].join('\n');
+  return [`Заказ ${today()} · ${pavLabel(pv.pav)}`, ...models.map(x => `${x.code}${x.name ? ` (${trunc(x.name, 40)})` : ''}: ${x.rows.map(r => `${sizeShow(r.size) || 'шт'} — ${fmt(r.order)}`).join(', ')}`), `Итого: ${fmt(total)} шт.`].join('\n');
 }
 const waDigits = ph => { let d = String(ph || '').replace(/\D/g, ''); if (d.length === 11 && d[0] === '8') d = '7' + d.slice(1); if (d.length === 10) d = '7' + d; return d.length >= 10 ? d : ''; };
 const waLink = (ph, text) => { const d = waDigits(ph); return d ? `https://wa.me/${d}${text ? '?text=' + encodeURIComponent(text) : ''}` : ''; };
@@ -3464,7 +3509,7 @@ function renderBuy(p, rows) {
       </div></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
       ${m.moved || tn ? `<div class="mnote">${m.moved ? `<span class="tagm">из ${esc(m.moved)}</span><span>перенесено в этот павильон</span><button class="lnk" type="button" data-unmove="${esc(m.mkey)}">вернуть в ${esc(m.moved)}</button>` : ''}${tn}</div>` : ''}
       <table class="sz"><thead><tr><th>Размер</th><th class="num">Нужно</th><th class="num">Заказать</th><th></th></tr></thead><tbody>
-      ${m.rows.map(r => `<tr><td class="size">${esc(r.size || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : ''}</td></tr>`).join('')}
+      ${m.rows.map(r => `<tr><td class="size">${esc(sizeShow(r.size) || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : ''}</td></tr>`).join('')}
       </tbody></table>
       <div class="plus"><input class="in" data-size-for="${esc(m.model)}" placeholder="размер" aria-label="Добавить размер к ${esc(m.model)}"><button class="btn" type="button" data-add-size="${esc(m.model)}">+ размер</button></div>
     </div></div>`; }).join('')}
@@ -3520,7 +3565,7 @@ function renderRecv() {
   setBody($('#recvModels'), gs.map(g => `<div class="card recv-model"><div class="rm-head">${thumb(g.mkey, 'lg', true)}<div>
     <h4>${esc(shortModel(g.model, pur.pav))}</h4>${g.n ? `<span class="nm">${esc(g.n)}</span>` : ''}</div></div><div>
     ${g.rows.sort((a, b) => bySize(a.size, b.size)).map(({l, i, size}) => `<div class="cnt ${l.c === l.q ? 'ok' : l.c < l.q ? (l.c ? 'less' : '') : 'more'}">
-      <span class="size">${esc(size || '—')}</span><span class="ord">${l.c === l.q ? 'всё пришло' : `заказано ${fmt(l.q)}`}</span>
+      <span class="size">${esc(sizeShow(size) || '—')}</span><span class="ord">${l.c === l.q ? 'всё пришло' : `заказано ${fmt(l.q)}`}</span>
       <span class="step"><button type="button" data-inc="${i}" data-d="-1" aria-label="Минус один, размер ${esc(size)}">−</button><input class="in cin" data-cin="${i}" inputmode="numeric" value="${esc(qv(l.c))}" aria-label="Пришло, размер ${esc(size)}"><button type="button" class="pl" data-inc="${i}" data-d="1" aria-label="Плюс один, размер ${esc(size)}">+</button></span>
     </div>`).join('')}
   </div></div>`).join('') || '<div class="card"><p class="hint" style="margin:0">Ничего не найдено.</p></div>');
@@ -3562,7 +3607,7 @@ function renderStock() {
     const shown = list.slice(0, ui.stLimit);
     setBody($('#stModels'), shown.map(m => `<div class="mrow">${thumb(m.mkey, 'md', true)}<div>
       <div class="row" style="gap:8px">${m.pav ? `<span class="pavtag">${esc(m.pav)}</span>` : ''}<span class="art">${esc(shortModel(m.model, m.pav))}</span></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
-      <div class="szchips">${m.sizes.sort((a, b) => bySize(a.size, b.size)).map(s => `<span class="szc${s.q < 0 ? ' neg' : s.d >= S.deadDays ? ' dead' : s.d >= oldDays() ? ' old' : ''}" title="${s.d != null ? `без продаж ${s.d} ${plural(s.d, W.day)}` : ''}">${esc(s.size || 'шт')} · ${fmt(s.q)}</span>`).join('')}</div>
+      <div class="szchips">${m.sizes.sort((a, b) => bySize(a.size, b.size)).map(s => `<span class="szc${s.q < 0 ? ' neg' : s.d >= S.deadDays ? ' dead' : s.d >= oldDays() ? ' old' : ''}" title="${s.d != null ? `без продаж ${s.d} ${plural(s.d, W.day)}` : ''}">${esc(sizeShow(s.size) || 'шт')} · ${fmt(s.q)}</span>`).join('')}</div>
     </div><div class="tot">${fmt(m.total)}<small>${m.idle >= oldDays() ? `без продаж ${m.idle} ${plural(m.idle, W.day)}` : 'шт.'}</small></div></div>`).join('') || `<p class="empty">${items.length ? 'Ничего не найдено' : (EMP ? 'Склад пуст.' : 'Склад пуст. Сделайте пересчёт ниже или загрузите остатки из файла.')}</p>`);
     $('#stMore').hidden = list.length <= shown.length;
     $('#stMore').textContent = `Показать ещё (${fmt(list.length - shown.length)})`;
@@ -3639,6 +3684,7 @@ function renderLog() {
 function renderSettings() {
   $('#optLatin').checked = S.latin; $('#optZeros').checked = S.zeros; $('#optPunct').checked = S.punct; $('#optPav').checked = S.pav; $('#optPrice').checked = S.price;
   if (document.activeElement !== $('#optSupplier')) $('#optSupplier').value = S.supplier;
+  if (document.activeElement !== $('#optSizes')) $('#optSizes').value = S.sizes;
   const note = {
     db: 'Склад, отправления, закупки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
     local: 'Данные хранятся только в этом браузере на этом компьютере. Если очистить историю браузера, они пропадут, поэтому раз в неделю нажимайте «Скачать резервную копию».',
@@ -3653,10 +3699,10 @@ function renderDiag() {
   $('#diagList').innerHTML = ev.map(e => `<li><time>${when(e[0])}</time><span><b>${esc(e[1])}</b> ${esc(e[2])}</span></li>`).join('') || '<li><time>—</time><span class="hint" style="margin:0">Записей пока нет.</span></li>';
 }
 function renderTester() {
-  const v = $('#testIn').value, k = normKey(v), pa = parseArt(v);
+  const v = $('#testIn').value, k = akey(v), pa = parseArt(v);
   $('#testOut').textContent = v.trim() ? (k || '(пусто)') : '—';
   const st = k && stock.items.get(k);
-  const parts = v.trim() ? `Павильон: ${pa.pav || '—'}, модель: ${pa.model || '—'}, размер: ${pa.size || '—'}. ` : '';
+  const parts = v.trim() ? `Павильон: ${pa.pav || '—'}, модель: ${pa.model || '—'}, размер: ${sizeShow(pa.size) || '—'}. ` : '';
   $('#testMatch').innerHTML = !v.trim() ? '' : esc(parts) + (st ? `На складе есть: <b class="art">${esc(st.a)}</b> — ${fmt(st.q)} шт.` : 'На складе такого артикула нет.');
 }
 
@@ -3920,7 +3966,7 @@ async function hashPairs(pairs) {
 }
 const twSure = c => { const d = photoDist(c.main.mk, c.other.mk); return (c.sure && (d == null || d <= 20)) || (d != null && d <= 8 && c.sc >= 0.6); };
 function twSide(m) {
-  const sizes = [...m.sizes].sort(bySize);
+  const sizes = [...new Set([...m.sizes].map(sizeShow))].sort(bySize);
   return `<div class="twside">${thumb(m.mk, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="twmeta">${esc(pavLabel(m.pav))}${sizes.length ? ` · ${esc(sizes.slice(0, 8).join(', '))}${sizes.length > 8 ? '…' : ''}` : ''}${m.q ? ` · ${fmt(round(m.q))} шт. в заказах и на складе` : ''}</div></div></div>`;
 }
 function renderTw() {
@@ -4038,7 +4084,7 @@ function osCard(g, x, cx, cy, h, img, idx, pv) {
     const bx = tx + (i % per) * (OS.chW + OS.chGap), by = y + Math.floor(i / per) * (OS.chH + OS.chGap);
     rrect(g, bx, by, OS.chW, OS.chH, 14); g.fillStyle = '#FFFFFF'; g.fill(); g.lineWidth = 2; g.strokeStyle = OSC.line; g.stroke();
     g.textAlign = 'center';
-    const sz = r.size || 'шт';
+    const sz = sizeShow(r.size) || 'шт';
     g.fillStyle = OSC.ink; fitFont(g, sz, 700, OSF.ui, 30, 16, OS.chW - 12); g.fillText(sz, bx + OS.chW / 2, by + 36);
     g.fillStyle = OSC.goldInk; g.font = `600 22px ${OSF.ui}`; g.fillText(`${fmt(r.order)} шт`, bx + OS.chW / 2, by + 64);
     g.textAlign = 'left';
@@ -4668,10 +4714,10 @@ function whereIs(q) {
   const M = new Map();
   const get = (a, n) => { const pa = parseArt(a); let m = M.get(pa.mkey); if (!m) M.set(pa.mkey, m = {mk: pa.mkey, model: pa.model, pav: pa.pav, n: n || '', stock: new Map(), ships: {ready: new Set(), wait: new Set(), short: new Set()}, go: [], order: 0, ret: 0}); if (!m.n && n) m.n = n; return {m, pa}; };
   const hit = (a, n) => matches(q, a, n);
-  for (const it of stock.items.values()) if (it.q > 0 && hit(it.a, it.n)) { const {m, pa} = get(it.a, it.n), z = pa.size || 'шт'; m.stock.set(z, round((m.stock.get(z) || 0) + it.q)); }
+  for (const it of stock.items.values()) if (it.q > 0 && hit(it.a, it.n)) { const {m, pa} = get(it.a, it.n), z = sizeShow(pa.size) || 'шт'; m.stock.set(z, round((m.stock.get(z) || 0) + it.q)); }
   const ships = LAST.ships || shipsOf(plan());
   for (const sh of ships.values()) for (const x of sh.lines) if (hit(x.ln.a, x.ln.n)) { const {m} = get(x.ln.a, x.ln.n); (m.ships[x.st === 'stock' ? 'ready' : x.st] || m.ships.short).add(sh.sid); }
-  for (const pur of going()) for (const l of pur.lines) if (hit(l.a, l.n)) { const {m, pa} = get(l.a, l.n); m.go.push({pav: pur.pav, at: pur.at, q: l.q, size: pa.size || 'шт'}); }
+  for (const pur of going()) for (const l of pur.lines) if (hit(l.a, l.n)) { const {m, pa} = get(l.a, l.n); m.go.push({pav: pur.pav, at: pur.at, q: l.q, size: sizeShow(pa.size) || 'шт'}); }
   for (const r of LAST.rows || buyRows(plan())) if (r.order > 0 && hit(r.a, r.n)) { const {m} = get(r.a, r.n); m.order = round(m.order + r.order); }
   for (const r of RET) if (hit(r.a)) { const {m} = get(r.a); m.ret = round(m.ret + r.q); }
   const rank = m => { const k = normKey(m.model); return k.startsWith(qk) ? 0 : k.includes(qk) ? 1 : 2; };
@@ -4754,8 +4800,8 @@ function lbShow() {
   $('#lbT').textContent = [info.pav, shortModel(info.model || mk)].filter(Boolean).join(' · ');
   $('#lbN').textContent = info.n || '';
   $('#lbSz').innerHTML = info.mode === 'recv'
-    ? info.rows.map(r => `<button class="z${r.c === r.q ? ' ok' : ''}" type="button" data-lb-inc="${r.i}" aria-label="Размер ${esc(r.size || 'шт')}: пришло ${fmt(r.c)} из ${fmt(r.q)}, добавить одну"><b>${esc(r.size || 'шт')}</b><span>пришло ${fmt(r.c)} из ${fmt(r.q)}</span><i>+1</i></button>`).join('')
-    : info.rows.map(r => `<div class="z"><b>${esc(r.size || 'шт')}</b><span>${info.mode === 'buy' ? 'заказать' : 'на складе'} ${fmt(r.q)} шт.</span></div>`).join('') || '<span class="lb-n">На складе нет</span>';
+    ? info.rows.map(r => `<button class="z${r.c === r.q ? ' ok' : ''}" type="button" data-lb-inc="${r.i}" aria-label="Размер ${esc(sizeShow(r.size) || 'шт')}: пришло ${fmt(r.c)} из ${fmt(r.q)}, добавить одну"><b>${esc(sizeShow(r.size) || 'шт')}</b><span>пришло ${fmt(r.c)} из ${fmt(r.q)}</span><i>+1</i></button>`).join('')
+    : info.rows.map(r => `<div class="z"><b>${esc(sizeShow(r.size) || 'шт')}</b><span>${info.mode === 'buy' ? 'заказать' : 'на складе'} ${fmt(r.q)} шт.</span></div>`).join('') || '<span class="lb-n">На складе нет</span>';
   $('#lbPos').textContent = LB.list.length > 1 ? `${LB.i + 1} из ${LB.list.length} · листайте стрелками или пальцем` : '';
   $('#lbPrev').disabled = LB.i <= 0; $('#lbNext').disabled = LB.i >= LB.list.length - 1;
 }
@@ -5087,6 +5133,15 @@ $('#stClear').addEventListener('click', () => {
   $(id).addEventListener('change', e => { S = {...S, [k]: e.target.checked}; rekeyAll(true); saveMeta('meta/settings'); log('Изменены правила сравнения артикулов'); renderTester(); render(); });
 });
 $('#optPav').addEventListener('change', e => { S = {...S, pav: e.target.checked}; clearArt(); saveMeta('meta/settings'); renderTester(); render(); });
+$('#optSizes').addEventListener('change', e => {
+  const v = e.target.value.replace(/\s+/g, ' ').trim();
+  if (v === S.sizes) return;
+  S = {...S, sizes: v}; rekeyAll(true); saveMeta('meta/settings');
+  const n = sizeTable().l2n.size;
+  log(`Таблица размеров: ${v || 'пусто'}`);
+  toast(n ? `Размеры: ${cnt(n, ['пара', 'пары', 'пар'])} буква = цифра. Заказы и остатки пересчитаны.` : 'Таблица размеров пуста: буквы и цифры теперь разные размеры');
+  e.target.value = S.sizes; renderTester(); render();
+});
 $('#optSupplier').addEventListener('change', e => { const v = e.target.value.trim(); S = {...S, supplier: v || DEF.supplier}; e.target.value = S.supplier; saveMeta('meta/settings'); render(); });
 $('#testIn').addEventListener('input', renderTester);
 $('#anForm').addEventListener('change', e => {
@@ -5186,7 +5241,7 @@ async function start() {
 }
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
-  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, shortModel};
+  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, shortModel, sizeShow};
 start();
 })();
 </script>
