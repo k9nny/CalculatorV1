@@ -539,10 +539,13 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 .mvsheet{max-width:600px}
 .mvmodel{display:flex;gap:12px;align-items:center}
 .mvmodel .art{font-size:15px}
-.mvpavs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:14px;max-height:34vh;overflow:auto;padding:2px}
+.mvpavs{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin-top:8px;max-height:30vh;overflow:auto;padding:2px}
+.mvnew{margin:10px 0 0;padding:10px 12px;border-radius:10px;font-size:14px;background:color-mix(in srgb,var(--gold) 12%,var(--surface));border:1px solid color-mix(in srgb,var(--gold) 40%,var(--line))}
+.mvnew b{font-family:var(--f-mono)}
 .mvpavs .ppc{padding:9px 10px}
 .mvpavs .ppc b{padding-right:0}
-.mvform{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:14px}
+.mvform{display:grid;grid-template-columns:1.3fr 1fr auto;gap:10px;align-items:end;margin-top:16px}
+.mvform #mvPav{font-size:17px;font-weight:700}
 .mvform small{font-weight:400;color:var(--muted)}
 @media (max-width:560px){.mvform{grid-template-columns:1fr 1fr}.mvform .btn{grid-column:1/-1}}
 /* twins dialog */
@@ -1491,13 +1494,15 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
     <header><h2 id="mvTitle">Перенести в другой павильон</h2><button class="x" type="button" id="mvX" aria-label="Закрыть">×</button></header>
     <div class="sbody">
       <div class="mvmodel" id="mvModel"></div>
-      <p class="hint" style="margin:0">Выберите павильон, где эта модель дешевле. Программа запомнит выбор: и в следующих закупках модель будет у этого павильона.</p>
-      <div class="mvpavs" id="mvPavs" role="group" aria-label="Павильоны"></div>
       <form class="mvform" id="mvForm" autocomplete="off">
-        <label class="fld">Павильон<input class="in mono" id="mvPav" placeholder="например, К18" spellcheck="false" required></label>
+        <label class="fld">В какой павильон — впишите любой<input class="in mono" id="mvPav" placeholder="например, Б15" spellcheck="false" required></label>
         <label class="fld">Цена там, ₽<input class="in" id="mvPrice" inputmode="numeric" placeholder="можно не писать"></label>
         <button class="btn primary" type="submit">Перенести</button>
       </form>
+      <p class="mvnew" id="mvNew" hidden></p>
+      <p class="hint small" id="mvListHint" style="margin:14px 0 0">Или нажмите павильон, который уже есть в программе:</p>
+      <div class="mvpavs" id="mvPavs" role="group" aria-label="Павильоны"></div>
+      <p class="hint small" style="margin:12px 0 0">Программа запомнит выбор: и в следующих закупках эта модель будет у нового павильона.</p>
     </div>
   </div>
 </div>
@@ -1563,7 +1568,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-05.2';
+const APP_VERSION = '2026-10-06.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -3428,6 +3433,8 @@ function knownPavs() {
   for (const ln of lines.items.values()) set.add(parseArt(ln.a).pav);
   for (const x of PUR.values()) set.add(x.pav);
   for (const r of RET) set.add(r.pav);
+  for (const m of MOVE.values()) { set.add(m.pav); set.add(m.from); }
+  if (HIST) for (const day of HIST.values()) for (const [a] of day.values()) set.add(parseRaw(a).pav);
   set.delete('');
   return [...set].sort(byPav);
 }
@@ -3972,15 +3979,15 @@ function skipIt(t) {
 }
 
 /* ---------- a model bought in another pavilion ---------- */
-const MV = {mk: '', from: ''};
+const MV = {mk: '', from: '', cur: ''};
 function openMove(mk) {
   const r = buyRows(plan()).find(x => x.mkey === mk); if (!r) return;
-  MV.mk = mk; MV.from = r.movedFrom || r.pav;
+  MV.mk = mk; MV.from = r.movedFrom || r.pav; MV.cur = r.pav;
   const was = r.movedFrom ? parseRaw(r.a).price : 0;
   $('#mvModel').innerHTML = `${thumb(mk, 'md', true)}<div style="min-width:0"><span class="art">${esc(shortModel(r.model))}</span>${r.n ? `<span class="nm">${esc(r.n)}</span>` : ''}<div class="twmeta">сейчас: ${esc(pavLabel(r.pav))}${r.movedFrom ? `, перенесено из ${esc(r.movedFrom)}${was ? ` (там ${rub(was)})` : ''}` : ''}${r.price ? ` · цена ${rub(r.price)}` : ''}</div></div>`;
   const pavs = knownPavs().filter(p => p !== r.pav);
   $('#mvPavs').innerHTML = pavs.map(p => { const sup = SUP.get(p); return `<button type="button" class="ppc" data-mv-pav="${esc(p)}" aria-pressed="false"><b>${esc(p)}</b><span>${p === MV.from && r.movedFrom ? 'был здесь' : sup && sup.name ? esc(trunc(sup.name, 14)) : '&nbsp;'}</span></button>`; }).join('');
-  $('#mvPav').value = ''; $('#mvPrice').value = '';
+  $('#mvPav').value = ''; $('#mvPrice').value = ''; mvFilter();
   showModal('#mv'); setTimeout(() => $('#mvPav').focus(), 60);
 }
 function moveModel(mk, pav, price, from) {
@@ -3995,13 +4002,28 @@ function moveModel(mk, pav, price, from) {
 }
 $('#mvPavs').addEventListener('click', e => {
   const b = e.target.closest('[data-mv-pav]'); if (!b) return;
-  $$('#mvPavs .ppc').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-  $('#mvPav').value = b.dataset.mvPav; $('#mvPrice').focus();
+  $('#mvPav').value = b.dataset.mvPav; mvFilter(); $('#mvPrice').focus();
 });
-$('#mvPav').addEventListener('input', () => { const v = normPav($('#mvPav').value); $$('#mvPavs .ppc').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.mvPav === v))); });
+function mvFilter() {
+  const raw = $('#mvPav').value.trim(), v = normPav(raw);
+  let shown = 0, exact = false;
+  for (const x of $$('#mvPavs .ppc')) {
+    const p = x.dataset.mvPav, hit = !v || p.includes(v) || normKey(p).includes(normKey(raw));
+    x.hidden = !hit; if (hit) shown++;
+    if (p === v) exact = true;
+    x.setAttribute('aria-pressed', String(p === v));
+  }
+  $('#mvListHint').hidden = !shown; $('#mvPavs').hidden = !shown;
+  const nw = $('#mvNew');
+  nw.hidden = !v || exact || shown > 0 || v === MV.cur;
+  if (!nw.hidden) nw.innerHTML = `Павильона <b>${esc(v)}</b> ещё нет в программе — ничего страшного. Нажмите «Перенести», и модель появится в закупке у этого павильона.`;
+  else if (v && v === MV.cur) { nw.hidden = false; nw.textContent = 'Модель уже в этом павильоне.'; }
+}
+$('#mvPav').addEventListener('input', mvFilter);
 $('#mvForm').addEventListener('submit', e => {
   e.preventDefault();
   const pav = normPav($('#mvPav').value); if (!pav) { $('#mvPav').focus(); return; }
+  if (pav === MV.cur) { toast('Модель уже в этом павильоне — впишите другой'); $('#mvPav').select(); return; }
   const pr = parseQty($('#mvPrice').value);
   if ($('#mvPrice').value.trim() && !(pr > 0)) { toast('Цена — это число, например 1500'); $('#mvPrice').focus(); return; }
   moveModel(MV.mk, pav, pr > 0 ? Math.round(pr) : 0, MV.from);
@@ -5058,7 +5080,7 @@ const TOUR = [
   {tab: 'day', sel: ['#dayTiles', '#dayEmpty'], h: 'Что можно собрать, а чего нет', t: 'Товар со склада сразу отдаётся отправлениям, сначала старым. У каждого отправления свой статус: «можно собирать», «ждёт мешок» или «не хватает». То, чего не хватает, уходит в закупку.'},
   {tab: 'buy', sel: ['#pavPick', '#buyList'], h: 'Закупка по павильонам', t: 'Всё, чего не хватает, разложено по павильонам. Выберите павильон: там модели с фото и размерами. В поле «Заказать» можно вписать больше, на целый мешок, лишнее уйдёт на склад.'},
   {tab: 'buy', sel: ['#buyList [data-order-pav]', '#buyList .btn.wa', '#buyPdfAll'], h: 'Заказ с фото вместо скриншотов', t: 'Кнопка «Заказ с фото» собирает картинку: фото каждой модели, размеры и количество, без цен, всё пронумеровано. На компьютере перетащите её мышкой прямо в чат WhatsApp. На iPhone в приложении Claude сохраните её — сразу откроется «Поделиться».'},
-  {tab: 'buy', sel: ['#buyList .mact', '#buyList .model', '#buyList'], h: 'Перенести, объединить, убрать', t: '«Перенести» — купить модель в другом павильоне, где дешевле; программа это запомнит. «Объединить» — если та же шуба есть во втором магазине под другим артикулом: заказы сложатся в одну строку. Крестик убирает модель или целый павильон из этой закупки, вернуть можно одним нажатием.'},
+  {tab: 'buy', sel: ['#buyList .mact', '#buyList .model', '#buyList'], h: 'Перенести, объединить, убрать', t: '«Перенести» — купить модель в другом павильоне, где дешевле: впишите любой павильон, даже если его нет в заказах; программа это запомнит. «Объединить» — если та же шуба есть во втором магазине под другим артикулом: заказы сложатся в одну строку. Крестик убирает модель или целый павильон из этой закупки, вернуть можно одним нажатием.'},
   {tab: 'buy', sel: ['#buyCommit'], h: 'Оформить закупку', t: 'Когда заказали у всех, нажмите «Оформить закупку». Товар со склада спишется под отправления, а остальные отправления будут ждать свой мешок. Ошиблись — 10 секунд можно нажать «Отменить».'},
   {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно. Если пересчитывать некогда, «Без проверки» примет мешок как заказано.'},
   {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
@@ -5293,7 +5315,13 @@ document.addEventListener('drop', e => {
   e.preventDefault(); dragN = 0; $('#drop').hidden = true;
   const fl = [...e.dataTransfer.files]; if (fl.length) loadFiles(tabTarget(), fl);
 });
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') maps.forEach(m => { if (m.dirty.size) m.flush(); }); });
+// the window is being hidden or closed: write what is still waiting for its short delay right now
+function flushNow() {
+  maps.forEach(m => { if (m.dirty.size) m.flush(); });
+  for (const [path, st] of Object.entries(docSt)) if (st.dirty && !st.busy) { clearTimeout(st.timer); flushDoc(path); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushNow(); });
+addEventListener('pagehide', flushNow);
 
 /* ---------- start ---------- */
 async function start() {
