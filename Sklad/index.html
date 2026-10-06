@@ -523,6 +523,8 @@ details.rep summary b{font:400 14px var(--f-display);letter-spacing:.1em}
 @media (max-width:760px){.mact .btn span{display:none}.mact .btn.sm{width:34px;padding:0}}
 .mnote{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:6px;font-size:12.5px;color:var(--muted)}
 .tagm{font:600 12px/1.25 var(--f-mono);padding:4px 8px;border-radius:999px;background:var(--accent-soft);color:var(--ink)}
+.tagm.hint2{background:color-mix(in srgb,var(--gold) 16%,var(--surface));border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
+.lnk.mut{color:var(--muted);font-weight:500}
 .lnk{appearance:none;background:none;border:0;padding:2px 0;font:600 12.5px/1.2 var(--f-ui);color:var(--ink);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
 .ppw{position:relative;display:grid}
 .ppx{position:absolute;top:-8px;right:-8px;z-index:3;width:24px;height:24px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font:400 17px/1 var(--f-ui);cursor:pointer;display:grid;place-items:center;padding:0 0 2px;opacity:.7;transition:opacity .15s,transform .35s var(--spring),background-color .15s,color .15s,border-color .15s}
@@ -1411,6 +1413,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
           <button class="btn" type="button" id="bkLoad">Восстановить из копии</button>
           <button class="btn danger" type="button" id="stClear">Очистить склад</button>
         </div>
+        <div class="manbar" id="autoBk" hidden></div>
         <input type="file" id="bkFile" accept=".json,application/json" hidden>
         <div class="confirm" id="setConfirm" hidden></div>
       </div>
@@ -1568,7 +1571,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-06.1';
+const APP_VERSION = '2026-10-06.3';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -1758,7 +1761,8 @@ function localBackend() {
   const onStore = (pre, fn) => addEventListener('storage', e => { if (e.key && e.key.startsWith('sklad/' + pre)) fn(); });
   return {
     kind: ls ? 'local' : 'memory',
-    async set(p, data) { const s = JSON.stringify(data); if (ls) ls.setItem('sklad/' + p, s); else mem.set(p, s); },
+    // no room left: the automatic copy from the last update goes first, the data itself always has priority
+    async set(p, data) { const s = JSON.stringify(data); if (!ls) { mem.set(p, s); return; } try { ls.setItem('sklad/' + p, s); } catch (e) { if (ls.getItem('sklad/autobk') == null) throw e; ls.removeItem('sklad/autobk'); ls.setItem('sklad/' + p, s); } },
     async del(p) { if (ls) ls.removeItem('sklad/' + p); else mem.delete(p); },
     async get(p) { return read(p); },
     watchColl(name, cb) { const load = () => cb(list(name), false); setTimeout(load, 0); onStore(name + '/', load); },
@@ -2883,7 +2887,7 @@ function modelIndex() {
   const add = (a, n, q) => {
     const r = parseRaw(a); if (!r.mkey) return;
     let m = M.get(r.mkey);
-    if (!m) M.set(r.mkey, m = {mk: r.mkey, a: String(a).trim(), model: r.model, pav: r.pav, rp: r.rp, n: '', sizes: new Set(), q: 0});
+    if (!m) M.set(r.mkey, m = {mk: r.mkey, a: String(a).trim(), model: r.model, pav: r.pav, rp: r.rp, price: S.price ? r.price : 0, n: '', sizes: new Set(), q: 0});
     if (!m.n && n) m.n = n;
     if (r.size) m.sizes.add(latinUp(r.size));
     m.q += Math.max(0, q || 0);
@@ -2917,34 +2921,59 @@ function twinFeat(m) {
   return {toks, colors, tag, sig};
 }
 const pairKey = (a, b) => a < b ? a + '|' + b : b + '|' + a;
-let twinCache = {sig: '', list: [], M: null}, MODV = 0;   // MODV: bumped on every change of twins
-// pairs worth a look: same pavilion, similar name and article; each model in one pair at most
+let twinCache = {sig: '', list: [], M: null}, MODV = 0;   // MODV: bumped on every change of twins or moves
+// where a model is bought now (after «Перенести») and its price there
+const effPav = m => (MOVE.get(m.mk) || {}).pav || m.pav;
+const effPrice = m => (MOVE.get(m.mk) || {}).price || m.price || 0;
+const pavKey = pav => String(pav || '').replace(/^([^\d]*)0+(?=\d)/, '$1');   // «А3» and «А03» are one pavilion here
+// both are (or are bought) in one pavilion
+const samePav = (a, b) => (!a.pav && !b.pav) || [a.pav, effPav(a)].some(p => p && [b.pav, effPav(b)].some(q => pavKey(p) === pavKey(q)));
+// how alike two models are, 0…1. A black and a white coat are never alike. The same coat is often sold in several
+// pavilions, so models of different pavilions count too, but only with the same model number (or, by hand, a bit lower)
+function twinScore(a, b, fa, fb, w, loose) {
+  if (fa.colors.size && fb.colors.size && ![...fa.colors].some(c => fb.colors.has(c))) return 0;
+  let both = 0, any = 0;
+  for (const t of fa.toks) { const x = w(t); any += x; if (fb.toks.has(t)) both += x; }
+  for (const t of fb.toks) if (!fa.toks.has(t)) any += w(t);
+  let sc = any ? both / any : 0;
+  const same = !!fa.sig && fa.sig === fb.sig;
+  if (fa.sig && fb.sig) sc = same ? Math.min(1, sc + 0.2) : sc * 0.5;
+  if (fa.tag && fb.tag && fa.tag === fb.tag) sc *= 0.7;
+  if (!samePav(a, b)) sc = loose ? sc * 0.75 : same ? sc * 0.92 : 0;
+  return sc;
+}
+// which of the two stays the main one: the one in its own pavilion if the other was moved there,
+// else the cheaper one (the coat is bought where it is cheaper), else the one with more orders
+function pickMain(a, b) {
+  if (MOVE.has(a.mk) && !MOVE.has(b.mk) && pavKey(effPav(a)) === pavKey(b.pav)) return [b, a];
+  if (MOVE.has(b.mk) && !MOVE.has(a.mk) && pavKey(effPav(b)) === pavKey(a.pav)) return [a, b];
+  const pa = effPrice(a), pb = effPrice(b);
+  if (pavKey(effPav(a)) !== pavKey(effPav(b)) && pa && pb && pa !== pb) return pa < pb ? [a, b] : [b, a];
+  return (b.q > a.q || (b.q === a.q && !purl(a.mk) && purl(b.mk))) ? [b, a] : [a, b];
+}
+// pairs worth a look across all pavilions: a model number or a rare word in common, a similar name; each model in one pair at most
 function twinSuggest() {
-  const sig = [lines.items.size, stock.items.size, PO.size, MODV, TWIN.size, NOTWIN.size, going().length, S.pav, S.latin, S.punct, S.zeros, DAYM.at].join('|');
+  const sig = [lines.items.size, stock.items.size, PO.size, MODV, TWIN.size, NOTWIN.size, MOVE.size, going().length, S.pav, S.price, S.latin, S.punct, S.zeros, DAYM.at].join('|');
   if (twinCache.sig === sig) return twinCache;
   const M = modelIndex(), roots = [...M.values()].filter(m => !TWIN.has(m.mk));
   const F = new Map(roots.map(m => [m.mk, twinFeat(m)])), df = new Map();
   for (const f of F.values()) for (const t of f.toks) df.set(t, (df.get(t) || 0) + 1);
   const N = Math.max(2, roots.length), w = t => Math.log(1 + N / (df.get(t) || 1));
-  // «А3» and «А03» written by two shops are one pavilion here too
-  const byPavM = new Map(), pk = pav => pav.replace(/^([^\d]*)0+(?=\d)/, '$1');
-  for (const m of roots) { const k = pk(m.pav); (byPavM.get(k) || byPavM.set(k, []).get(k)).push(m); }
-  const cand = [];
-  for (const [pav, ms] of byPavM) {
-    if (!pav || ms.length < 2) continue;
+  // candidates: models sharing a word that few models have (a model number, a rare word)
+  const inv = new Map();
+  for (const m of roots) for (const t of F.get(m.mk).toks) (inv.get(t) || inv.set(t, []).get(t)).push(m);
+  const cap = Math.max(12, Math.min(60, Math.ceil(N / 8))), seen = new Set(), cand = [];
+  for (const ms of inv.values()) {
+    if (ms.length < 2 || ms.length > cap) continue;
     for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) {
-      const a = ms[i], b = ms[j], fa = F.get(a.mk), fb = F.get(b.mk);
-      if (NOTWIN.has(pairKey(a.mk, b.mk))) continue;
-      if (fa.colors.size && fb.colors.size && ![...fa.colors].some(c => fb.colors.has(c))) continue;
-      let both = 0, any = 0;
-      for (const t of fa.toks) { const x = w(t); any += x; if (fb.toks.has(t)) both += x; }
-      for (const t of fb.toks) if (!fa.toks.has(t)) any += w(t);
-      let sc = any ? both / any : 0;
-      if (fa.sig && fb.sig) sc = fa.sig === fb.sig ? Math.min(1, sc + 0.2) : sc * 0.5;
-      if (fa.tag && fb.tag && fa.tag === fb.tag) sc *= 0.7;
+      const a = ms[i], b = ms[j], k = pairKey(a.mk, b.mk);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      if (NOTWIN.has(k)) continue;
+      const fa = F.get(a.mk), fb = F.get(b.mk), sc = twinScore(a, b, fa, fb, w);
       if (sc < 0.5) continue;
-      const main = (b.q > a.q || (b.q === a.q && !purl(a.mk) && purl(b.mk))) ? b : a, other = main === a ? b : a;
-      cand.push({main, other, sc, sure: sc >= 0.8 && (!fa.sig || fa.sig === fb.sig)});
+      const [main, other] = pickMain(a, b);
+      cand.push({main, other, sc, sure: sc >= 0.8 && (fa.sig === fb.sig)});
     }
   }
   cand.sort((x, y) => y.sc - x.sc);
@@ -2953,16 +2982,14 @@ function twinSuggest() {
   twinCache = {sig, list, M, F, w};
   return twinCache;
 }
-// models of the same pavilion ranked by likeness, for joining by hand
+// models of every pavilion ranked by likeness, for joining by hand: the same pavilion (after moves) first, unlike ones left out
 function twinRank(mk) {
-  const {M} = twinSuggest(), me = M.get(mk); if (!me) return [];
-  const fm = twinFeat(me), out = [];
+  const {M, F, w} = twinSuggest(), me = M.get(mk); if (!me) return [];
+  const fm = F.get(mk) || twinFeat(me), out = [];
   for (const m of M.values()) {
-    if (m.mk === mk || TWIN.has(m.mk) || m.pav.replace(/^([^\d]*)0+(?=\d)/, '$1') !== me.pav.replace(/^([^\d]*)0+(?=\d)/, '$1')) continue;
-    const f = twinFeat(m); let both = 0, any = 0;
-    for (const t of fm.toks) { any++; if (f.toks.has(t)) both++; }
-    for (const t of f.toks) if (!fm.toks.has(t)) any++;
-    out.push({m, sc: any ? both / any : 0});
+    if (m.mk === mk || TWIN.has(m.mk)) continue;
+    const f = F.get(m.mk) || twinFeat(m), sc = twinScore(me, m, fm, f, w, true);
+    if (sc >= 0.2) out.push({m, sc: samePav(me, m) ? Math.min(1, sc + 0.1) : sc});
   }
   return out.sort((a, b) => b.sc - a.sc);
 }
@@ -2973,7 +3000,11 @@ function joinTwins(pairs) {
     if (root.to === other.mk) continue;
     TWIN.set(other.mk, {to: root.to, a: root.a});
     for (const t of TWIN.values()) if (t.to === other.mk) { t.to = root.to; t.a = root.a; }
-    if (MOVE.has(other.mk)) { if (!MOVE.has(root.to)) MOVE.set(root.to, MOVE.get(other.mk)); MOVE.delete(other.mk); }
+    if (MOVE.has(other.mk)) {
+      const mv = MOVE.get(other.mk), home = parseRaw(root.a).pav;
+      MOVE.delete(other.mk);
+      if (!MOVE.has(root.to) && pavKey(mv.pav) !== pavKey(home)) MOVE.set(root.to, {...mv, from: home});
+    }
     if (SKIP.m.has(other.mk)) { SKIP.m.delete(other.mk); SKIP.m.add(root.to); }
     NOTWIN.delete(pairKey(main.mk, other.mk));
   }
@@ -3554,17 +3585,21 @@ function renderBuy(p, rows) {
     return `<footer class="pv-nav">${prev ? `<button class="btn ghost" type="button" data-pick-pav="${esc(prev.pav)}" data-scroll>← ${lbl(prev)}</button>` : '<span></span>'}${later ? `<button class="btn" type="button" data-pick-pav="${esc(later.pav)}" data-scroll>${next ? 'Следующий' : 'Не отправлен'}: ${lbl(later)} →</button>` : ''}</footer>`;
   };
   const MI = TWIN.size ? twinSuggest().M : null;
+  // a likely twin of this model, in this pavilion or another one: one tap joins them
+  const twBy = new Map(); for (const c of twinSuggest().list) { twBy.set(c.main.mk, c.other); twBy.set(c.other.mk, c.main); }
+  const twHint = mk => { const o = twBy.get(mk); return o ? `<span class="tagm hint2">похожа на ${esc(shortModel(o.model))} · ${esc(effPav(o) || 'без павильона')}</span><button class="lnk" type="button" data-tw-pk="${esc(pairKey(mk, o.mk))}">это одна шуба — объединить</button><button class="lnk mut" type="button" data-tw-pk-no="${esc(pairKey(mk, o.mk))}">разные</button>` : ''; };
   const twinNote = mk => { if (!MI) return ''; const ts = [...TWIN].filter(([, t]) => t.to === mk).map(([k]) => MI.get(k)).filter(Boolean); return ts.length ? `<span class="tagm">+ ${esc(ts.map(x => shortModel(x.model)).join(', '))}</span><span>одинаковый товар другого магазина, заказы сложены</span>` : ''; };
   const out = (cur < 0 ? pavs : [pavs[cur]]).map(pv => `<article class="pav" data-pav="${esc(pv.pav)}">
     <header><h3>${esc(pavLabel(pv.pav))}</h3>${supHead(pv)}<button class="xx" type="button" data-skip-p="${esc(pv.pav)}" aria-label="Убрать ${esc(pavLabel(pv.pav).toLowerCase())} из закупки" title="Убрать павильон из закупки">×</button></header>
     ${ui.editSup === pv.pav ? supForm(pv.pav) : ''}
-    ${pv.list.map(m => { const tn = twinNote(m.mkey); return `<div class="model" data-model="${esc(m.mkey)}">${thumb(m.mkey, 'md', true)}<div>
+    ${pv.list.map(m => { const tn = twinNote(m.mkey), th = twHint(m.mkey); return `<div class="model" data-model="${esc(m.mkey)}">${thumb(m.mkey, 'md', true)}<div>
       <div class="mhead"><h4>${esc(shortModel(m.model, pv.pav))}</h4><div class="mact">
         <button class="btn sm" type="button" data-move="${esc(m.mkey)}" title="Перенести в другой павильон"><svg class="ic"><use href="#i-move"/></svg><span>Перенести</span></button>
         <button class="btn sm" type="button" data-twin="${esc(m.mkey)}" title="Объединить с таким же товаром другого магазина"><svg class="ic"><use href="#i-link"/></svg><span>Объединить</span></button>
         <button class="xx" type="button" data-skip-m="${esc(m.mkey)}" aria-label="Убрать ${esc(shortModel(m.model))} из закупки" title="Убрать из закупки">×</button>
       </div></div>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}
       ${m.moved || tn ? `<div class="mnote">${m.moved ? `<span class="tagm">из ${esc(m.moved)}</span><span>перенесено в этот павильон</span><button class="lnk" type="button" data-unmove="${esc(m.mkey)}">вернуть в ${esc(m.moved)}</button>` : ''}${tn}</div>` : ''}
+      ${th ? `<div class="mnote">${th}</div>` : ''}
       <table class="sz"><thead><tr><th>Размер</th><th class="num">Нужно</th><th class="num">Заказать</th><th></th></tr></thead><tbody>
       ${m.rows.map(r => `<tr><td class="size">${esc(sizeShow(r.size) || '—')}</td><td class="num">${r.need ? fmt(r.need) : '—'}</td><td class="num"><input class="in qin${r.man ? ' man' : ''}" data-ak="${esc(r.ak)}" inputmode="decimal" value="${esc(qv(r.order))}" aria-label="Заказать ${esc(r.a)}"${r.man ? ` title="Вписано вручную, по заказам нужно ${fmt(r.need)}"` : ''}></td><td class="c">${r.add && !r.need ? `<button class="x" type="button" data-unadd="${esc(r.ak)}" aria-label="Убрать ${esc(r.a)}">×</button>` : r.man ? `<button class="x undo" type="button" data-unedit="${esc(r.ak)}" title="Вернуть ${fmt(r.need)}, сколько нужно по заказам" aria-label="Вернуть ${fmt(r.need)} для ${esc(r.a)}">↺</button>` : ''}</td></tr>`).join('')}
       </tbody></table>
@@ -3752,7 +3787,7 @@ function renderSettings() {
     memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
   };
   $('#storeNote').textContent = Backend ? note[Backend.kind] : 'Подключение к хранилищу…';
-  renderTester(); renderDiag(); renderSuppliers();
+  renderTester(); renderDiag(); renderSuppliers(); renderAutoBk();
 }
 const diagAll = () => [...DIAG.events, ...DIAG.buf];
 function renderDiag() {
@@ -3814,7 +3849,7 @@ function toast(msg, ms = 3800, action) {
 /* ---------- events ---------- */
 $$('.tab').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel],[data-skip-m],[data-skip-p],[data-unskip-m],[data-unskip-p],[data-unskip-all],[data-move],[data-unmove],[data-twin],[data-recv-asis],[data-unedit],[data-unedit-all]');
+  const t = e.target.closest('[data-order-all],[data-order-pav],[data-pick-pav],[data-pav-step],[data-go],[data-commit],[data-recv],[data-cancel-pur],[data-add-size],[data-unadd],[data-returned],[data-wa],[data-edit-sup],[data-sup-cancel],[data-skip-m],[data-skip-p],[data-unskip-m],[data-unskip-p],[data-unskip-all],[data-move],[data-unmove],[data-twin],[data-recv-asis],[data-unedit],[data-unedit-all],[data-tw-pk],[data-tw-pk-no]');
   if (!t) return;
   if (t.dataset.skipM || t.dataset.skipP != null) { skipIt(t); return; }
   if (t.dataset.unskipM || t.dataset.unskipP != null || t.hasAttribute('data-unskip-all')) {
@@ -3824,6 +3859,13 @@ document.addEventListener('click', e => {
   if (t.dataset.move) { openMove(t.dataset.move); return; }
   if (t.dataset.unmove) { const mv = MOVE.get(t.dataset.unmove); if (mv) moveModel(t.dataset.unmove, mv.from, 0, mv.from); return; }
   if (t.dataset.twin) { openTwins(t.dataset.twin === '*' ? '' : t.dataset.twin); return; }
+  if (t.dataset.twPk || t.dataset.twPkNo) {
+    const k = t.dataset.twPk || t.dataset.twPkNo, c = twinSuggest().list.find(x => pairKey(x.main.mk, x.other.mk) === k);
+    if (!c) return;
+    if (t.dataset.twPk) joinWithUndo([c], `Объединено: ${shortModel(c.main.model)} и ${shortModel(c.other.model)}${pavKey(effPav(c.main)) !== pavKey(effPav(c.other)) ? ` — покупаем в ${effPav(c.main)}` : ''}`);
+    else { NOTWIN.add(k); MODV++; saveMeta('meta/models'); render(); toast('Хорошо, это разные шубы — больше не предложу'); }
+    return;
+  }
   if (t.dataset.unedit) { const po = PO.get(t.dataset.unedit); if (po) { if (po.add) po.q = null; else PO.delete(t.dataset.unedit); saveMeta('meta/po'); render(); } return; }
   if (t.hasAttribute('data-unedit-all')) {
     const was = new Map([...PO].map(([k, e]) => [k, {...e}]));
@@ -3995,10 +4037,10 @@ function moveModel(mk, pav, price, from) {
   const name = row ? shortModel(row.model) : 'Модель';
   pav = normPav(pav);
   if (!pav || pav === from) MOVE.delete(mk); else MOVE.set(mk, {pav, price: price || 0, from, at: Date.now(), model: row ? row.model : (was && was.model) || ''});
-  clearArt(); saveMeta('meta/models');
+  MODV++; clearArt(); saveMeta('meta/models');
   log(pav === from ? `${name}: закупка снова в ${from}` : `${name}: закупка перенесена из ${from || 'без павильона'} в ${pav}${price ? ` по ${rub(price)}` : ''}`);
   closeModal('#mv'); render();
-  toast(pav === from ? `${name} снова в ${from ? `павильоне ${from}` : 'закупке без павильона'}` : `${name} перенесена в павильон ${pav}`, 6000, {label: 'Отменить', fn: () => { if (was) MOVE.set(mk, was); else MOVE.delete(mk); clearArt(); saveMeta('meta/models'); render(); }});
+  toast(pav === from ? `${name} снова в ${from ? `павильоне ${from}` : 'закупке без павильона'}` : `${name} перенесена в павильон ${pav}`, 6000, {label: 'Отменить', fn: () => { if (was) MOVE.set(mk, was); else MOVE.delete(mk); MODV++; clearArt(); saveMeta('meta/models'); render(); }});
 }
 $('#mvPavs').addEventListener('click', e => {
   const b = e.target.closest('[data-mv-pav]'); if (!b) return;
@@ -4060,9 +4102,16 @@ async function hashPairs(pairs) {
   if (!$('#tw').hidden) renderTw();
 }
 const twSure = c => { const d = photoDist(c.main.mk, c.other.mk); return (c.sure && (d == null || d <= 20)) || (d != null && d <= 8 && c.sc >= 0.6); };
+// two pavilions: where the joined coat will be bought
+function twWhere(c) {
+  const em = effPav(c.main), eo = effPav(c.other);
+  if (!em || pavKey(em) === pavKey(eo)) return '';
+  const pm = effPrice(c.main), po = effPrice(c.other);
+  return ` · покупать будем в <b>${esc(em)}</b>${pm && po && pm < po ? `, там дешевле: ${rub(pm)} вместо ${rub(po)}` : ''}`;
+}
 function twSide(m) {
   const sizes = [...new Set([...m.sizes].map(sizeShow))].sort(bySize);
-  return `<div class="twside">${thumb(m.mk, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="twmeta">${esc(pavLabel(m.pav))}${sizes.length ? ` · ${esc(sizes.slice(0, 8).join(', '))}${sizes.length > 8 ? '…' : ''}` : ''}${m.q ? ` · ${fmt(round(m.q))} шт. в заказах и на складе` : ''}</div></div></div>`;
+  return `<div class="twside">${thumb(m.mk, 'sm', true)}<div><span class="art">${esc(shortModel(m.model))}</span>${m.n ? `<span class="nm">${esc(m.n)}</span>` : ''}<div class="twmeta">${esc(pavLabel(m.pav))}${effPav(m) !== m.pav ? ` → покупается в ${esc(effPav(m))}` : ''}${effPrice(m) ? ` · ${rub(effPrice(m))}` : ''}${sizes.length ? ` · ${esc(sizes.slice(0, 8).join(', '))}${sizes.length > 8 ? '…' : ''}` : ''}${m.q ? ` · ${fmt(round(m.q))} шт. в заказах и на складе` : ''}</div></div></div>`;
 }
 function renderTw() {
   const {list, M} = twinSuggest(), box = $('#twBody');
@@ -4075,15 +4124,15 @@ function renderTw() {
     let cand = twinRank(me.mk);
     if (TWV.q) cand = [...M.values()].filter(m => m.mk !== me.mk && !TWIN.has(m.mk) && matches(TWV.q, m.model, m.n, m.a)).map(m => ({m, sc: 0}));
     box.innerHTML = `${intro}<div class="twpair pick" style="border-color:var(--ink)">${twSide(me)}<span class="chip good">этот товар</span></div>
-      <div class="twhead" style="margin-top:16px"><h3>Какой товар другого магазина — такой же?</h3><input class="in search" id="twQ" placeholder="Поиск по артикулу или названию" value="${esc(TWV.q)}" aria-label="Поиск товара"></div>
-      ${cand.slice(0, 12).map(c => `<div class="twpair pick">${twSide(c.m)}<button class="btn primary" type="button" data-tw-join="${esc(me.mk)}" data-tw-other="${esc(c.m.mk)}">Это он</button></div>`).join('') || `<p class="hint">${TWV.q ? 'Ничего не нашлось. Попробуйте часть артикула.' : 'В этом павильоне больше нет товаров. Найдите нужный поиском.'}</p>`}
-      ${TWV.q ? '' : '<p class="hint small" style="margin-top:10px">Сверху самые похожие товары того же павильона. Если нужного нет, найдите его поиском.</p>'}${doneHtml}`;
+      <div class="twhead" style="margin-top:16px"><h3>Какой товар — та же шуба?</h3><input class="in search" id="twQ" placeholder="Поиск во всех павильонах: артикул или название" value="${esc(TWV.q)}" aria-label="Поиск товара во всех павильонах"></div>
+      ${cand.slice(0, 12).map(c => `<div class="twpair pick">${twSide(c.m)}<button class="btn primary" type="button" data-tw-join="${esc(me.mk)}" data-tw-other="${esc(c.m.mk)}">Это она</button></div>`).join('') || `<p class="hint">${TWV.q ? 'Ничего не нашлось. Попробуйте часть артикула или номер модели.' : 'Похожих шуб не нашлось ни в одном павильоне. Найдите нужную поиском: впишите номер модели или часть артикула.'}</p>`}
+      ${TWV.q ? '' : '<p class="hint small" style="margin-top:10px">Здесь похожие шубы из всех павильонов, сверху — из того же павильона (с учётом переноса). Если нужной нет, найдите её поиском.</p>'}${doneHtml}`;
     hashPairs(cand.slice(0, 12).map(c => ({main: me, other: c.m})));
     return;
   }
   const sure = list.filter(twSure);
   box.innerHTML = `${intro}${list.length ? `<div class="twhead"><h3>Похожие пары: ${fmt(list.length)}</h3>${sure.length ? `<button class="btn primary" type="button" data-tw-all>Объединить все уверенные (${fmt(sure.length)})</button>` : ''}</div>` : '<p class="empty" style="padding:18px 0">Похожих пар не нашлось. Если программа что-то пропустила, нажмите «Объединить» у модели на вкладке «Закупка».</p>'}
-    ${list.slice(0, TWV.more).map((c, i) => { const d = photoDist(c.main.mk, c.other.mk); return `<div class="twpair" data-tw-i="${i}">${twSide(c.main)}<span class="tweq" aria-hidden="true">=</span>${twSide(c.other)}<div class="twact"><span class="why">похожи на ${Math.round(c.sc * 100)}%${d == null ? '' : d <= 8 ? ' · <b>фото одинаковые</b>' : d > 20 ? ' · фото разные' : ''}</span><button class="btn ghost" type="button" data-tw-no="${i}">Разные товары</button><button class="btn primary" type="button" data-tw-yes="${i}">Один товар</button></div></div>`; }).join('')}
+    ${list.slice(0, TWV.more).map((c, i) => { const d = photoDist(c.main.mk, c.other.mk); return `<div class="twpair" data-tw-i="${i}">${twSide(c.main)}<span class="tweq" aria-hidden="true">=</span>${twSide(c.other)}<div class="twact"><span class="why">похожи на ${Math.round(c.sc * 100)}%${d == null ? '' : d <= 8 ? ' · <b>фото одинаковые</b>' : d > 20 ? ' · фото разные' : ''}${twWhere(c)}</span><button class="btn ghost" type="button" data-tw-no="${i}">Разные товары</button><button class="btn primary" type="button" data-tw-yes="${i}">Один товар</button></div></div>`; }).join('')}
     ${list.length > TWV.more ? `<button class="btn more" type="button" data-tw-more>Показать ещё ${fmt(Math.min(30, list.length - TWV.more))}</button>` : ''}${doneHtml}`;
   hashPairs(list.slice(0, TWV.more));
 }
@@ -4114,7 +4163,7 @@ $('#twBody').addEventListener('click', e => {
   else if (t.hasAttribute('data-tw-more')) { TWV.more += 30; renderTw(); }
   else if (t.dataset.twJoin) {
     const a = M.get(t.dataset.twJoin), b = M.get(t.dataset.twOther); if (!a || !b) return;
-    const [main, other] = b.q > a.q ? [b, a] : [a, b];
+    const [main, other] = pickMain(a, b);
     TWV.focus = ''; TWV.q = '';
     joinWithUndo([{main, other}], `Объединено: ${shortModel(main.model)} и ${shortModel(other.model)}`);
   }
@@ -5080,7 +5129,7 @@ const TOUR = [
   {tab: 'day', sel: ['#dayTiles', '#dayEmpty'], h: 'Что можно собрать, а чего нет', t: 'Товар со склада сразу отдаётся отправлениям, сначала старым. У каждого отправления свой статус: «можно собирать», «ждёт мешок» или «не хватает». То, чего не хватает, уходит в закупку.'},
   {tab: 'buy', sel: ['#pavPick', '#buyList'], h: 'Закупка по павильонам', t: 'Всё, чего не хватает, разложено по павильонам. Выберите павильон: там модели с фото и размерами. В поле «Заказать» можно вписать больше, на целый мешок, лишнее уйдёт на склад.'},
   {tab: 'buy', sel: ['#buyList [data-order-pav]', '#buyList .btn.wa', '#buyPdfAll'], h: 'Заказ с фото вместо скриншотов', t: 'Кнопка «Заказ с фото» собирает картинку: фото каждой модели, размеры и количество, без цен, всё пронумеровано. На компьютере перетащите её мышкой прямо в чат WhatsApp. На iPhone в приложении Claude сохраните её — сразу откроется «Поделиться».'},
-  {tab: 'buy', sel: ['#buyList .mact', '#buyList .model', '#buyList'], h: 'Перенести, объединить, убрать', t: '«Перенести» — купить модель в другом павильоне, где дешевле: впишите любой павильон, даже если его нет в заказах; программа это запомнит. «Объединить» — если та же шуба есть во втором магазине под другим артикулом: заказы сложатся в одну строку. Крестик убирает модель или целый павильон из этой закупки, вернуть можно одним нажатием.'},
+  {tab: 'buy', sel: ['#buyList .mact', '#buyList .model', '#buyList'], h: 'Перенести, объединить, убрать', t: '«Перенести» — купить модель в другом павильоне, где дешевле: впишите любой павильон, даже если его нет в заказах; программа это запомнит. «Объединить» — если та же шуба есть во втором магазине под другим артикулом, даже в другом павильоне: заказы сложатся в одну строку, покупать будем там, где дешевле. Крестик убирает модель или целый павильон из этой закупки, вернуть можно одним нажатием.'},
   {tab: 'buy', sel: ['#buyCommit'], h: 'Оформить закупку', t: 'Когда заказали у всех, нажмите «Оформить закупку». Товар со склада спишется под отправления, а остальные отправления будут ждать свой мешок. Ошиблись — 10 секунд можно нажать «Отменить».'},
   {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно. Если пересчитывать некогда, «Без проверки» примет мешок как заказано.'},
   {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
@@ -5338,8 +5387,43 @@ async function start() {
     $('#hAiBtn').hidden = !SAMPLE;
   }
   Backend = db ? dbBackend(db) : localBackend();
+  autoBackup();
   subscribe(); renderSettings();
 }
+/* ---------- a new version starts: first a copy of the data exactly as saved, then everything else ---------- */
+const AUTO_RX = /^sklad\/(stock|receipt|lines|purch|meta)\//;
+function autoBackup() {
+  if (!Backend || Backend.kind !== 'local') return;
+  const last = lsGet('sklad/ver');
+  if (last === APP_VERSION) return;
+  try {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && AUTO_RX.test(k)) data[k] = localStorage.getItem(k); }
+    if (Object.keys(data).length) {
+      try { localStorage.removeItem('sklad/autobk'); localStorage.setItem('sklad/autobk', JSON.stringify({from: last || '', to: APP_VERSION, at: Date.now(), data})); }
+      catch { diag('autobk', 'места не хватило'); }
+    }
+  } catch {}
+  lsSet('sklad/ver', APP_VERSION);
+}
+function autoBackupInfo() { try { const b = JSON.parse(localStorage.getItem('sklad/autobk') || 'null'); return b && b.data ? b : null; } catch { return null; } }
+function renderAutoBk() {
+  const b = Backend && Backend.kind === 'local' ? autoBackupInfo() : null, box = $('#autoBk');
+  box.hidden = !b;
+  if (b) box.innerHTML = `<p>При обновлении программы ${when(b.at)} данные сохранены в копию — как они были до обновления. Если после обновления что-то пропало или посчитано не так, их можно вернуть.</p><button class="btn" type="button" id="autoBkBtn">Вернуть данные как до обновления</button>`;
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#autoBkBtn')) return;
+  const b = autoBackupInfo(); if (!b) return;
+  confirmIn('#setConfirm', `Вернуть данные, какими они были ${when(b.at)}, перед обновлением? Всё, что вы сделали после этого, пропадёт.`, 'Вернуть', () => {
+    try {
+      const drop = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && AUTO_RX.test(k)) drop.push(k); }
+      for (const k of drop) localStorage.removeItem(k);
+      for (const [k, v] of Object.entries(b.data)) localStorage.setItem(k, v);
+      location.reload();
+    } catch { toast('Не получилось вернуть данные: браузеру не хватает места'); }
+  }, true);
+});
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
   get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow};

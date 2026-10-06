@@ -40,6 +40,7 @@ try {
   if ($at -lt 0) { throw 'в файле установки нет программы, скачайте его ещё раз' }
   $html = $all.Substring($at + $mark.Length).TrimStart("`r", "`n")
   if (-not $html.StartsWith('<!doctype html>') -or -not $html.TrimEnd().EndsWith('</html>')) { throw 'файл установки скачался не полностью, скачайте его ещё раз' }
+  $isUpdate = Test-Path -LiteralPath $app
   New-Item -ItemType Directory -Force -Path $dest | Out-Null
   [IO.File]::WriteAllText($app, $html, (New-Object Text.UTF8Encoding $false))
 
@@ -47,9 +48,19 @@ try {
   $ico = Join-Path $dest 'ULTIMATE SHOP SKLAD.ico'
   [IO.File]::WriteAllBytes($ico, [Convert]::FromBase64String('__ICON__'))
 
-  # 3. the browser; Chrome, Yandex Browser and Edge open the program as a window without tabs
+  # 3. the browser; Chrome, Yandex Browser and Edge open the program as a window without tabs.
+  #    An update keeps the browser of the existing shortcut: the data lives in that browser
+  $links = @(Join-Path $desktop ($title + '.lnk'))
+  $menu = [Environment]::GetFolderPath('Programs')
+  if ($menu) { $links += Join-Path $menu ($title + '.lnk') }
   $browser = $null
   if (-not $DryRun) {
+    foreach ($l in $links) {
+      if ($browser -or -not (Test-Path -LiteralPath $l)) { continue }
+      try { $old = (New-Object -ComObject WScript.Shell).CreateShortcut($l).TargetPath; if ($old -match '\.exe$' -and (Test-Path -LiteralPath $old)) { $browser = $old } } catch {}
+    }
+  }
+  if (-not $DryRun -and -not $browser) {
     $browser = ExeOf (Choice 'Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.html\UserChoice')
     if (-not $browser) { $browser = ExeOf (Choice 'Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice') }
     if (-not $browser) {
@@ -67,9 +78,6 @@ try {
   if ($appMode) { $argv = '--app="' + $url + '"' } elseif ($browser) { $argv = '"' + $url + '"' } else { $argv = '' }
 
   # 4. shortcuts on the Desktop and in the Start menu
-  $links = @(Join-Path $desktop ($title + '.lnk'))
-  $menu = [Environment]::GetFolderPath('Programs')
-  if ($menu) { $links += Join-Path $menu ($title + '.lnk') }
   if ($DryRun) {
     Write-Output "app=$app ($((Get-Item -LiteralPath $app).Length) bytes)"; Write-Output "icon=$ico ($((Get-Item -LiteralPath $ico).Length) bytes)"
     Write-Output "url=$url"; Write-Output "links=$($links -join ' | ')"
@@ -86,7 +94,8 @@ try {
     $sc.Save()
   }
   if ($argv) { Start-Process -FilePath $target -ArgumentList $argv } else { Start-Process -FilePath $target }
-  Say "Готово!`n`nНа рабочем столе появился ярлык «$title». Программа сейчас откроется.`n`nДальше открывайте её этим ярлыком. Этот файл установки можно удалить.`n`nВышла новая версия — скачайте новый файл установки и откройте его так же. Данные останутся." 64
+  if ($isUpdate) { Say "Программа обновлена!`n`nВсё, что вы делали раньше, осталось на месте. Программа сейчас откроется.`n`nОткрывайте её, как и раньше, ярлыком «$title» на рабочем столе. Этот файл установки можно удалить." 64 }
+  else { Say "Готово!`n`nНа рабочем столе появился ярлык «$title». Программа сейчас откроется.`n`nДальше открывайте её этим ярлыком. Этот файл установки можно удалить.`n`nВышла новая версия — скачайте новый файл установки и откройте его так же. Данные останутся." 64 }
 } catch {
   Say ("Не получилось установить программу.`n`n" + $_.Exception.Message) 16
 }
