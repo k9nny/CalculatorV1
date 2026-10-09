@@ -1121,7 +1121,7 @@ body[data-tab="home"] .top .kpis{display:none}
 @keyframes shimmer{from{background-position:120% 0}to{background-position:-120% 0}}
 @keyframes spinAng{to{--ang:360deg}}
 .helpbtn.gear{display:none}
-@media (max-width:1023px){#t-settings{display:none}.helpbtn.gear{display:grid;place-items:center}.side .tab{flex:1 0 54px;font-size:10.5px}.side .tab .tl{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
+@media (max-width:1023px){#t-settings{display:none}.helpbtn.gear{display:grid;place-items:center}.side .tab{flex:1 0 48px;font-size:10.5px}.side .tab .tl{max-width:100%;overflow:hidden;text-overflow:ellipsis}}
 @media (prefers-reduced-motion:reduce){.aurora i,.pulse,.ai,.aibtn,.ai-text.think{animation:none!important}.rings .rv,.w{transition:none!important}}
 
 /* ============ photo viewer ============ */
@@ -1210,7 +1210,7 @@ body.emp .onlyemp{display:inline}
 .helpbtn.empexit{text-align:left}
 body.emp .empbadge{display:block;margin:-8px 8px 0;padding:6px 10px;border-radius:8px;background:color-mix(in srgb,var(--side-gold) 18%,transparent);color:var(--side-gold);font:600 11.5px/1.2 var(--f-ui);letter-spacing:.08em;text-transform:uppercase;text-align:center}
 body.emp .helpbtn.empexit{display:flex}
-body.emp #t-home,body.emp #t-day,body.emp #t-buy,body.emp #t-an,body.emp #t-settings,body.emp .helpbtn.gear,body.emp .top .kpis,
+body.emp #t-home,body.emp #t-day,body.emp #t-buy,body.emp #t-an,body.emp #t-prices,body.emp #t-settings,body.emp .helpbtn.gear,body.emp .top .kpis,
 body.emp #recvAsIs,body.emp [data-import="stock"],body.emp [data-paste="stock"],body.emp [data-export-stock],body.emp #rcReplace,body.emp #stSeg,body.emp #stBody [data-del],
 body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-cancel-pur],body.emp [data-recv-asis]{display:none!important}
 @media (max-width:1023px){body.emp .empbadge{display:none}body.emp .helpbtn.empexit{width:34px;height:34px;padding:0;justify-content:center}body.emp .helpbtn.empexit span{display:none}}
@@ -1224,6 +1224,47 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
   .btn::after,.mark::after,.toast,.toast.out,.modal,.modal .sheet,#pageTitle.swap,.badge.pop{animation:none!important}
   .toast .ti svg path{animation:none;stroke-dashoffset:0}
 }
+/* ============ prices ============ */
+.prhow p{margin:8px 0 0;max-width:72ch;color:var(--muted)}
+.prhow summary,#prCols summary{cursor:pointer;color:var(--ink);font-weight:600}
+.prcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 12px;margin-top:10px}
+.prcols label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.prcols label b{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prcols label b.green::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--good);margin-right:6px;vertical-align:1px}
+.prcols select{font-size:14px;padding:7px 9px}
+.prbulk{display:grid;grid-template-columns:1.1fr 1.2fr 1.3fr .9fr 1.1fr auto;gap:10px;align-items:end}
+.prbulk select{font-size:14px;padding:9px 10px}
+@media (max-width:900px){.prbulk{grid-template-columns:1fr 1fr}.prbulk .btn{grid-column:1/-1}}
+.prtw{max-height:none}
+.prt td{padding:7px 10px}
+.prt th{padding:9px 10px}
+.prt td.c input{width:18px;height:18px;accent-color:var(--ink)}
+.prt .pm{display:flex;gap:10px;align-items:center;min-width:220px}
+.prt .pm img,.prt .pm .noph{width:38px;height:50px;border-radius:6px;object-fit:cover;flex:none;background:var(--surface-2)}
+.prt .pm .nm{font-size:12.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:300px}
+.prt .szs{font:500 11.5px/1.2 var(--f-mono);color:var(--muted);margin-top:2px}
+.prt .was{font:500 12px/1.2 var(--f-mono);color:var(--muted);text-align:right;margin-bottom:3px;white-space:nowrap}
+.prt .was b{color:var(--good);font-weight:600}
+.prt .prin{width:112px}
+.prt .prin.chg{border-color:var(--good);background:var(--good-soft)}
+.prt .prin.low{border-color:var(--bad);background:var(--bad-soft)}
+.prt .cost{font:500 12.5px/1.3 var(--f-mono);white-space:nowrap}
+.prt .cost small{display:block;color:var(--muted);font-family:var(--f-ui)}
+.prt .cost .qin{width:84px;margin:0}
+.prt tr.sub td{background:var(--surface-2);font-size:13px}
+.prt tr.sub .art{font-size:12.5px}
+.prt tr.off td{opacity:.55}
+.prt tr.off td.st{opacity:1}
+.prt td.st{min-width:150px}
+.prt td.st .chip{margin:2px 4px 2px 0}
+.prt .exp{border:0;background:none;color:var(--muted);font:600 12px/1 var(--f-ui);cursor:pointer;padding:4px 0}
+.prfoot{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.prfoot p{margin:0 auto 0 0;font-size:14px;color:var(--muted)}
+.prfoot p b{color:var(--ink)}
+.prsnap{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.prsnap:last-child{border-bottom:0}
+.prsnap p{margin:0;flex:1 1 280px;font-size:14px}
+#prWarn .manbar:first-child{margin-top:12px}
 </style>
 </head>
 <body>
@@ -1259,6 +1300,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
   <symbol id="i-move" viewBox="0 0 24 24"><path d="M4 8h14M14.5 4.5 18 8l-3.5 3.5M20 16H6M9.5 12.5 6 16l3.5 3.5"/></symbol>
   <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
   <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+  <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.4 1.4 0 0 1 0 2l-6.7 6.7a1.4 1.4 0 0 1-2 0z"/><circle cx="8" cy="8" r="1.6"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2"/><path d="M15.5 8.5v-3a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></symbol>
 </defs></svg>
 <div class="shell">
@@ -1275,6 +1317,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
       <button class="tab" role="tab" id="t-recv" data-tab="recv" aria-selected="false"><svg class="ic"><use href="#i-recv"/></svg><span class="tl">Приёмка</span> <span class="badge" id="bRecv" hidden></span></button>
       <button class="tab" role="tab" id="t-stock" data-tab="stock" aria-selected="false"><svg class="ic"><use href="#i-stock"/></svg><span class="tl">Склад</span></button>
       <button class="tab" role="tab" id="t-an" data-tab="an" aria-selected="false"><svg class="ic"><use href="#i-an"/></svg><span class="tl">Анализ</span></button>
+      <button class="tab" role="tab" id="t-prices" data-tab="prices" aria-selected="false"><svg class="ic"><use href="#i-tag"/></svg><span class="tl">Цены</span></button>
       <button class="tab" role="tab" id="t-settings" data-tab="settings" aria-selected="false"><svg class="ic"><use href="#i-set"/></svg><span class="tl">Настройки</span></button>
     </nav>
     <div class="side-foot"><button class="helpbtn empexit" type="button" id="empExit" aria-label="Выйти из режима сотрудника"><svg class="ic"><use href="#i-back"/></svg><span>Выйти из режима сотрудника</span></button><button class="helpbtn gear" type="button" data-go="settings" aria-label="Настройки"><svg class="ic"><use href="#i-set"/></svg></button><button class="helpbtn" type="button" id="tourOpen" aria-label="Как пользоваться"><svg class="ic"><use href="#i-help"/></svg><span>Как пользоваться</span></button><div class="sync" id="sync" data-s="wait" role="status"><i></i><span>Загрузка…</span></div></div>
@@ -1634,6 +1677,89 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
       </div>
     </section>
 
+    <!-- ЦЕНЫ -->
+    <section class="pane stack" id="pane-prices" role="tabpanel" aria-labelledby="t-prices" hidden>
+      <div class="card">
+        <div class="lhead"><h2>Цены на Ozon</h2><span class="sum" id="prSum"></span></div>
+        <p class="hint">Цены меняются через Excel-файл Ozon. Скачайте его в кабинете и откройте здесь. Поменяйте цены точно или процентом, сразу всем или по одной, и сохраните. Готовый файл загрузите обратно в кабинет Ozon. Программа меняет в файле только цены, всё остальное остаётся как было.</p>
+        <div class="row mt">
+          <button class="btn primary" type="button" id="prOpenBtn"><svg class="ic"><use href="#i-up"/></svg>Открыть файл Ozon</button>
+          <button class="btn ghost" type="button" id="prCloseBtn" hidden>Закрыть файл</button>
+        </div>
+        <details class="small mt prhow"><summary>Где взять файл</summary>
+          <p><b>Цены.</b> Кабинет Ozon → «Цены и акции» → «Цены на товары». Скачайте файл для изменения цен в Excel. Сохранённый здесь файл загрузите там же.</p>
+          <p><b>Акция.</b> «Продвижение» → «Акции» → нужная акция → «Добавить товары» → «Импорт в XLS-файле» → «Скачать». Сохранённый здесь файл загрузите в том же окне.</p>
+          <p>Каждый раз скачивайте свежий файл: Ozon иногда меняет столбцы. У каждого магазина свой файл.</p>
+        </details>
+        <input type="file" id="prFile" accept=".xlsx,.xlsm,.xls,.ods" hidden>
+      </div>
+      <div class="card" id="prCard" hidden>
+        <div class="lhead">
+          <h3 id="prTitle">Файл</h3>
+          <div class="seg" role="group" aria-label="Магазин" id="prShop"></div>
+        </div>
+        <p class="hint small" id="prKind"></p>
+        <details class="small mt" id="prCols"><summary>Столбцы файла</summary><div class="prcols" id="prColList"></div><p class="hint small">Программа сама находит, где какая цена. Если ошиблась, поправьте здесь. Зелёным Ozon отмечает столбцы, которые можно менять.</p></details>
+        <form class="prbulk mt" id="prBulk" autocomplete="off">
+          <label class="fld">Что меняем<select class="in" id="prRole"></select></label>
+          <label class="fld">Новая цена<input class="in mono" id="prExpr" placeholder="1990, -15%, +10% или -200" spellcheck="false"></label>
+          <label class="fld" id="prBaseF">Считать от<select class="in" id="prBase">
+            <option value="self">нынешней цены в этом столбце</option>
+            <option value="price">цены товара</option>
+            <option value="cost">закупки</option>
+            <option value="floor">защиты (минимума)</option>
+          </select></label>
+          <label class="fld">Округлить<select class="in" id="prRound">
+            <option value="1">до рубля</option>
+            <option value="10" selected>до 10 ₽</option>
+            <option value="50">до 50 ₽</option>
+            <option value="100">до 100 ₽</option>
+            <option value="90">на …90 (1 990)</option>
+          </select></label>
+          <label class="fld">Кому<select class="in" id="prWho"></select></label>
+          <button class="btn primary" type="submit">Применить</button>
+        </form>
+        <p class="hint small" id="prExprHint">Число — точная цена. С процентом — скидка или наценка: «-15%» дешевле на 15%, «+10%» дороже на 10%. Со знаком без процента — рубли: «-200» дешевле на 200 ₽. Так же можно писать прямо в строке товара.</p>
+        <div id="prWarn"></div>
+        <div class="lhead mt">
+          <div class="seg" role="group" aria-label="Показать" id="prSeg">
+            <button type="button" data-v="all" aria-pressed="true">Все</button>
+            <button type="button" data-v="chg" aria-pressed="false">Изменённые</button>
+            <button type="button" data-v="bad" aria-pressed="false">Проблемы</button>
+          </div>
+          <input class="in search" id="prSearch" type="search" placeholder="Артикул или название" aria-label="Поиск по файлу цен">
+        </div>
+        <div class="tw prtw"><table class="t prt">
+          <thead id="prHeadRow"></thead>
+          <tbody id="prBody"></tbody>
+        </table></div>
+        <button class="btn ghost more" id="prMore" type="button" hidden>Показать ещё</button>
+        <div class="prfoot mt">
+          <p id="prFootSum"></p>
+          <button class="btn" type="button" id="prReset">Отменить изменения</button>
+          <button class="btn primary" type="button" id="prSave"><svg class="ic"><use href="#i-dl"/></svg>Сохранить файл для Ozon</button>
+        </div>
+        <div class="confirm" id="prConfirm" hidden></div>
+      </div>
+      <div class="card">
+        <h3>Защита от продажи в минус</h3>
+        <p class="hint">Цена и цена по акции не опустятся ниже закупки с наценкой. Закупка — число в артикуле: 1900 в <code class="k">A04-LM9-Ser-1900-3XL</code>. Если его нет, впишите закупку у товара. Цена ниже защиты не попадёт в файл. Товар, который Ozon предлагает в акцию дешевле защиты, программа уберёт из файла акции. Если так и задумано, нажмите у товара «Всё равно».</p>
+        <form class="anparams mt" id="prFloorForm" autocomplete="off">
+          <label class="fld">Наценка к закупке, %<input class="in" id="prPct" inputmode="decimal"></label>
+          <label class="fld">Плюс к закупке, ₽<input class="in" id="prAdd" inputmode="numeric"></label>
+          <label class="fld">Первый магазин<input class="in" id="prShop0"></label>
+          <label class="fld">Второй магазин<input class="in" id="prShop1"></label>
+        </form>
+        <p class="hint small" id="prFloorEx"></p>
+      </div>
+      <div class="card">
+        <div class="lhead"><h3>Цены до изменений</h3><span class="sum" id="prSnapSum"></span></div>
+        <p class="hint small">При каждом сохранении файла программа запоминает, какие цены были раньше. Сама она их не возвращает. Когда акция закончится, скачайте в Ozon свежий файл цен, откройте его здесь и нажмите «Вписать эти цены». Потом сохраните и загрузите.</p>
+        <div id="prSnaps" class="mt"></div>
+        <div class="confirm" id="prSnapConfirm" hidden></div>
+      </div>
+    </section>
+
     <!-- НАСТРОЙКИ -->
     <section class="pane stack" id="pane-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
       <div class="card empcard">
@@ -1937,7 +2063,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-06.3';
+const APP_VERSION = '2026-10-09.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -2447,6 +2573,7 @@ function subscribe() {
     for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) putSup(r);
     render();
   });
+  Backend.watchDoc('meta/prices', d => { if (!d || docPending('meta/prices')) return; PRS = prLoad(d); renderPrices(); });
   Backend.watchDoc('meta/returns', d => {
     first('ret');
     if (!d || docPending('meta/returns')) return;
@@ -3126,21 +3253,8 @@ async function saveTable(base, sheets) {
     data = '﻿' + sheets[0].rows.map(r => r.map(csvCell).join(';')).join('\r\n'); ext = 'csv';
   }
   const name = `${safeName(base)}.${ext}`;
-  if (DL) {
-    try { await DL.save({filename: name, data}); toast('Файл сохранён: ' + name); diag('export', name, 'saved'); }
-    catch (e) {
-      const c = e && e.code;
-      diag('export', name, {code: c || '', msg: String((e && e.message) || '').slice(0, 200)});
-      if (c === 'declined') return;
-      toast(c === 'rate_limited' ? 'Подождите пару секунд и нажмите ещё раз' : 'Не получилось сохранить файл. Нажмите «Копировать» и вставьте список в Excel.');
-    }
-    return;
-  }
-  const url = URL.createObjectURL(new Blob([data], {type: ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8'}));
-  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  diag('export', name, inViewer ? 'link-in-viewer' : 'link');
-  if (inViewer) toast('Если файл не скачался, нажмите «Копировать» и вставьте список в Excel.');
+  await saveFile(name, data, ext === 'xlsx' ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'text/csv;charset=utf-8', 'Не получилось сохранить файл. Нажмите «Копировать» и вставьте список в Excel.');
+  if (!DL && inViewer) toast('Если файл не скачался, нажмите «Копировать» и вставьте список в Excel.');
 }
 function exportStock() {
   const items = [...stock.items.values()].sort((a, b) => coll.compare(a.a, b.a));
@@ -4168,7 +4282,7 @@ function renderTester() {
   $('#testMatch').innerHTML = !v.trim() ? '' : esc(parts) + (st ? `На складе есть: <b class="art">${esc(st.a)}</b> — ${fmt(st.q)} шт.` : 'На складе такого артикула нет.');
 }
 
-const TAB_TITLE = {home: 'Сводка', day: 'Заказы', buy: 'Закупка', recv: 'Приёмка', stock: 'Склад', an: 'Анализ', settings: 'Настройки'};
+const TAB_TITLE = {home: 'Сводка', day: 'Заказы', buy: 'Закупка', recv: 'Приёмка', stock: 'Склад', an: 'Анализ', prices: 'Цены', settings: 'Настройки'};
 function setTab(t) {
   if (EMP && t !== 'recv' && t !== 'stock') t = 'recv';
   const changed = ui.tab !== t;
@@ -4184,6 +4298,7 @@ function setTab(t) {
   $$('.pane').forEach(p => p.hidden = p.id !== 'pane-' + t);
   lsSet('sklad/tab', t);
   if (t === 'settings') renderSettings();
+  if (t === 'prices') renderPrices();
   placePill(); placeThumbs();
   if (changed) enterPane(t);
 }
@@ -5500,6 +5615,7 @@ const TOUR = [
   {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно. Если пересчитывать некогда, «Без проверки» примет мешок как заказано.'},
   {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
   {tab: 'an', sel: ['#pane-an .card'], h: 'Анализ продаж', t: 'По истории продаж программа подскажет, что закупить впрок, что залежалось и стоит снизить в цене, а что продаётся хорошо, но на складе нет. Видны и перекосы по размерам.'},
+  {tab: 'prices', sel: ['#prOpenBtn', '#pane-prices .card'], h: 'Цены на Ozon через Excel', t: 'Скачайте в кабинете Ozon файл цен или файл акции и откройте его здесь. Цену можно поменять сразу всем или отмеченным: точной суммой, процентом или рублями. Защита не даст поставить цену ниже закупки с наценкой. Сохраните файл и загрузите его обратно в Ozon. Прежние цены программа запомнит, их можно вернуть после акции.'},
   {tab: 'settings', sel: [() => $('#supList').closest('.card'), '#pane-settings .card'], h: 'Настройки', t: 'Телефоны поставщиков для WhatsApp, правила сравнения артикулов (русские и английские буквы, нули в начале) и резервная копия всех данных в один файл. Здесь же включается режим сотрудника для телефона приёмщика.'},
   {sel: ['#tourOpen'], h: 'Готово', t: 'Каждый день по кругу: Заказы → Закупка → Приёмка. Это обучение всегда можно открыть снова вот этой кнопкой.', last: true},
 ];
@@ -5630,6 +5746,7 @@ $('#bkFile').addEventListener('change', async () => {
     if (m['meta/suppliers']) { SUP.clear(); for (const r of m['meta/suppliers'].items || []) putSup(r); saveMeta('meta/suppliers'); }
     if (m['meta/supstats']) { SUPSTAT.clear(); for (const r of m['meta/supstats'].items || []) putStat(r); saveMeta('meta/supstats'); }
     if (m['meta/day']) { DAYM = {...DAYM, ...m['meta/day']}; saveMeta('meta/day'); }
+    if (m['meta/prices']) { PRS = prLoad(m['meta/prices']); saveMeta('meta/prices'); }
     log(`Данные восстановлены из копии от ${when(b.at)}`);
     diag('backup', 'restore', {at: b.at, stock: b.stock.length, lines: (b.lines || []).length, purch: (b.purch || []).length});
     toast('Данные восстановлены');
@@ -5722,13 +5839,15 @@ document.addEventListener('paste', e => {
 });
 let dragN = 0;
 const hasFiles = e => !!e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
-document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = {stock: 'Отпустите файл, чтобы загрузить остатки', history: 'Отпустите файл, чтобы загрузить историю продаж', orders: 'Отпустите файл, чтобы загрузить лист подбора'}[tabTarget()]; $('#drop').hidden = false; });
+document.addEventListener('dragenter', e => { if (!hasFiles(e)) return; dragN++; $('#drop').textContent = ui.tab === 'prices' ? 'Отпустите файл, чтобы открыть цены Ozon' : {stock: 'Отпустите файл, чтобы загрузить остатки', history: 'Отпустите файл, чтобы загрузить историю продаж', orders: 'Отпустите файл, чтобы загрузить лист подбора'}[tabTarget()]; $('#drop').hidden = false; });
 document.addEventListener('dragleave', e => { if (!hasFiles(e)) return; dragN = Math.max(0, dragN - 1); if (!dragN) $('#drop').hidden = true; });
 document.addEventListener('dragover', e => { if (hasFiles(e)) e.preventDefault(); });
 document.addEventListener('drop', e => {
   if (!hasFiles(e)) return;
   e.preventDefault(); dragN = 0; $('#drop').hidden = true;
-  const fl = [...e.dataTransfer.files]; if (fl.length) loadFiles(tabTarget(), fl);
+  const fl = [...e.dataTransfer.files]; if (!fl.length) return;
+  if (ui.tab === 'prices') { prOpen(fl[0]); return; }
+  loadFiles(tabTarget(), fl);
 });
 // the window is being hidden or closed: write what is still waiting for its short delay right now
 function flushNow() {
@@ -5743,7 +5862,7 @@ async function start() {
   document.body.classList.add('loading');
   const saved = lsGet('sklad/tab');
   document.body.classList.toggle('emp', EMP);
-  setTab(['home', 'day', 'buy', 'recv', 'stock', 'an', 'settings'].includes(saved) ? saved : EMP ? 'recv' : 'home');
+  setTab(['home', 'day', 'buy', 'recv', 'stock', 'an', 'prices', 'settings'].includes(saved) ? saved : EMP ? 'recv' : 'home');
   renderSettings(); render();
   let db = null;
   if (inViewer) {
@@ -5757,7 +5876,7 @@ async function start() {
   subscribe(); renderSettings();
 }
 /* ---------- a new version starts: first a copy of the data exactly as saved, then everything else ---------- */
-const AUTO_RX = /^sklad\/(stock|receipt|lines|purch|meta)\//;
+const AUTO_RX = /^sklad\/(stock|receipt|lines|purch|meta|psnap)\//;
 function autoBackup() {
   if (!Backend || Backend.kind !== 'local') return;
   const last = lsGet('sklad/ver');
@@ -5790,9 +5909,671 @@ document.addEventListener('click', e => {
     } catch { toast('Не получилось вернуть данные: браузеру не хватает места'); }
   }, true);
 });
+/* ---------- prices: Ozon's own price or promotion file, changed here and uploaded back ----------
+   The file is changed in place: only the price cells are rewritten inside the xlsx, so Ozon's
+   template keeps its sheets, colours, hidden lists and checks. Nothing goes to Ozon from here. */
+const PRDEF = {shops: ['Магазин 1', 'Магазин 2'], pct: 60, add: 0, cost: {}, snaps: []};
+let PRS = JSON.parse(JSON.stringify(PRDEF));
+META['meta/prices'] = () => PRS;
+function prLoad(d) {
+  const x = JSON.parse(JSON.stringify(PRDEF));
+  if (!d) return x;
+  if (Array.isArray(d.shops)) x.shops = [0, 1].map(i => String(d.shops[i] || PRDEF.shops[i]).slice(0, 40));
+  if (Number.isFinite(+d.pct) && d.pct !== '') x.pct = Math.max(0, Math.min(1000, +d.pct));
+  if (Number.isFinite(+d.add)) x.add = Math.max(0, Math.min(1e6, +d.add));
+  if (d.cost && typeof d.cost === 'object') for (const [k, v] of Object.entries(d.cost)) if (+v > 0) x.cost[k] = +v;
+  if (Array.isArray(d.snaps)) x.snaps = d.snaps.filter(s => s && s.id).map(s => ({id: String(s.id), at: +s.at || 0, shop: +s.shop || 0, n: +s.n || 0, file: String(s.file || '')})).slice(0, 12);
+  return x;
+}
+const PR_ROLE = {art: 'Артикул', sku: 'Ozon ID / SKU', name: 'Название', price: 'Цена', old: 'Зачёркнутая цена (до скидки)', min: 'Ограничение для акций (мин. цена)', promo: 'Цена по акции', maxp: 'Макс. цена по акции (смотреть)', site: 'Цена на сайте (смотреть)', '': '— не нужен'};
+const PR_EDIT = ['price', 'old', 'min', 'promo'];
+const PR_SHORT = {price: 'Цена', old: 'Зачёркнутая', min: 'Ограничение для акций', promo: 'Цена по акции'};
+let PR = null;   // the open file
+const prNorm = v => String(v ?? '').toLowerCase().replace(/ё/g, 'е').replace(/[\s\u00a0]+/g, ' ').trim();
+function pnum(v) {
+  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+  const s = String(v ?? '').replace(/[\s\u00a0\u202f]/g, '').replace(/(₽|руб\.?|rub|р\.)$/i, '').replace(',', '.');
+  return /^-?\d+(\.\d+)?$/.test(s) ? parseFloat(s) : null;
+}
+// which price a column holds, by its header; old and new Ozon names both count
+function prRoleOf(t) {
+  if (!t) return '';
+  if (/артикул|offer.?id/.test(t) && !/ozon|озон|sku/.test(t)) return 'art';
+  if (/\bsku\b|ozon\s*id|озон\s*id|product.?id|код товара/.test(t)) return 'sku';
+  if (/наименован|название/.test(t)) return 'name';
+  if (/ограничени/.test(t) && /акци|стратег/.test(t)) return 'min';
+  if (!/цен|price/.test(t)) return '';
+  if (/макс/.test(t) && /акци/.test(t)) return 'maxp';
+  if (/минимальн\S*\s+цен|ограничени|min.?price/.test(t)) return 'min';
+  if (/до\s+скидк|зач[её]ркнут|перечеркнут|старая\s+цена|old.?price/.test(t)) return 'old';
+  if (/рыночн|конкурент/.test(t)) return '';
+  if (/с\s+уч[её]том\s+акци|на\s+сайте|для\s+покупател/.test(t)) return 'site';
+  const u = t.replace(/без\s+акци\S*/g, '');
+  if (/акци/.test(u)) return /мин|скидк|%/.test(u) ? '' : 'promo';
+  if (/индекс|себестоим|закуп|комисс|логист|расход|наценк|ндс|валют|рекоменд|максимал|изменени|дата|стратег|динамик|эквайр|доставк|%|балл|бонус/.test(t)) return '';
+  return 'price';
+}
+const prGreen = c => { const f = c && c.s && (c.s.fgColor || c.s.bgColor), h = f && typeof f.rgb === 'string' ? f.rgb.slice(-6) : ''; if (!/^[0-9a-f]{6}$/i.test(h)) return false; const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4), 16); return g > r + 25 && g > b + 10; };
+
+// the sheet and the header row: the row with «Артикул» and at least one price
+function prParse(wb, name, buf) {
+  let best = null;
+  for (const sn of wb.SheetNames) {
+    const ws = wb.Sheets[sn]; if (!ws || !ws['!ref']) continue;
+    const rows = XLSX.utils.sheet_to_json(ws, {header: 1, raw: true, defval: '', blankrows: true});
+    for (let i = 0; i < Math.min(rows.length, 40); i++) {
+      const r = rows[i] || []; let art = -1, pr = 0;
+      for (let j = 0; j < r.length; j++) { const t = prNorm(r[j]); if (!t || t.length > 90) continue; const ro = prRoleOf(t); if (ro === 'art' && art < 0) art = j; if (PR_EDIT.includes(ro)) pr++; }
+      if (art < 0 || !pr) continue;
+      const sc = pr * 2 + Math.min(rows.length - i, 5);
+      if (!best || sc > best.sc) best = {sc, sn, ws, rows, hdr: i};
+    }
+  }
+  if (!best) return null;
+  const {ws, rows, hdr, sn} = best, rg = XLSX.utils.decode_range(ws['!ref']);
+  // merged header cells: the text sits in the first cell only
+  const mg = new Map(), wide = new Set();
+  for (const m of ws['!merges'] || []) if (m.e.c - m.s.c >= 4) wide.add((m.s.r - rg.s.r) + ',' + (m.s.c - rg.s.c));
+  for (const m of ws['!merges'] || []) for (let R = m.s.r; R <= m.e.r; R++) for (let C = m.s.c; C <= m.e.c; C++) {
+    const i = R - rg.s.r, j = C - rg.s.c; if ((i === hdr || i === hdr - 1) && !(R === m.s.r && C === m.s.c)) mg.set(i + ',' + j, {v: (rows[m.s.r - rg.s.r] || [])[m.s.c - rg.s.c], span: m.e.c - m.s.c + 1});
+  }
+  const txt = (i, j, all) => { const v = (rows[i] || [])[j]; if (v !== '' && v != null) return all || !wide.has(i + ',' + j) ? String(v).trim() : ''; const m = mg.get(i + ',' + j); return m && (all || m.span <= 4) ? String(m.v ?? '').trim() : ''; };
+  const width = Math.max(...rows.slice(hdr, hdr + 30).map(r => (r || []).length), 0);
+  const cols = [];
+  for (let j = 0; j < width; j++) {
+    const h = txt(hdr, j, true), up = hdr > 0 ? txt(hdr - 1, j) : '';
+    if (!h && !up) continue;
+    let t = prNorm(h || up), role = prRoleOf(t), label = h || up;
+    if (!role && h && up) { const t2 = prNorm(up + ' ' + h), r2 = prRoleOf(t2); if (r2) { t = t2; role = r2; label = `${up} · ${h}`; } }
+    const cell = ws[XLSX.utils.encode_cell({r: rg.s.r + hdr, c: rg.s.c + j})], cell2 = ws[XLSX.utils.encode_cell({r: rg.s.r + hdr + 1, c: rg.s.c + j})];
+    cols.push({j, c: rg.s.c + j, label, t, role, green: prGreen(cell) || prGreen(cell2)});
+  }
+  prDedupe(cols);
+  // Ozon colours the columns that may be changed green: the other prices are only to look at
+  if (cols.some(c => PR_EDIT.includes(c.role) && c.green)) for (const c of cols) c.ro = PR_EDIT.includes(c.role) && !c.green;
+  const zip = buf[0] === 0x50 && buf[1] === 0x4B;
+  const P = {name, buf, zip, sn, rows, hdr, r0: rg.s.r, cols, list: [], groups: [], shop: 0, sel: new Set(), open: new Set(), view: 'all', q: '', lim: 150, snap: '', snapItems: new Map(), saved: true, kind: 'price'};
+  prRows(P);
+  const names = P.list.map(r => r.n).filter(Boolean), two = names.filter(n => /^\s*["«'“„]\s*2\s*["»'”“]/.test(n)).length;
+  P.shop = two && two >= names.length / 2 ? 1 : 0;
+  return P;
+}
+// one column per price: Ozon's green (editable) one wins, then «новая», then the first
+function prDedupe(cols, keep) {
+  const sc = c => (c === keep ? 10 : 0) + (c.green ? 2 : 0) + (/нов|установ/.test(c.t) ? 1 : 0) - (/текущ|сейчас|было/.test(c.t) ? 1 : 0);
+  const by = new Map();
+  for (const c of cols) if (c.role) { const o = by.get(c.role); if (!o || sc(c) > sc(o)) by.set(c.role, c); }
+  for (const c of cols) if (c.role && by.get(c.role) !== c) c.role = '';
+}
+const prCol = role => PR && PR.cols.find(c => c.role === role);
+const prEdit = () => PR_EDIT.filter(r => { const c = prCol(r); return c && !c.ro; });
+// the products of the file; the changes survive a new choice of columns
+function prRows(P) {
+  const J = role => { const c = P.cols.find(x => x.role === role); return c ? c.j : -1; };
+  const ja = J('art'), jn = J('name'), js = J('sku');
+  const nums = ['price', 'old', 'min', 'promo', 'maxp', 'site'].map(r => [r, J(r)]).filter(x => x[1] >= 0);
+  const was = new Map(P.list.map(r => [r.i, r]));
+  P.kind = nums.some(x => x[0] === 'promo' || x[0] === 'maxp') ? 'promo' : 'price';
+  P.list = []; const gm = new Map(); P.groups = [];
+  if (ja < 0) return;
+  for (let i = P.hdr + 1; i < P.rows.length; i++) {
+    const row = P.rows[i] || [], a = String(row[ja] ?? '').trim();
+    if (!a) continue;
+    const o = {}, txt = {};
+    for (const [r, j] of nums) { const v = row[j]; o[r] = pnum(v); txt[r] = typeof v === 'string' && v !== ''; }
+    // explanation rows under the header have long text instead of an article and no numbers
+    if (/\s/.test(a) && !nums.some(([r]) => o[r] != null)) continue;
+    if (a.length > 80) continue;
+    const old = was.get(i);
+    const r = {i, R: P.r0 + i, a, n: jn >= 0 ? String(row[jn] ?? '').trim() : '', sku: js >= 0 ? String(row[js] ?? '').trim() : '', o, txt, v: old ? old.v : {}, off: old ? old.off : false, lock: old ? old.lock : false};
+    const pa = parseRaw(a), k = pa.mkey || normKey(a);
+    let g = gm.get(k);
+    if (!g) { g = {k, model: pa.model || a, mk: parseArt(a).mkey, rows: [], n: ''}; gm.set(k, g); P.groups.push(g); }
+    g.rows.push(r); r.g = g; if (!g.n && r.n) g.n = r.n;
+    P.list.push(r);
+  }
+  for (const g of P.groups) { g.rows.sort((x, y) => bySize(parseRaw(x.a).size, parseRaw(y.a).size)); g.sizes = g.rows.map(r => parseRaw(r.a).size).filter(Boolean); g.name = g.n ? sheetName(g.n, g.sizes) : ''; }
+}
+const prCost = g => PRS.cost[g.k] || (S.price ? parseArt(g.rows[0].a).price : 0) || 0;
+const prFloorOf = cost => cost ? Math.ceil((cost * (1 + (+PRS.pct || 0) / 100) + (+PRS.add || 0)) / 10) * 10 : 0;
+const prFloor = g => prFloorOf(prCost(g));
+const prEv = (r, role) => r.v[role] !== undefined ? r.v[role] : r.o[role];
+const prChg = (r, role) => r.v[role] !== undefined && r.v[role] !== r.o[role];
+const prAny = r => PR_EDIT.some(role => prChg(r, role));
+// a new price below the protection stays out of the file: the old one is what Ozon keeps
+const prBlocked = (r, role) => (role === 'price' || role === 'promo') && !r.lock && prChg(r, role) && r.v[role] < prFloor(r.g);
+const prWill = (r, role) => prChg(r, role) && !prBlocked(r, role);
+const prOut = (r, role) => prWill(r, role) ? r.v[role] : r.o[role];
+// below the protection: a new price, and in a promotion also the price Ozon offers
+function prLow(r) {
+  if (r.lock) return false;
+  const f = prFloor(r.g); if (!f) return false;
+  for (const role of ['price', 'promo']) {
+    if (!prCol(role)) continue;
+    const v = prEv(r, role);
+    if (v != null && v > 0 && v < f && (prChg(r, role) || (role === 'promo' && PR.kind === 'promo'))) return true;
+  }
+  return false;
+}
+// Ozon: the crossed-out price is more than 5% above the price (under 400 ₽ — 20 ₽, over 10 000 ₽ — 500 ₽)
+const prOldNeed = p => p < 400 ? p + 20 : p <= 10000 ? p * 1.05 : p + 500;
+function prWarns(r) {
+  const w = [];
+  if (PR.kind === 'promo' && r.off) return w;
+  const P = prOut(r, 'price'), O = prOut(r, 'old'), M = prOut(r, 'min'), A = prOut(r, 'promo'), X = r.o.maxp, ed = prEdit();
+  if (ed.includes('old') && (prWill(r, 'price') || prWill(r, 'old')) && O > 0 && P > 0 && O <= prOldNeed(P)) w.push('old');
+  if (ed.includes('min') && (prWill(r, 'price') || prWill(r, 'min')) && M > 0 && P > 0 && M > P) w.push('min');
+  if (ed.includes('promo') && X > 0 && A > X) w.push('max');
+  return w;
+}
+const PR_WTXT = {old: 'зачёркнутая мала', min: 'ограничение выше цены', max: 'выше макс. по акции'};
+const prDirty = () => !!PR && PR.list.some(r => prAny(r) || r.off);
+
+// «1990» — exactly; «-15%», «+10%» — percent; «90%» — of; «-200», «+300» — rubles
+function prExpr(s) {
+  s = String(s ?? '').replace(/[\s\u00a0₽]/g, '').replace(/руб\.?$/i, '').replace(',', '.').replace(/[−–—]/g, '-');
+  let m;
+  if (!s) return {k: 'clear'};
+  if ((m = s.match(/^(\d+(?:\.\d+)?)$/))) return {k: 'abs', n: +m[1]};
+  if ((m = s.match(/^([+-])(\d+(?:\.\d+)?)%$/))) return {k: 'pct', n: (m[1] === '-' ? -1 : 1) * m[2]};
+  if ((m = s.match(/^(\d+(?:\.\d+)?)%$/))) return {k: 'mul', n: +m[1]};
+  if ((m = s.match(/^([+-])(\d+(?:\.\d+)?)$/))) return {k: 'rub', n: (m[1] === '-' ? -1 : 1) * m[2]};
+  return null;
+}
+const prRound = (x, m) => { m = +m || 1; if (m === 90) return Math.max(90, Math.round((x + 10) / 100) * 100 - 10); return Math.round(x / m) * m; };
+function prCalc(r, role, p, base, rnd) {
+  if (p.k === 'clear') return undefined;
+  if (p.k === 'abs') return Math.round(p.n * 100) / 100;
+  const b = base === 'price' ? prEv(r, 'price') : base === 'cost' ? prCost(r.g) : base === 'floor' ? prFloor(r.g) : r.o[role];
+  if (!(b > 0)) return null;
+  const x = p.k === 'pct' ? b * (1 + p.n / 100) : p.k === 'mul' ? b * p.n / 100 : b + p.n;
+  const y = prRound(x, rnd);
+  return y > 0 ? y : null;
+}
+function prSet(r, role, v) { if (v === undefined || v === r.o[role]) delete r.v[role]; else r.v[role] = v; }
+function prTouch() { PR.saved = false; renderPrices(); }
+
+/* ---------- writing the file: only the changed cells, inside Ozon's own xlsx ---------- */
+const xmlUn = s => String(s).replace(/&(amp|lt|gt|quot|apos|#(\d+)|#x([0-9a-f]+));/gi, (m, n, d, h) => d ? String.fromCodePoint(+d) : h ? String.fromCodePoint(parseInt(h, 16)) : ({amp: '&', lt: '<', gt: '>', quot: '"', apos: "'"})[n.toLowerCase()]);
+const xAttr = (tag, n) => { const m = tag.match(new RegExp('\\s' + n + '\\s*=\\s*(?:"([^"]*)"|\'([^\']*)\')')); return m ? (m[1] ?? m[2]) : null; };
+// the zip is rewritten by hand: untouched parts are copied byte for byte, in Ozon's order
+const zFile = (z, p) => XLSX.CFB.find(z, '/' + p);
+function zText(z, p) {
+  if (z.put && z.put.has(p)) return new TextDecoder('utf-8').decode(z.put.get(p));
+  if (z.del && z.del.has(p)) return null;
+  const f = zFile(z, p); return f && f.content ? new TextDecoder('utf-8').decode(f.content instanceof Uint8Array ? f.content : new Uint8Array(f.content)) : null;
+}
+const zPut = (z, p, txt) => z.put.set(p, new TextEncoder().encode(txt));
+const zJoin = (dir, t) => { const out = []; for (const p of (t.startsWith('/') ? t.slice(1) : (dir ? dir + '/' : '') + t).split('/')) { if (p === '..') out.pop(); else if (p && p !== '.') out.push(p); } return out.join('/'); };
+const zRels = p => { const i = p.lastIndexOf('/'); return (i >= 0 ? p.slice(0, i + 1) : '') + '_rels/' + p.slice(i + 1) + '.rels'; };
+const zDir = p => p.slice(0, Math.max(0, p.lastIndexOf('/')));
+function zWorkbook(z) {
+  const rels = zText(z, '_rels/.rels') || '';
+  for (const m of rels.matchAll(/<(?:\w+:)?Relationship\b[^>]*>/g)) if (/officeDocument$/.test(xAttr(m[0], 'Type') || '')) return zJoin('', xAttr(m[0], 'Target') || '');
+  return 'xl/workbook.xml';
+}
+function zSheetPath(z, wbp, name) {
+  const wbx = zText(z, wbp), rels = zText(z, zRels(wbp));
+  if (!wbx || !rels) return null;
+  let id = null;
+  for (const m of wbx.matchAll(/<(?:\w+:)?sheet\b[^>]*>/g)) if (xmlUn(xAttr(m[0], 'name') || '') === name) { id = (m[0].match(/\s\w+:id\s*=\s*["']([^"']*)["']/) || [])[1]; break; }
+  if (!id) return null;
+  for (const m of rels.matchAll(/<(?:\w+:)?Relationship\b[^>]*>/g)) if (xAttr(m[0], 'Id') === id) return zJoin(zDir(wbp), xAttr(m[0], 'Target') || '');
+  return null;
+}
+// a formula cell that we overwrite or move loses its formula: Excel's calculation list goes too
+function zDropCalc(z, wbp) {
+  const rp = zRels(wbp); let rels = zText(z, rp); if (!rels) return;
+  for (const m of rels.matchAll(/<(?:\w+:)?Relationship\b[^>]*?\/>/g)) {
+    if (!/calcChain$/.test(xAttr(m[0], 'Type') || '')) continue;
+    const p = zJoin(zDir(wbp), xAttr(m[0], 'Target') || '');
+    z.del.add(p);
+    rels = rels.replace(m[0], ''); zPut(z, rp, rels);
+    const ct = zText(z, '[Content_Types].xml');
+    if (ct) zPut(z, '[Content_Types].xml', ct.replace(new RegExp(`<(?:\\w+:)?Override\\b[^>]*PartName\\s*=\\s*["']/${p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}["'][^>]*\\/>`), ''));
+  }
+}
+const CRC_T = (() => { const t = new Int32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c; } return t; })();
+const crc32 = u => { let c = -1; for (let i = 0; i < u.length; i++) c = CRC_T[(c ^ u[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; };
+function zipRewrite(buf, put, del) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength), dec = new TextDecoder('utf-8');
+  let e = buf.length - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('zip');
+  const n = dv.getUint16(e + 10, true), cdOff = dv.getUint32(e + 16, true);
+  if (n === 0xffff || cdOff === 0xffffffff) throw new Error('zip64');
+  const parts = [], cds = []; let off = 0, p = cdOff, done = 0;
+  for (let i = 0; i < n; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) throw new Error('zip cd');
+    const flags = dv.getUint16(p + 8, true), csz = dv.getUint32(p + 20, true), nl = dv.getUint16(p + 28, true), xl = dv.getUint16(p + 30, true), cl = dv.getUint16(p + 32, true), lo = dv.getUint32(p + 42, true);
+    const nameB = buf.slice(p + 46, p + 46 + nl), name = dec.decode(nameB), cd = buf.slice(p, p + 46 + nl + xl + cl), cv = new DataView(cd.buffer);
+    p += cd.length;
+    if (del.has(name)) continue;
+    if (dv.getUint32(lo, true) !== 0x04034b50) throw new Error('zip local');
+    if (put.has(name)) {
+      const raw = put.get(name), comp = XLSX.CFB.utils._deflateRaw(raw), crc = crc32(raw), lh = new Uint8Array(30 + nl), lv = new DataView(lh.buffer);
+      lv.setUint32(0, 0x04034b50, true); lv.setUint16(4, 20, true); lv.setUint16(6, flags & 0x0800, true); lv.setUint16(8, 8, true);
+      lv.setUint16(10, cv.getUint16(12, true), true); lv.setUint16(12, cv.getUint16(14, true), true);
+      lv.setUint32(14, crc, true); lv.setUint32(18, comp.length, true); lv.setUint32(22, raw.length, true); lv.setUint16(26, nl, true); lh.set(nameB, 30);
+      cv.setUint16(8, flags & 0x0800, true); cv.setUint16(10, 8, true); cv.setUint32(16, crc, true); cv.setUint32(20, comp.length, true); cv.setUint32(24, raw.length, true);
+      parts.push(lh, comp instanceof Uint8Array ? comp : new Uint8Array(comp)); cv.setUint32(42, off, true); off += lh.length + comp.length; done++;
+    } else {
+      let end = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true) + csz;
+      if (flags & 8) end += dv.getUint32(end, true) === 0x08074b50 ? 16 : 12;
+      const seg = buf.subarray(lo, end); parts.push(seg); cv.setUint32(42, off, true); off += seg.length;
+    }
+    cds.push(cd);
+  }
+  if (done !== put.size) throw new Error('zip parts');
+  const cdStart = off; let cdSize = 0; for (const c of cds) { parts.push(c); cdSize += c.length; }
+  const eo = new Uint8Array(22), ev = new DataView(eo.buffer);
+  ev.setUint32(0, 0x06054b50, true); ev.setUint16(8, cds.length, true); ev.setUint16(10, cds.length, true); ev.setUint32(12, cdSize, true); ev.setUint32(16, cdStart, true);
+  parts.push(eo);
+  const out = new Uint8Array(parts.reduce((s, x) => s + x.length, 0)); let o = 0; for (const x of parts) { out.set(x, o); o += x.length; }
+  return out;
+}
+const prNumTxt = v => String(Math.round(v * 100) / 100);
+function prCellXml(ref, head, v, pre) {
+  const s = head ? xAttr(head, 's') : null, t = head ? xAttr(head, 't') : null, sa = s != null ? ` s="${s}"` : '';
+  if (t === 's' || t === 'str' || t === 'inlineStr') return `<${pre}c r="${ref}"${sa} t="inlineStr"><${pre}is><${pre}t>${prNumTxt(v)}</${pre}t></${pre}is></${pre}c>`;
+  return `<${pre}c r="${ref}"${sa}><${pre}v>${prNumTxt(v)}</${pre}v></${pre}c>`;
+}
+// edits: row → (column → value), both from 0; drop: rows to take out of the file (promotion)
+function prPatchXml(xml, edits, drop) {
+  const pre = (xml.match(/<(\w+:)?sheetData\b/) || [])[1] || '';
+  const a = xml.search(/<(?:\w+:)?sheetData\b/); if (a < 0) throw new Error('в листе нет таблицы');
+  const tagEnd = xml.indexOf('>', a), self = xml[tagEnd - 1] === '/', closeTag = `</${pre}sheetData>`;
+  const bStart = tagEnd + 1, bEnd = self ? bStart : xml.indexOf(closeTag, bStart);
+  const body = xml.slice(bStart, bEnd);
+  const rowRx = new RegExp(`<${pre}row\\b[^>]*?(?:\\/>|>[\\s\\S]*?<\\/${pre}row>)`, 'g'), cellRx = new RegExp(`<${pre}c\\b[^>]*?(?:\\/>|>[\\s\\S]*?<\\/${pre}c>)`, 'g'), fRx = new RegExp(`<${pre}f\\b[^>]*?(?:\\/>|>[\\s\\S]*?<\\/${pre}f>)`, 'g');
+  let rows = [], seq = 0, hadF = false;
+  for (const m of body.matchAll(rowRx)) { const h = m[0].slice(0, m[0].indexOf('>') + 1), r = xAttr(h, 'r'), R = r ? +r - 1 : seq; seq = R + 1; rows.push({R, tag: m[0]}); }
+  const setR = (tag, n) => { const h = tag.slice(0, tag.indexOf('>') + 1); const nh = xAttr(h, 'r') != null ? h.replace(/(\sr\s*=\s*)(["'])[^"']*\2/, `$1"${n}"`) : h.replace(new RegExp(`^<${pre}row\\b`), `$& r="${n}"`); return nh + tag.slice(h.length); };
+  const byR = new Map(rows.map(x => [x.R, x]));
+  for (const [R, cm] of edits) {
+    let row = byR.get(R);
+    if (!row) { row = {R, tag: `<${pre}row r="${R + 1}"></${pre}row>`}; rows.push(row); byR.set(R, row); }
+    let tag = setR(row.tag, R + 1);
+    const hEnd = tag.indexOf('>'), tail = `</${pre}row>`;
+    let head = tag.slice(0, hEnd + 1), inner;
+    if (head.endsWith('/>')) { head = head.slice(0, -2) + '>'; inner = ''; } else inner = tag.slice(hEnd + 1, tag.length - tail.length);
+    const cells = []; let sc = 0;
+    for (const m of inner.matchAll(cellRx)) { const ch = m[0].slice(0, m[0].indexOf('>') + 1), ref = xAttr(ch, 'r'), C = ref ? XLSX.utils.decode_cell(ref).c : sc; sc = C + 1; cells.push({C, head: ch, tag: m[0], at: m.index, len: m[0].length}); }
+    const ops = [];
+    for (const [C, v] of cm) {
+      const ref = XLSX.utils.encode_cell({r: R, c: C}), ex = cells.find(x => x.C === C);
+      if (ex) { if (fRx.test(ex.tag)) hadF = true; fRx.lastIndex = 0; ops.push({at: ex.at, len: ex.len, C, text: prCellXml(ref, ex.head, v, pre)}); }
+      else { const nx = cells.find(x => x.C > C); ops.push({at: nx ? nx.at : inner.length, len: 0, C, text: prCellXml(ref, null, v, pre)}); }
+    }
+    ops.sort((x, y) => (y.at - x.at) || (y.C - x.C));
+    for (const o of ops) inner = inner.slice(0, o.at) + o.text + inner.slice(o.at + o.len);
+    row.tag = head + inner + tail;
+  }
+  rows.sort((x, y) => x.R - y.R);
+  let outXml = xml;
+  if (drop.size) {
+    const ds = [...drop].sort((x, y) => x - y);
+    const nr = R => { let lo = 0, hi = ds.length; while (lo < hi) { const m = (lo + hi) >> 1; if (ds[m] < R) lo = m + 1; else hi = m; } return R - lo; };
+    rows = rows.filter(x => !drop.has(x.R));
+    for (const x of rows) {
+      const N = nr(x.R); if (N === x.R) continue;
+      let t = setR(x.tag, N + 1);
+      t = t.replace(new RegExp(`(<${pre}c\\b[^>]*?\\sr\\s*=\\s*["'])([A-Z]+)\\d+(["'])`, 'g'), (m, p1, col, q) => p1 + col + (N + 1) + q);
+      if (fRx.test(t)) { hadF = true; fRx.lastIndex = 0; t = t.replace(fRx, ''); }
+      x.tag = t;
+    }
+    const mapRefs = s => s.replace(/(\s(?:ref|sqref)\s*=\s*["'])([^"']*)(["'])/g, (m, p1, v, q) => p1 + v.replace(/(\$?[A-Z]{1,3}\$?)(\d+)/g, (mm, c, r) => c + (nr(+r - 1) + 1)) + q);
+    outXml = mapRefs(xml.slice(0, a)) + xml.slice(a, bEnd) + mapRefs(xml.slice(bEnd));
+  }
+  return {xml: prJoinBody(outXml, pre, rows), hadF};
+}
+function prJoinBody(xml, pre, rows) {
+  const a = xml.search(/<(?:\w+:)?sheetData\b/), tagEnd = xml.indexOf('>', a), self = xml[tagEnd - 1] === '/', closeTag = `</${pre}sheetData>`;
+  const body = rows.map(x => x.tag).join('');
+  if (self) return xml.slice(0, tagEnd - 1) + '>' + body + closeTag + xml.slice(tagEnd + 1);
+  const bEnd = xml.indexOf(closeTag, tagEnd + 1);
+  return xml.slice(0, tagEnd + 1) + body + xml.slice(bEnd);
+}
+function prPatchZip(buf, sn, edits, drop) {
+  const z = XLSX.CFB.read(buf, {type: 'array'});
+  z.put = new Map(); z.del = new Set();
+  const wbp = zWorkbook(z), sp = zSheetPath(z, wbp, sn);
+  if (!sp) throw new Error('не нашёлся лист «' + sn + '»');
+  const xml = zText(z, sp); if (xml == null) throw new Error('лист не читается');
+  const res = prPatchXml(xml, edits, drop);
+  zPut(z, sp, res.xml);
+  if (res.hadF) zDropCalc(z, wbp);
+  try { return zipRewrite(buf, z.put, z.del); }
+  catch (e) {
+    diag('prices', 'zip-fallback', String((e && e.message) || e));
+    for (const [p, b] of z.put) XLSX.CFB.utils.cfb_add(z, '/' + p, b);
+    for (const p of z.del) if (zFile(z, p)) XLSX.CFB.utils.cfb_del(z, '/' + p);
+    const out = XLSX.CFB.write(z, {fileType: 'zip', type: 'array', compression: true});
+    return out instanceof Uint8Array ? out : new Uint8Array(out);
+  }
+}
+// an old .xls or .ods: written anew as .xlsx (values stay, Excel's look may simplify)
+function prPatchBook(buf, sn, edits, drop) {
+  const wb = XLSX.read(buf, {type: 'array', cellStyles: true, cellDates: false});
+  const ws = wb.Sheets[sn], rg = XLSX.utils.decode_range(ws['!ref']), enc = (r, c) => XLSX.utils.encode_cell({r, c});
+  for (const [R, cm] of edits) for (const [C, v] of cm) { const ad = enc(R, C), old = ws[ad]; ws[ad] = old && old.t === 's' ? {...old, t: 's', v: prNumTxt(v), w: undefined} : {...(old || {}), t: 'n', v, w: undefined}; }
+  if (drop.size) {
+    let out = rg.s.r;
+    for (let R = rg.s.r; R <= rg.e.r; R++) {
+      if (drop.has(R)) continue;
+      if (out !== R) for (let C = rg.s.c; C <= rg.e.c; C++) { const s = ws[enc(R, C)]; if (s) ws[enc(out, C)] = s; else delete ws[enc(out, C)]; }
+      out++;
+    }
+    for (let R = out; R <= rg.e.r; R++) for (let C = rg.s.c; C <= rg.e.c; C++) delete ws[enc(R, C)];
+    rg.e.r = Math.max(rg.s.r, out - 1); ws['!ref'] = XLSX.utils.encode_range(rg);
+  }
+  return new Uint8Array(XLSX.write(wb, {bookType: 'xlsx', type: 'array', compression: true, cellStyles: true}));
+}
+
+// what goes into the file
+function prPlan() {
+  const edits = new Map(), drop = new Set(), snap = [];
+  let chg = 0, low = 0, off = 0, warn = 0;
+  for (const r of PR.list) {
+    const isLow = prLow(r);
+    if (PR.kind === 'promo' && (r.off || isLow)) { drop.add(r.R); if (r.off) off++; else low++; continue; }
+    const ce = new Map(); let blocked = false;
+    for (const role of PR_EDIT) {
+      const c = prCol(role); if (!c || c.ro || !prChg(r, role)) continue;
+      if (prBlocked(r, role)) { blocked = true; continue; }
+      ce.set(c.c, r.v[role]);
+    }
+    if (blocked) low++;
+    if (ce.size) { edits.set(r.R, ce); chg++; snap.push([r.a, r.o.price ?? null, r.o.old ?? null, r.o.min ?? null]); }
+    if (prWarns(r).length) warn++;
+  }
+  return {edits, drop, snap, chg, low, off, warn};
+}
+function prFixAll() {
+  let n = 0;
+  for (const r of PR.list) for (const w of prWarns(r)) {
+    const P = prOut(r, 'price');
+    if (w === 'old') { prSet(r, 'old', Math.ceil((prOldNeed(P) + 1) / 10) * 10); n++; }
+    if (w === 'min') { prSet(r, 'min', P); n++; }
+    if (w === 'max') { prSet(r, 'promo', r.o.maxp); n++; }
+  }
+  return n;
+}
+
+async function saveFile(name, data, mime, failMsg) {
+  if (DL) {
+    try { await DL.save({filename: name, data}); toast('Файл сохранён: ' + name); diag('export', name, 'saved'); return true; }
+    catch (e) {
+      const c = e && e.code;
+      diag('export', name, {code: c || '', msg: String((e && e.message) || '').slice(0, 200)});
+      if (c === 'declined') return false;
+      toast(c === 'rate_limited' ? 'Подождите пару секунд и нажмите ещё раз' : failMsg || 'Не получилось сохранить файл');
+      return false;
+    }
+  }
+  const url = URL.createObjectURL(new Blob([data], {type: mime}));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  diag('export', name, inViewer ? 'link-in-viewer' : 'link');
+  return true;
+}
+async function prSave(mode) {
+  if (!PR) return;
+  if (mode === 'fix') prFixAll();
+  const P = prPlan();
+  if (!P.edits.size && !P.drop.size) { toast('Пока ничего не изменено'); return; }
+  if (PR.kind === 'promo' && P.drop.size >= PR.list.length) { toast('В файле акции не осталось ни одного товара — сохранять нечего'); return; }
+  if (P.warn && !mode) {
+    const el = $('#prConfirm');
+    el.innerHTML = `<p>У ${cnt(P.warn, W.pos)} есть ошибки, из-за которых Ozon может не принять эти строки: ${[...new Set(PR.list.flatMap(prWarns))].map(w => PR_WTXT[w]).join(', ')}. Программа может поправить их сама: поднять зачёркнутую цену, опустить ограничение до цены, цену по акции — до максимальной.</p><div class="row"><button class="btn primary" type="button" data-prsave="fix">Исправить и сохранить</button><button class="btn" type="button" data-prsave="asis">Сохранить как есть</button><button class="btn ghost" type="button" data-prsave="no">Отмена</button></div>`;
+    el.hidden = false; el.scrollIntoView({block: 'nearest', behavior: motionOk() ? 'smooth' : 'auto'});
+    return;
+  }
+  $('#prConfirm').hidden = true;
+  let out;
+  try { await ensureXLSX(); out = PR.zip ? prPatchZip(PR.buf, PR.sn, P.edits, P.drop) : prPatchBook(PR.buf, PR.sn, P.edits, P.drop); }
+  catch (e) { diag('prices', 'save-fail', String((e && e.message) || e).slice(0, 200)); toast('Не получилось собрать файл: ' + ((e && e.message) || 'ошибка') + '. Скачайте файл в Ozon заново и попробуйте ещё раз.', 9000); return; }
+  const base = safeName(PR.name.replace(/\.[^.]+$/, '')), name = `${base} — ${PR.kind === 'promo' ? 'в акцию' : 'новые цены'} ${today()}.xlsx`;
+  const ok = await saveFile(name, out, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Не получилось сохранить файл. Попробуйте ещё раз.');
+  if (!ok) return;
+  if (PR.kind === 'price' && P.snap.length) prSnapSave(P.snap);
+  PR.saved = true;
+  const shop = PRS.shops[PR.shop] || '';
+  log(`Цены${shop ? ' «' + shop + '»' : ''}: сохранён файл для Ozon — ${PR.kind === 'promo' ? `в акции ${cnt(PR.list.length - P.drop.size, W.pos)}, убрано ${fmt(P.drop.size)}` : `изменено ${cnt(P.chg, W.pos)}`}`);
+  diag('prices', 'save', {kind: PR.kind, rows: PR.list.length, chg: P.chg, drop: P.drop.size, low: P.low, zip: PR.zip, bytes: out.length});
+  toast(`Файл готов: ${name}. Загрузите его в кабинете Ozon там же, где скачивали.`, 9000);
+  renderPrices();
+}
+function prSnapSave(items) {
+  for (const it of items) { const k = normKey(it[0]); if (!PR.snapItems.has(k)) PR.snapItems.set(k, it); }
+  let m = PR.snap && PRS.snaps.find(x => x.id === PR.snap);
+  if (!m) { m = {id: 's' + Date.now().toString(36), at: 0, shop: PR.shop, n: 0, file: PR.name}; PR.snap = m.id; PRS.snaps.unshift(m); }
+  m.at = Date.now(); m.n = PR.snapItems.size; m.shop = PR.shop;
+  const id = m.id, data = {id, items: [...PR.snapItems.values()]};
+  saveDoc('psnap/' + id, () => data);
+  while (PRS.snaps.length > 12) { const x = PRS.snaps.pop(); saveDoc('psnap/' + x.id, () => null); }
+  saveMeta('meta/prices');
+}
+async function prSnapUse(id, sure) {
+  const m = PRS.snaps.find(x => x.id === id); if (!m) return;
+  if (!PR) { toast('Сначала скачайте в Ozon свежий файл цен этого магазина и откройте его здесь — программа впишет в него прежние цены.', 9000); const b = $('#prOpenBtn'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); return; }
+  if (PR.kind !== 'price') { toast('Прежние цены вписываются в файл цен, а не в файл акции'); return; }
+  if (!sure && m.shop !== PR.shop) { confirmIn('#prConfirm', `Эти цены запомнены для магазина «${esc(PRS.shops[m.shop] || '')}», а открыт файл магазина «${esc(PRS.shops[PR.shop] || '')}». Всё равно вписать?`, 'Вписать', () => prSnapUse(id, true)); return; }
+  let d = null;
+  if (id === PR.snap) d = {items: [...PR.snapItems.values()]};
+  else { try { d = await Backend.get('psnap/' + id); } catch {} }
+  if (!d || !Array.isArray(d.items)) { toast('Не получилось прочитать сохранённые цены'); return; }
+  const mp = new Map(d.items.map(x => [normKey(x[0]), x]));
+  let n = 0;
+  for (const r of PR.list) {
+    const x = mp.get(normKey(r.a)); if (!x) continue;
+    [['price', x[1]], ['old', x[2]], ['min', x[3]]].forEach(([role, v]) => { if (v != null && prCol(role)) prSet(r, role, +v); });
+    r.lock = true; n++;
+  }
+  const miss = mp.size - n;
+  PR.view = 'chg'; PR.saved = false;
+  toast(n ? `Вписаны прежние цены: ${cnt(n, W.pos)}${miss > 0 ? `, ещё ${fmt(miss)} нет в этом файле` : ''}. Проверьте и сохраните файл.` : 'В открытом файле нет товаров из этого списка', 9000);
+  renderPrices();
+}
+
+async function prOpen(f, sure) {
+  if (!f) return;
+  if (!sure && prDirty() && !PR.saved) { confirmIn('#prConfirm', 'В открытом файле есть несохранённые изменения. Открыть другой файл и потерять их?', 'Открыть другой', () => prOpen(f, true), true); return; }
+  const ext = (f.name.split('.').pop() || '').toLowerCase();
+  if (!['xlsx', 'xlsm', 'xls', 'ods'].includes(ext)) { toast('Нужен Excel-файл цен или акции из кабинета Ozon'); return; }
+  toast(`Читаю «${trunc(f.name, 40)}»…`, 30000);
+  let P;
+  try {
+    await ensureXLSX();
+    const buf = new Uint8Array(await f.arrayBuffer());
+    let wb;
+    try { wb = XLSX.read(buf, {type: 'array', cellStyles: true, cellDates: false}); }
+    catch { toast(`«${trunc(f.name, 40)}» не получилось открыть. Скачайте файл в Ozon ещё раз.`, 8000); return; }
+    P = prParse(wb, f.name, buf);
+  } catch (e) { toast((e && e.message) || 'Не получилось прочитать файл', 8000); return; }
+  if (!P || !P.list.length) { diag('prices', 'open-fail', {name: f.name}); toast(`В «${trunc(f.name, 40)}» не нашлось столбцов «Артикул» и цены. Нужен файл цен или файл акции из кабинета Ozon.`, 9000); return; }
+  PR = P;
+  diag('prices', 'open', {name: f.name, kind: P.kind, rows: P.list.length, models: P.groups.length, cols: P.cols.filter(c => c.role).map(c => c.role + (c.green ? '*' : '')).join(','), zip: P.zip});
+  toast(`Открыт ${P.kind === 'promo' ? 'файл акции' : 'файл цен'}: ${cnt(P.list.length, W.pos)}, ${cnt(P.groups.length, W.model)}`);
+  renderPrices();
+}
+function prClose(sure) {
+  if (!sure && prDirty() && !PR.saved) { confirmIn('#prConfirm', 'Закрыть файл? Несохранённые изменения пропадут.', 'Закрыть', () => prClose(true), true); return; }
+  PR = null; renderPrices();
+}
+
+/* ---------- the prices tab ---------- */
+const prRange = vs => { const u = [...new Set(vs.filter(v => v != null))]; if (!u.length) return '—'; if (u.length === 1) return fmt(u[0]); return `${fmt(Math.min(...u))}–${fmt(Math.max(...u))}`; };
+function prVisible() {
+  const q = prNorm(PR.q), lq = latinUp(PR.q).replace(/\s+/g, '');
+  return PR.groups.filter(g => {
+    if (q && !g.rows.some(r => latinUp(r.a).replace(/\s+/g, '').includes(lq) || prNorm(r.n).includes(q))) return false;
+    if (PR.view === 'chg') return g.rows.some(r => prAny(r) || r.off);
+    if (PR.view === 'bad') return g.rows.some(r => prLow(r) || prWarns(r).length) || (!prCost(g) && !!(prCol('price') || prCol('promo')));
+    return true;
+  });
+}
+function prInput(rs, role, attrs) {
+  const nv = [...new Set(rs.map(r => r.v[role]))], chg = rs.some(r => prChg(r, role)), low = rs.some(r => prBlocked(r, role) || (role === 'promo' && prLow(r)));
+  const val = nv.length === 1 && nv[0] !== undefined ? prNumTxt(nv[0]) : '';
+  const ov = [...new Set(rs.map(r => r.o[role]).filter(v => v != null))], ph = nv.length > 1 || ov.length > 1 ? 'разные' : ov.length ? fmt(ov[0]) : '';
+  return `<input class="in qin prin mono${chg ? ' chg' : ''}${low ? ' low' : ''}" ${attrs} data-role="${role}" value="${esc(val)}" placeholder="${esc(ph)}" inputmode="text" spellcheck="false" aria-label="${esc(PR_SHORT[role])}">`;
+}
+function prStatus(rs, gk) {
+  const out = [];
+  const low = rs.filter(prLow).length, locked = rs.some(r => r.lock && prFloor(r.g) && ['price', 'promo'].some(role => { const v = prEv(r, role); return v > 0 && v < prFloor(r.g); }));
+  if (PR.kind === 'promo' && rs.every(r => r.off)) out.push(`<span class="chip plain">не в акции</span><button class="btn sm ghost" type="button" data-proff="${esc(gk)}">Вернуть в акцию</button>`);
+  else {
+    if (low) out.push(`<span class="chip bad">${PR.kind === 'promo' ? 'дешевле защиты — не в акции' : 'ниже защиты — не попадёт'}</span><button class="btn sm ghost" type="button" data-prlock="${esc(gk)}" title="Поставить эту цену, хоть она и ниже защиты">Всё равно</button>`);
+    else if (locked) out.push(`<span class="chip warn">ниже защиты, разрешено</span><button class="btn sm ghost" type="button" data-prunlock="${esc(gk)}">Отменить</button>`);
+    for (const w of new Set(rs.flatMap(prWarns))) out.push(`<span class="chip warn">${PR_WTXT[w]}</span>`);
+    if (!low && rs.some(prAny)) out.push('<span class="chip good">изменено</span>');
+    if (PR.kind === 'promo' && rs.length && gk && !rs.some(r => r.off)) out.push(`<button class="btn sm ghost" type="button" data-proff="${esc(gk)}">Убрать из акции</button>`);
+  }
+  return out.join('');
+}
+function renderPrices() {
+  if (ui.tab !== 'prices') return;
+  const fin = (id, v) => { const el = $(id); if (document.activeElement !== el) el.value = v; };
+  fin('#prPct', String(PRS.pct)); fin('#prAdd', String(PRS.add)); fin('#prShop0', PRS.shops[0]); fin('#prShop1', PRS.shops[1]);
+  const ex = S.price ? 1900 : 0;
+  $('#prFloorEx').textContent = (S.price ? `Например, закупка 1 900 ₽ → цена не ниже ${rub(prFloorOf(1900))}.` : 'Сейчас число в артикуле не считается закупкой (Настройки → «Как читать артикул»): впишите закупку у товаров сами.') + (ex && !PRS.pct && !PRS.add ? ' При нулевой наценке защита не даст продавать дешевле закупки, но комиссию и доставку Ozon не покроет.' : '');
+  renderPrSnaps();
+  $('#prOpenBtn').lastChild.textContent = PR ? 'Открыть другой файл' : 'Открыть файл Ozon';
+  $('#prCloseBtn').hidden = !PR;
+  $('#prCard').hidden = !PR;
+  $('#prSum').textContent = PR ? `${PR.name} · ${cnt(PR.list.length, W.pos)}` : '';
+  if (!PR) return;
+  $('#prTitle').textContent = PR.kind === 'promo' ? 'Файл акции' : 'Файл цен';
+  const roles = prEdit();
+  $('#prKind').innerHTML = `«${esc(PR.name)}», лист «${esc(PR.sn)}»: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}. Меняем: ${roles.map(r => `<b>${esc(PR_SHORT[r])}</b>`).join(', ') || '—'}.` + (PR.kind === 'promo' ? ' Товары, которые вы уберёте из акции, и те, что Ozon предлагает дешевле защиты, программа уберёт из файла — в акцию они не попадут.' : '') + (PR.zip ? '' : ' Файл старого формата: сохранится как .xlsx.');
+  setBody($('#prShop'), PRS.shops.map((n, i) => `<button type="button" data-prshop="${i}" aria-pressed="${PR.shop === i}">${esc(n)}</button>`).join(''));
+  const colsSig = PR.cols.map(c => c.role + (c.ro ? '!' : '')).join('|');
+  if ($('#prColList').dataset.sig !== colsSig) {
+    $('#prColList').dataset.sig = colsSig;
+    $('#prColList').innerHTML = PR.cols.map((c, ix) => `<label><b class="${c.green ? 'green' : ''}" title="${esc(c.label)}">${esc(trunc(c.label, 60))}</b><select class="in" data-prcol="${ix}">${Object.entries(PR_ROLE).map(([k, l]) => `<option value="${k}"${c.role === k ? ' selected' : ''}>${esc(l)}${c.ro && c.role === k ? ' — только смотреть' : ''}</option>`).join('')}</select></label>`).join('');
+  }
+  // the form above the list
+  const rs = $('#prRole'), keepR = rs.value;
+  rs.innerHTML = roles.map(r => `<option value="${r}">${esc(PR_SHORT[r])}</option>`).join('') || '<option value="">нет столбцов цен</option>';
+  if (roles.includes(keepR)) rs.value = keepR; else if (PR.kind === 'promo' && roles.includes('promo')) rs.value = 'promo';
+  const vis = prVisible(), selN = [...PR.sel].filter(k => PR.groups.some(g => g.k === k)).length, who = $('#prWho');
+  who.innerHTML = `<option value="sel"${selN ? '' : ' disabled'}>отмеченным (${fmt(selN)})</option><option value="vis">всем в списке ниже (${fmt(vis.length)})</option>`;
+  who.value = selN && PR.who !== 'vis' ? 'sel' : 'vis';
+  // warnings
+  const W2 = [], lows = PR.list.filter(prLow).length, wn = k => PR.list.filter(r => prWarns(r).includes(k)).length;
+  if (lows) W2.push(`<div class="manbar"><p>${PR.kind === 'promo' ? `<b>${cnt(lows, W.pos)}</b> Ozon предлагает в акцию дешевле защиты — программа уберёт их из файла акции.` : `У <b>${cnt(lows, W.pos)}</b> новая цена ниже защиты — в файл они не попадут, останется прежняя цена.`}</p><button class="btn sm" type="button" data-prview="bad">Показать</button></div>`);
+  const wo = wn('old'), wm = wn('min'), wx = wn('max');
+  if (wo) W2.push(`<div class="manbar"><p>У <b>${cnt(wo, W.pos)}</b> зачёркнутая цена слишком близко к цене. Ozon требует разницу больше 5% (до 400 ₽ — больше 20 ₽, от 10 000 ₽ — больше 500 ₽).</p><button class="btn sm" type="button" data-prfix="old">Поднять зачёркнутую</button></div>`);
+  if (wm) W2.push(`<div class="manbar"><p>У <b>${cnt(wm, W.pos)}</b> ограничение для акций выше новой цены.</p><button class="btn sm" type="button" data-prfix="min">Опустить до цены</button></div>`);
+  if (wx) W2.push(`<div class="manbar"><p>У <b>${cnt(wx, W.pos)}</b> цена по акции выше максимальной, Ozon её не примет.</p><button class="btn sm" type="button" data-prfix="max">Поставить максимальную</button></div>`);
+  if (roles.includes('min')) { const ml = PR.list.filter(r => { const f = prFloor(r.g), m = prOut(r, 'min'), p = prOut(r, 'price'); return f && m != null && m < f && !(p > 0 && p < f); }).length; if (ml) W2.push(`<div class="manbar"><p>У <b>${cnt(ml, W.pos)}</b> ограничение для акций ниже защиты — Ozon может сам добавить их в акцию дешевле.</p><button class="btn sm" type="button" data-prfix="minfloor">Поставить ограничение = защите</button></div>`); }
+  const noCost = PR.groups.filter(g => !prCost(g)).length;
+  if (noCost && roles.some(r => r === 'price' || r === 'promo')) W2.push(`<div class="manbar"><p>У <b>${cnt(noCost, W.model)}</b> не известна закупка — для них защита не работает. Впишите закупку в строке товара.</p></div>`);
+  setBody($('#prWarn'), W2.join(''));
+  // the list
+  $$('#prSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === PR.view)));
+  if (document.activeElement !== $('#prSearch')) $('#prSearch').value = PR.q;
+  const allSel = vis.length && vis.every(g => PR.sel.has(g.k));
+  $('#prHeadRow').innerHTML = `<tr><th class="c"><input type="checkbox" data-prall${allSel ? ' checked' : ''} aria-label="Отметить все в списке"></th><th>Товар</th><th>Закупка → защита</th>${roles.map(r => `<th class="num">${esc(PR_SHORT[r])}</th>`).join('')}<th>Что с ним</th></tr>`;
+  const html = [];
+  for (const g of vis.slice(0, PR.lim)) {
+    const cost = prCost(g), f = prFloor(g), off = PR.kind === 'promo' && g.rows.every(r => r.off), open = PR.open.has(g.k) && g.rows.length > 1;
+    html.push(`<tr data-g="${esc(g.k)}"${off ? ' class="off"' : ''}><td class="c"><input type="checkbox" data-prsel="${esc(g.k)}"${PR.sel.has(g.k) ? ' checked' : ''} aria-label="Отметить ${esc(shortModel(g.model))}"></td>
+      <td><div class="pm">${thumb(g.mk, 'md', true)}<div><div class="art">${esc(shortModel(g.model))}</div>${g.name ? `<div class="nm">${esc(g.name)}</div>` : ''}<div class="szs">${g.sizes.length ? esc(g.sizes.map(sizeShow).join(' · ')) : cnt(g.rows.length, W.art)}${g.rows.length > 1 ? ` <button class="exp" type="button" data-prexp="${esc(g.k)}" aria-expanded="${open}">${open ? 'свернуть' : 'по размерам'}</button>` : ''}</div></div></div></td>
+      <td class="cost"><input class="in qin mono" data-prcost="${esc(g.k)}" value="${cost ? esc(String(cost)) : ''}" placeholder="закупка" inputmode="numeric" aria-label="Закупка, ₽"><small>${f ? 'не ниже ' + rub(f) : 'закупка не известна'}</small></td>
+      ${roles.map(role => `<td class="num"><div class="was">${role === 'promo' && g.rows.some(r => r.o.maxp) ? `макс. ${prRange(g.rows.map(r => r.o.maxp))} · ` : ''}было ${prRange(g.rows.map(r => r.o[role]))}${g.rows.some(r => prChg(r, role)) && new Set(g.rows.map(r => r.v[role])).size > 1 ? ` → <b>${prRange(g.rows.map(r => prEv(r, role)))}</b>` : ''}</div>${prInput(g.rows, role, `data-prg="${esc(g.k)}"`)}</td>`).join('')}
+      <td class="st">${prStatus(g.rows, g.k)}</td></tr>`);
+    if (open) for (const r of g.rows) {
+      const ix = PR.list.indexOf(r);
+      html.push(`<tr class="sub${PR.kind === 'promo' && r.off ? ' off' : ''}"><td></td><td><span class="art">${esc(r.a)}</span></td><td></td>${roles.map(role => `<td class="num"><div class="was">было ${r.o[role] != null ? fmt(r.o[role]) : '—'}</div>${prInput([r], role, `data-prr="${ix}"`)}</td>`).join('')}<td class="st">${[...new Set(prWarns(r))].map(w => `<span class="chip warn">${PR_WTXT[w]}</span>`).join('')}${prLow(r) ? '<span class="chip bad">ниже защиты</span>' : ''}</td></tr>`);
+    }
+  }
+  setBody($('#prBody'), html.join('') || `<tr><td colspan="${4 + roles.length}" class="empty">${PR.view === 'chg' ? 'Пока ничего не изменено' : PR.view === 'bad' ? 'Проблем нет' : 'Ничего не найдено'}</td></tr>`);
+  const mb = $('#prMore'); mb.hidden = vis.length <= PR.lim; mb.textContent = `Показать ещё (${fmt(vis.length - PR.lim)})`;
+  const P = prPlan();
+  $('#prFootSum').innerHTML = PR.kind === 'promo'
+    ? `В акции будет <b>${cnt(PR.list.length - P.drop.size, W.pos)}</b> из ${fmt(PR.list.length)}${P.chg ? `, цена изменена у ${fmt(P.chg)}` : ''}${P.drop.size ? ` · убрано ${fmt(P.drop.size)}` : ''}`
+    : `Изменено <b>${cnt(P.chg, W.pos)}</b>${P.low ? ` · ниже защиты ${fmt(P.low)} — не попадут` : ''}${PR.saved && P.chg ? ' · файл сохранён' : ''}`;
+  placeThumbs();
+}
+function renderPrSnaps() {
+  const list = PRS.snaps;
+  $('#prSnapSum').textContent = list.length ? cnt(list.length, ['список', 'списка', 'списков']) : '';
+  setBody($('#prSnaps'), list.map(s => `<div class="prsnap"><p><b>${when(s.at)}</b> · ${esc(PRS.shops[s.shop] || '')} · ${cnt(s.n, W.pos)}<br><span class="hint small">цены до изменений из «${esc(trunc(s.file, 60))}»</span></p><button class="btn sm" type="button" data-snapuse="${esc(s.id)}">Вписать эти цены</button><button class="x" type="button" data-snapdel="${esc(s.id)}" aria-label="Удалить список">×</button></div>`).join('') || '<p class="hint small" style="margin:0">Пока пусто: появится после первого сохранённого файла цен.</p>');
+}
+// a change typed in a row: one size, or the whole model
+function prTyped(el) {
+  const role = el.dataset.role, p = prExpr(el.value);
+  const rs = el.dataset.prr != null ? [PR.list[+el.dataset.prr]] : (PR.groups.find(g => g.k === el.dataset.prg) || {rows: []}).rows;
+  if (!p) { toast('Не понял. Пишите цену (1990), процент (-15% или +10%) или рубли (-200)'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); return; }
+  let skip = 0;
+  for (const r of rs) { const v = prCalc(r, role, p, 'self', $('#prRound').value); if (v === null) { skip++; continue; } prSet(r, role, v); }
+  if (skip) toast(`Не у всех размеров есть цена в этом столбце — у ${fmt(skip)} не посчитать процент`);
+  prTouch();
+}
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.closest || !t.closest('#pane-prices')) return;
+  if (t.matches('.prin')) { if (PR) prTyped(t); return; }
+  if (t.dataset.prcost != null) { const k = t.dataset.prcost, v = pnum(t.value), g = PR && PR.groups.find(x => x.k === k), auto = g && S.price ? parseArt(g.rows[0].a).price : 0; if (v > 0 && v !== auto) PRS.cost[k] = Math.round(v); else delete PRS.cost[k]; saveMeta('meta/prices'); renderPrices(); return; }
+  if (t.dataset.prcol != null) { const c = PR.cols[+t.dataset.prcol]; if (t.value) for (const o of PR.cols) if (o !== c && o.role === t.value) o.role = ''; c.role = t.value; c.ro = false; prRows(PR); renderPrices(); return; }
+  if (t.dataset.prsel != null) { if (t.checked) PR.sel.add(t.dataset.prsel); else PR.sel.delete(t.dataset.prsel); renderPrices(); return; }
+  if (t.dataset.prall != null) { for (const g of prVisible()) { if (t.checked) PR.sel.add(g.k); else PR.sel.delete(g.k); } renderPrices(); return; }
+  if (t.id === 'prWho') { if (PR) PR.who = t.value; return; }
+  if (t.id === 'prPct' || t.id === 'prAdd') { const v = pnum(t.value); PRS[t.id === 'prPct' ? 'pct' : 'add'] = v >= 0 ? v : 0; saveMeta('meta/prices'); renderPrices(); return; }
+  if (t.id === 'prShop0' || t.id === 'prShop1') { PRS.shops[t.id === 'prShop0' ? 0 : 1] = t.value.trim().slice(0, 40) || PRDEF.shops[t.id === 'prShop0' ? 0 : 1]; saveMeta('meta/prices'); renderPrices(); return; }
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('#pane-prices button, #pane-prices [data-prexp]'); if (!t) return;
+  if (t.id === 'prOpenBtn') { $('#prFile').value = ''; $('#prFile').click(); return; }
+  if (t.id === 'prCloseBtn') { prClose(); return; }
+  if (t.dataset.snapuse) { prSnapUse(t.dataset.snapuse); return; }
+  if (t.dataset.snapdel) { const id = t.dataset.snapdel; confirmIn('#prSnapConfirm', 'Удалить этот список прежних цен?', 'Удалить', () => { PRS.snaps = PRS.snaps.filter(x => x.id !== id); if (PR && PR.snap === id) { PR.snap = ''; PR.snapItems = new Map(); } saveDoc('psnap/' + id, () => null); saveMeta('meta/prices'); renderPrices(); }, true); return; }
+  if (!PR) return;
+  if (t.dataset.prshop != null) { PR.shop = +t.dataset.prshop; renderPrices(); return; }
+  if (t.dataset.prexp != null) { const k = t.dataset.prexp; if (PR.open.has(k)) PR.open.delete(k); else PR.open.add(k); renderPrices(); return; }
+  if (t.closest('#prSeg') && t.dataset.v) { PR.view = t.dataset.v; PR.lim = 150; renderPrices(); return; }
+  if (t.dataset.prview) { PR.view = t.dataset.prview; PR.lim = 150; renderPrices(); $('#prSeg').scrollIntoView({block: 'nearest', behavior: motionOk() ? 'smooth' : 'auto'}); return; }
+  if (t.id === 'prMore') { PR.lim += 200; renderPrices(); return; }
+  const grp = k => (PR.groups.find(g => g.k === k) || {rows: []}).rows;
+  if (t.dataset.prlock) { for (const r of grp(t.dataset.prlock)) r.lock = true; prTouch(); return; }
+  if (t.dataset.prunlock) { for (const r of grp(t.dataset.prunlock)) r.lock = false; prTouch(); return; }
+  if (t.dataset.proff) { const rs = grp(t.dataset.proff), off = !rs.every(r => r.off); for (const r of rs) r.off = off; prTouch(); return; }
+  if (t.dataset.prfix) {
+    const k = t.dataset.prfix; let n = 0;
+    for (const r of PR.list) {
+      const P = prOut(r, 'price'), f = prFloor(r.g);
+      if (k === 'old' && prWarns(r).includes('old')) { prSet(r, 'old', Math.ceil((prOldNeed(P) + 1) / 10) * 10); n++; }
+      if (k === 'min' && prWarns(r).includes('min')) { prSet(r, 'min', P); n++; }
+      if (k === 'max' && prWarns(r).includes('max')) { prSet(r, 'promo', r.o.maxp); n++; }
+      if (k === 'minfloor' && f) { const m = prOut(r, 'min'); if (m != null && m < f && !(P > 0 && P < f)) { prSet(r, 'min', f); n++; } }
+    }
+    toast(n ? `Исправлено: ${cnt(n, W.pos)}` : 'Исправлять нечего'); prTouch(); return;
+  }
+  if (t.dataset.prsave) { if (t.dataset.prsave === 'no') { $('#prConfirm').hidden = true; return; } prSave(t.dataset.prsave); return; }
+  if (t.id === 'prSave') { prSave(); return; }
+  if (t.id === 'prReset') { if (!prDirty()) { toast('Изменений нет'); return; } confirmIn('#prConfirm', 'Отменить все изменения в этом файле? Цены вернутся такими, как в файле Ozon.', 'Отменить изменения', () => { for (const r of PR.list) { r.v = {}; r.off = false; r.lock = false; } PR.saved = true; renderPrices(); }, true); return; }
+});
+$('#prFile').addEventListener('change', () => { const f = $('#prFile').files[0]; $('#prFile').value = ''; if (f) prOpen(f); });
+$('#prBulk').addEventListener('submit', e => {
+  e.preventDefault(); if (!PR) return;
+  const role = $('#prRole').value, p = prExpr($('#prExpr').value), base = $('#prBase').value, rnd = $('#prRound').value, who = $('#prWho').value;
+  if (!role) return;
+  if (!p || p.k === 'clear') { toast('Впишите цену (1990), процент (-15% или +10%) или рубли (-200)'); const el = $('#prExpr'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); el.focus(); return; }
+  const gs = who === 'sel' ? PR.groups.filter(g => PR.sel.has(g.k)) : prVisible();
+  if (!gs.length) { toast(who === 'sel' ? 'Сначала отметьте товары галочками' : 'В списке нет товаров'); return; }
+  let n = 0, skip = 0;
+  for (const g of gs) for (const r of g.rows) { if (PR.kind === 'promo' && r.off) continue; const v = prCalc(r, role, p, base, rnd); if (v === null) { skip++; continue; } prSet(r, role, v); n++; }
+  const why = base === 'cost' || base === 'floor' ? 'не известна закупка' : 'нет цены, от которой считать';
+  toast(n ? `${PR_SHORT[role]}: изменено ${cnt(n, W.pos)}${skip ? ` · у ${fmt(skip)} ${why}` : ''}` : `Ничего не изменилось: ${why}`, 6000);
+  diag('prices', 'bulk', {role, expr: $('#prExpr').value, base, rnd, who, groups: gs.length, n, skip});
+  prTouch();
+});
+let prQT = 0;
+$('#prSearch').addEventListener('input', () => { clearTimeout(prQT); prQT = setTimeout(() => { if (!PR) return; PR.q = $('#prSearch').value; PR.lim = 150; renderPrices(); }, 180); });
+addEventListener('beforeunload', e => { if (PR && !PR.saved && prDirty()) { e.preventDefault(); e.returnValue = ''; } });
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
-  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow};
+  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }};
 start();
 })();
 </script>
