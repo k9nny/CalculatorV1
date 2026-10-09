@@ -1424,11 +1424,13 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
           <label class="fld">Кому<select class="in" id="prWho"></select></label>
           <button class="btn primary" type="submit">Применить</button>
         </form>
+        <div class="row mt" id="prPartBar" hidden><span class="hint small" style="margin:0">Участие в акции для выбранных в «Кому»:</span><button class="btn sm" type="button" data-prpart="1">Добавить в акцию</button><button class="btn sm" type="button" data-prpart="0">Убрать из акции</button></div>
         <p class="hint small" id="prExprHint">Число — точная цена. С процентом — скидка или наценка: «-15%» дешевле на 15%, «+10%» дороже на 10%. Со знаком без процента — рубли: «-200» дешевле на 200 ₽. Так же можно писать прямо в строке товара.</p>
         <div id="prWarn"></div>
         <div class="lhead mt">
           <div class="seg" role="group" aria-label="Показать" id="prSeg">
             <button type="button" data-v="all" aria-pressed="true">Все</button>
+            <button type="button" data-v="in" aria-pressed="false" hidden>В акции</button>
             <button type="button" data-v="chg" aria-pressed="false">Изменённые</button>
             <button type="button" data-v="bad" aria-pressed="false">Проблемы</button>
           </div>
@@ -1697,7 +1699,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-09.1';
+const APP_VERSION = '2026-10-09.2';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -5559,7 +5561,9 @@ function prLoad(d) {
   if (Array.isArray(d.snaps)) x.snaps = d.snaps.filter(s => s && s.id).map(s => ({id: String(s.id), at: +s.at || 0, shop: +s.shop || 0, n: +s.n || 0, file: String(s.file || '')})).slice(0, 12);
   return x;
 }
-const PR_ROLE = {art: 'Артикул', sku: 'Ozon ID / SKU', name: 'Название', price: 'Цена', old: 'Зачёркнутая цена (до скидки)', min: 'Ограничение для акций (мин. цена)', promo: 'Цена по акции', maxp: 'Макс. цена по акции (смотреть)', site: 'Цена на сайте (смотреть)', '': '— не нужен'};
+const PR_ROLE = {art: 'Артикул', sku: 'Ozon ID / SKU', name: 'Название', price: 'Цена', old: 'Зачёркнутая цена (до скидки)', min: 'Ограничение для акций (мин. цена)', promo: 'Цена по акции', maxp: 'Макс. цена по акции (смотреть)', part: 'Участие в акции («Да» или пусто)', site: 'Цена на сайте (смотреть)', '': '— не нужен'};
+// «Да» — in the promotion, «Да*» — Ozon put it there itself, empty — not in it
+const PR_YES = v => /^да\*?$/i.test(String(v ?? '').trim());
 const PR_EDIT = ['price', 'old', 'min', 'promo'];
 const PR_SHORT = {price: 'Цена', old: 'Зачёркнутая', min: 'Ограничение для акций', promo: 'Цена по акции'};
 let PR = null;   // the open file
@@ -5576,8 +5580,10 @@ function prRoleOf(t) {
   if (/\bsku\b|ozon\s*id|озон\s*id|product.?id|код товара/.test(t)) return 'sku';
   if (/наименован|название/.test(t)) return 'name';
   if (/ограничени/.test(t) && /акци|стратег/.test(t)) return 'min';
+  if (/участи/.test(t) && /акци/.test(t) && !/цен/.test(t)) return 'part';
   if (!/цен|price/.test(t)) return '';
   if (/макс/.test(t) && /акци/.test(t)) return 'maxp';
+  if (/рассчитанн|для\s+участия/.test(t) && /акци/.test(t)) return 'maxp';
   if (/минимальн\S*\s+цен|ограничени|min.?price/.test(t)) return 'min';
   if (/до\s+скидк|зач[её]ркнут|перечеркнут|старая\s+цена|old.?price/.test(t)) return 'old';
   if (/рыночн|конкурент/.test(t)) return '';
@@ -5618,7 +5624,8 @@ function prParse(wb, name, buf) {
     const h = txt(hdr, j, true), up = hdr > 0 ? txt(hdr - 1, j) : '';
     if (!h && !up) continue;
     let t = prNorm(h || up), role = prRoleOf(t), label = h || up;
-    if (!role && h && up) { const t2 = prNorm(up + ' ' + h), r2 = prRoleOf(t2); if (r2) { t = t2; role = r2; label = `${up} · ${h}`; } }
+    // a group title above («Цена по акции» over «Минимальная / Максимальная») names only prices, never counts or shares
+    if (!role && h && up && !/количеств|шт\b|скидк|%|динамик|показ|заказ|остат|статус|участи/.test(prNorm(h))) { const t2 = prNorm(up + ' ' + h), r2 = prRoleOf(t2); if (r2 && r2 !== 'part') { t = t2; role = r2; label = `${up} · ${h}`; } }
     const cell = ws[XLSX.utils.encode_cell({r: rg.s.r + hdr, c: rg.s.c + j})], cell2 = ws[XLSX.utils.encode_cell({r: rg.s.r + hdr + 1, c: rg.s.c + j})];
     cols.push({j, c: rg.s.c + j, label, t, role, green: prGreen(cell) || prGreen(cell2)});
   }
@@ -5626,7 +5633,9 @@ function prParse(wb, name, buf) {
   // Ozon colours the columns that may be changed green: the other prices are only to look at
   if (cols.some(c => PR_EDIT.includes(c.role) && c.green)) for (const c of cols) c.ro = PR_EDIT.includes(c.role) && !c.green;
   const zip = buf[0] === 0x50 && buf[1] === 0x4B;
-  const P = {name, buf, zip, sn, rows, hdr, r0: rg.s.r, cols, list: [], groups: [], shop: 0, sel: new Set(), open: new Set(), view: 'all', q: '', lim: 150, snap: '', snapItems: new Map(), saved: true, kind: 'price'};
+  let promoName = '', promoDates = '';
+  for (const n of wb.SheetNames) { if (n === sn) continue; const w = wb.Sheets[n]; if (!w || !w['!ref']) continue; for (const r of XLSX.utils.sheet_to_json(w, {header: 1, raw: false, defval: ''}).slice(0, 15)) for (const v of r) { const t = String(v).trim(); let m; if ((m = t.match(/^Название акции:\s*(.+)/))) promoName = m[1].slice(0, 120); if ((m = t.match(/^Даты акции:\s*(.+)/))) promoDates = m[1].slice(0, 120); } }
+  const P = {name, buf, zip, sn, rows, hdr, r0: rg.s.r, cols, list: [], promoName, promoDates, groups: [], shop: 0, sel: new Set(), open: new Set(), view: 'all', q: '', lim: 150, snap: '', snapItems: new Map(), saved: true, kind: 'price'};
   prRows(P);
   const names = P.list.map(r => r.n).filter(Boolean), two = names.filter(n => /^\s*["«'“„]\s*2\s*["»'”“]/.test(n)).length;
   P.shop = two && two >= names.length / 2 ? 1 : 0;
@@ -5644,10 +5653,10 @@ const prEdit = () => PR_EDIT.filter(r => { const c = prCol(r); return c && !c.ro
 // the products of the file; the changes survive a new choice of columns
 function prRows(P) {
   const J = role => { const c = P.cols.find(x => x.role === role); return c ? c.j : -1; };
-  const ja = J('art'), jn = J('name'), js = J('sku');
+  const ja = J('art'), jn = J('name'), js = J('sku'), jp = J('part');
   const nums = ['price', 'old', 'min', 'promo', 'maxp', 'site'].map(r => [r, J(r)]).filter(x => x[1] >= 0);
   const was = new Map(P.list.map(r => [r.i, r]));
-  P.kind = nums.some(x => x[0] === 'promo' || x[0] === 'maxp') ? 'promo' : 'price';
+  P.kind = jp >= 0 || nums.some(x => x[0] === 'promo' || x[0] === 'maxp') ? 'promo' : 'price';
   P.list = []; const gm = new Map(); P.groups = [];
   if (ja < 0) return;
   for (let i = P.hdr + 1; i < P.rows.length; i++) {
@@ -5655,6 +5664,7 @@ function prRows(P) {
     if (!a) continue;
     const o = {}, txt = {};
     for (const [r, j] of nums) { const v = row[j]; o[r] = pnum(v); txt[r] = typeof v === 'string' && v !== ''; }
+    if (jp >= 0) o.part = String(row[jp] ?? '').trim();
     // explanation rows under the header have long text instead of an article and no numbers
     if (/\s/.test(a) && !nums.some(([r]) => o[r] != null)) continue;
     if (a.length > 80) continue;
@@ -5668,12 +5678,21 @@ function prRows(P) {
   }
   for (const g of P.groups) { g.rows.sort((x, y) => bySize(parseRaw(x.a).size, parseRaw(y.a).size)); g.sizes = g.rows.map(r => parseRaw(r.a).size).filter(Boolean); g.name = g.n ? sheetName(g.n, g.sizes) : ''; }
 }
-const prCost = g => PRS.cost[g.k] || (S.price ? parseArt(g.rows[0].a).price : 0) || 0;
+// the purchase price is the round number in the article, as everywhere in the program
+const prAutoCost = a => S.price ? parseArt(a).price || 0 : 0;
+const prCost = g => PRS.cost[g.k] || prAutoCost(g.rows[0].a);
 const prFloorOf = cost => cost ? Math.ceil((cost * (1 + (+PRS.pct || 0) / 100) + (+PRS.add || 0)) / 10) * 10 : 0;
 const prFloor = g => prFloorOf(prCost(g));
 const prEv = (r, role) => r.v[role] !== undefined ? r.v[role] : r.o[role];
 const prChg = (r, role) => r.v[role] !== undefined && r.v[role] !== r.o[role];
-const prAny = r => PR_EDIT.some(role => prChg(r, role));
+const prAny = r => PR_EDIT.some(role => prChg(r, role)) || prChg(r, 'part') || r.off;
+// in the promotion: by the «Участие» column when the file has it, otherwise the row stays in the file
+const prIn = r => prCol('part') ? PR_YES(prEv(r, 'part')) : !r.off;
+function prSetIn(r, on) {
+  if (!prCol('part')) { r.off = !on; return; }
+  const was = PR_YES(r.o.part);
+  prSet(r, 'part', on ? (was ? r.o.part : 'Да') : (was ? '' : r.o.part));
+}
 // a new price below the protection stays out of the file: the old one is what Ozon keeps
 const prBlocked = (r, role) => (role === 'price' || role === 'promo') && !r.lock && prChg(r, role) && r.v[role] < prFloor(r.g);
 const prWill = (r, role) => prChg(r, role) && !prBlocked(r, role);
@@ -5681,6 +5700,7 @@ const prOut = (r, role) => prWill(r, role) ? r.v[role] : r.o[role];
 // below the protection: a new price, and in a promotion also the price Ozon offers
 function prLow(r) {
   if (r.lock) return false;
+  if (PR.kind === 'promo' && !prIn(r)) return false;
   const f = prFloor(r.g); if (!f) return false;
   for (const role of ['price', 'promo']) {
     if (!prCol(role)) continue;
@@ -5693,7 +5713,7 @@ function prLow(r) {
 const prOldNeed = p => p < 400 ? p + 20 : p <= 10000 ? p * 1.05 : p + 500;
 function prWarns(r) {
   const w = [];
-  if (PR.kind === 'promo' && r.off) return w;
+  if (PR.kind === 'promo' && !prIn(r)) return w;
   const P = prOut(r, 'price'), O = prOut(r, 'old'), M = prOut(r, 'min'), A = prOut(r, 'promo'), X = r.o.maxp, ed = prEdit();
   if (ed.includes('old') && (prWill(r, 'price') || prWill(r, 'old')) && O > 0 && P > 0 && O <= prOldNeed(P)) w.push('old');
   if (ed.includes('min') && (prWill(r, 'price') || prWill(r, 'min')) && M > 0 && P > 0 && M > P) w.push('min');
@@ -5701,7 +5721,7 @@ function prWarns(r) {
   return w;
 }
 const PR_WTXT = {old: 'зачёркнутая мала', min: 'ограничение выше цены', max: 'выше макс. по акции'};
-const prDirty = () => !!PR && PR.list.some(r => prAny(r) || r.off);
+const prDirty = () => !!PR && PR.list.some(prAny);
 
 // «1990» — exactly; «-15%», «+10%» — percent; «90%» — of; «-200», «+300» — rubles
 function prExpr(s) {
@@ -5806,8 +5826,10 @@ function zipRewrite(buf, put, del) {
   return out;
 }
 const prNumTxt = v => String(Math.round(v * 100) / 100);
+const xmlEsc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 function prCellXml(ref, head, v, pre) {
   const s = head ? xAttr(head, 's') : null, t = head ? xAttr(head, 't') : null, sa = s != null ? ` s="${s}"` : '';
+  if (typeof v === 'string') return `<${pre}c r="${ref}"${sa} t="inlineStr"><${pre}is><${pre}t>${xmlEsc(v)}</${pre}t></${pre}is></${pre}c>`;
   if (t === 's' || t === 'str' || t === 'inlineStr') return `<${pre}c r="${ref}"${sa} t="inlineStr"><${pre}is><${pre}t>${prNumTxt(v)}</${pre}t></${pre}is></${pre}c>`;
   return `<${pre}c r="${ref}"${sa}><${pre}v>${prNumTxt(v)}</${pre}v></${pre}c>`;
 }
@@ -5889,7 +5911,7 @@ function prPatchZip(buf, sn, edits, drop) {
 function prPatchBook(buf, sn, edits, drop) {
   const wb = XLSX.read(buf, {type: 'array', cellStyles: true, cellDates: false});
   const ws = wb.Sheets[sn], rg = XLSX.utils.decode_range(ws['!ref']), enc = (r, c) => XLSX.utils.encode_cell({r, c});
-  for (const [R, cm] of edits) for (const [C, v] of cm) { const ad = enc(R, C), old = ws[ad]; ws[ad] = old && old.t === 's' ? {...old, t: 's', v: prNumTxt(v), w: undefined} : {...(old || {}), t: 'n', v, w: undefined}; }
+  for (const [R, cm] of edits) for (const [C, v] of cm) { const ad = enc(R, C), old = ws[ad]; ws[ad] = typeof v === 'string' ? {...(old || {}), t: 's', v, w: undefined} : old && old.t === 's' ? {...old, t: 's', v: prNumTxt(v), w: undefined} : {...(old || {}), t: 'n', v, w: undefined}; }
   if (drop.size) {
     let out = rg.s.r;
     for (let R = rg.s.r; R <= rg.e.r; R++) {
@@ -5905,22 +5927,29 @@ function prPatchBook(buf, sn, edits, drop) {
 
 // what goes into the file
 function prPlan() {
-  const edits = new Map(), drop = new Set(), snap = [];
-  let chg = 0, low = 0, off = 0, warn = 0;
+  const edits = new Map(), drop = new Set(), snap = [], pc = prCol('part');
+  let chg = 0, low = 0, off = 0, warn = 0, inN = 0;
   for (const r of PR.list) {
     const isLow = prLow(r);
-    if (PR.kind === 'promo' && (r.off || isLow)) { drop.add(r.R); if (r.off) off++; else low++; continue; }
+    if (PR.kind === 'promo' && !pc && (r.off || isLow)) { drop.add(r.R); if (r.off) off++; else low++; continue; }
+    if (PR.kind === 'promo' && !pc) inN++;
     const ce = new Map(); let blocked = false;
+    // the promotion file with an «Участие» column: rows stay, the column says who is in
+    if (pc) {
+      const was = PR_YES(r.o.part), now = prIn(r);
+      if (now && isLow) { if (was) ce.set(pc.c, ''); low++; }
+      else { if (prChg(r, 'part')) ce.set(pc.c, r.v.part); if (now) inN++; else if (was) off++; }
+    }
     for (const role of PR_EDIT) {
       const c = prCol(role); if (!c || c.ro || !prChg(r, role)) continue;
       if (prBlocked(r, role)) { blocked = true; continue; }
       ce.set(c.c, r.v[role]);
     }
     if (blocked) low++;
-    if (ce.size) { edits.set(r.R, ce); chg++; snap.push([r.a, r.o.price ?? null, r.o.old ?? null, r.o.min ?? null]); }
+    if (ce.size) { edits.set(r.R, ce); chg++; if (PR.kind === 'price') snap.push([r.a, r.o.price ?? null, r.o.old ?? null, r.o.min ?? null]); }
     if (prWarns(r).length) warn++;
   }
-  return {edits, drop, snap, chg, low, off, warn};
+  return {edits, drop, snap, chg, low, off, warn, inN};
 }
 function prFixAll() {
   let n = 0;
@@ -6041,7 +6070,8 @@ function prVisible() {
   const q = prNorm(PR.q), lq = latinUp(PR.q).replace(/\s+/g, '');
   return PR.groups.filter(g => {
     if (q && !g.rows.some(r => latinUp(r.a).replace(/\s+/g, '').includes(lq) || prNorm(r.n).includes(q))) return false;
-    if (PR.view === 'chg') return g.rows.some(r => prAny(r) || r.off);
+    if (PR.view === 'chg') return g.rows.some(prAny);
+    if (PR.view === 'in') return g.rows.some(prIn);
     if (PR.view === 'bad') return g.rows.some(r => prLow(r) || prWarns(r).length) || (!prCost(g) && !!(prCol('price') || prCol('promo')));
     return true;
   });
@@ -6053,16 +6083,21 @@ function prInput(rs, role, attrs) {
   return `<input class="in qin prin mono${chg ? ' chg' : ''}${low ? ' low' : ''}" ${attrs} data-role="${role}" value="${esc(val)}" placeholder="${esc(ph)}" inputmode="text" spellcheck="false" aria-label="${esc(PR_SHORT[role])}">`;
 }
 function prStatus(rs, gk) {
-  const out = [];
+  const out = [], pc = prCol('part');
   const low = rs.filter(prLow).length, locked = rs.some(r => r.lock && prFloor(r.g) && ['price', 'promo'].some(role => { const v = prEv(r, role); return v > 0 && v < prFloor(r.g); }));
-  if (PR.kind === 'promo' && rs.every(r => r.off)) out.push(`<span class="chip plain">не в акции</span><button class="btn sm ghost" type="button" data-proff="${esc(gk)}">Вернуть в акцию</button>`);
-  else {
-    if (low) out.push(`<span class="chip bad">${PR.kind === 'promo' ? 'дешевле защиты — не в акции' : 'ниже защиты — не попадёт'}</span><button class="btn sm ghost" type="button" data-prlock="${esc(gk)}" title="Поставить эту цену, хоть она и ниже защиты">Всё равно</button>`);
-    else if (locked) out.push(`<span class="chip warn">ниже защиты, разрешено</span><button class="btn sm ghost" type="button" data-prunlock="${esc(gk)}">Отменить</button>`);
-    for (const w of new Set(rs.flatMap(prWarns))) out.push(`<span class="chip warn">${PR_WTXT[w]}</span>`);
-    if (!low && rs.some(prAny)) out.push('<span class="chip good">изменено</span>');
-    if (PR.kind === 'promo' && rs.length && gk && !rs.some(r => r.off)) out.push(`<button class="btn sm ghost" type="button" data-proff="${esc(gk)}">Убрать из акции</button>`);
+  const promo = PR.kind === 'promo', inN = promo ? rs.filter(prIn).length : rs.length;
+  if (promo && !inN) {
+    out.push(`<span class="chip plain">не в акции</span>`);
+    if (gk) out.push(`<button class="btn sm ghost" type="button" data-proff="${esc(gk)}">${pc ? 'Добавить в акцию' : 'Вернуть в акцию'}</button>`);
+    return out.join('');
   }
+  if (low) out.push(`<span class="chip bad">${promo ? 'дешевле защиты — не в акции' : 'ниже защиты — не попадёт'}</span><button class="btn sm ghost" type="button" data-prlock="${esc(gk)}" title="Поставить эту цену, хоть она и ниже защиты">Всё равно</button>`);
+  else if (locked) out.push(`<span class="chip warn">ниже защиты, разрешено</span><button class="btn sm ghost" type="button" data-prunlock="${esc(gk)}">Отменить</button>`);
+  if (promo && !low) out.push(inN < rs.length ? `<span class="chip good">в акции ${fmt(inN)} из ${fmt(rs.length)}</span>` : `<span class="chip good">в акции</span>`);
+  if (pc && rs.some(r => r.o.part === 'Да*' && !prChg(r, 'part') && prIn(r))) out.push('<span class="chip plain">добавил Ozon</span>');
+  for (const w of new Set(rs.flatMap(prWarns))) out.push(`<span class="chip warn">${PR_WTXT[w]}</span>`);
+  if (!low && rs.some(prAny)) out.push('<span class="chip good">изменено</span>');
+  if (promo && gk) out.push(`<button class="btn sm ghost" type="button" data-proff="${esc(gk)}">Убрать из акции</button>`);
   return out.join('');
 }
 function renderPrices() {
@@ -6079,7 +6114,11 @@ function renderPrices() {
   if (!PR) return;
   $('#prTitle').textContent = PR.kind === 'promo' ? 'Файл акции' : 'Файл цен';
   const roles = prEdit();
-  $('#prKind').innerHTML = `«${esc(PR.name)}», лист «${esc(PR.sn)}»: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}. Меняем: ${roles.map(r => `<b>${esc(PR_SHORT[r])}</b>`).join(', ') || '—'}.` + (PR.kind === 'promo' ? ' Товары, которые вы уберёте из акции, и те, что Ozon предлагает дешевле защиты, программа уберёт из файла — в акцию они не попадут.' : '') + (PR.zip ? '' : ' Файл старого формата: сохранится как .xlsx.');
+  const pc = prCol('part');
+  $('#prKind').innerHTML = (PR.promoName ? `<b>${esc(PR.promoName)}</b>${PR.promoDates ? ' · ' + esc(PR.promoDates) : ''}<br>` : '') + `«${esc(PR.name)}», лист «${esc(PR.sn)}»: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}. Меняем: ${roles.map(r => `<b>${esc(PR_SHORT[r])}</b>`).join(', ') || '—'}${pc ? ', <b>участие в акции</b>' : ''}.`
+    + (PR.kind === 'promo' ? (pc ? ' Участие — столбец «Участие товара в акции»: «Да» — товар в акции, пусто — нет. Товары в акции дешевле защиты программа из акции уберёт.' : ' Товары, которые вы уберёте из акции, и те, что Ozon предлагает дешевле защиты, программа уберёт из файла — в акцию они не попадут.') : '') + (PR.zip ? '' : ' Файл старого формата: сохранится как .xlsx.');
+  $('#prPartBar').hidden = PR.kind !== 'promo';
+  $('#prSeg [data-v="in"]').hidden = PR.kind !== 'promo';
   setBody($('#prShop'), PRS.shops.map((n, i) => `<button type="button" data-prshop="${i}" aria-pressed="${PR.shop === i}">${esc(n)}</button>`).join(''));
   const colsSig = PR.cols.map(c => c.role + (c.ro ? '!' : '')).join('|');
   if ($('#prColList').dataset.sig !== colsSig) {
@@ -6095,7 +6134,9 @@ function renderPrices() {
   who.value = selN && PR.who !== 'vis' ? 'sel' : 'vis';
   // warnings
   const W2 = [], lows = PR.list.filter(prLow).length, wn = k => PR.list.filter(r => prWarns(r).includes(k)).length;
-  if (lows) W2.push(`<div class="manbar"><p>${PR.kind === 'promo' ? `<b>${cnt(lows, W.pos)}</b> Ozon предлагает в акцию дешевле защиты — программа уберёт их из файла акции.` : `У <b>${cnt(lows, W.pos)}</b> новая цена ниже защиты — в файл они не попадут, останется прежняя цена.`}</p><button class="btn sm" type="button" data-prview="bad">Показать</button></div>`);
+  if (lows) W2.push(`<div class="manbar"><p>${PR.kind === 'promo' ? `У <b>${cnt(lows, W.pos)}</b> в акции цена ниже защиты — программа уберёт их из ${pc ? 'акции' : 'файла акции'}.` : `У <b>${cnt(lows, W.pos)}</b> новая цена ниже защиты — в файл они не попадут, останется прежняя цена.`}</p><button class="btn sm" type="button" data-prview="bad">Показать</button></div>`);
+  const auto = pc ? PR.list.filter(r => r.o.part === 'Да*' && prIn(r)).length : 0;
+  if (auto) W2.push(`<div class="manbar"><p>Ozon сам добавил в эту акцию <b>${cnt(auto, W.pos)}</b> («Да*»). Проверьте, устраивает ли цена: если нет, нажмите у товара «Убрать из акции».</p><button class="btn sm" type="button" data-prview="in">Показать</button></div>`);
   const wo = wn('old'), wm = wn('min'), wx = wn('max');
   if (wo) W2.push(`<div class="manbar"><p>У <b>${cnt(wo, W.pos)}</b> зачёркнутая цена слишком близко к цене. Ozon требует разницу больше 5% (до 400 ₽ — больше 20 ₽, от 10 000 ₽ — больше 500 ₽).</p><button class="btn sm" type="button" data-prfix="old">Поднять зачёркнутую</button></div>`);
   if (wm) W2.push(`<div class="manbar"><p>У <b>${cnt(wm, W.pos)}</b> ограничение для акций выше новой цены.</p><button class="btn sm" type="button" data-prfix="min">Опустить до цены</button></div>`);
@@ -6111,22 +6152,22 @@ function renderPrices() {
   $('#prHeadRow').innerHTML = `<tr><th class="c"><input type="checkbox" data-prall${allSel ? ' checked' : ''} aria-label="Отметить все в списке"></th><th>Товар</th><th>Закупка → защита</th>${roles.map(r => `<th class="num">${esc(PR_SHORT[r])}</th>`).join('')}<th>Что с ним</th></tr>`;
   const html = [];
   for (const g of vis.slice(0, PR.lim)) {
-    const cost = prCost(g), f = prFloor(g), off = PR.kind === 'promo' && g.rows.every(r => r.off), open = PR.open.has(g.k) && g.rows.length > 1;
-    html.push(`<tr data-g="${esc(g.k)}"${off ? ' class="off"' : ''}><td class="c"><input type="checkbox" data-prsel="${esc(g.k)}"${PR.sel.has(g.k) ? ' checked' : ''} aria-label="Отметить ${esc(shortModel(g.model))}"></td>
-      <td><div class="pm">${thumb(g.mk, 'md', true)}<div><div class="art">${esc(shortModel(g.model))}</div>${g.name ? `<div class="nm">${esc(g.name)}</div>` : ''}<div class="szs">${g.sizes.length ? esc(g.sizes.map(sizeShow).join(' · ')) : cnt(g.rows.length, W.art)}${g.rows.length > 1 ? ` <button class="exp" type="button" data-prexp="${esc(g.k)}" aria-expanded="${open}">${open ? 'свернуть' : 'по размерам'}</button>` : ''}</div></div></div></td>
+    const cost = prCost(g), f = prFloor(g), off = PR.kind === 'promo' && !g.rows.some(prIn), open = PR.open.has(g.k) && g.rows.length > 1;
+    html.push(`<tr data-g="${esc(g.k)}"${off ? ' class="off"' : ''}><td class="c"><input type="checkbox" data-prsel="${esc(g.k)}"${PR.sel.has(g.k) ? ' checked' : ''} aria-label="Отметить ${esc(g.model)}"></td>
+      <td><div class="pm">${thumb(g.mk, 'md', true)}<div><div class="art">${esc(g.model)}</div>${g.name ? `<div class="nm">${esc(g.name)}</div>` : ''}<div class="szs">${g.sizes.length ? esc(g.sizes.map(sizeShow).join(' · ')) : cnt(g.rows.length, W.art)}${g.rows.length > 1 ? ` <button class="exp" type="button" data-prexp="${esc(g.k)}" aria-expanded="${open}">${open ? 'свернуть' : 'по размерам'}</button>` : ''}</div></div></div></td>
       <td class="cost"><input class="in qin mono" data-prcost="${esc(g.k)}" value="${cost ? esc(String(cost)) : ''}" placeholder="закупка" inputmode="numeric" aria-label="Закупка, ₽"><small>${f ? 'не ниже ' + rub(f) : 'закупка не известна'}</small></td>
       ${roles.map(role => `<td class="num"><div class="was">${role === 'promo' && g.rows.some(r => r.o.maxp) ? `макс. ${prRange(g.rows.map(r => r.o.maxp))} · ` : ''}было ${prRange(g.rows.map(r => r.o[role]))}${g.rows.some(r => prChg(r, role)) && new Set(g.rows.map(r => r.v[role])).size > 1 ? ` → <b>${prRange(g.rows.map(r => prEv(r, role)))}</b>` : ''}</div>${prInput(g.rows, role, `data-prg="${esc(g.k)}"`)}</td>`).join('')}
       <td class="st">${prStatus(g.rows, g.k)}</td></tr>`);
     if (open) for (const r of g.rows) {
       const ix = PR.list.indexOf(r);
-      html.push(`<tr class="sub${PR.kind === 'promo' && r.off ? ' off' : ''}"><td></td><td><span class="art">${esc(r.a)}</span></td><td></td>${roles.map(role => `<td class="num"><div class="was">было ${r.o[role] != null ? fmt(r.o[role]) : '—'}</div>${prInput([r], role, `data-prr="${ix}"`)}</td>`).join('')}<td class="st">${[...new Set(prWarns(r))].map(w => `<span class="chip warn">${PR_WTXT[w]}</span>`).join('')}${prLow(r) ? '<span class="chip bad">ниже защиты</span>' : ''}</td></tr>`);
+      html.push(`<tr class="sub${PR.kind === 'promo' && !prIn(r) ? ' off' : ''}"><td></td><td><span class="art">${esc(r.a)}</span></td><td></td>${roles.map(role => `<td class="num"><div class="was">было ${r.o[role] != null ? fmt(r.o[role]) : '—'}</div>${prInput([r], role, `data-prr="${ix}"`)}</td>`).join('')}<td class="st">${[...new Set(prWarns(r))].map(w => `<span class="chip warn">${PR_WTXT[w]}</span>`).join('')}${prLow(r) ? '<span class="chip bad">ниже защиты</span>' : ''}${PR.kind === 'promo' ? `<button class="btn sm ghost" type="button" data-proffr="${ix}">${prIn(r) ? 'Убрать из акции' : 'Добавить в акцию'}</button>` : ''}</td></tr>`);
     }
   }
-  setBody($('#prBody'), html.join('') || `<tr><td colspan="${4 + roles.length}" class="empty">${PR.view === 'chg' ? 'Пока ничего не изменено' : PR.view === 'bad' ? 'Проблем нет' : 'Ничего не найдено'}</td></tr>`);
+  setBody($('#prBody'), html.join('') || `<tr><td colspan="${4 + roles.length}" class="empty">${PR.view === 'chg' ? 'Пока ничего не изменено' : PR.view === 'bad' ? 'Проблем нет' : PR.view === 'in' ? 'В акции пока нет товаров' : 'Ничего не найдено'}</td></tr>`);
   const mb = $('#prMore'); mb.hidden = vis.length <= PR.lim; mb.textContent = `Показать ещё (${fmt(vis.length - PR.lim)})`;
   const P = prPlan();
   $('#prFootSum').innerHTML = PR.kind === 'promo'
-    ? `В акции будет <b>${cnt(PR.list.length - P.drop.size, W.pos)}</b> из ${fmt(PR.list.length)}${P.chg ? `, цена изменена у ${fmt(P.chg)}` : ''}${P.drop.size ? ` · убрано ${fmt(P.drop.size)}` : ''}`
+    ? `В акции будет <b>${cnt(P.inN, W.pos)}</b> из ${fmt(PR.list.length)}${P.off ? ` · убрано вами ${fmt(P.off)}` : ''}${P.low ? ` · дешевле защиты ${fmt(P.low)} — не войдут` : ''}${P.chg ? ` · изменено строк ${fmt(P.chg)}` : ''}${PR.saved && P.chg ? ' · файл сохранён' : ''}`
     : `Изменено <b>${cnt(P.chg, W.pos)}</b>${P.low ? ` · ниже защиты ${fmt(P.low)} — не попадут` : ''}${PR.saved && P.chg ? ' · файл сохранён' : ''}`;
   placeThumbs();
 }
@@ -6148,7 +6189,7 @@ function prTyped(el) {
 document.addEventListener('change', e => {
   const t = e.target; if (!t.closest || !t.closest('#pane-prices')) return;
   if (t.matches('.prin')) { if (PR) prTyped(t); return; }
-  if (t.dataset.prcost != null) { const k = t.dataset.prcost, v = pnum(t.value), g = PR && PR.groups.find(x => x.k === k), auto = g && S.price ? parseArt(g.rows[0].a).price : 0; if (v > 0 && v !== auto) PRS.cost[k] = Math.round(v); else delete PRS.cost[k]; saveMeta('meta/prices'); renderPrices(); return; }
+  if (t.dataset.prcost != null) { const k = t.dataset.prcost, v = pnum(t.value), g = PR && PR.groups.find(x => x.k === k), auto = g ? prAutoCost(g.rows[0].a) : 0; if (v > 0 && v !== auto) PRS.cost[k] = Math.round(v); else delete PRS.cost[k]; saveMeta('meta/prices'); renderPrices(); return; }
   if (t.dataset.prcol != null) { const c = PR.cols[+t.dataset.prcol]; if (t.value) for (const o of PR.cols) if (o !== c && o.role === t.value) o.role = ''; c.role = t.value; c.ro = false; prRows(PR); renderPrices(); return; }
   if (t.dataset.prsel != null) { if (t.checked) PR.sel.add(t.dataset.prsel); else PR.sel.delete(t.dataset.prsel); renderPrices(); return; }
   if (t.dataset.prall != null) { for (const g of prVisible()) { if (t.checked) PR.sel.add(g.k); else PR.sel.delete(g.k); } renderPrices(); return; }
@@ -6171,7 +6212,14 @@ document.addEventListener('click', e => {
   const grp = k => (PR.groups.find(g => g.k === k) || {rows: []}).rows;
   if (t.dataset.prlock) { for (const r of grp(t.dataset.prlock)) r.lock = true; prTouch(); return; }
   if (t.dataset.prunlock) { for (const r of grp(t.dataset.prunlock)) r.lock = false; prTouch(); return; }
-  if (t.dataset.proff) { const rs = grp(t.dataset.proff), off = !rs.every(r => r.off); for (const r of rs) r.off = off; prTouch(); return; }
+  if (t.dataset.proff) { const rs = grp(t.dataset.proff), on = !rs.some(prIn); for (const r of rs) prSetIn(r, on); prTouch(); return; }
+  if (t.dataset.proffr != null) { const r = PR.list[+t.dataset.proffr]; if (r) { prSetIn(r, !prIn(r)); prTouch(); } return; }
+  if (t.dataset.prpart != null) {
+    const on = t.dataset.prpart === '1', gs = $('#prWho').value === 'sel' ? PR.groups.filter(g => PR.sel.has(g.k)) : prVisible();
+    if (!gs.length) { toast('Сначала отметьте товары галочками'); return; }
+    let n = 0; for (const g of gs) for (const r of g.rows) if (prIn(r) !== on) { prSetIn(r, on); n++; }
+    toast(n ? `${on ? 'Добавлено в акцию' : 'Убрано из акции'}: ${cnt(n, W.pos)}` : 'Ничего не изменилось'); prTouch(); return;
+  }
   if (t.dataset.prfix) {
     const k = t.dataset.prfix; let n = 0;
     for (const r of PR.list) {
@@ -6196,7 +6244,7 @@ $('#prBulk').addEventListener('submit', e => {
   const gs = who === 'sel' ? PR.groups.filter(g => PR.sel.has(g.k)) : prVisible();
   if (!gs.length) { toast(who === 'sel' ? 'Сначала отметьте товары галочками' : 'В списке нет товаров'); return; }
   let n = 0, skip = 0;
-  for (const g of gs) for (const r of g.rows) { if (PR.kind === 'promo' && r.off) continue; const v = prCalc(r, role, p, base, rnd); if (v === null) { skip++; continue; } prSet(r, role, v); n++; }
+  for (const g of gs) for (const r of g.rows) { if (PR.kind === 'promo' && !prCol('part') && r.off) continue; const v = prCalc(r, role, p, base, rnd); if (v === null) { skip++; continue; } prSet(r, role, v); n++; }
   const why = base === 'cost' || base === 'floor' ? 'не известна закупка' : 'нет цены, от которой считать';
   toast(n ? `${PR_SHORT[role]}: изменено ${cnt(n, W.pos)}${skip ? ` · у ${fmt(skip)} ${why}` : ''}` : `Ничего не изменилось: ${why}`, 6000);
   diag('prices', 'bulk', {role, expr: $('#prExpr').value, base, rnd, who, groups: gs.length, n, skip});
