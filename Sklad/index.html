@@ -938,6 +938,18 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
   .toast .ti svg path{animation:none;stroke-dashoffset:0}
 }
 /* ============ Ozon API ============ */
+:root{--money-bar:#B08A3E}
+.mlist{display:grid;margin-top:8px}
+.mrow{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(90px,1fr) 118px;gap:14px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--line);border-radius:6px}
+.mrow:hover{background:var(--surface-2)}
+.mname b{display:block;font-weight:600}
+.mname span{display:block;font-size:12.5px;color:var(--muted)}
+.mbar{display:block;height:10px;background:var(--surface-2);border-radius:0 4px 4px 0;overflow:hidden}
+.mbar i{display:block;height:100%;background:var(--money-bar);border-radius:0 4px 4px 0}
+.mval{font:600 14px/1.25 var(--f-mono);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mval small{display:block;font:500 12px/1.2 var(--f-ui);color:var(--muted)}
+#ozMoney h4{font:600 15px/1.3 var(--f-ui)}
+@media (max-width:640px){.mrow{grid-template-columns:1fr auto}.mrow .mbar{grid-column:1/-1;order:3}}
 .ozf{grid-template-columns:150px minmax(0,1fr) minmax(0,1.6fr) auto auto;align-items:end;max-width:none}
 .ozf .fld b{color:var(--ink);font-size:15px;padding:10px 0}
 @media (max-width:900px){.ozf{grid-template-columns:1fr 1fr}.ozf .fld:first-child{grid-column:1/-1}}
@@ -945,6 +957,8 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
 .ozpshop h4{margin:0 0 6px;font:600 15px/1.3 var(--f-ui)}
 #ozRetList .arow .row .btn{min-height:30px}
 /* ============ prices ============ */
+.prlist summary{cursor:pointer;color:var(--ink);font-weight:600}
+.prlist textarea{width:100%;max-width:640px;margin-top:8px;font-size:14px;resize:vertical}
 .prhow p{margin:8px 0 0;max-width:72ch;color:var(--muted)}
 .prhow summary,#prCols summary{cursor:pointer;color:var(--ink);font-weight:600}
 .prcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px 12px;margin-top:10px}
@@ -1358,6 +1372,15 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
           <button class="btn ghost" type="button" id="anReload">Пересчитать</button>
         </div>
       </div>
+      <div class="card" id="ozMoney" hidden>
+        <div class="lhead"><h3>Деньги в Ozon: куда уходят и зачем</h3>
+          <div class="seg" role="group" aria-label="Срок" id="ozmPer"><button type="button" data-per="7" aria-pressed="false">7 дней</button><button type="button" data-per="30" aria-pressed="true">30 дней</button><button type="button" data-per="m" aria-pressed="false">Этот месяц</button><button type="button" data-per="pm" aria-pressed="false">Прошлый месяц</button></div>
+          <select class="in sortsel" id="ozmShop" aria-label="Магазин" hidden></select>
+          <button class="btn primary" type="button" id="ozmGo"><svg class="ic"><use href="#i-an"/></svg>Посчитать</button>
+        </div>
+        <p class="hint small" id="ozmProg" style="margin:0"></p>
+        <div id="ozmBody"></div>
+      </div>
       <div class="card" id="anEmpty" hidden>
         <h3>Пока нет истории продаж</h3>
         <p class="hint">Её можно набрать двумя способами: каждый день загружать лист подбора на вкладке «Заказы» (история копится сама) или сразу загрузить выгрузку заказов из кабинета Озона за 1–3 месяца кнопкой выше. Нужны колонки с датой заказа, артикулом и количеством; колонка статуса поможет не считать отменённые заказы.</p>
@@ -1402,8 +1425,10 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
       <div class="card">
         <div class="lhead"><h2>Цены на Ozon</h2><span class="sum" id="prSum"></span></div>
         <p class="hint">Цены меняются через Excel-файл Ozon. Скачайте его в кабинете и откройте здесь. Поменяйте цены точно или процентом, сразу всем или по одной, и сохраните. Готовый файл загрузите обратно в кабинет Ozon. Программа меняет в файле только цены, всё остальное остаётся как было.</p>
+        <div class="row mt" id="prOzRow" hidden></div>
+        <p class="hint small" id="prOzLoad" hidden></p>
         <div class="row mt">
-          <button class="btn primary" type="button" id="prOpenBtn"><svg class="ic"><use href="#i-up"/></svg>Открыть файл Ozon</button>
+          <button class="btn" type="button" id="prOpenBtn"><svg class="ic"><use href="#i-up"/></svg>Открыть файл Ozon</button>
           <button class="btn ghost" type="button" id="prCloseBtn" hidden>Закрыть файл</button>
         </div>
         <details class="small mt prhow"><summary>Где взять файл</summary>
@@ -1445,6 +1470,13 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
           <button class="btn primary" type="submit">Применить</button>
         </form>
         <div class="row mt" id="prPartBar" hidden><span class="hint small" style="margin:0">Участие в акции для выбранных в «Кому»:</span><button class="btn sm" type="button" data-prpart="1">Добавить в акцию</button><button class="btn sm" type="button" data-prpart="0">Убрать из акции</button></div>
+        <details class="small mt prlist" id="prListBox" hidden><summary>Добавить в акцию по списку</summary>
+          <p class="hint small">Вставьте артикулы, по одному в строке: можно скопировать столбец из Excel. Через пробел или табуляцию можно указать цену по акции. Артикул без размера отметит все размеры модели. Список можно взять и из файла.</p>
+          <textarea class="in mono" id="prListText" rows="5" spellcheck="false" placeholder="A04-1400-APASH-1-46&#10;A03-1400-PUSH-10    3990"></textarea>
+          <div class="row mt"><button class="btn primary sm" type="button" data-prlist="add">Добавить в акцию</button><button class="btn sm" type="button" data-prlist="only">Оставить в акции только их</button><button class="btn sm ghost" type="button" data-prlist="file">Список из файла…</button></div>
+          <input type="file" id="prListFile" accept=".xlsx,.xls,.xlsm,.ods,.csv,.txt,.tsv" hidden>
+          <p class="hint small" id="prListRes"></p>
+        </details>
         <p class="hint small" id="prExprHint">Число — точная цена. С процентом — скидка или наценка: «-15%» дешевле на 15%, «+10%» дороже на 10%. Со знаком без процента — рубли: «-200» дешевле на 200 ₽. Так же можно писать прямо в строке товара.</p>
         <div id="prWarn"></div>
         <div class="lhead mt">
@@ -1744,7 +1776,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-10.2';
+const APP_VERSION = '2026-10-11.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -3657,7 +3689,7 @@ function renderAllInner() {
   badge($('#bRecv'), go.length);
   renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog(); renderOz();
   if (ui.tab === 'settings') { renderSuppliers(); renderModelsSet(); }
-  if (ui.tab === 'an') renderAn(p);
+  if (ui.tab === 'an') { renderAn(p); renderOzMoney(); }
   if (ui.tab === 'home') renderHome(p, ships, rows, go);
   LAST = {p, ships, rows};
   if (ui.flash) { const tr = $(`#rcBody tr[data-k="${CSS.escape(ui.flash)}"]`); if (tr) { tr.classList.remove('flash'); void tr.offsetWidth; tr.classList.add('flash'); } ui.flash = null; }
@@ -5302,7 +5334,7 @@ const TOUR = [
   {tab: 'recv', sel: ['#recvHome .card', '#recvView .card'], h: 'Приёмка мешка', t: 'Мешок приехал: выберите его здесь и считайте по факту. У каждой модели фото из листа подбора, шубу легко узнать. Нажимайте «+» у размера с бирки. Чужую шубу добавьте в «Не из заказа»: на склад или вернуть. Нажмите на фото, чтобы открыть его крупно. Если пересчитывать некогда, «Без проверки» примет мешок как заказано.'},
   {tab: 'stock', sel: ['#pane-stock .card'], h: 'Склад', t: 'Остатки по моделям и размерам. Жёлтым и красным подсвечено то, что давно не продаётся. Ниже пересчёт, можно сканером штрихкодов. Перед заменой склада программа покажет недостачу и излишек.'},
   {tab: 'an', sel: ['#pane-an .card'], h: 'Анализ продаж', t: 'По истории продаж программа подскажет, что закупить впрок, что залежалось и стоит снизить в цене, а что продаётся хорошо, но на складе нет. Видны и перекосы по размерам.'},
-  {tab: 'prices', sel: ['#prOpenBtn', '#pane-prices .card'], h: 'Цены на Ozon через Excel', t: 'Скачайте в кабинете Ozon файл цен или файл акции и откройте его здесь. Цену можно поменять сразу всем или отмеченным: точной суммой, процентом или рублями. Защита не даст поставить цену ниже закупки с наценкой. Сохраните файл и загрузите его обратно в Ozon. Прежние цены программа запомнит, их можно вернуть после акции.'},
+  {tab: 'prices', sel: ['#prOpenBtn', '#pane-prices .card'], h: 'Цены и акции', t: 'С ключом Ozon нажмите «Цены из Ozon» или «Товары» у акции: всё откроется прямо здесь, файлы скачивать не нужно. Меняйте цену сразу всем или отмеченным: точной суммой, процентом или рублями, добавляйте и убирайте товары в акции, хоть списком. Защита не даст поставить цену ниже закупки с наценкой. «Создать файл для Ozon» — и загрузите его в кабинете. Прежние цены программа запомнит.'},
   {tab: 'settings', sel: [() => $('#supList').closest('.card'), '#pane-settings .card'], h: 'Настройки', t: 'Телефоны поставщиков для WhatsApp, правила сравнения артикулов (русские и английские буквы, нули в начале) и резервная копия всех данных в один файл. Здесь же включается режим сотрудника для телефона приёмщика.'},
   {sel: ['#tourOpen'], h: 'Готово', t: 'Каждый день по кругу: Заказы → Закупка → Приёмка. Это обучение всегда можно открыть снова вот этой кнопкой.', last: true},
 ];
@@ -5694,7 +5726,7 @@ function prParse(wb, name, buf) {
   const zip = buf[0] === 0x50 && buf[1] === 0x4B;
   let promoName = '', promoDates = '';
   for (const n of wb.SheetNames) { if (n === sn) continue; const w = wb.Sheets[n]; if (!w || !w['!ref']) continue; for (const r of XLSX.utils.sheet_to_json(w, {header: 1, raw: false, defval: ''}).slice(0, 15)) for (const v of r) { const t = String(v).trim(); let m; if ((m = t.match(/^Название акции:\s*(.+)/))) promoName = m[1].slice(0, 120); if ((m = t.match(/^Даты акции:\s*(.+)/))) promoDates = m[1].slice(0, 120); } }
-  const P = {name, buf, zip, sn, rows, hdr, r0: rg.s.r, cols, list: [], promoName, promoDates, groups: [], shop: 0, sel: new Set(), open: new Set(), view: 'all', q: '', lim: 150, snap: '', snapItems: new Map(), saved: true, kind: 'price'};
+  const P = {name, buf, zip, sn, rows, hdr, r0: rg.s.r, cols, list: [], promoName, promoDates, marks: best.marks ?? null, groups: [], shop: 0, sel: new Set(), open: new Set(), view: 'all', q: '', lim: 150, snap: '', snapItems: new Map(), saved: true, kind: 'price'};
   prRows(P);
   const names = P.list.map(r => r.n).filter(Boolean), two = names.filter(n => /^\s*["«'“„]\s*2\s*["»'”“]/.test(n)).length;
   P.shop = two && two >= names.length / 2 ? 1 : 0;
@@ -5716,8 +5748,8 @@ const prEdit = () => PR_EDIT.filter(r => { const c = prCol(r); return c && !c.ro
 // the products of the file; the changes survive a new choice of columns
 function prRows(P) {
   const J = role => { const c = P.cols.find(x => x.role === role); return c ? c.j : -1; };
-  const ja = J('art'), jn = J('name'), js = J('sku'), jp = J('part');
-  const nums = ['price', 'old', 'min', 'promo', 'maxp', 'site', 'cost'].map(r => [r, J(r)]).filter(x => x[1] >= 0);
+  const ja = J('art'), jn = J('name'), js = J('sku'), jp = J('part'), jpid = J('pid');
+  const nums = ['price', 'old', 'min', 'promo', 'maxp', 'site', 'cost', 'stock'].map(r => [r, J(r)]).filter(x => x[1] >= 0);
   const curJ = Object.fromEntries(P.cols.filter(c => c.role && c.cur != null).map(c => [c.role, c.cur]));
   const was = new Map(P.list.map(r => [r.i, r]));
   P.kind = jp >= 0 || nums.some(x => x[0] === 'promo' || x[0] === 'maxp') ? 'promo' : 'price';
@@ -5734,7 +5766,7 @@ function prRows(P) {
     if (/\s/.test(a) && !nums.some(([r]) => o[r] != null)) continue;
     if (a.length > 80) continue;
     const old = was.get(i);
-    const r = {i, R: P.r0 + i, a, n: jn >= 0 ? String(row[jn] ?? '').trim() : '', sku: js >= 0 ? String(row[js] ?? '').trim() : '', o, txt, v: old ? old.v : {}, off: old ? old.off : false, lock: old ? old.lock : false};
+    const r = {i, R: P.r0 + i, a, n: jn >= 0 ? String(row[jn] ?? '').trim() : '', sku: js >= 0 ? String(row[js] ?? '').trim() : '', pid: jpid >= 0 ? +row[jpid] || 0 : 0, o, txt, v: old ? old.v : {}, off: old ? old.off : false, lock: old ? old.lock : false};
     const pa = parseRaw(a), k = pa.mkey || normKey(a);
     let g = gm.get(k);
     if (!g) { g = {k, model: pa.model || a, mk: parseArt(a).mkey, rows: [], n: ''}; gm.set(k, g); P.groups.push(g); }
@@ -5810,7 +5842,7 @@ function prCalc(r, role, p, base, rnd) {
   return y > 0 ? y : null;
 }
 function prSet(r, role, v) { if (v === undefined || v === r.o[role]) delete r.v[role]; else r.v[role] = v; }
-function prTouch() { PR.saved = false; renderPrices(); }
+function prTouch() { PR.saved = false; PR.done = false; renderPrices(); }
 
 /* ---------- writing the file: only the changed cells, inside Ozon's own xlsx ---------- */
 const xmlUn = s => String(s).replace(/&(amp|lt|gt|quot|apos|#(\d+)|#x([0-9a-f]+));/gi, (m, n, d, h) => d ? String.fromCodePoint(+d) : h ? String.fromCodePoint(parseInt(h, 16)) : ({amp: '&', lt: '<', gt: '>', quot: '"', apos: "'"})[n.toLowerCase()]);
@@ -6054,11 +6086,12 @@ async function prSave(mode) {
   if (PR.kind === 'promo' && P.drop.size >= PR.list.length) { toast('В файле акции не осталось ни одного товара — сохранять нечего'); return; }
   if (P.warn && !mode) {
     const el = $('#prConfirm');
-    el.innerHTML = `<p>У ${cnt(P.warn, W.pos)} есть ошибки, из-за которых Ozon может не принять эти строки: ${[...new Set(PR.list.flatMap(prWarns))].map(w => PR_WTXT[w]).join(', ')}. Программа может поправить их сама: поднять зачёркнутую цену, опустить ограничение до цены, цену по акции — до максимальной.</p><div class="row"><button class="btn primary" type="button" data-prsave="fix">Исправить и сохранить</button><button class="btn" type="button" data-prsave="asis">Сохранить как есть</button><button class="btn ghost" type="button" data-prsave="no">Отмена</button></div>`;
+    el.innerHTML = `<p>У ${cnt(P.warn, W.pos)} есть ошибки, из-за которых Ozon может не принять эти строки: ${[...new Set(PR.list.flatMap(prWarns))].map(w => PR_WTXT[w]).join(', ')}. Программа может поправить их сама: поднять зачёркнутую цену, опустить ограничение до цены, цену по акции — до максимальной.</p><div class="row"><button class="btn primary" type="button" data-prsave="fix">Исправить и ${PR.src === 'api' ? 'создать файл' : 'сохранить'}</button><button class="btn" type="button" data-prsave="asis">${PR.src === 'api' ? 'Создать файл как есть' : 'Сохранить как есть'}</button><button class="btn ghost" type="button" data-prsave="no">Отмена</button></div>`;
     el.hidden = false; el.scrollIntoView({block: 'nearest', behavior: motionOk() ? 'smooth' : 'auto'});
     return;
   }
   $('#prConfirm').hidden = true;
+  if (PR.src === 'api') { await ensureXLSX(); await prMakeFile(); return; }
   let out;
   try { await ensureXLSX(); out = PR.zip ? prPatchZip(PR.buf, PR.sn, P.edits, P.drop) : prPatchBook(PR.buf, PR.sn, P.edits, P.drop); }
   catch (e) { diag('prices', 'save-fail', String((e && e.message) || e).slice(0, 200)); toast('Не получилось собрать файл: ' + ((e && e.message) || 'ошибка') + '. Скачайте файл в Ozon заново и попробуйте ещё раз.', 9000); return; }
@@ -6066,7 +6099,7 @@ async function prSave(mode) {
   const ok = await saveFile(name, out, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Не получилось сохранить файл. Попробуйте ещё раз.');
   if (!ok) return;
   if (PR.kind === 'price' && P.snap.length) prSnapSave(P.snap);
-  PR.saved = true;
+  PR.saved = true; PR.done = true;
   const shop = PRS.shops[PR.shop] || '';
   log(`Цены${shop ? ' «' + shop + '»' : ''}: сохранён файл для Ozon — ${PR.kind === 'promo' ? `в акции ${cnt(PR.list.length - P.drop.size, W.pos)}, убрано ${fmt(P.drop.size)}` : `изменено ${cnt(P.chg, W.pos)}`}`);
   diag('prices', 'save', {kind: PR.kind, rows: PR.list.length, chg: P.chg, drop: P.drop.size, low: P.low, zip: PR.zip, bytes: out.length});
@@ -6122,6 +6155,7 @@ async function prOpen(f, sure) {
   } catch (e) { toast((e && e.message) || 'Не получилось прочитать файл', 8000); return; }
   if (!P || !P.list.length) { diag('prices', 'open-fail', {name: f.name}); toast(`В «${trunc(f.name, 40)}» не нашлось столбцов «Артикул» и цены. Нужен файл цен или файл акции из кабинета Ozon.`, 9000); return; }
   PR = P;
+  tplLearn(P);
   diag('prices', 'open', {name: f.name, kind: P.kind, rows: P.list.length, models: P.groups.length, cols: P.cols.filter(c => c.role).map(c => c.role + (c.green ? '*' : '')).join(','), zip: P.zip});
   toast(`Открыт ${P.kind === 'promo' ? 'файл акции' : 'файл цен'}: ${cnt(P.list.length, W.pos)}, ${cnt(P.groups.length, W.model)}`);
   renderPrices();
@@ -6174,17 +6208,28 @@ function renderPrices() {
   const ex = S.price ? 1900 : 0;
   $('#prFloorEx').textContent = (S.price ? `Например, закупка 1 900 ₽ → цена не ниже ${rub(prFloorOf(1900))}.` : 'Сейчас число в артикуле не считается закупкой (Настройки → «Как читать артикул»): впишите закупку у товаров сами.') + (ex && !PRS.pct && !PRS.add ? ' При нулевой наценке защита не даст продавать дешевле закупки, но комиссию и доставку Ozon не покроет.' : '');
   renderPrSnaps();
-  $('#prOpenBtn').lastChild.textContent = PR ? 'Открыть другой файл' : 'Открыть файл Ozon';
-  $('#prCloseBtn').hidden = !PR;
+  $('#prOpenBtn').lastChild.textContent = PR && PR.src !== 'api' ? 'Открыть другой файл' : 'Открыть файл Ozon';
+  const shops = ozShops();
+  $('#prOzRow').hidden = !shops.length;
+  setBody($('#prOzRow'), shops.map(sh => `<button class="btn primary" type="button" data-propen="${sh.i}"><svg class="ic"><use href="#i-tag"/></svg>Цены из Ozon${shops.length > 1 ? ' · ' + esc(ozName(sh.i)) : ''}</button>`).join('') + `<span class="hint small" style="margin:0">Все товары с ценами прямо из Ozon. Файл скачивать не нужно.</span>`);
+  renderOzLoad();
+  $('#prCloseBtn').hidden = !PR; $('#prCloseBtn').lastChild.textContent = PR && PR.src === 'api' ? 'Закрыть список' : 'Закрыть файл';
   $('#prCard').hidden = !PR;
   $('#prSum').textContent = PR ? `${PR.name} · ${cnt(PR.list.length, W.pos)}` : '';
   if (!PR) return;
-  $('#prTitle').textContent = PR.kind === 'promo' ? 'Файл акции' : 'Файл цен';
+  const api = PR.src === 'api';
+  $('#prTitle').textContent = api ? (PR.kind === 'promo' ? 'Акция в Ozon' : `Цены в Ozon · ${ozName(PR.shop)}`) : PR.kind === 'promo' ? 'Файл акции' : 'Файл цен';
+  $('#prShop').hidden = api; $('#prCols').hidden = api;
+  $('#prSave').lastChild.textContent = api ? 'Создать файл для Ozon' : 'Сохранить файл для Ozon';
   const roles = prEdit();
   const pc = prCol('part');
-  $('#prKind').innerHTML = (PR.promoName ? `<b>${esc(PR.promoName)}</b>${PR.promoDates ? ' · ' + esc(PR.promoDates) : ''}<br>` : '') + `«${esc(PR.name)}», лист «${esc(PR.sn)}»: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}. Меняем: ${roles.map(r => `<b>${esc(PR_SHORT[r])}</b>`).join(', ') || '—'}${pc ? ', <b>участие в акции</b>' : ''}.`
+  if (api) $('#prKind').innerHTML = (PR.promoName ? `<b>${esc(PR.promoName)}</b>${PR.promoDates ? ' · ' + esc(PR.promoDates) : ''} · ${esc(ozName(PR.shop))}<br>` : '')
+    + (PR.kind === 'promo'
+      ? `Из Ozon: в акции ${cnt(PR.list.filter(r => PR_YES(r.o.part)).length, W.pos)}, можно добавить ${fmt(PR.list.filter(r => !PR_YES(r.o.part)).length)}. Добавляйте и убирайте товары, меняйте цену по акции, потом нажмите «Создать файл для Ozon» и загрузите его в этой акции в кабинете. Товары дешевле защиты в акцию не попадут.`
+      : `Из Ozon: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}. Меняйте цены, потом нажмите «Создать файл для Ozon» и загрузите его в кабинете: «Цены и акции» → «Цены на товары». В файл попадут только изменённые товары.`);
+  else $('#prKind').innerHTML = (PR.promoName ? `<b>${esc(PR.promoName)}</b>${PR.promoDates ? ' · ' + esc(PR.promoDates) : ''}<br>` : '') + `«${esc(PR.name)}», лист «${esc(PR.sn)}»: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}. Меняем: ${roles.map(r => `<b>${esc(PR_SHORT[r])}</b>`).join(', ') || '—'}${pc ? ', <b>участие в акции</b>' : ''}.`
     + (PR.kind === 'promo' ? (pc ? ' Участие — столбец «Участие товара в акции»: «Да» — товар в акции, пусто — нет. Товары в акции дешевле защиты программа из акции уберёт.' : ' Товары, которые вы уберёте из акции, и те, что Ozon предлагает дешевле защиты, программа уберёт из файла — в акцию они не попадут.') : '') + (PR.zip ? '' : ' Файл старого формата: сохранится как .xlsx.');
-  $('#prPartBar').hidden = PR.kind !== 'promo';
+  $('#prPartBar').hidden = PR.kind !== 'promo'; $('#prListBox').hidden = PR.kind !== 'promo';
   $('#prSeg [data-v="in"]').hidden = PR.kind !== 'promo';
   setBody($('#prShop'), PRS.shops.map((n, i) => `<button type="button" data-prshop="${i}" aria-pressed="${PR.shop === i}">${esc(n)}</button>`).join(''));
   const colsSig = PR.cols.map(c => c.role + (c.ro ? '!' : '')).join('|');
@@ -6234,8 +6279,8 @@ function renderPrices() {
   const mb = $('#prMore'); mb.hidden = vis.length <= PR.lim; mb.textContent = `Показать ещё (${fmt(vis.length - PR.lim)})`;
   const P = prPlan();
   $('#prFootSum').innerHTML = PR.kind === 'promo'
-    ? `В акции будет <b>${cnt(P.inN, W.pos)}</b> из ${fmt(PR.list.length)}${P.off ? ` · убрано вами ${fmt(P.off)}` : ''}${P.low ? ` · дешевле защиты ${fmt(P.low)} — не войдут` : ''}${P.chg ? ` · изменено строк ${fmt(P.chg)}` : ''}${PR.saved && P.chg ? ' · файл сохранён' : ''}`
-    : `Изменено <b>${cnt(P.chg, W.pos)}</b>${P.low ? ` · ниже защиты ${fmt(P.low)} — не попадут` : ''}${PR.saved && P.chg ? ' · файл сохранён' : ''}`;
+    ? `В акции будет <b>${cnt(P.inN, W.pos)}</b> из ${fmt(PR.list.length)}${P.off ? ` · убрано вами ${fmt(P.off)}` : ''}${P.low ? ` · дешевле защиты ${fmt(P.low)} — не войдут` : ''}${P.chg ? ` · изменено строк ${fmt(P.chg)}` : ''}${PR.done ? (PR.src === 'api' ? ' · файл создан' : ' · файл сохранён') : ''}`
+    : `Изменено <b>${cnt(P.chg, W.pos)}</b>${P.low ? ` · ниже защиты ${fmt(P.low)} — не попадут` : ''}${PR.done ? (PR.src === 'api' ? ' · файл создан' : ' · файл сохранён') : ''}`;
   placeThumbs();
 }
 function renderPrSnaps() {
@@ -6267,6 +6312,7 @@ document.addEventListener('change', e => {
 document.addEventListener('click', e => {
   const t = e.target.closest && e.target.closest('#pane-prices button, #pane-prices [data-prexp]'); if (!t) return;
   if (t.id === 'prOpenBtn') { $('#prFile').value = ''; $('#prFile').click(); return; }
+  if (t.dataset.propen != null) { prOpenOzon(+t.dataset.propen); return; }
   if (t.id === 'prCloseBtn') { prClose(); return; }
   if (t.dataset.snapuse) { prSnapUse(t.dataset.snapuse); return; }
   if (t.dataset.snapdel) { const id = t.dataset.snapdel; confirmIn('#prSnapConfirm', 'Удалить этот список прежних цен?', 'Удалить', () => { PRS.snaps = PRS.snaps.filter(x => x.id !== id); if (PR && PR.snap === id) { PR.snap = ''; PR.snapItems = new Map(); } saveDoc('psnap/' + id, () => null); saveMeta('meta/prices'); renderPrices(); }, true); return; }
@@ -6281,6 +6327,11 @@ document.addEventListener('click', e => {
   if (t.dataset.prunlock) { for (const r of grp(t.dataset.prunlock)) r.lock = false; prTouch(); return; }
   if (t.dataset.proff) { const rs = grp(t.dataset.proff), on = !rs.some(prIn); for (const r of rs) prSetIn(r, on); prTouch(); return; }
   if (t.dataset.proffr != null) { const r = PR.list[+t.dataset.proffr]; if (r) { prSetIn(r, !prIn(r)); prTouch(); } return; }
+  if (t.dataset.prlist) {
+    if (t.dataset.prlist === 'file') { $('#prListFile').value = ''; $('#prListFile').click(); return; }
+    prListApply(prListParse($('#prListText').value.split(/\r?\n/).map(l => l.split(/\t|;|\s{2,}|\s+(?=\d+(?:[.,]\d+)?\s*(?:₽|руб)?\s*$)/))), t.dataset.prlist === 'only');
+    return;
+  }
   if (t.dataset.prpart != null) {
     const on = t.dataset.prpart === '1', gs = $('#prWho').value === 'sel' ? PR.groups.filter(g => PR.sel.has(g.k)) : prVisible();
     if (!gs.length) { toast('Сначала отметьте товары галочками'); return; }
@@ -6301,6 +6352,37 @@ document.addEventListener('click', e => {
   if (t.dataset.prsave) { if (t.dataset.prsave === 'no') { $('#prConfirm').hidden = true; return; } prSave(t.dataset.prsave); return; }
   if (t.id === 'prSave') { prSave(); return; }
   if (t.id === 'prReset') { if (!prDirty()) { toast('Изменений нет'); return; } confirmIn('#prConfirm', 'Отменить все изменения в этом файле? Цены вернутся такими, как в файле Ozon.', 'Отменить изменения', () => { for (const r of PR.list) { r.v = {}; r.off = false; r.lock = false; } PR.saved = true; renderPrices(); }, true); return; }
+});
+// a list for a promotion: article (with or without the size) and, if given, the promotion price
+function prListParse(rows) {
+  const byA = new Map(), byM = new Map();
+  for (const g of PR.groups) { byM.set(g.k, g.rows); for (const r of g.rows) byA.set(normKey(r.a), [r]); }
+  const hits = new Map(), miss = [];
+  for (const row of rows) {
+    const cells = row.map(v => String(v ?? '').trim()).filter(Boolean);
+    if (!cells.length) continue;
+    let rs = null, at = -1;
+    for (let i = 0; i < cells.length && !rs; i++) { const k = normKey(cells[i]); rs = byA.get(k) || byM.get(parseRaw(cells[i]).mkey || k) || byM.get(k) || null; if (rs) at = i; }
+    if (!rs) { if (!/^(артикул|offer|sku|цена)/i.test(cells[0])) miss.push(cells[0]); continue; }
+    const price = cells.filter((c, i) => i !== at).map(pnum).find(v => v >= 50) || null;
+    for (const r of rs) hits.set(r, price);
+  }
+  return {hits, miss};
+}
+function prListApply({hits, miss}, only) {
+  if (!PR || PR.kind !== 'promo') return;
+  if (!hits.size) { $('#prListRes').textContent = miss.length ? `Ни один артикул не нашёлся в этой акции: ${miss.slice(0, 8).join(', ')}${miss.length > 8 ? '…' : ''}` : 'Список пуст'; return; }
+  let add = 0, priced = 0, out = 0;
+  for (const [r, price] of hits) { if (!prIn(r)) add++; prSetIn(r, true); if (price) { prSet(r, 'promo', price); priced++; } }
+  if (only) for (const r of PR.list) if (!hits.has(r) && prIn(r)) { prSetIn(r, false); out++; }
+  $('#prListRes').textContent = `Отмечено ${cnt(hits.size, W.pos)}${add ? `, из них новых в акции ${fmt(add)}` : ''}${priced ? `, с ценой из списка ${fmt(priced)}` : ''}${out ? `; убрано из акции ${fmt(out)}` : ''}.${miss.length ? ` Нет в этой акции: ${miss.slice(0, 8).join(', ')}${miss.length > 8 ? ` и ещё ${fmt(miss.length - 8)}` : ''}.` : ''}`;
+  diag('prices', 'list', {hits: hits.size, add, priced, out, miss: miss.length});
+  PR.view = 'chg'; prTouch();
+}
+$('#prListFile').addEventListener('change', async () => {
+  const f = $('#prListFile').files[0]; $('#prListFile').value = ''; if (!f || !PR) return;
+  try { const books = await readFiles([f]); prListApply(prListParse(books.flatMap(b => b.sheets.flatMap(sh => sh.rows))), false); }
+  catch (e) { toast((e && e.message) || 'Не получилось прочитать файл'); }
 });
 $('#prFile').addEventListener('change', () => { const f = $('#prFile').files[0]; $('#prFile').value = ''; if (f) prOpen(f); });
 $('#prBulk').addEventListener('submit', e => {
@@ -6388,6 +6470,9 @@ async function ozPostings(shop, since, to, status, max = 60) {
   return out;
 }
 const ozIso = ms => new Date(ms).toISOString();
+// shipments each shop gave the program: only those can be known as shipped when they leave Ozon's list
+function ozSeen() { try { const o = JSON.parse(localStorage.getItem('sklad-ozon-seen') || '{}') || {}; const x = {}; for (const [i, a] of Object.entries(o)) x[i] = new Set(a); return x; } catch { return {}; } }
+function ozSeenSave(x) { try { localStorage.setItem('sklad-ozon-seen', JSON.stringify(Object.fromEntries(Object.entries(x).map(([i, set]) => [i, [...set]])))); } catch {} }
 
 /* orders: everything waiting to be packed or handed over, from every connected shop, replaces the picking list */
 async function ozSyncOrders(manual) {
@@ -6398,7 +6483,7 @@ async function ozSyncOrders(manual) {
     for (const sh of shops) {
       for (const st of OZ_OPEN) for (const p of await ozPostings(sh, ozIso(now - 30 * DAYMS), ozIso(now + DAYMS), st)) {
         posts++; count[st] = (count[st] || 0) + 1;
-        for (const pr of p.products || []) { const a = String(pr.offer_id ?? '').trim(); if (a) lines0.push({s: String(p.posting_number), a, n: String(pr.name || ''), q: +pr.quantity || 1, sh: sh.i}); }
+        for (const pr of p.products || []) { const a = String(pr.offer_id ?? '').trim(); if (a) { lines0.push({s: String(p.posting_number), a, n: String(pr.name || ''), q: +pr.quantity || 1, sh: sh.i}); ozInfoPut(sh.i, a, pr.sku, pr.name); } }
       }
       for (const p of await ozPostings(sh, ozIso(now - 14 * DAYMS), ozIso(now + DAYMS), 'cancelled', 10)) cancelled.add(String(p.posting_number));
     }
@@ -6411,10 +6496,15 @@ async function ozSyncOrders(manual) {
   if (newBack) saveMeta('meta/ozret');
   loadList(lines0, {date: new Date().toLocaleDateString('ru-RU'), file: 'Ozon API', expected: 0, noHist: true, quiet: !manual});
   // with every shop connected Ozon knows all orders: what it no longer has is shipped or cancelled
-  const incoming = new Set(lines0.map(l => l.s)), gone = [];
-  if (shops.length >= 2) for (const [k, ln] of [...lines.items]) if (ln.s && !incoming.has(ln.s) && ln.got < ln.q) gone.push(k);
+  const incoming = new Set(lines0.map(l => l.s)), gone = [], seen = ozSeen();
+  const mine = s => shops.length >= 2 || shops.some(sh => seen[sh.i] && seen[sh.i].has(s));
+  for (const [k, ln] of [...lines.items]) if (ln.s && !incoming.has(ln.s) && ln.got < ln.q && mine(ln.s)) gone.push(k);
+  for (const l of lines0) (seen[l.sh] || (seen[l.sh] = new Set())).add(l.s);
   if (gone.length > 20 && gone.length > open / 2 && !manual) { ozMark('orders', false, `Ozon не знает ${fmt(gone.length)} отправлений из программы — проверьте и нажмите «Обновить заказы из Ozon»`); render(); return; }
   for (const k of gone) lines.remove(k);
+  const still = new Set([...lines.items.values()].map(ln => ln.s).filter(Boolean));
+  for (const i of Object.keys(seen)) seen[i] = new Set([...seen[i]].filter(x => still.has(x)));
+  ozSeenSave(seen);
   if (gone.length) log(`Ozon: убраны отправления, которых больше нет в работе (отправлены или отменены): ${fmt(gone.length)}`);
   ozMark('orders', true, '', {posts, count, shops: shops.length});
   diag('ozon', 'orders', {posts, lines: lines0.length, gone: gone.length, back: newBack, via: OZ.via});
@@ -6465,24 +6555,35 @@ function ozrLoad(d) {
 }
 // [id, shop, article, name, qty, status, date, posting, scheme]
 const ozrRow = r => ({id: String(r[0]), sh: +r[1] || 0, a: String(r[2] || ''), n: String(r[3] || ''), q: +r[4] || 1, st: String(r[5] || ''), at: +r[6] || 0, ps: String(r[7] || ''), sch: String(r[8] || '')});
+// Ozon gives returns oldest first: ask for the recent ones only, by one of the filters it understands
+const OZ_RET_F = [
+  (f, t) => ({visual_status_change_moment: {time_from: f, time_to: t}, return_schema: 'FBS'}),
+  (f, t) => ({visual_status_change_moment: {time_from: f, time_to: t}}),
+  (f, t) => ({logistic_return_date: {time_from: f, time_to: t}}),
+];
+const ozRetWhen = r => { const lg = r.logistic || {}; return Date.parse(lg.return_date || lg.final_moment || (r.visual && r.visual.change_moment) || r.returned_to_seller_date_time || r.return_date || r.accepted_from_customer_moment || '') || 0; };
 async function ozReturns(shop) {
-  const out = [];
-  const tryBody = async (filter, last) => ozFetch(shop, '/v1/returns/list', {filter, limit: 500, last_id: last});
-  let filter = {}, last = 0;
-  for (let page = 0; page < 40; page++) {
-    let j;
-    try { j = await tryBody(filter, last); }
-    catch (e) {
-      // an empty filter may be refused: then the last 60 days by the return date
-      if (e.status === 400 && !page && !Object.keys(filter).length) { filter = {logistic_return_date: {time_from: ozIso(Date.now() - 60 * DAYMS), time_to: ozIso(Date.now() + DAYMS)}}; j = await tryBody(filter, last); }
-      else throw e;
+  const from = Date.now() - 60 * DAYMS, f = ozIso(from), t = ozIso(Date.now() + DAYMS);
+  const pages = async (filter, max) => {
+    const out = []; let last = 0;
+    for (let page = 0; page < max; page++) {
+      const j = await ozFetch(shop, '/v1/returns/list', {filter, limit: 500, last_id: last});
+      const rs = ozList(j, 'returns'); out.push(...rs);
+      for (const r of rs) if (r.company_id) ozCo(shop.i, r.company_id);
+      // a filter Ozon does not know is ignored: old returns come back, then try the next filter
+      if (!page && rs.length && Object.keys(filter).length && rs.every(r => { const w = ozRetWhen(r); return w && w < from - 7 * DAYMS; })) { const e = new Error('ignored'); e.ignored = true; throw e; }
+      if (!(j.has_next || (j.result && j.result.has_next)) || !rs.length) break;
+      last = rs[rs.length - 1].id;
     }
-    const rs = ozList(j, 'returns');
-    out.push(...rs);
-    if (!(j.has_next || (j.result && j.result.has_next)) || !rs.length) break;
-    last = rs[rs.length - 1].id;
+    return out;
+  };
+  const start = OZ.st.retF != null ? +OZ.st.retF : 0;
+  for (let k = start; k < OZ_RET_F.length; k++) {
+    try { const out = await pages(OZ_RET_F[k](f, t), 20); if (OZ.st.retF !== k) { OZ.st.retF = k; try { localStorage.setItem(OZS, JSON.stringify(OZ.st)); } catch {} } return out; }
+    catch (e) { if (!(e.ignored || e.status === 400)) throw e; }
   }
-  return out;
+  // no filter worked: the newest are at the end
+  return (await pages({}, 60)).filter(r => ozRetWhen(r) >= from);
 }
 async function ozSyncReturns(manual) {
   const shops = ozShops(); if (!shops.length) return;
@@ -6492,7 +6593,7 @@ async function ozSyncReturns(manual) {
       const pr = r.product || (Array.isArray(r.products) ? r.products[0] : null) || r, lg = r.logistic || {}, vs = (r.visual && r.visual.status) || {};
       const sch = String(r.schema || r.scheme || '');
       if (/fbo/i.test(sch)) continue;   // FBO returns go back to Ozon's warehouse, not to ours
-      const when = Date.parse(lg.return_date || lg.final_moment || r.returned_to_seller_date_time || r.return_date || (r.visual && r.visual.change_moment) || r.accepted_from_customer_moment || '') || 0;
+      const when = ozRetWhen(r);
       rows.push([String(r.id ?? r.return_id ?? ''), sh.i, String(pr.offer_id ?? '').trim(), String(pr.name || pr.product_name || ''), +pr.quantity || +r.quantity || 1, String(vs.display_name || r.status_name || r.status || ''), when, String(r.posting_number || ''), sch]);
     }
   } catch (e) { ozMark('returns', false, e.message); diag('ozon', 'returns-fail', String(e.message).slice(0, 200)); if (manual) toast(e.message, 12000); render(); return; }
@@ -6517,7 +6618,7 @@ async function ozSyncHist(manual) {
       const t = Date.parse(p.in_process_at || p.shipment_date || ''); if (!t) continue;
       const iso = isoOf(new Date(t)); if (iso < from) continue;
       const day = byDay.get(iso) || byDay.set(iso, new Map()).get(iso);
-      for (const pr of p.products || []) { const a = String(pr.offer_id ?? '').trim(), k = normKey(a); if (!k) continue; const e = day.get(k); if (e) e[1] = round(e[1] + (+pr.quantity || 1)); else day.set(k, [a, +pr.quantity || 1]); }
+      for (const pr of p.products || []) { const a = String(pr.offer_id ?? '').trim(), k = normKey(a); if (!k) continue; ozInfoPut(sh.i, a, pr.sku, pr.name); const e = day.get(k); if (e) e[1] = round(e[1] + (+pr.quantity || 1)); else day.set(k, [a, +pr.quantity || 1]); }
     }
   } catch (e) { ozMark('hist', false, e.message, {done: st.done}); diag('ozon', 'hist-fail', String(e.message).slice(0, 200)); if (manual) toast(e.message, 12000); return; }
   const isos = [...byDay.keys()].sort();
@@ -6533,25 +6634,16 @@ async function ozSyncHist(manual) {
 
 /* prices and promotions right now, to look at: changes still go through Ozon's Excel file */
 async function ozSyncPrices(manual) {
-  const shops = ozShops(); if (!shops.length || OZ.prBusy) return;
+  const shops = ozShops(); if (!shops.length || OZ.prBusy || OZ.load) return;
   OZ.prBusy = true; renderOzPrices();
   const out = [];
   for (const sh of shops) {
     const x = {i: sh.i, items: [], actions: [], err: ''};
     try {
-      let cursor = '';
-      for (let page = 0; page < 30; page++) {
-        const j = await ozFetch(sh, '/v5/product/info/prices', {cursor, filter: {visibility: 'ALL'}, limit: 1000});
-        const its = ozList(j, 'items');
-        for (const it of its) {
-          const p = it.price || {};
-          x.items.push({a: String(it.offer_id ?? '').trim(), price: pnum(p.price), old: pnum(p.old_price), min: pnum(p.min_price), mkt: pnum(p.marketing_seller_price) || pnum(p.marketing_price)});
-        }
-        cursor = j.cursor || (j.result && j.result.cursor) || '';
-        if (!cursor || !its.length) break;
-      }
+      x.items = await ozItems(sh, manual);
       const ja = await ozFetch(sh, '/v1/actions', null, 'GET');
-      x.actions = ozList(ja, 'result').map(a => ({id: a.id, t: String(a.title || ''), from: Date.parse(a.date_start || '') || 0, to: Date.parse(a.date_end || '') || 0, inN: +a.participating_products_count || 0, can: +a.potential_products_count || 0, on: !!a.is_participating}));
+      x.actions = ozList(ja, 'result').map(a => ({id: +a.id, t: String(a.title || ''), type: String(a.action_type || ''), from: Date.parse(a.date_start || '') || 0, to: Date.parse(a.date_end || '') || 0,
+        inN: +a.participating_products_count || 0, can: +a.potential_products_count || 0, on: !!a.is_participating, auto: (a.auto_add_dates || []).map(d => Date.parse(d)).filter(Boolean)}));
     } catch (e) { x.err = e.message; }
     out.push(x);
   }
@@ -6601,9 +6693,15 @@ async function ozDiagnose() {
     };
     const fb = await one('Отправления FBS', '/v3/posting/fbs/list', {dir: 'ASC', filter: {since: ozIso(now - 3 * DAYMS), to: ozIso(now + DAYMS)}, limit: 3, offset: 0, with: {analytics_data: false, financial_data: false}});
     await one('Отправления: ожидают сборки', '/v3/posting/fbs/list', {dir: 'ASC', filter: {since: ozIso(now - 30 * DAYMS), to: ozIso(now + DAYMS), status: 'awaiting_packaging'}, limit: 3, offset: 0});
-    if (!await one('Возвраты', '/v1/returns/list', {filter: {}, limit: 3, last_id: 0})) await one('Возвраты за 60 дней', '/v1/returns/list', {filter: {logistic_return_date: {time_from: ozIso(now - 60 * DAYMS), time_to: ozIso(now + DAYMS)}}, limit: 3, last_id: 0});
+    await one('Возвраты', '/v1/returns/list', {filter: {}, limit: 2, last_id: 0});
+    for (const [k, mk] of OZ_RET_F.entries()) await one('Возвраты, фильтр ' + (k + 1), '/v1/returns/list', {filter: mk(ozIso(now - 60 * DAYMS), ozIso(now + DAYMS)), limit: 3, last_id: 0});
     const pr = await one('Цены', '/v5/product/info/prices', {cursor: '', filter: {visibility: 'ALL'}, limit: 3});
-    await one('Акции', '/v1/actions', null, 'GET');
+    const acts = await one('Акции', '/v1/actions', null, 'GET');
+    const a0 = ozList(acts, 'result').find(a => a.is_participating) || ozList(acts, 'result')[0];
+    if (a0) { await one('Товары в акции', '/v1/actions/products', {action_id: a0.id, limit: 3, offset: 0}); await one('Можно добавить в акцию', '/v1/actions/candidates', {action_id: a0.id, limit: 3, offset: 0}); }
+    const mStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    await one('Деньги: итоги месяца', '/v3/finance/transaction/totals', {date: {from: mStart.toISOString(), to: ozIso(now)}, posting_number: '', transaction_type: 'all'});
+    await one('Деньги: операции', '/v3/finance/transaction/list', {filter: {date: {from: ozIso(now - 7 * DAYMS), to: ozIso(now)}, operation_type: [], posting_number: '', transaction_type: 'all'}, page: 1, page_size: 5});
     const offer = (ozList(fb, 'postings')[0] || {products: []}).products.map(p => p.offer_id)[0] || (ozList(pr, 'items')[0] || {}).offer_id;
     if (offer) await one('Карточка товара', '/v3/product/info/list', {offer_id: [String(offer)]});
     await one('Остатки', '/v4/product/info/stocks', {cursor: '', filter: {visibility: 'ALL'}, limit: 3});
@@ -6663,7 +6761,7 @@ function renderOzPrices() {
   const card = $('#ozPrCard'); if (!card) return;
   card.hidden = !ozShops().length;
   if (card.hidden) return;
-  $('#ozPrBtn').disabled = OZ.prBusy; $('#ozPrBtn').lastChild.textContent = OZ.prBusy ? 'Загружаю…' : 'Обновить из Ozon';
+  $('#ozPrBtn').disabled = OZ.prBusy || !!OZ.load; $('#ozPrBtn').lastChild.textContent = OZ.prBusy ? 'Загружаю…' : 'Обновить из Ozon';
   const P = OZ.pr;
   $('#ozPrSum').textContent = P ? `обновлено ${ozAgo(P.at)}` : '';
   if (!P) { setBody($('#ozPrBody'), `<p class="hint" style="margin:0">${OZ.prBusy ? 'Загружаю цены и акции из Ozon…' : 'Нажмите «Обновить из Ozon», чтобы увидеть цены и акции.'}</p>`); return; }
@@ -6681,7 +6779,7 @@ function renderOzPrices() {
     const acts = x.actions.filter(a => !a.to || a.to >= now).sort((p, q) => (q.on - p.on) || (p.from - q.from));
     return `<div class="ozpshop"><h4>${esc(ozName(x.i))} · ${cnt(x.items.length, W.pos)}</h4>
       ${low.length ? `<div class="manbar"><p>Цена в Ozon ниже защиты у <b>${cnt(low.length, WG.pos)}</b>: ${esc(low.slice(0, 8).map(l => `${l.a} — ${fmt(l.now)} ₽ (нужно не ниже ${fmt(l.f)})`).join('; '))}${low.length > 8 ? '…' : ''}</p></div>` : '<p class="hint small">Все цены не ниже защиты.</p>'}
-      ${acts.length ? `<div class="tw mt"><table class="t"><thead><tr><th>Акция</th><th>Даты</th><th class="num">Участвует</th><th class="num">Можно добавить</th></tr></thead><tbody>${acts.slice(0, 40).map(a => `<tr><td>${a.on ? '<span class="chip good">вы участвуете</span> ' : ''}${esc(a.t)}</td><td class="num">${a.from ? esc(new Date(a.from).toLocaleDateString('ru-RU')) : ''}${a.to ? ' — ' + esc(new Date(a.to).toLocaleDateString('ru-RU')) : ''}</td><td class="num">${fmt(a.inN)}</td><td class="num">${fmt(a.can)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint small">Сейчас акций нет.</p>'}</div>`;
+      ${acts.length ? `<div class="tw mt"><table class="t"><thead><tr><th>Акция</th><th>Даты</th><th class="num">Участвует</th><th class="num">Можно добавить</th><th>Ozon добавит сам</th><th></th></tr></thead><tbody>${acts.slice(0, 40).map(a => { const auto = (a.auto || []).filter(d => d > now - DAYMS); return `<tr><td>${a.on ? '<span class="chip good">вы участвуете</span> ' : ''}${esc(a.t)}</td><td class="num">${a.from ? esc(new Date(a.from).toLocaleDateString('ru-RU')) : ''}${a.to ? ' — ' + esc(new Date(a.to).toLocaleDateString('ru-RU')) : ''}</td><td class="num">${fmt(a.inN)}</td><td class="num">${fmt(a.can)}</td><td>${auto.length ? `<span class="chip warn">${esc(auto.map(d => new Date(d).toLocaleDateString('ru-RU', {day: 'numeric', month: 'short'})).join(', '))}</span>` : '—'}</td><td><button class="btn sm" type="button" data-ozact="${x.i}:${a.id}">Товары</button></td></tr>`; }).join('')}</tbody></table></div><p class="hint small">«Товары» — что уже в акции и что можно добавить, с ценами. Там же можно добавить, убрать и поменять цену, а программа создаст файл для загрузки в эту акцию. «Ozon добавит сам» — в этот день Ozon сам добавит в акцию подходящие товары, если не запретить в кабинете.</p>` : '<p class="hint small">Сейчас акций нет.</p>'}</div>`;
   }).join(''));
 }
 
@@ -6717,6 +6815,7 @@ document.addEventListener('click', e => {
   if (t.id === 'ozOrdersBtn') { t.disabled = true; ozSync(true).finally(() => { t.disabled = false; }); return; }
   if (t.id === 'ozRetBtn') { t.disabled = true; ozSyncReturns(true).finally(() => { t.disabled = false; }); return; }
   if (t.id === 'ozPrBtn') { ozSyncPrices(true); return; }
+  if (t.dataset.ozact) { const [i, id] = t.dataset.ozact.split(':').map(Number); prOpenAction(i, id); return; }
   if (t.dataset.ozback != null) {
     const back = OZR.back, put = t.dataset.ozback === '1';
     const snap = takeSnap();
@@ -6736,9 +6835,485 @@ document.addEventListener('click', e => {
   if (t.dataset.ozhide) { OZR.hide.add(t.dataset.ozhide); saveMeta('meta/ozret'); render(); return; }
 });
 $('#ozAuto').addEventListener('change', () => { const k = ozKeys(); k.auto = $('#ozAuto').checked; ozSaveKeys(k); if (k.auto) ozAuto(); });
+// Ozon's own layouts of October 2026: the header rows only, without products, seller or promotion
+const TPL_BUILTIN = {"price":{"kind":"price","sheet":"Товары и цены","first":4,"cols":[[0,"Артикул","артикул","art",null],[1,"SKU","sku","sku",null],[2,"Название товара","название товара","name",null],[3,"Статус","статус","",null],[4,"Видимость на OZON","видимость на ozon","",null],[5,"На складе Ozon","на складе ozon","",null],[6,"На моих складах","на моих складах","",null],[7,"Объем, л","объем, л","",null],[8,"Объемный вес, кг","объемный вес, кг","",null],[9,"Штрихкод","штрихкод","",null],[10,"Заказано на сумму","заказано на сумму","",null],[11,"Показы всего","показы всего","",null],[12,"Конверсия из показа в заказ","конверсия из показа в заказ","",null],[13,"Заказано товаров","заказано товаров","",null],[14,"Зачёркнутая цена, руб.","зачеркнутая цена, руб.","",null],[15,"Предельная цена без акций, руб.","предельная цена без акций, руб.","",null],[16,"Скидка, %","скидка, %","",null],[17,"Скидка, руб.","скидка, руб.","",null],[18,"Предельная цена, руб.","предельная цена, руб.","",null],[19,"Скидка с учетом акции, %","скидка с учетом акции, %","",null],[20,"Скидка с учетом акции, руб.","скидка с учетом акции, руб.","",null],[21,"НДС, %","ндс, %","",null],[22,"Цена реализации, руб.","цена реализации, руб.","",null],[23,"Ограничение для акций и стратегий, руб.","ограничение для акций и стратегий, руб.","",null],[24,"Настройка \"Учитывать ограничение для акций при автодобавлении\"","настройка \"учитывать ограничение для акций при автодобавлении\"","",null],[25,"Осталось дней действия настройки \"Учитывать ограничение для акций при автодобавлении\"","осталось дней действия настройки \"учитывать ограничение для акций при автодобавлении\"","",null],[26,"Настройка стратегии ценообразования «Удерживайте выгодную цену»","настройка стратегии ценообразования «удерживайте выгодную цену»","",null],[27,"Себестоимость","себестоимость","cost",null],[28,"Маржинальность по FBO","маржинальность по fbo","",null],[29,"Маржинальность по FBS","маржинальность по fbs","",null],[30,"Подключение подходящих акций","подключение подходящих акций","",null],[31,"Автодобавление товара в акции","автодобавление товара в акции","",null],[32,"Рыночная цена на Ozon, руб.","рыночная цена на ozon, руб.","",null],[33,"Рыночная цена конкурентов, руб.","рыночная цена конкурентов, руб.","",null],[34,"Моя цена на других площадках, руб.","моя цена на других площадках, руб.","",null],[35,"Ссылка на рыночную цену конкурентов","ссылка на рыночную цену конкурентов","",null],[36,"Ссылка на рыночную цену на мои товары","ссылка на рыночную цену на мои товары","",null],[37,"Индекс цен","индекс цен","",null],[38,"Ценовой индекс товара на Ozon","ценовой индекс товара на ozon","",null],[39,"Ценовой индекс товара на рынке","ценовой индекс товара на рынке","",null],[40,"Ценовой индекс товара на рынке на мои товары","ценовой индекс товара на рынке на мои товары","",null],[41,"Моя цена на Wildberries, руб.","моя цена на wildberries, руб.","",null],[42,"Вклад в индекс цен магазина","вклад в индекс цен магазина","",null],[43,"Ссылка на рыночную цену на мои товары на ВБ","ссылка на рыночную цену на мои товары на вб","",null],[44,"Ценовой индекс товара на рынке на мои товары на ВБ","ценовой индекс товара на рынке на мои товары на вб","",null],[45,"Эквайринг","эквайринг","",null],[46,"Вознаграждение Ozon, FBO, %","вознаграждение ozon, fbo, %","",null],[47,"Логистика Ozon, минимум, FBO","логистика ozon, минимум, fbo","",null],[48,"Логистика Ozon, максимум, FBO","логистика ozon, максимум, fbo","",null],[49,"Доставка до места выдачи, FBO","доставка до места выдачи, fbo","",null],[50,"Обработка нестандартного товара, FBO","обработка нестандартного товара, fbo","",null],[51,"Вознаграждение Ozon, FBS, %","вознаграждение ozon, fbs, %","",null],[52,"Обработка отправления, минимум FBS","обработка отправления, минимум fbs","",null],[53,"Обработка отправления, максимум FBS","обработка отправления, максимум fbs","",null],[54,"Обработка нестандартного товара, FBS","обработка нестандартного товара, fbs","",null],[55,"Логистика Ozon, минимум, FBS","логистика ozon, минимум, fbs","",null],[56,"Логистика Ozon, максимум, FBS","логистика ozon, максимум, fbs","",null],[57,"Доставка до места выдачи, FBS","доставка до места выдачи, fbs","",null],[58,"Новая зачёркнутая цена, руб.","новая зачеркнутая цена, руб.","old",14],[59,"Новая предельная цена без акций, руб.","новая предельная цена без акций, руб.","price",15],[60,"Скидка, %","скидка, %","",null],[61,"Новый НДС, %","новый ндс, %","",null],[62,"Новая себестоимость","новая себестоимость","",null],[63,"Стратегия ценообразования «Удерживайте выгодную цену»","стратегия ценообразования «удерживайте выгодную цену»","",null],[64,"Новое ограничение для акций и стратегий, руб.","новое ограничение для акций и стратегий, руб.","min",23],[65,"Подключать подходящие акции","подключать подходящие акции","",null],[66,"Учитывать ограничение для акций при автодобавлении или продлить действие настройки","учитывать ограничение для акций при автодобавлении или продлить действие настройки","",null],[67,"Автоматически добавлять товар в акции","автоматически добавлять товар в акции","",null]],"at":0,"src":"Ozon, октябрь 2026","shop":null,"b64":"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"},"promo":{"kind":"promo","sheet":"Товары и цены","first":3,"cols":[[0,"OzonID","ozonid","sku",null],[1,"SKU","sku","",null],[2,"Артикул","артикул","art",null],[3,"Схема","схема","",null],[4,"Название","название","name",null],[5,"Категория","категория","",null],[6,"Зачеркнутая цена, RUB","зачеркнутая цена, rub","old",null],[7,"Предельная цена без акций, RUB","предельная цена без акций, rub","price",null],[8,"Ограничение для акций, RUB","ограничение для акций, rub","min",null],[9,"Цена на сайте, RUB","цена на сайте, rub","site",null],[10,"Запрашиваемая скидка по акции, %","запрашиваемая скидка по акции, %","",null],[11,"Рассчитанная цена для участия в акции, RUB","рассчитанная цена для участия в акции, rub","maxp",null],[12,"Участие товара в акции","участие товара в акции","part",null],[13,"Предельная цена по этой акции, RUB","предельная цена по этой акции, rub","promo",null],[14,"Количество товаров в акции, шт","количество товаров в акции, шт","",null],[15,"Заказано товаров, шт","заказано товаров, шт","",null],[16,"Заказано товаров, динамика в %","заказано товаров, динамика в %","",null],[17,"Показано всего","показано всего","",null],[18,"Показано всего, динамика в %","показано всего, динамика в %","",null],[19,"Рекомендованное количество товаров на период акции, шт","рекомендованное количество товаров на период акции, шт","",null],[20,"Остаток на складе Ozon, шт","остаток на складе ozon, шт","",null],[21,"Остаток на моем складе, шт","остаток на моем складе, шт","",null],[22,"Статус","статус","",null]],"at":0,"src":"Ozon, октябрь 2026","shop":null,"b64":"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"}};
+/* ---------- prices and promotions from Ozon in the program; the file for Ozon is made here ----------
+   With the read-only key the program shows every product's prices and every promotion's products.
+   Changes go back as a file in Ozon's own layout, uploaded in the cabinet by hand: the program keeps that
+   layout (the empty head of Ozon's file, without any products) from the last Ozon file opened here and has
+   the October 2026 layout built in. */
+const u8b64 = u => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000)); return btoa(s); };
+const b64u8 = b => { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+const sqrefRows = s => [...String(s).matchAll(/[A-Z]{1,3}\$?(\d+)/g)].map(m => +m[1]);
+// the products out of the data sheet: header rows stay, with everything that belongs to them
+function tplCut(xml, last) {
+  const a = xml.search(/<(?:\w+:)?sheetData\b/); if (a < 0) return xml;
+  const pre = (xml.match(/<(\w+:)?sheetData\b/) || [])[1] || '', tagEnd = xml.indexOf('>', a), closeTag = `</${pre}sheetData>`;
+  if (xml[tagEnd - 1] === '/') return xml;
+  const bEnd = xml.indexOf(closeTag, tagEnd), body = xml.slice(tagEnd + 1, bEnd);
+  const rowRx = new RegExp(`<${pre}row\\b[^>]*?(?:\\/>|>[\\s\\S]*?<\\/${pre}row>)`, 'g');
+  let seq = 0; const keep = [];
+  for (const m of body.matchAll(rowRx)) { const h = m[0].slice(0, m[0].indexOf('>') + 1), r = xAttr(h, 'r'), R = r ? +r : seq + 1; seq = R; if (R <= last) keep.push(m[0]); }
+  let head = xml.slice(0, tagEnd + 1), tail = xml.slice(bEnd);
+  head = head.replace(/(<(?:\w+:)?dimension\b[^>]*\bref\s*=\s*["'])([^"']*)(["'])/, (m, p1, ref, q) => p1 + (ref.includes(':') ? ref.replace(/\d+$/, String(last)) : ref) + q);
+  // merged cells and links of product rows go; a drop-down list of the first product row reaches every new row
+  tail = tail.replace(new RegExp(`<${pre}mergeCell\\b[^>]*?\\/?>(?:<\\/${pre}mergeCell>)?`, 'g'), m => Math.max(...sqrefRows(xAttr(m, 'ref') || '')) > last ? '' : m);
+  tail = tail.replace(new RegExp(`<${pre}hyperlink\\b[^>]*?\\/?>(?:<\\/${pre}hyperlink>)?`, 'g'), m => Math.max(...sqrefRows(xAttr(m, 'ref') || '')) > last ? '' : m);
+  const seen = new Set();
+  tail = tail.replace(new RegExp(`<${pre}dataValidation\\b[^>]*>[\\s\\S]*?<\\/${pre}dataValidation>`, 'g'), m => {
+    const sq = xAttr(m.slice(0, m.indexOf('>') + 1), 'sqref') || '', rows = sqrefRows(sq);
+    if (!rows.length || Math.min(...rows) !== last + 1) return Math.max(...rows) <= last ? m : '';
+    const nsq = sq.split(/\s+/).map(p => { const mm = p.match(/^([A-Z]{1,3})\$?(\d+)(?::([A-Z]{1,3})\$?(\d+))?$/); return mm ? `${mm[1]}${mm[2]}:${mm[3] || mm[1]}50000` : p; }).join(' ');
+    if (seen.has(nsq + m.slice(m.indexOf('>')))) return '';
+    seen.add(nsq + m.slice(m.indexOf('>')));
+    return m.replace(/(\ssqref\s*=\s*["'])[^"']*(["'])/, `$1${nsq}$2`);
+  });
+  for (const tag of ['mergeCells', 'dataValidations', 'hyperlinks']) {
+    tail = tail.replace(new RegExp(`<${pre}${tag}\\b([^>]*)>([\\s\\S]*?)<\\/${pre}${tag}>`), (m, attrs, inner) => {
+      const n = (inner.match(new RegExp(`<${pre}${tag.slice(0, -1)}\\b`, 'g')) || []).length;
+      return n ? `<${pre}${tag}${attrs.replace(/\scount\s*=\s*["']\d+["']/, ` count="${n}"`)}>${inner}</${pre}${tag}>` : '';
+    });
+  }
+  return head + keep.join('') + tail;
+}
+// the empty layout of an Ozon file: product rows out, only the texts still in use left in the shared strings
+function tplStrip(buf, sn, last) {
+  const z = XLSX.CFB.read(buf, {type: 'array'}); z.put = new Map(); z.del = new Set();
+  const wbp = zWorkbook(z), wbx = zText(z, wbp) || '', rels = zText(z, zRels(wbp)) || '';
+  const relOf = test => { for (const m of rels.matchAll(/<(?:\w+:)?Relationship\b[^>]*>/g)) if (test(m[0])) return zJoin(zDir(wbp), xAttr(m[0], 'Target') || ''); return null; };
+  const sheets = [...wbx.matchAll(/<(?:\w+:)?sheet\b[^>]*>/g)].map(m => { const id = (m[0].match(/\s\w+:id\s*=\s*["']([^"']*)["']/) || [])[1]; return relOf(t => xAttr(t, 'Id') === id); }).filter(p => p && zFile(z, p));
+  const sp = zSheetPath(z, wbp, sn); if (!sp) throw new Error('в файле нет листа «' + sn + '»');
+  const xmls = new Map(sheets.map(p => [p, zText(z, p) || '']));
+  xmls.set(sp, tplCut(xmls.get(sp), last));
+  const sstPath = relOf(t => /sharedStrings$/.test(xAttr(t, 'Type') || ''));
+  if (sstPath && zFile(z, sstPath)) {
+    const sst = zText(z, sstPath), pre = (sst.match(/<(\w+:)?sst\b/) || [])[1] || '';
+    const sis = [...sst.matchAll(new RegExp(`<${pre}si\\b[^>]*?(?:\\/>|>[\\s\\S]*?<\\/${pre}si>)`, 'g'))].map(m => m[0]);
+    const map = new Map(), order = [];
+    const cellRx = /(<(?:\w+:)?c\b[^>]*\bt\s*=\s*["']s["'][^>]*>\s*<((?:\w+:)?v)>)(\d+)(<\/\2>)/g;
+    for (const [p, x] of xmls) xmls.set(p, x.replace(cellRx, (m, a, vt, n, b) => { let k = map.get(+n); if (k == null) { k = order.length; map.set(+n, k); order.push(+n); } return a + k + b; }));
+    const open = sst.match(new RegExp(`<${pre}sst\\b[^>]*>`))[0].replace(/\s(count|uniqueCount)\s*=\s*["']\d+["']/g, '').replace(/>$/, ` count="${order.length}" uniqueCount="${order.length}">`);
+    zPut(z, sstPath, sst.slice(0, sst.indexOf(sst.match(new RegExp(`<${pre}sst\\b`))[0])) + open + order.map(i => sis[i] || `<${pre}si><${pre}t></${pre}t></${pre}si>`).join('') + `</${pre}sst>`);
+  }
+  for (const [p, x] of xmls) zPut(z, p, x);
+  if ((zText(z, zRels(wbp)) || '').includes('calcChain')) zDropCalc(z, wbp);
+  return zipRewrite(buf, z.put, z.del);
+}
+// Ozon writes its own marks into a promotion file: format, seller, promotion
+function ozFileMeta(z) {
+  const core = zText(z, 'docProps/core.xml') || '', m = core.match(/<dc:description>([\s\S]*?)<\/dc:description>/);
+  if (!m) return null;
+  try { const j = JSON.parse(xmlUn(m[1])); return j && typeof j === 'object' ? j : null; } catch { return null; }
+}
+// fill the layout with rows (column → value) from its first product row; texts and marks of other parts too
+function tplFill(t, rows, opt = {}) {
+  const buf = b64u8(t.b64), z = XLSX.CFB.read(buf, {type: 'array'}); z.put = new Map(); z.del = new Set();
+  const wbp = zWorkbook(z), sp = zSheetPath(z, wbp, t.sheet);
+  if (!sp) throw new Error('образец файла Ozon повреждён');
+  const edits = new Map(); rows.forEach((m, k) => edits.set(t.first + k, m));
+  let xml = prPatchXml(zText(z, sp), edits, new Set()).xml;
+  xml = xml.replace(/(<(?:\w+:)?dimension\b[^>]*\bref\s*=\s*["'])([^"']*)(["'])/, (m, p1, ref, q) => p1 + (ref.includes(':') ? ref.replace(/\d+$/, String(t.first + Math.max(rows.length, 1))) : ref) + q);
+  zPut(z, sp, xml);
+  if (opt.texts && opt.texts.length) {
+    const rels = zText(z, zRels(wbp)) || '';
+    let sstPath = null; for (const m of rels.matchAll(/<(?:\w+:)?Relationship\b[^>]*>/g)) if (/sharedStrings$/.test(xAttr(m[0], 'Type') || '')) sstPath = zJoin(zDir(wbp), xAttr(m[0], 'Target') || '');
+    const sst = sstPath && zText(z, sstPath);
+    if (sst) zPut(z, sstPath, sst.replace(/<((?:\w+:)?)si\b[^>]*>([\s\S]*?)<\/\1si>/g, (m, pre, inner) => {
+      const plain = xmlUn(inner.replace(/<[^>]+>/g, ''));
+      for (const [rx, text] of opt.texts) if (rx.test(plain)) return `<${pre}si><${pre}t xml:space="preserve">${xmlEsc(text)}</${pre}t></${pre}si>`;
+      return m;
+    }));
+  }
+  if (opt.meta) {
+    const core = zText(z, 'docProps/core.xml');
+    if (core) zPut(z, 'docProps/core.xml', core.replace(/(<dc:description>)([\s\S]*?)(<\/dc:description>)/, (m, a, v, b) => {
+      let j = {}; try { j = JSON.parse(xmlUn(v)); } catch {}
+      return a + xmlEsc(JSON.stringify({...j, ...opt.meta})).replace(/&quot;/g, '&#34;') + b;
+    }));
+  }
+  return zipRewrite(buf, z.put, z.del);
+}
+// the layouts: learned from Ozon's files opened here, or the built-in ones
+const TPL_LS = 'sklad-ozon-tpl';
+function tplAll() { try { return JSON.parse(localStorage.getItem(TPL_LS) || '{}') || {}; } catch { return {}; } }
+function tplGet(kind, type) { const all = tplAll(); return (type && all[kind + ':' + type]) || all[kind] || TPL_BUILTIN[kind] || null; }
+function tplLearn(P) {
+  if (!P || !P.zip || !P.buf) return;
+  let z, meta = null; try { z = XLSX.CFB.read(P.buf, {type: 'array'}); meta = ozFileMeta(z); } catch { return; }
+  const ozon = P.kind === 'price' ? P.marks != null : !!(meta && meta.aid) && !!P.cols.find(c => c.role === 'part');
+  if (!ozon || !P.list.length) return;
+  const first = Math.min(...P.list.map(r => r.R));
+  try {
+    const bytes = tplStrip(P.buf, P.sn, first);
+    if (bytes.length > 400000) { diag('tpl', 'too-big', bytes.length); return; }
+    const off = P.cols.length ? P.cols[0].c - P.cols[0].j : 0;
+    const rec = {kind: P.kind, sheet: P.sn, first, cols: P.cols.map(c => [c.c, c.label, c.t, c.role, c.cur != null ? c.cur + off : null]), at: Date.now(), src: P.name, shop: P.shop, b64: u8b64(bytes)};
+    const all = tplAll(); all[P.kind] = rec;
+    const act = meta && meta.aid && OZ.pr && OZ.pr.shops.flatMap(x => x.actions).find(a => a.id === meta.aid);
+    if (act && act.type) all[P.kind + ':' + act.type] = rec;
+    try { localStorage.setItem(TPL_LS, JSON.stringify(all)); diag('tpl', 'learned', {kind: P.kind, bytes: bytes.length}); } catch { diag('tpl', 'no-room', bytes.length); }
+  } catch (e) { diag('tpl', 'strip-fail', String(e.message || e).slice(0, 160)); }
+}
+
+/* ---- every product of a shop with today's prices and Ozon's fees ---- */
+OZ.items = {}; OZ.info = {}; OZ.load = null; OZ.co = {};
+try { OZ.co = JSON.parse(localStorage.getItem('sklad-ozon-co') || '{}') || {}; } catch {}
+function ozItem(it) {
+  const p = it.price || {}, c = it.commissions || {}, n = v => pnum(v) || 0;
+  return {a: String(it.offer_id ?? '').trim(), pid: +it.product_id || 0, price: pnum(p.price), old: pnum(p.old_price), min: pnum(p.min_price), mkt: pnum(p.marketing_seller_price) || pnum(p.marketing_price),
+    pct: pnum(c.sales_percent_fbs), fee: n(it.acquiring) + n(c.fbs_first_mile_max_amount) + n(c.fbs_direct_flow_trans_max_amount) + n(c.fbs_deliv_to_customer_amount)};
+}
+function renderOzLoad() {
+  const el = $('#prOzLoad'); if (!el) return;
+  el.hidden = !OZ.load;
+  if (OZ.load) el.textContent = `${OZ.load.what}${OZ.load.total ? `: ${fmt(OZ.load.n)} из ${fmt(OZ.load.total)}` : OZ.load.n ? `: ${fmt(OZ.load.n)}` : '…'}`;
+  $$('#prOzRow button, #ozPrBody [data-ozact]').forEach(b => { b.disabled = !!OZ.load; });
+}
+async function ozItems(sh, fresh) {
+  const c = OZ.items[sh.i];
+  if (c && !fresh && Date.now() - c.at < 30 * 60000) return c.list;
+  const own = !OZ.load; if (own) OZ.load = {what: 'Загружаю товары и цены из Ozon', n: 0, total: 0};
+  renderOzLoad();
+  try {
+    const list = []; let cursor = '', total = 0;
+    for (let page = 0; page < 60; page++) {
+      const j = await ozFetch(sh, '/v5/product/info/prices', {cursor, filter: {visibility: 'ALL'}, limit: 1000});
+      const its = ozList(j, 'items'); total = +j.total || +(j.result && j.result.total) || total;
+      for (const it of its) list.push(ozItem(it));
+      OZ.load.n = list.length; OZ.load.total = total; renderOzLoad();
+      cursor = j.cursor || (j.result && j.result.cursor) || '';
+      if (!cursor || !its.length) break;
+    }
+    OZ.items[sh.i] = {at: Date.now(), list};
+    return list;
+  } finally { if (own) { OZ.load = null; renderOzLoad(); } }
+}
+// names and Ozon SKUs: from orders already seen, the rest from Ozon's cards (only for products going into a file)
+function ozInfoPut(i, a, sku, name) { if (!a) return; const m = OZ.info[i] || (OZ.info[i] = new Map()), o = m.get(a) || {}; if (sku) o.sku = +sku; if (name) o.name = String(name); m.set(a, o); }
+async function ozInfo(sh, offers) {
+  const m = OZ.info[sh.i] || (OZ.info[sh.i] = new Map()), need = [...new Set(offers)].filter(a => { const o = m.get(a); return !o || !o.sku || !o.name; });
+  for (let i = 0; i < need.length; i += 1000) {
+    if (OZ.load) { OZ.load.what = 'Беру названия товаров из Ozon'; OZ.load.n = i; OZ.load.total = need.length; renderOzLoad(); }
+    const j = await ozFetch(sh, '/v3/product/info/list', {offer_id: need.slice(i, i + 1000)});
+    for (const it of ozList(j, 'items')) ozInfoPut(sh.i, String(it.offer_id ?? '').trim(), it.sku || ((it.sources || [])[0] || {}).sku, it.name);
+  }
+  return m;
+}
+function ozNames() {
+  const m = new Map();
+  for (const it of stock.items.values()) if (it.n) m.set(normKey(it.a), it.n);
+  for (const ln of lines.items.values()) if (ln.n && !m.has(normKey(ln.a))) m.set(normKey(ln.a), ln.n);
+  for (const im of Object.values(OZ.info)) for (const [a, o] of im) if (o.name && !m.has(normKey(a))) m.set(normKey(a), o.name);
+  return m;
+}
+async function ozCompany(sh) {
+  if (OZ.co[sh.i]) return OZ.co[sh.i];
+  try { const j = await ozFetch(sh, '/v1/returns/list', {filter: {}, limit: 1, last_id: 0}); const r = ozList(j, 'returns')[0]; if (r && r.company_id) ozCo(sh.i, r.company_id); } catch {}
+  return OZ.co[sh.i] || 0;
+}
+function ozCo(i, id) { if (!id || OZ.co[i] === +id) return; OZ.co[i] = +id; try { localStorage.setItem('sklad-ozon-co', JSON.stringify(OZ.co)); } catch {} }
+
+/* ---- the price list and a promotion opened from Ozon, edited like a file ---- */
+function prFromApi(o) {
+  const rows = [o.head, ...o.rows];
+  const cols = o.head.map((label, j) => ({j, c: j, label, t: prNorm(label), role: o.roles[j] || '', green: false, edit: false, ro: !!(o.ro && o.ro.includes(o.roles[j]))}));
+  const P = {src: 'api', api: o.api, name: o.name, buf: null, zip: false, sn: 'Ozon', rows, hdr: 0, r0: 0, cols, list: [], groups: [], shop: o.api.shop, sel: new Set(), open: new Set(), view: 'all', q: '', lim: 150, snap: '', snapItems: new Map(), saved: true, kind: o.kind, promoName: o.promoName || '', promoDates: o.promoDates || ''};
+  prRows(P);
+  return P;
+}
+function ozDirtyAsk(fn) { if (prDirty() && !PR.saved) { confirmIn('#prConfirm', 'В открытом списке есть несохранённые изменения. Открыть другой и потерять их?', 'Открыть', fn, true); return true; } return false; }
+async function prOpenOzon(i, sure) {
+  if (!sure && ozDirtyAsk(() => prOpenOzon(i, true))) return;
+  const sh = ozShops().find(s => s.i === i); if (!sh || OZ.load) return;
+  let list; try { list = await ozItems(sh, true); } catch (e) { toast(e.message, 12000); return; }
+  const nm = ozNames();
+  PR = prFromApi({api: {shop: i}, kind: 'price', name: `Цены в Ozon · ${ozName(i)}`,
+    head: ['Артикул', 'Название', 'Цена', 'Зачёркнутая цена', 'Ограничение для акций', 'product_id'], roles: ['art', 'name', 'price', 'old', 'min', 'pid'],
+    rows: list.filter(x => x.a).map(x => [x.a, nm.get(normKey(x.a)) || '', x.price, x.old, x.min || null, x.pid])});
+  diag('ozon', 'open-prices', {shop: i, rows: PR.list.length});
+  toast(`Цены из Ozon: ${cnt(PR.list.length, W.pos)}, ${cnt(PR.groups.length, W.model)}`);
+  renderPrices(); $('#prCard').scrollIntoView({block: 'start', behavior: motionOk() ? 'smooth' : 'auto'});
+}
+function ozPromoDates(act) {
+  if (!act.from) return '';
+  const d = t => new Date(t).toLocaleDateString('ru-RU', {timeZone: 'Europe/Moscow', day: 'numeric', month: 'long', year: 'numeric'}).replace(/\s*г\.?$/, '');
+  const h = t => new Date(t).toLocaleTimeString('ru-RU', {timeZone: 'Europe/Moscow', hour: 'numeric', minute: '2-digit'});
+  if (!act.to) return `${d(act.from)} ${h(act.from)}`;
+  const n = Math.round((act.to - act.from) / DAYMS);
+  return `${d(act.from)} ${h(act.from)} - ${d(act.to)} ${h(act.to)} (${n} ${plural(n, W.day)})`;
+}
+async function ozActionList(sh, path, id) {
+  const out = []; let offset = 0, total = 0;
+  for (let page = 0; page < 400; page++) {
+    const j = await ozFetch(sh, path, {action_id: id, limit: 100, offset});
+    const r = j.result || j, ps = r.products || [];
+    total = +r.total || total; out.push(...ps);
+    if (OZ.load) { OZ.load.n = out.length; OZ.load.total = total; renderOzLoad(); }
+    if (!ps.length || (total && out.length >= total) || ps.length < 100) break;
+    offset += ps.length;
+  }
+  return out;
+}
+async function prOpenAction(i, id, sure) {
+  if (!sure && ozDirtyAsk(() => prOpenAction(i, id, true))) return;
+  const sh = ozShops().find(s => s.i === i); if (!sh || OZ.load) return;
+  const act = ((OZ.pr && OZ.pr.shops.find(x => x.i === i)) || {actions: []}).actions.find(a => a.id === id) || {id, t: 'Акция ' + id, type: ''};
+  let list, parts, cands;
+  OZ.load = {what: 'Загружаю товары и цены из Ozon', n: 0, total: 0}; renderOzLoad();
+  try {
+    list = await ozItems(sh);
+    OZ.load = {what: `Товары в акции «${act.t}»`, n: 0, total: 0}; renderOzLoad();
+    parts = await ozActionList(sh, '/v1/actions/products', id);
+    OZ.load = {what: `Можно добавить в «${act.t}»`, n: 0, total: 0}; renderOzLoad();
+    cands = await ozActionList(sh, '/v1/actions/candidates', id);
+  } catch (e) { toast(e.message, 12000); return; }
+  finally { OZ.load = null; renderOzLoad(); }
+  const byPid = new Map(list.map(x => [x.pid, x])), nm = ozNames(), rows = [], seen = new Set();
+  const row = (p, inA) => {
+    const pid = +p.id || +p.product_id || 0, it = byPid.get(pid) || {}, a = it.a || `ID ${pid}`;
+    seen.add(pid);
+    return [a, nm.get(normKey(a)) || '', pnum(p.price) || it.price || null, it.old || null, it.min || null, it.mkt || null, inA ? (p.add_mode === 'AUTO' ? 'Да*' : 'Да') : '',
+      inA ? pnum(p.action_price) || null : pnum(p.max_action_price) || pnum(p.action_price) || null, pnum(p.max_action_price) || null, pid, inA ? pnum(p.stock) || 0 : pnum(p.min_stock) || 0];
+  };
+  for (const p of parts) rows.push(row(p, true));
+  for (const p of cands) if (!seen.has(+p.id || +p.product_id)) rows.push(row(p, false));
+  const dates = ozPromoDates(act);
+  PR = prFromApi({api: {shop: i, action: act}, kind: 'promo', name: `Акция «${act.t}» · ${ozName(i)}`, promoName: act.t, promoDates: dates,
+    head: ['Артикул', 'Название', 'Цена', 'Зачёркнутая цена', 'Ограничение для акций', 'Цена на сайте', 'Участие в акции', 'Цена по акции', 'Макс. цена по акции', 'product_id', 'Остаток в акции'],
+    roles: ['art', 'name', 'price', 'old', 'min', 'site', 'part', 'promo', 'maxp', 'pid', 'stock'], ro: ['price', 'old', 'min'], rows});
+  diag('ozon', 'open-action', {shop: i, id, parts: parts.length, cands: cands.length});
+  toast(`Акция «${trunc(act.t, 40)}»: участвует ${fmt(parts.length)}, можно добавить ${fmt(rows.length - parts.length)}`);
+  renderPrices(); $('#prCard').scrollIntoView({block: 'start', behavior: motionOk() ? 'smooth' : 'auto'});
+}
+
+/* ---- the file for Ozon from what was changed here ---- */
+const tplCol = (t, rx, role) => { let c = rx ? t.cols.find(x => rx.test(x[2])) : null; if (!c && role) c = t.cols.find(x => x[3] === role); return c ? c[0] : -1; };
+async function prMakeFile() {
+  const P = prPlan(), promo = PR.kind === 'promo', act = PR.api.action || {};
+  const t = tplGet(promo ? 'promo' : 'price', act.type);
+  if (!t) { toast('Нет образца файла Ozon. Скачайте один раз файл в кабинете и откройте его здесь — программа запомнит его вид.', 10000); return; }
+  const sh = ozShops().find(s => s.i === PR.shop);
+  if (!sh) { toast('Ключ этого магазина удалён — подключите его снова в «Настройках»'); return; }
+  const byR = new Map(PR.list.map(r => [r.R, r]));
+  const rows0 = promo ? PR.list.filter(r => r.pid) : [...P.edits.keys()].map(R => byR.get(R)).filter(Boolean);
+  if (!rows0.length) { toast('Пока ничего не изменено'); return; }
+  const btn = $('#prSave'); btn.disabled = true;
+  OZ.load = {what: 'Готовлю файл для Ozon', n: 0, total: 0}; renderOzLoad();
+  let bytes, name;
+  try {
+    const info = promo ? (OZ.info[sh.i] || new Map()) : await ozInfo(sh, rows0.map(r => r.a).filter(a => !/^ID /.test(a)));
+    const I = a => info.get(a) || {};
+    const out = [];
+    if (!promo) {
+      const C = {art: tplCol(t, /^артикул/, 'art'), sku: tplCol(t, /^sku$/), name: tplCol(t, /^(название|наименование)/, 'name'),
+        price: tplCol(t, /^нов\S*\s+предельн\S*\s+цен\S*\s+без/, 'price'), old: tplCol(t, /^нов\S*\s+зач[её]ркнут/, 'old'), min: tplCol(t, /^нов\S*\s+ограничени/, 'min'),
+        cprice: tplCol(t, /^предельн\S*\s+цен\S*\s+без\s+акци/), cold: tplCol(t, /^зач[её]ркнут/), cmin: tplCol(t, /^ограничени\S*\s+для\s+акци/)};
+      if (C.art < 0 || C.price < 0) throw new Error('в образце нет столбцов «Артикул» или «Новая предельная цена»');
+      for (const r of rows0) {
+        const m = new Map(), put = (c, v) => { if (c >= 0 && v != null && v !== '') m.set(c, v); };
+        put(C.art, r.a); put(C.sku, I(r.a).sku); put(C.name, I(r.a).name || r.n);
+        put(C.cprice, r.o.price); put(C.cold, r.o.old); put(C.cmin, r.o.min);
+        if (prWill(r, 'price')) put(C.price, r.v.price); if (prWill(r, 'old')) put(C.old, r.v.old); if (prWill(r, 'min')) put(C.min, r.v.min);
+        out.push(m);
+      }
+      bytes = tplFill(t, out);
+      name = `Цены для Ozon — ${ozName(PR.shop)} — ${today()}.xlsx`;
+    } else {
+      const C = {pid: tplCol(t, /ozon\s*id/), sku: tplCol(t, /^sku$/), art: tplCol(t, /^артикул/, 'art'), name: tplCol(t, /^(название|наименование)/, 'name'),
+        old: tplCol(t, /^зач[её]ркнут/), price: tplCol(t, /^предельн\S*\s+цен\S*\s+без/), min: tplCol(t, /^ограничени/), site: tplCol(t, /^цена\s+на\s+сайте/),
+        maxp: tplCol(t, /рассчитанн|для\s+участия/, 'maxp'), part: tplCol(t, /^участие/, 'part'), promo: tplCol(t, /по\s+этой\s+акции|цен\S*\s+по\s+акции/, 'promo'), qty: tplCol(t, /^количеств/)};
+      if (C.pid < 0 || C.part < 0 || C.promo < 0) throw new Error('в образце нет столбцов «OzonID», «Участие» или цены по акции');
+      for (const r of rows0) {
+        const m = new Map(), put = (c, v) => { if (c >= 0 && v != null && v !== '') m.set(c, v); };
+        const inNow = prIn(r) && !prLow(r), part = inNow ? (!prChg(r, 'part') && PR_YES(r.o.part) ? r.o.part : 'Да') : '';
+        put(C.pid, r.pid); put(C.sku, I(r.a).sku ? String(I(r.a).sku) : null); put(C.art, /^ID /.test(r.a) ? null : r.a); put(C.name, I(r.a).name || r.n);
+        put(C.old, r.o.old); put(C.price, r.o.price); put(C.min, r.o.min ?? 0); put(C.site, r.o.site); put(C.maxp, r.o.maxp);
+        m.set(C.part, part); put(C.promo, prOut(r, 'promo')); put(C.qty, r.o.stock || 0);
+        out.push(m);
+      }
+      const sid = await ozCompany(sh);
+      bytes = tplFill(t, out, {
+        meta: {aid: act.id, ...(sid ? {sid} : {})},
+        texts: [[/^Название акции:/, `Название акции: ${act.t}`], ...(PR.promoDates ? [[/^Даты акции:/, `Даты акции: ${PR.promoDates}`]] : [])],
+      });
+      name = `Акция ${act.t} — ${ozName(PR.shop)} — ${today()}.xlsx`;
+      if (!sid) toast('Не удалось узнать номер продавца в Ozon: если файл не примут, откройте здесь один раз файл этой акции из кабинета.', 10000);
+    }
+  } catch (e) { diag('ozon', 'make-fail', String(e.message || e).slice(0, 200)); toast('Не получилось собрать файл: ' + (e.message || 'ошибка'), 10000); return; }
+  finally { btn.disabled = false; OZ.load = null; renderOzLoad(); }
+  const ok = await saveFile(safeName(name.replace(/\.xlsx$/, '')) + '.xlsx', bytes, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'Не получилось сохранить файл. Попробуйте ещё раз.');
+  if (!ok) return;
+  if (!promo && P.snap.length) prSnapSave(P.snap);
+  PR.saved = true; PR.done = true;
+  log(promo ? `Акция «${act.t}»: создан файл для Ozon — в акции ${cnt(P.inN, W.pos)}` : `Цены «${ozName(PR.shop)}»: создан файл для Ozon — изменено ${cnt(P.chg, W.pos)}`);
+  diag('ozon', 'make-file', {kind: PR.kind, rows: rows0.length, bytes: bytes.length, tpl: t.src || 'builtin'});
+  toast(promo
+    ? `Файл готов. В кабинете Ozon: «Продвижение» → «Акции» → «${trunc(act.t, 40)}» → «Добавить товары» → «Импорт в XLS-файле» → загрузите этот файл.`
+    : 'Файл готов. В кабинете Ozon: «Цены и акции» → «Цены на товары» → загрузите этот файл как шаблон цен.', 14000);
+  renderPrices();
+}
+/* ---------- money in Ozon: where it goes and why ----------
+   Ozon's own accounting for a period (the read-only key may read it): what buyers paid, what Ozon kept and
+   for what, what is left to pay out; then minus the purchase price of what was sold — the profit. */
+const OZM = {per: '30', shop: 'all', busy: false, data: null, prog: ''};
+const OZ_CAT = [
+  ['accruals_for_sale', 'Продажи', 'Сколько заплатили покупатели за ваши товары, по вашим ценам и до всех вычетов.'],
+  ['sale_commission', 'Вознаграждение Ozon', 'Процент Ozon с каждой продажи. Зависит от категории товара.'],
+  ['processing_and_delivery', 'Доставка и обработка', 'Логистика: забрать отправление, довезти до покупателя, обработать его на складах Ozon.'],
+  ['refunds_and_cancellations', 'Возвраты и отмены', 'Деньги, которые вернули покупателям, и обратная доставка.'],
+  ['services_amount', 'Услуги Ozon', 'Продвижение, бонусы покупателям, хранение и другие услуги — подробно ниже.'],
+  ['compensation_amount', 'Компенсации', 'Ozon возместил потерянный или испорченный товар.'],
+  ['others_amount', 'Прочее', 'Корректировки и другие начисления.'],
+];
+// Ozon's service codes in plain words
+const OZ_SVC = {
+  MarketplaceServiceItemFulfillment: 'Сборка заказа', MarketplaceServiceItemPickup: 'Выезд за отправлениями', MarketplaceServiceItemDropoffPVZ: 'Приём отправления в пункте выдачи',
+  MarketplaceServiceItemDropoffSC: 'Приём отправления в сортировочном центре', MarketplaceServiceItemDropoffFF: 'Приём отправления на складе Ozon', MarketplaceServiceItemDirectFlowTrans: 'Магистраль до города покупателя',
+  MarketplaceServiceItemReturnFlowTrans: 'Обратная магистраль', MarketplaceServiceItemDelivToCustomer: 'Последняя миля до покупателя', MarketplaceServiceItemDirectFlowLogistic: 'Логистика до покупателя',
+  MarketplaceServiceItemReturnFlowLogistic: 'Обратная логистика', MarketplaceServiceItemReturnAfterDelivToCustomer: 'Возврат после доставки', MarketplaceServiceItemReturnPartGoodsCustomer: 'Частичный возврат',
+  MarketplaceServiceItemReturnNotDelivToCustomer: 'Невыкуп: возврат недоставленного', MarketplaceRedistributionOfAcquiringOperation: 'Эквайринг: оплата картой', MarketplaceServiceItemDirectFlowLogisticVDC: 'Логистика из распределительного центра',
+  MarketplaceServiceItemRedistributionLastMileCourier: 'Курьерская доставка', MarketplaceServiceItemRedistributionLastMilePVZ: 'Доставка в пункт выдачи', MarketplaceServiceItemDisposalDetailed: 'Утилизация',
+};
+const OZ_WHY = [
+  [/продвиж|клик|трафарет|поиск|реклам|бустинг|звёздн|звездн/i, 'Реклама и продвижение: показы и клики по вашим товарам.'],
+  [/бонус|балл|кешбэк|кэшбэк/i, 'Бонусы и баллы покупателям за ваш счёт.'],
+  [/хранен|размещен/i, 'Хранение товара на складе Ozon.'],
+  [/эквайринг|платёж|платеж/i, 'Банку за приём оплаты картой.'],
+  [/миля|магистрал|логистик|доставк|выезд|приём отправл|прием отправл|сборк/i, 'Доставка заказа: приём, перевозка, вручение.'],
+  [/возврат|невыкуп|отмен/i, 'Возвраты: обратная доставка и обработка.'],
+  [/premium|подписк/i, 'Подписка Ozon Premium для продавцов.'],
+  [/утилиз/i, 'Утилизация товара по вашему запросу или после хранения.'],
+  [/вознагражден|комисси/i, 'Процент Ozon с продажи.'],
+  [/компенсац|возмещ/i, 'Ozon вернул деньги за потерянный или испорченный товар.'],
+];
+const ozWhy = n => (OZ_WHY.find(([rx]) => rx.test(n)) || [, ''])[1];
+function ozmRange(per) {
+  const now = new Date();
+  if (per === 'm') return [new Date(now.getFullYear(), now.getMonth(), 1), now];
+  if (per === 'pm') return [new Date(now.getFullYear(), now.getMonth() - 1, 1), new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, -1)];
+  return [new Date(now - (per === '7' ? 7 : 30) * DAYMS), now];
+}
+async function ozMoney() {
+  const shops = OZM.shop === 'all' ? ozShops() : ozShops().filter(s => s.i === +OZM.shop);
+  if (!shops.length || OZM.busy) return;
+  OZM.busy = true; OZM.err = ''; renderOzMoney();
+  const [from, to] = ozmRange(OZM.per), date = {from: from.toISOString(), to: to.toISOString()};
+  const tot = {}, svc = new Map(), posts = new Map(), skuToA = new Map();
+  for (const m of Object.values(OZ.info)) for (const [a, o] of m) if (o.sku) skuToA.set(+o.sku, a);
+  let ops = 0;
+  try {
+    for (const sh of shops) {
+      OZM.prog = `${ozName(sh.i)}: итоги`; renderOzMoney();
+      const jt = await ozFetch(sh, '/v3/finance/transaction/totals', {date, posting_number: '', transaction_type: 'all'});
+      const t = jt.result || jt;
+      for (const [k] of OZ_CAT) tot[k] = round((tot[k] || 0) + (pnum(t[k]) || 0));
+      tot.money_transfer = round((tot.money_transfer || 0) + (pnum(t.money_transfer) || 0));
+      for (let page = 1; page <= 200; page++) {
+        const jl = await ozFetch(sh, '/v3/finance/transaction/list', {filter: {date, operation_type: [], posting_number: '', transaction_type: 'all'}, page, page_size: 1000});
+        const r = jl.result || jl, list = r.operations || [];
+        ops += list.length;
+        OZM.prog = `${ozName(sh.i)}: операции ${fmt(ops)}${r.row_count ? ' из ' + fmt(r.row_count) : ''}`; renderOzMoney();
+        for (const op of list) {
+          const add = (name, v) => { if (!v) return; const e = svc.get(name) || svc.set(name, {v: 0, n: 0}).get(name); e.v = round(e.v + v); e.n++; };
+          const name = String(op.operation_type_name || op.operation_type || 'Операция');
+          if (pnum(op.sale_commission)) add('Вознаграждение Ozon', pnum(op.sale_commission));
+          const sv = Array.isArray(op.services) ? op.services : [];
+          for (const s of sv) add(OZ_SVC[s.name] || String(s.name || 'Услуга'), pnum(s.price) || 0);
+          if (pnum(op.delivery_charge)) add('Доставка', pnum(op.delivery_charge));
+          if (pnum(op.return_delivery_charge)) add('Обратная доставка', pnum(op.return_delivery_charge));
+          const acc = pnum(op.accruals_for_sale) || 0, amt = pnum(op.amount) || 0;
+          // an operation without a sale of its own is a charge in itself (promotion, storage, subscription…)
+          const rest = round(amt - acc - (pnum(op.sale_commission) || 0) - sv.reduce((s, x) => s + (pnum(x.price) || 0), 0) - (pnum(op.delivery_charge) || 0) - (pnum(op.return_delivery_charge) || 0));
+          if (!acc && Math.abs(rest) >= 0.5 && !/перевод|выплат/i.test(name)) add(name, rest);
+          else if (acc < 0) add('Возврат денег покупателю', acc);
+          const pn = op.posting && op.posting.posting_number;
+          if (pn && Array.isArray(op.items) && op.items.length) {
+            const p = posts.get(pn) || posts.set(pn, {net: 0, sale: 0, units: 0, items: op.items}).get(pn);
+            p.net = round(p.net + amt); p.sale = round(p.sale + acc);
+            if (acc > 0) p.units += op.items.length; else if (acc < 0) p.units -= op.items.length;
+            if (!p.items.length) p.items = op.items;
+          }
+        }
+        if (!list.length || page >= (+r.page_count || 1)) break;
+      }
+    }
+  } catch (e) { OZM.err = e.message; OZM.busy = false; OZM.prog = ''; diag('ozon', 'money-fail', String(e.message).slice(0, 200)); renderOzMoney(); return; }
+  // per model: what was paid out for it and what it cost to buy
+  const mod = new Map();
+  for (const [pn, p] of posts) {
+    const k = p.items.length || 1;
+    for (const it of p.items) {
+      const a = skuToA.get(+it.sku) || '', pa = a ? parseRaw(a) : null, key = pa ? (pa.mkey || normKey(a)) : 'n:' + String(it.name || '').toLowerCase();
+      const m = mod.get(key) || mod.set(key, {key, a, model: pa ? pa.model : '', name: String(it.name || ''), units: 0, sale: 0, net: 0, cost: 0, known: !!a}).get(key);
+      m.units += p.units / k; m.sale = round(m.sale + p.sale / k); m.net = round(m.net + p.net / k);
+    }
+  }
+  for (const m of mod.values()) {
+    const unit = m.a ? (PRS.cost[m.key] || prAutoCost(m.a)) : 0;
+    m.units = Math.round(m.units * 100) / 100; m.cost = round(unit * Math.max(0, m.units)); m.unit = unit;
+    m.profit = unit ? round(m.net - m.cost) : null;
+  }
+  OZM.data = {at: Date.now(), per: OZM.per, from, to, tot, svc: [...svc].map(([name, e]) => ({name, v: e.v, c: e.n})), mod: [...mod.values()], ops, posts: posts.size};
+  OZM.busy = false; OZM.prog = '';
+  diag('ozon', 'money', {ops, posts: posts.size, models: mod.size, per: OZM.per});
+  renderOzMoney();
+}
+const rubS = v => (v < 0 ? '−' : v > 0 ? '+' : '') + rub(Math.abs(v));
+function renderOzMoney() {
+  const card = $('#ozMoney'); if (!card) return;
+  const shops = ozShops();
+  card.hidden = !shops.length || EMP;
+  if (card.hidden) return;
+  $$('#ozmPer button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.per === OZM.per)));
+  const sel = $('#ozmShop');
+  sel.hidden = shops.length < 2;
+  if (shops.length > 1 && sel.options.length !== shops.length + 1) sel.innerHTML = `<option value="all">Все магазины</option>` + shops.map(s => `<option value="${s.i}">${esc(ozName(s.i))}</option>`).join('');
+  sel.value = OZM.shop;
+  const go = $('#ozmGo'); go.disabled = OZM.busy; go.lastChild.textContent = OZM.busy ? 'Считаю…' : OZM.data ? 'Пересчитать' : 'Посчитать';
+  $('#ozmProg').textContent = OZM.busy ? OZM.prog : OZM.err ? '' : OZM.data ? `Посчитано ${when(OZM.data.at)} · ${fmt(OZM.data.ops)} операций Ozon` : 'Нажмите «Посчитать»: программа возьмёт из Ozon все начисления и удержания за выбранный срок.';
+  const D = OZM.data, box = $('#ozmBody');
+  if (OZM.err) { setBody(box, `<p class="hint" style="color:var(--bad)">${esc(OZM.err)}</p>`); return; }
+  if (!D) { setBody(box, ''); return; }
+  const sale = D.tot.accruals_for_sale || 0, kept = OZ_CAT.slice(1).reduce((s, [k]) => s + Math.min(0, D.tot[k] || 0), 0), plus = OZ_CAT.slice(1).reduce((s, [k]) => s + Math.max(0, D.tot[k] || 0), 0);
+  const payout = round(OZ_CAT.reduce((s, [k]) => s + (D.tot[k] || 0), 0));
+  const known = D.mod.filter(m => m.profit != null), cost = round(known.reduce((s, m) => s + m.cost, 0)), unknownNet = round(D.mod.filter(m => m.profit == null).reduce((s, m) => s + m.net, 0));
+  const profit = round(payout - cost), pct = v => sale ? `${nf.format(Math.round(Math.abs(v) / sale * 1000) / 10)}%` : '';
+  const bar = (v, max) => `<span class="mbar" aria-hidden="true"><i style="width:${Math.max(1.5, Math.min(100, Math.abs(v) / (max || 1) * 100))}%"></i></span>`;
+  const cats = OZ_CAT.slice(1).map(([k, n, why]) => ({k, n, why, v: D.tot[k] || 0})).filter(c => c.v);
+  const top = D.svc.filter(s => s.v < 0).sort((a, b) => a.v - b.v).slice(0, 14), maxSvc = top.length ? Math.abs(top[0].v) : 1;
+  const mods = D.mod.filter(m => m.units > 0 || m.net).sort((a, b) => (b.profit ?? -Infinity) - (a.profit ?? -Infinity));
+  const loss = mods.filter(m => m.profit != null && m.profit < 0).sort((a, b) => a.profit - b.profit);
+  const row = m => `<tr><td><div class="prod">${m.a ? thumb(m.a, 'sm') : ''}<div><span class="art">${esc(m.model || m.a || '—')}</span>${m.name ? `<span class="nm">${esc(trunc(m.name, 70))}</span>` : ''}</div></div></td><td class="num">${nf.format(m.units)}</td><td class="num">${rub(m.sale)}</td><td class="num">${rub(m.net)}</td><td class="num">${m.unit ? rub(m.cost) : '—'}</td><td class="num">${m.profit == null ? '<span class="hint small" style="margin:0">нет закупки</span>' : `<b>${rubS(m.profit)}</b>`}</td></tr>`;
+  setBody(box, `
+    <div class="tiles four mt">
+      <div class="tile"><span class="k">Продажи</span><span class="v">${rub(sale)}</span><span class="s">заплатили покупатели</span></div>
+      <div class="tile"><span class="k">Ozon удержал</span><span class="v">${rub(-kept)}</span><span class="s">${pct(kept)} от продаж${plus ? ` · вернул ${rub(plus)}` : ''}</span></div>
+      <div class="tile"><span class="k">К выплате</span><span class="v">${rub(payout)}</span><span class="s">${pct(payout)} от продаж</span></div>
+      <div class="tile ${profit < 0 ? 'hot' : ''}"><span class="k">Прибыль после закупки</span><span class="v">${rubS(profit)}</span><span class="s">к выплате минус закупка проданного (${rub(cost)})${unknownNet ? ` · у товаров без закупки ${rub(unknownNet)}` : ''}</span></div>
+    </div>
+    <h4 class="mt">Куда уходят деньги с продаж</h4>
+    <div class="mlist">${cats.map(c => `<div class="mrow" title="${esc(c.why)}"><div class="mname"><b>${esc(c.n)}</b><span>${esc(c.why)}</span></div>${bar(c.v, sale)}<div class="mval">${rubS(c.v)}<small>${pct(c.v)}</small></div></div>`).join('') || '<p class="hint">За этот срок удержаний нет.</p>'}</div>
+    ${top.length ? `<h4 class="mt">Подробно: на что именно</h4><div class="mlist">${top.map(s => `<div class="mrow" title="${esc(ozWhy(s.name))}"><div class="mname"><b>${esc(s.name)}</b><span>${esc([ozWhy(s.name), s.c ? cnt(s.c, ['операция', 'операции', 'операций']) : ''].filter(Boolean).join(' · '))}</span></div>${bar(s.v, maxSvc)}<div class="mval">${rubS(s.v)}<small>${pct(s.v)}</small></div></div>`).join('')}</div>` : ''}
+    ${loss.length ? `<div class="manbar mt"><p><b>${cnt(loss.length, W.model)} в минус</b> после удержаний Ozon и закупки: ${esc(loss.slice(0, 5).map(m => `${m.model || m.a} (${rubS(m.profit)})`).join(', '))}${loss.length > 5 ? '…' : ''}. Поднимите цену или уберите их из акций.</p></div>` : ''}
+    <div class="lhead mt"><h4 style="margin:0">Товары: сколько принесли</h4><button class="btn sm" type="button" id="ozmXls"><svg class="ic"><use href="#i-dl"/></svg>Скачать в Excel</button></div>
+    <div class="tw"><table class="t"><thead><tr><th>Модель</th><th class="num">Продано, шт.</th><th class="num">Продажи</th><th class="num">К выплате</th><th class="num">Закупка</th><th class="num">Прибыль</th></tr></thead><tbody>${mods.slice(0, 15).map(row).join('') || '<tr><td colspan="6" class="empty">Продаж за этот срок нет</td></tr>'}${loss.length ? `<tr><td colspan="6" class="hint small" style="padding-top:14px">Самые убыточные</td></tr>${loss.slice(0, 10).map(row).join('')}` : ''}</tbody></table></div>
+    <p class="hint small">«К выплате» — что осталось от продаж после всех удержаний Ozon по этим отправлениям. Закупка — число в артикуле или то, что вы вписали на вкладке «Цены». Деньги, которые Ozon перевёл на счёт, не считаются расходом${D.tot.money_transfer ? `: за этот срок переведено ${rub(Math.abs(D.tot.money_transfer))}` : ''}.</p>`);
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('#ozMoney button'); if (!t) return;
+  if (t.dataset.per) { OZM.per = t.dataset.per; OZM.data = null; renderOzMoney(); return; }
+  if (t.id === 'ozmGo') { ozMoney(); return; }
+  if (t.id === 'ozmXls' && OZM.data) {
+    const D = OZM.data, rows = [['Модель', 'Артикул', 'Название', 'Продано, шт.', 'Продажи, ₽', 'К выплате, ₽', 'Закупка за шт., ₽', 'Закупка всего, ₽', 'Прибыль, ₽']];
+    for (const m of [...D.mod].sort((a, b) => (b.profit ?? -1e12) - (a.profit ?? -1e12))) rows.push([m.model, m.a, m.name, m.units, m.sale, m.net, m.unit || '', m.unit ? m.cost : '', m.profit ?? '']);
+    const cats = [['Статья', 'Сумма, ₽', 'Зачем'], ...OZ_CAT.map(([k, n, why]) => [n, D.tot[k] || 0, why]), ...[...D.svc].sort((a, b) => a.v - b.v).map(s => [s.name, s.v, ozWhy(s.name)])];
+    saveTable(`Деньги Ozon ${isoRu(isoOf(D.from))}–${isoRu(isoOf(D.to))}`, [{name: 'Товары', cols: [22, 24, 50, 12, 14, 14, 14, 14, 14], rows}, {name: 'Куда уходят деньги', cols: [40, 14, 70], rows: cats}]);
+  }
+});
+$('#ozmShop').addEventListener('change', () => { OZM.shop = $('#ozmShop').value; OZM.data = null; renderOzMoney(); });
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
-  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }, ozSync, ozSyncPrices, get OZ() { return OZ; }, get OZR() { return OZR; }, get PHOTO() { return PHOTO; }};
+  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }, ozMoney, get OZM() { return OZM; }, ozSync, ozSyncPrices, get OZ() { return OZ; }, get OZR() { return OZR; }, get PHOTO() { return PHOTO; }, tplAll, tplFill, tplStrip, tplGet, u8b64, b64u8, prOpenOzon, prOpenAction, prMakeFile, ozFileMeta};
 start();
 })();
 </script>
