@@ -2065,7 +2065,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-09.2';
+const APP_VERSION = '2026-10-10.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -5927,7 +5927,7 @@ function prLoad(d) {
   if (Array.isArray(d.snaps)) x.snaps = d.snaps.filter(s => s && s.id).map(s => ({id: String(s.id), at: +s.at || 0, shop: +s.shop || 0, n: +s.n || 0, file: String(s.file || '')})).slice(0, 12);
   return x;
 }
-const PR_ROLE = {art: 'Артикул', sku: 'Ozon ID / SKU', name: 'Название', price: 'Цена', old: 'Зачёркнутая цена (до скидки)', min: 'Ограничение для акций (мин. цена)', promo: 'Цена по акции', maxp: 'Макс. цена по акции (смотреть)', part: 'Участие в акции («Да» или пусто)', site: 'Цена на сайте (смотреть)', '': '— не нужен'};
+const PR_ROLE = {art: 'Артикул', sku: 'Ozon ID / SKU', name: 'Название', price: 'Цена', old: 'Зачёркнутая цена (до скидки)', min: 'Ограничение для акций (мин. цена)', promo: 'Цена по акции', maxp: 'Макс. цена по акции (смотреть)', cost: 'Себестоимость (закупка)', part: 'Участие в акции («Да» или пусто)', site: 'Цена на сайте (смотреть)', '': '— не нужен'};
 // «Да» — in the promotion, «Да*» — Ozon put it there itself, empty — not in it
 const PR_YES = v => /^да\*?$/i.test(String(v ?? '').trim());
 const PR_EDIT = ['price', 'old', 'min', 'promo'];
@@ -5947,6 +5947,7 @@ function prRoleOf(t) {
   if (/наименован|название/.test(t)) return 'name';
   if (/ограничени/.test(t) && /акци|стратег/.test(t)) return 'min';
   if (/участи/.test(t) && /акци/.test(t) && !/цен/.test(t)) return 'part';
+  if (/^себестоимост/.test(t)) return 'cost';
   if (!/цен|price/.test(t)) return '';
   if (/макс/.test(t) && /акци/.test(t)) return 'maxp';
   if (/рассчитанн|для\s+участия/.test(t) && /акци/.test(t)) return 'maxp';
@@ -5995,9 +5996,15 @@ function prParse(wb, name, buf) {
     const cell = ws[XLSX.utils.encode_cell({r: rg.s.r + hdr, c: rg.s.c + j})], cell2 = ws[XLSX.utils.encode_cell({r: rg.s.r + hdr + 1, c: rg.s.c + j})];
     cols.push({j, c: rg.s.c + j, label, t, role, green: prGreen(cell) || prGreen(cell2)});
   }
+  // a row under the header may say for every column «Редактируемое» or «Нередактируемое»
+  for (let i = hdr + 1; i <= hdr + 3 && i < rows.length; i++) {
+    const r = rows[i] || [], marks = r.filter(v => /^(не)?редактируем/i.test(String(v).trim())).length;
+    if (marks >= 3) { best.marks = i; for (const c of cols) c.edit = /^редактируем/i.test(String(r[c.j] ?? '').trim()); break; }
+  }
   prDedupe(cols);
-  // Ozon colours the columns that may be changed green: the other prices are only to look at
-  if (cols.some(c => PR_EDIT.includes(c.role) && c.green)) for (const c of cols) c.ro = PR_EDIT.includes(c.role) && !c.green;
+  // the columns Ozon lets change are marked (or coloured green): the other prices are only to look at
+  if (best.marks != null) for (const c of cols) c.ro = PR_EDIT.includes(c.role) && !c.edit;
+  else if (cols.some(c => PR_EDIT.includes(c.role) && c.green)) for (const c of cols) c.ro = PR_EDIT.includes(c.role) && !c.green;
   const zip = buf[0] === 0x50 && buf[1] === 0x4B;
   let promoName = '', promoDates = '';
   for (const n of wb.SheetNames) { if (n === sn) continue; const w = wb.Sheets[n]; if (!w || !w['!ref']) continue; for (const r of XLSX.utils.sheet_to_json(w, {header: 1, raw: false, defval: ''}).slice(0, 15)) for (const v of r) { const t = String(v).trim(); let m; if ((m = t.match(/^Название акции:\s*(.+)/))) promoName = m[1].slice(0, 120); if ((m = t.match(/^Даты акции:\s*(.+)/))) promoDates = m[1].slice(0, 120); } }
@@ -6009,9 +6016,13 @@ function prParse(wb, name, buf) {
 }
 // one column per price: Ozon's green (editable) one wins, then «новая», then the first
 function prDedupe(cols, keep) {
-  const sc = c => (c === keep ? 10 : 0) + (c.green ? 2 : 0) + (/нов|установ/.test(c.t) ? 1 : 0) - (/текущ|сейчас|было/.test(c.t) ? 1 : 0);
+  const sc = c => (c === keep ? 10 : 0) + (c.edit ? 4 : 0) + (c.green ? 2 : 0) + (/нов|установ/.test(c.t) ? 1 : 0) - (/текущ|сейчас|было/.test(c.t) ? 1 : 0);
   const by = new Map();
   for (const c of cols) if (c.role) { const o = by.get(c.role); if (!o || sc(c) > sc(o)) by.set(c.role, c); }
+  // Ozon's price file: the new price goes into «Новая предельная цена…», today's is in «Предельная цена…»
+  const plain = t => t.replace(/^нов\S*\s+/, '');
+  for (const c of cols) c.cur = null;
+  for (const [role, m] of by) if (/^нов/.test(m.t)) { const cur = cols.find(c => c !== m && c.role === role && plain(c.t) === plain(m.t)); if (cur) m.cur = cur.j; }
   for (const c of cols) if (c.role && by.get(c.role) !== c) c.role = '';
 }
 const prCol = role => PR && PR.cols.find(c => c.role === role);
@@ -6020,7 +6031,8 @@ const prEdit = () => PR_EDIT.filter(r => { const c = prCol(r); return c && !c.ro
 function prRows(P) {
   const J = role => { const c = P.cols.find(x => x.role === role); return c ? c.j : -1; };
   const ja = J('art'), jn = J('name'), js = J('sku'), jp = J('part');
-  const nums = ['price', 'old', 'min', 'promo', 'maxp', 'site'].map(r => [r, J(r)]).filter(x => x[1] >= 0);
+  const nums = ['price', 'old', 'min', 'promo', 'maxp', 'site', 'cost'].map(r => [r, J(r)]).filter(x => x[1] >= 0);
+  const curJ = Object.fromEntries(P.cols.filter(c => c.role && c.cur != null).map(c => [c.role, c.cur]));
   const was = new Map(P.list.map(r => [r.i, r]));
   P.kind = jp >= 0 || nums.some(x => x[0] === 'promo' || x[0] === 'maxp') ? 'promo' : 'price';
   P.list = []; const gm = new Map(); P.groups = [];
@@ -6029,7 +6041,8 @@ function prRows(P) {
     const row = P.rows[i] || [], a = String(row[ja] ?? '').trim();
     if (!a) continue;
     const o = {}, txt = {};
-    for (const [r, j] of nums) { const v = row[j]; o[r] = pnum(v); txt[r] = typeof v === 'string' && v !== ''; }
+    for (const [r, j] of nums) { const v = row[j]; o[r] = pnum(v); txt[r] = typeof v === 'string' && v !== ''; if (o[r] == null && curJ[r] != null) o[r] = pnum(row[curJ[r]]); }
+    if (/^(не)?редактируем/i.test(a) || (!/\d/.test(a) && !nums.some(([r]) => o[r] != null))) continue;
     if (jp >= 0) o.part = String(row[jp] ?? '').trim();
     // explanation rows under the header have long text instead of an article and no numbers
     if (/\s/.test(a) && !nums.some(([r]) => o[r] != null)) continue;
@@ -6046,7 +6059,7 @@ function prRows(P) {
 }
 // the purchase price is the round number in the article, as everywhere in the program
 const prAutoCost = a => S.price ? parseArt(a).price || 0 : 0;
-const prCost = g => PRS.cost[g.k] || prAutoCost(g.rows[0].a);
+const prCost = g => PRS.cost[g.k] || g.rows.map(r => r.o.cost).find(v => v > 0) || prAutoCost(g.rows[0].a);
 const prFloorOf = cost => cost ? Math.ceil((cost * (1 + (+PRS.pct || 0) / 100) + (+PRS.add || 0)) / 10) * 10 : 0;
 const prFloor = g => prFloorOf(prCost(g));
 const prEv = (r, role) => r.v[role] !== undefined ? r.v[role] : r.o[role];
@@ -6193,8 +6206,10 @@ function zipRewrite(buf, put, del) {
 }
 const prNumTxt = v => String(Math.round(v * 100) / 100);
 const xmlEsc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-function prCellXml(ref, head, v, pre) {
-  const s = head ? xAttr(head, 's') : null, t = head ? xAttr(head, 't') : null, sa = s != null ? ` s="${s}"` : '';
+function prCellXml(ref, head, v, pre, tag) {
+  const s = head ? xAttr(head, 's') : null, sa = s != null ? ` s="${s}"` : '';
+  // a number goes in as text only where the file already kept a number as text; an empty cell gets a number
+  const t = head && tag && /<(\w+:)?(v|is)\b/.test(tag) ? xAttr(head, 't') : null;
   if (typeof v === 'string') return `<${pre}c r="${ref}"${sa} t="inlineStr"><${pre}is><${pre}t>${xmlEsc(v)}</${pre}t></${pre}is></${pre}c>`;
   if (t === 's' || t === 'str' || t === 'inlineStr') return `<${pre}c r="${ref}"${sa} t="inlineStr"><${pre}is><${pre}t>${prNumTxt(v)}</${pre}t></${pre}is></${pre}c>`;
   return `<${pre}c r="${ref}"${sa}><${pre}v>${prNumTxt(v)}</${pre}v></${pre}c>`;
@@ -6223,7 +6238,7 @@ function prPatchXml(xml, edits, drop) {
     const ops = [];
     for (const [C, v] of cm) {
       const ref = XLSX.utils.encode_cell({r: R, c: C}), ex = cells.find(x => x.C === C);
-      if (ex) { if (fRx.test(ex.tag)) hadF = true; fRx.lastIndex = 0; ops.push({at: ex.at, len: ex.len, C, text: prCellXml(ref, ex.head, v, pre)}); }
+      if (ex) { if (fRx.test(ex.tag)) hadF = true; fRx.lastIndex = 0; ops.push({at: ex.at, len: ex.len, C, text: prCellXml(ref, ex.head, v, pre, ex.tag)}); }
       else { const nx = cells.find(x => x.C > C); ops.push({at: nx ? nx.at : inner.length, len: 0, C, text: prCellXml(ref, null, v, pre)}); }
     }
     ops.sort((x, y) => (y.at - x.at) || (y.C - x.C));
