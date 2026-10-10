@@ -1,8 +1,9 @@
 param($self, [switch]$DryRun)
 # ULTIMATE SHOP СКЛАД: one-file installer for Windows.
 # The program itself is the text after the HTML marker line of this file. The script writes it to a
-# permanent folder, writes the icon and creates shortcuts on the Desktop and in the Start menu that
-# open the program in its own browser window. Nothing is downloaded from the internet.
+# permanent folder, writes the icon and the Ozon helper (its text is below, between the HELPER lines) and
+# creates shortcuts on the Desktop and in the Start menu. The shortcut starts the helper, the helper opens
+# the program in its own browser window. Nothing is downloaded from the internet.
 # Written for Windows PowerShell 5.1.
 $ErrorActionPreference = 'Stop'
 $title = 'ULTIMATE SHOP СКЛАД'
@@ -57,7 +58,11 @@ try {
   if (-not $DryRun) {
     foreach ($l in $links) {
       if ($browser -or -not (Test-Path -LiteralPath $l)) { continue }
-      try { $old = (New-Object -ComObject WScript.Shell).CreateShortcut($l).TargetPath; if ($old -match '\.exe$' -and (Test-Path -LiteralPath $old)) { $browser = $old } } catch {}
+      try { $old = (New-Object -ComObject WScript.Shell).CreateShortcut($l).TargetPath; if ($old -match '\.exe$' -and $old -notmatch '(^|[\\/])powershell\.exe$' -and (Test-Path -LiteralPath $old)) { $browser = $old } } catch {}
+    }
+    # the shortcut already starts the helper: the browser is in its settings
+    if (-not $browser) {
+      try { $prev = Get-Content -LiteralPath (Join-Path $dest 'start.json') -Raw -Encoding UTF8 | ConvertFrom-Json; if ($prev.target -match '\.exe$' -and (Test-Path -LiteralPath $prev.target)) { $browser = $prev.target } } catch {}
     }
   }
   if (-not $DryRun -and -not $browser) {
@@ -77,23 +82,38 @@ try {
   if ($browser) { $target = $browser } else { $target = $app }
   if ($appMode) { $argv = '--app="' + $url + '"' } elseif ($browser) { $argv = '"' + $url + '"' } else { $argv = '' }
 
-  # 4. shortcuts on the Desktop and in the Start menu
+  # 4. the Ozon helper: opens the program and passes its questions to Ozon (see its text below)
+  $helper = Join-Path $dest 'ozon-helper.ps1'
+  $helperText = @'
+__HELPER__
+'@
+  [IO.File]::WriteAllText($helper, $helperText, (New-Object Text.UTF8Encoding $true))
+  [IO.File]::WriteAllText((Join-Path $dest 'start.json'), (ConvertTo-Json @{target = $target; args = $argv}), (New-Object Text.UTF8Encoding $false))
+  $ps = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  if (-not $env:WINDIR -or -not (Test-Path -LiteralPath $ps)) { $ps = (Get-Command powershell.exe -ErrorAction SilentlyContinue).Source }
+  # the script text is read and run as a command, so Windows' rule against running script files does not stop it
+  $q = $helper.Replace("'", "''"); $qd = $dest.Replace("'", "''")
+  $runArgs = "-NoProfile -WindowStyle Hidden -Command `"& ([scriptblock]::Create([IO.File]::ReadAllText('$q', [Text.Encoding]::UTF8))) -Dir '$qd'`""
+
+  # 5. shortcuts on the Desktop and in the Start menu
   if ($DryRun) {
     Write-Output "app=$app ($((Get-Item -LiteralPath $app).Length) bytes)"; Write-Output "icon=$ico ($((Get-Item -LiteralPath $ico).Length) bytes)"
-    Write-Output "url=$url"; Write-Output "links=$($links -join ' | ')"
+    Write-Output "helper=$helper ($((Get-Item -LiteralPath $helper).Length) bytes)"; Write-Output "start=$(Get-Content -LiteralPath (Join-Path $dest 'start.json') -Raw)"
+    Write-Output "url=$url"; Write-Output "links=$($links -join ' | ')"; Write-Output "run=$ps $runArgs"
     return
   }
   $ws = New-Object -ComObject WScript.Shell
   foreach ($l in $links) {
     $sc = $ws.CreateShortcut($l)
-    $sc.TargetPath = $target
-    $sc.Arguments = $argv
+    if ($ps) { $sc.TargetPath = $ps; $sc.Arguments = $runArgs; $sc.WindowStyle = 7 }
+    else { $sc.TargetPath = $target; $sc.Arguments = $argv }
     $sc.WorkingDirectory = $dest
     $sc.IconLocation = $ico + ',0'
     $sc.Description = 'Склад: заказы, закупка, приёмка'
     $sc.Save()
   }
-  if ($argv) { Start-Process -FilePath $target -ArgumentList $argv } else { Start-Process -FilePath $target }
+  if ($ps) { Start-Process -FilePath $ps -ArgumentList $runArgs -WindowStyle Hidden }
+  elseif ($argv) { Start-Process -FilePath $target -ArgumentList $argv } else { Start-Process -FilePath $target }
   if ($isUpdate) { Say "Программа обновлена!`n`nВсё, что вы делали раньше, осталось на месте. Программа сейчас откроется.`n`nОткрывайте её, как и раньше, ярлыком «$title» на рабочем столе. Этот файл установки можно удалить." 64 }
   else { Say "Готово!`n`nНа рабочем столе появился ярлык «$title». Программа сейчас откроется.`n`nДальше открывайте её этим ярлыком. Этот файл установки можно удалить.`n`nВышла новая версия — скачайте новый файл установки и откройте его так же. Данные останутся." 64 }
 } catch {

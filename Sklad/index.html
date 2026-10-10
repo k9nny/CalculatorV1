@@ -925,7 +925,7 @@ body.emp .empbadge{display:block;margin:-8px 8px 0;padding:6px 10px;border-radiu
 body.emp .helpbtn.empexit{display:flex}
 body.emp #t-home,body.emp #t-day,body.emp #t-buy,body.emp #t-an,body.emp #t-prices,body.emp #t-settings,body.emp .helpbtn.gear,body.emp .top .kpis,
 body.emp #recvAsIs,body.emp [data-import="stock"],body.emp [data-paste="stock"],body.emp [data-export-stock],body.emp #rcReplace,body.emp #stSeg,body.emp #stBody [data-del],
-body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-cancel-pur],body.emp [data-recv-asis]{display:none!important}
+body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-cancel-pur],body.emp [data-recv-asis]{display:none!important}
 @media (max-width:1023px){body.emp .empbadge{display:none}body.emp .helpbtn.empexit{width:34px;height:34px;padding:0;justify-content:center}body.emp .helpbtn.empexit span{display:none}}
 .empcard{border-color:color-mix(in srgb,var(--gold) 45%,var(--line))}
 .shake{animation:shake .45s}
@@ -937,6 +937,13 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
   .btn::after,.mark::after,.toast,.toast.out,.modal,.modal .sheet,#pageTitle.swap,.badge.pop{animation:none!important}
   .toast .ti svg path{animation:none;stroke-dashoffset:0}
 }
+/* ============ Ozon API ============ */
+.ozf{grid-template-columns:150px minmax(0,1fr) minmax(0,1.6fr) auto auto;align-items:end;max-width:none}
+.ozf .fld b{color:var(--ink);font-size:15px;padding:10px 0}
+@media (max-width:900px){.ozf{grid-template-columns:1fr 1fr}.ozf .fld:first-child{grid-column:1/-1}}
+.ozpshop+.ozpshop{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.ozpshop h4{margin:0 0 6px;font:600 15px/1.3 var(--f-ui)}
+#ozRetList .arow .row .btn{min-height:30px}
 /* ============ prices ============ */
 .prhow p{margin:8px 0 0;max-width:72ch;color:var(--muted)}
 .prhow summary,#prCols summary{cursor:pointer;color:var(--ink);font-weight:600}
@@ -1122,7 +1129,9 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
         <div class="row mt">
           <button class="btn primary" type="button" data-import="orders"><svg class="ic"><use href="#i-up"/></svg>Загрузить лист подбора</button>
           <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
+          <button class="btn" type="button" id="ozOrdersBtn" hidden><svg class="ic"><use href="#i-undo"/></svg>Обновить заказы из Ozon</button>
         </div>
+        <div class="ometa" id="ozDayMeta" hidden></div>
         <div class="ometa" id="dayMeta"></div>
         <div class="ometa" id="photoStatus" hidden></div>
       </div>
@@ -1143,6 +1152,7 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
       </div>
       <div class="notice" id="dayPending" hidden></div>
       <div class="notice" id="dayGone" hidden></div>
+      <div class="notice" id="ozCancel" hidden></div>
       <div class="card" id="dayCard" hidden>
         <div class="lhead">
           <div class="seg" role="group" aria-label="Фильтр отправлений" id="daySeg">
@@ -1210,6 +1220,11 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
           <p class="hint">Выберите закупку, которая приехала, и посчитайте, что пришло на самом деле. Программа сравнит это с заказом, разложит товар по отправлениям, а остаток отправит на склад.</p>
           <div class="golist mt" id="recvGo"></div>
           <div class="confirm" id="recvGoConfirm" hidden></div>
+        </div>
+        <div class="card" id="ozRetCard" hidden>
+          <div class="lhead"><h3>Возвраты от покупателей (Ozon)</h3><span class="sum" id="ozRetSum"></span><button class="btn sm" type="button" id="ozRetBtn">Обновить</button></div>
+          <p class="hint small" style="margin:0 0 10px">Что покупатели вернули по заказам FBS. Когда возврат у вас на руках, нажмите «Принять на склад»: товар добавится на склад. «Скрыть» — если он не вернётся к вам.</p>
+          <div id="ozRetList"></div>
         </div>
         <div class="card"><h3>Недавние приёмки</h3><div class="mt" id="recvHist"></div></div>
       </div>
@@ -1398,6 +1413,11 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
         </details>
         <input type="file" id="prFile" accept=".xlsx,.xlsm,.xls,.ods" hidden>
       </div>
+      <div class="card" id="ozPrCard" hidden>
+        <div class="lhead"><h3>Сейчас в Ozon</h3><span class="sum" id="ozPrSum"></span><button class="btn sm" type="button" id="ozPrBtn"><svg class="ic"><use href="#i-undo"/></svg>Обновить из Ozon</button></div>
+        <p class="hint small" style="margin:0 0 6px">Цены и акции прямо из Ozon, по ключу только для чтения. Посмотреть можно здесь, а менять — через файл, как выше.</p>
+        <div id="ozPrBody"></div>
+      </div>
       <div class="card" id="prCard" hidden>
         <div class="lhead">
           <h3 id="prTitle">Файл</h3>
@@ -1477,6 +1497,30 @@ body.emp [data-import="receipt"],body.emp [data-paste="receipt"],body.emp [data-
           <button class="btn primary" type="submit">Включить на этом устройстве</button>
         </form>
         <p class="hint small">Без кода выйти сможет любой, кто нажмёт «Выйти из режима сотрудника». С кодом выход только по нему.</p>
+      </div>
+      <div class="card" id="ozSet">
+        <h2>Ozon API</h2>
+        <p class="hint">По ключу только для чтения программа сама берёт из Ozon заказы, возвраты, цены, акции и продажи. Ключ хранится только на этом компьютере: он не попадает в резервную копию, в журнал и на другие устройства. Изменить что-то в Ozon с таким ключом нельзя. Ключ создаёт владелец: кабинет Ozon → «Настройки» → «API ключи» → «Seller API» → «Сгенерировать ключ», роль «Admin read only».</p>
+        <form class="addrow ozf mt" id="ozForm0" autocomplete="off">
+          <div class="fld">Магазин<b id="ozName0">Магазин 1</b></div>
+          <label class="fld">Client ID<input class="in mono" id="ozCid0" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
+          <label class="fld">API-ключ<input class="in mono" id="ozKey0" type="password" autocomplete="new-password" spellcheck="false"></label>
+          <button class="btn primary" type="submit">Проверить и сохранить</button>
+          <button class="btn ghost" type="button" id="ozDel0" hidden>Удалить</button>
+        </form>
+        <p class="hint small" id="ozSt0"></p>
+        <form class="addrow ozf" id="ozForm1" autocomplete="off">
+          <div class="fld">Магазин<b id="ozName1">Магазин 2</b></div>
+          <label class="fld">Client ID<input class="in mono" id="ozCid1" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
+          <label class="fld">API-ключ<input class="in mono" id="ozKey1" type="password" autocomplete="new-password" spellcheck="false"></label>
+          <button class="btn primary" type="submit">Проверить и сохранить</button>
+          <button class="btn ghost" type="button" id="ozDel1" hidden>Удалить</button>
+        </form>
+        <p class="hint small" id="ozSt1"></p>
+        <label class="opt"><input type="checkbox" id="ozAuto"><div><b>Обновлять заказы и возвраты сами</b><span>При открытии программы и каждые 15 минут. Когда подключены оба магазина, отправления, которых больше нет в работе у Ozon (отправлены или отменены), программа убирает сама.</span></div></label>
+        <div class="row mt"><button class="btn" type="button" id="ozDiag" hidden><svg class="ic"><use href="#i-dl"/></svg>Проверка Ozon</button><span class="hint small" style="margin:0">Сохраняет файл с образцами ответов Ozon — без ключа и данных покупателей. Его можно прислать Claude, чтобы подогнать программу.</span></div>
+        <p class="hint small" id="ozVia"></p>
+        <div class="confirm" id="ozConfirm" hidden></div>
       </div>
       <div class="card">
         <h2>Как читать артикул</h2>
@@ -1685,6 +1729,7 @@ const coll = new Intl.Collator('ru', {numeric: true, sensitivity: 'base'});
 const plural = (n, f) => { const a = Math.abs(Math.trunc(n)) % 100, b = a % 10; return f[(a > 10 && a < 20) ? 2 : b === 1 ? 0 : (b >= 2 && b <= 4) ? 1 : 2]; };
 const W = {ship: ['отправление', 'отправления', 'отправлений'], art: ['артикул', 'артикула', 'артикулов'], row: ['строка', 'строки', 'строк'], file: ['файл', 'файла', 'файлов'], pos: ['позиция', 'позиции', 'позиций'], pav: ['павильон', 'павильона', 'павильонов'], model: ['модель', 'модели', 'моделей'], day: ['день', 'дня', 'дней'], pur: ['закупка', 'закупки', 'закупок']};
 const cnt = (n, w) => `${fmt(n)} ${plural(n, w)}`;
+const WG = {pos: ['позиции', 'позиций', 'позиций'], model: ['модели', 'моделей', 'моделей']};
 const inPav = n => `в ${fmt(n)} ${plural(n, ['павильоне', 'павильонах', 'павильонах'])}`;
 const trunc = (s, n) => { s = String(s ?? ''); return s.length > n ? s.slice(0, n - 1) + '…' : s; };
 const range = n => Array.from({length: n}, (_, i) => i);
@@ -1699,7 +1744,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-10.1';
+const APP_VERSION = '2026-10-10.2';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -2209,6 +2254,7 @@ function subscribe() {
     for (const r of Array.isArray(d.items) ? d.items : []) if (Array.isArray(r)) putSup(r);
     render();
   });
+  Backend.watchDoc('meta/ozret', d => { if (!d || docPending('meta/ozret')) return; OZR = ozrLoad(d); render(); });
   Backend.watchDoc('meta/prices', d => { if (!d || docPending('meta/prices')) return; PRS = prLoad(d); renderPrices(); });
   Backend.watchDoc('meta/returns', d => {
     first('ret');
@@ -2224,6 +2270,7 @@ function checkReady() {
   document.body.classList.remove('loading'); syncDone(); render();
   if (started) return;
   started = true;
+  setTimeout(ozAuto, 2500);
   const chk = checkData();
   diag('start', `v${APP_VERSION} ${Backend.kind}`, {ua: navigator.userAgent.slice(0, 200), scr: [screen.width, screen.height, devicePixelRatio], vp: [innerWidth, innerHeight], loadMs: Math.round(performance.now() - T0), stock: stock.items.size, lines: lines.items.size, going: [...PUR.values()].filter(x => x.st === 'go').length, photos: PHOTO.size, check: chk});
   if (chk.neg || chk.over || chk.orphan) diag('check', 'странные данные', chk);
@@ -3183,14 +3230,18 @@ function loadList(inLines, info) {
   const [dd, mm, yy] = DAYM.date.split('.');
   const hid = yy ? `d${yy}-${mm}-${dd}` : 'd' + new Date().toISOString().slice(0, 10);
   const hist = {date: DAYM.date, file: info.file, at: day, ships, items: [...agg.values()]};
-  saveDoc('hist/' + hid, () => hist, 50);
-  if (HIST) { const day = new Map(); for (const [a, q] of agg.values()) day.set(normKey(a), [a, q]); HIST.set(hid.slice(1), day); }
+  // orders from the Ozon API keep their own history by the day of each order
+  if (!info.noHist) {
+    saveDoc('hist/' + hid, () => hist, 50);
+    if (HIST) { const day = new Map(); for (const [a, q] of agg.values()) day.set(normKey(a), [a, q]); HIST.set(hid.slice(1), day); }
+  }
   const old = [...lines.items.values()].filter(ln => ln.d < day && ln.got < ln.q).length;
-  log(`Лист подбора ${DAYM.date}: ${cnt(ships || inLines.length, ships ? W.ship : W.row)}, новых строк ${fmt(added)}${dup ? `, уже были ${fmt(dup)}` : ''}${old ? `; с прошлых дней ждут ${fmt(old)}` : ''}`);
+  if (!info.quiet || added || reset) log(`${info.file === 'Ozon API' ? 'Заказы из Ozon' : 'Лист подбора'} ${DAYM.date}: ${cnt(ships || inLines.length, ships ? W.ship : W.row)}, новых строк ${fmt(added)}${dup ? `, уже были ${fmt(dup)}` : ''}${old ? `; с прошлых дней ждут ${fmt(old)}` : ''}`);
   diag('list', DAYM.date, {added, dup, ships, expected: info.expected || 0, old, total: lines.items.size, stock: stock.items.size});
   const gone = [...lines.items.values()].filter(isGone).length;
   const msg = `Лист загружен: ${cnt(added, W.row)}${dup ? `, ${fmt(dup)} уже были в программе` : ''}${gone ? `. ${cnt(gone, ['отправления', 'отправлений', 'отправлений'])} с прошлых дней в нём нет` : ''}`;
   if (reset) toast(`${msg}. Количества, которые вы вписывали в закупку ${prevDate}, сброшены — закупка посчитана заново по новому листу.`, 12000, {label: 'Вернуть правки', fn: () => { PO = reset.po; SKIP.m = reset.skip.m; SKIP.p = reset.skip.p; SENT = reset.sent; saveMeta('meta/po'); render(); toast('Правки закупки вернулись'); }});
+  else if (info.file === 'Ozon API') { if (!info.quiet || added) toast(added ? `Заказы из Ozon: новых ${cnt(added, W.row)}` : 'Заказы из Ozon: новых нет'); }
   else toast(msg);
 }
 
@@ -3604,7 +3655,7 @@ function renderAllInner() {
   const rows = buyRows(p);
   badge($('#bBuy'), rows.length);
   badge($('#bRecv'), go.length);
-  renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog();
+  renderDay(p, ships); renderBuy(p, rows); renderRecv(); renderStock(); renderRecount(); renderReturns(); renderLog(); renderOz();
   if (ui.tab === 'settings') { renderSuppliers(); renderModelsSet(); }
   if (ui.tab === 'an') renderAn(p);
   if (ui.tab === 'home') renderHome(p, ships, rows, go);
@@ -3934,7 +3985,7 @@ function setTab(t) {
   $$('.pane').forEach(p => p.hidden = p.id !== 'pane-' + t);
   lsSet('sklad/tab', t);
   if (t === 'settings') renderSettings();
-  if (t === 'prices') renderPrices();
+  if (t === 'prices') { renderPrices(); renderOzPrices(); if (ozShops().length && (!OZ.pr || Date.now() - OZ.pr.at > 30 * 60000)) ozSyncPrices(false); }
   placePill(); placeThumbs();
   if (changed) enterPane(t);
 }
@@ -5383,6 +5434,7 @@ $('#bkFile').addEventListener('change', async () => {
     if (m['meta/supstats']) { SUPSTAT.clear(); for (const r of m['meta/supstats'].items || []) putStat(r); saveMeta('meta/supstats'); }
     if (m['meta/day']) { DAYM = {...DAYM, ...m['meta/day']}; saveMeta('meta/day'); }
     if (m['meta/prices']) { PRS = prLoad(m['meta/prices']); saveMeta('meta/prices'); }
+    if (m['meta/ozret']) { OZR = ozrLoad(m['meta/ozret']); saveMeta('meta/ozret'); }
     log(`Данные восстановлены из копии от ${when(b.at)}`);
     diag('backup', 'restore', {at: b.at, stock: b.stock.length, lines: (b.lines || []).length, purch: (b.purch || []).length});
     toast('Данные восстановлены');
@@ -6149,16 +6201,16 @@ function renderPrices() {
   who.value = selN && PR.who !== 'vis' ? 'sel' : 'vis';
   // warnings
   const W2 = [], lows = PR.list.filter(prLow).length, wn = k => PR.list.filter(r => prWarns(r).includes(k)).length;
-  if (lows) W2.push(`<div class="manbar"><p>${PR.kind === 'promo' ? `У <b>${cnt(lows, W.pos)}</b> в акции цена ниже защиты — программа уберёт их из ${pc ? 'акции' : 'файла акции'}.` : `У <b>${cnt(lows, W.pos)}</b> новая цена ниже защиты — в файл они не попадут, останется прежняя цена.`}</p><button class="btn sm" type="button" data-prview="bad">Показать</button></div>`);
+  if (lows) W2.push(`<div class="manbar"><p>${PR.kind === 'promo' ? `У <b>${cnt(lows, WG.pos)}</b> в акции цена ниже защиты — программа уберёт их из ${pc ? 'акции' : 'файла акции'}.` : `У <b>${cnt(lows, WG.pos)}</b> новая цена ниже защиты — в файл они не попадут, останется прежняя цена.`}</p><button class="btn sm" type="button" data-prview="bad">Показать</button></div>`);
   const auto = pc ? PR.list.filter(r => r.o.part === 'Да*' && prIn(r)).length : 0;
   if (auto) W2.push(`<div class="manbar"><p>Ozon сам добавил в эту акцию <b>${cnt(auto, W.pos)}</b> («Да*»). Проверьте, устраивает ли цена: если нет, нажмите у товара «Убрать из акции».</p><button class="btn sm" type="button" data-prview="in">Показать</button></div>`);
   const wo = wn('old'), wm = wn('min'), wx = wn('max');
-  if (wo) W2.push(`<div class="manbar"><p>У <b>${cnt(wo, W.pos)}</b> зачёркнутая цена слишком близко к цене. Ozon требует разницу больше 5% (до 400 ₽ — больше 20 ₽, от 10 000 ₽ — больше 500 ₽).</p><button class="btn sm" type="button" data-prfix="old">Поднять зачёркнутую</button></div>`);
-  if (wm) W2.push(`<div class="manbar"><p>У <b>${cnt(wm, W.pos)}</b> ограничение для акций выше новой цены.</p><button class="btn sm" type="button" data-prfix="min">Опустить до цены</button></div>`);
-  if (wx) W2.push(`<div class="manbar"><p>У <b>${cnt(wx, W.pos)}</b> цена по акции выше максимальной, Ozon её не примет.</p><button class="btn sm" type="button" data-prfix="max">Поставить максимальную</button></div>`);
-  if (roles.includes('min')) { const ml = PR.list.filter(r => { const f = prFloor(r.g), m = prOut(r, 'min'), p = prOut(r, 'price'); return f && m != null && m < f && !(p > 0 && p < f); }).length; if (ml) W2.push(`<div class="manbar"><p>У <b>${cnt(ml, W.pos)}</b> ограничение для акций ниже защиты — Ozon может сам добавить их в акцию дешевле.</p><button class="btn sm" type="button" data-prfix="minfloor">Поставить ограничение = защите</button></div>`); }
+  if (wo) W2.push(`<div class="manbar"><p>У <b>${cnt(wo, WG.pos)}</b> зачёркнутая цена слишком близко к цене. Ozon требует разницу больше 5% (до 400 ₽ — больше 20 ₽, от 10 000 ₽ — больше 500 ₽).</p><button class="btn sm" type="button" data-prfix="old">Поднять зачёркнутую</button></div>`);
+  if (wm) W2.push(`<div class="manbar"><p>У <b>${cnt(wm, WG.pos)}</b> ограничение для акций выше новой цены.</p><button class="btn sm" type="button" data-prfix="min">Опустить до цены</button></div>`);
+  if (wx) W2.push(`<div class="manbar"><p>У <b>${cnt(wx, WG.pos)}</b> цена по акции выше максимальной, Ozon её не примет.</p><button class="btn sm" type="button" data-prfix="max">Поставить максимальную</button></div>`);
+  if (roles.includes('min')) { const ml = PR.list.filter(r => { const f = prFloor(r.g), m = prOut(r, 'min'), p = prOut(r, 'price'); return f && m != null && m < f && !(p > 0 && p < f); }).length; if (ml) W2.push(`<div class="manbar"><p>У <b>${cnt(ml, WG.pos)}</b> ограничение для акций ниже защиты — Ozon может сам добавить их в акцию дешевле.</p><button class="btn sm" type="button" data-prfix="minfloor">Поставить ограничение = защите</button></div>`); }
   const noCost = PR.groups.filter(g => !prCost(g)).length;
-  if (noCost && roles.some(r => r === 'price' || r === 'promo')) W2.push(`<div class="manbar"><p>У <b>${cnt(noCost, W.model)}</b> не известна закупка — для них защита не работает. Впишите закупку в строке товара.</p></div>`);
+  if (noCost && roles.some(r => r === 'price' || r === 'promo')) W2.push(`<div class="manbar"><p>У <b>${cnt(noCost, WG.model)}</b> не известна закупка — для них защита не работает. Впишите закупку в строке товара.</p></div>`);
   setBody($('#prWarn'), W2.join(''));
   // the list
   $$('#prSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === PR.view)));
@@ -6268,9 +6320,425 @@ $('#prBulk').addEventListener('submit', e => {
 let prQT = 0;
 $('#prSearch').addEventListener('input', () => { clearTimeout(prQT); prQT = setTimeout(() => { if (!PR) return; PR.q = $('#prSearch').value; PR.lim = 150; renderPrices(); }, 180); });
 addEventListener('beforeunload', e => { if (PR && !PR.saved && prDirty()) { e.preventDefault(); e.returnValue = ''; } });
+/* ---------- Ozon API with a read-only key: orders, customer returns, prices, promotions, sales ----------
+   The keys stay on this device: not in the shared data, the backups, the log or the copy before an update.
+   The program asks api-seller.ozon.ru itself or, where the browser does not let a page opened from a file do
+   that, through the helper the installer puts next to the program (http://127.0.0.1:37219).
+   With a read-only key nothing can be changed in Ozon. */
+const OZQ = new URLSearchParams(location.search), OZT = OZQ.has('test');
+const OZ_HOST = (OZT && OZQ.get('ozhost')) || 'https://api-seller.ozon.ru';
+const OZ_RELAY = (OZT && OZQ.get('ozrelay')) || 'http://127.0.0.1:37219';
+const OZK = 'sklad-ozon', OZS = 'sklad-ozon-st';   // outside «sklad/…» on purpose
+// orders still to be shipped from the warehouse: waiting to be packed and packed, waiting for the courier
+const OZ_OPEN = ['awaiting_packaging', 'awaiting_deliver'];
+const OZ_STATUS = {awaiting_packaging: 'ожидают сборки', awaiting_deliver: 'ожидают отгрузки'};
+const OZ = {via: lsGet('sklad-ozon-via') || '', run: null, st: {}, pr: null, prBusy: false};
+try { OZ.st = JSON.parse(localStorage.getItem(OZS) || '{}') || {}; } catch { OZ.st = {}; }
+function ozKeys() {
+  try { const v = JSON.parse(localStorage.getItem(OZK) || 'null'); if (v && Array.isArray(v.shops)) return {auto: v.auto !== false, shops: v.shops}; } catch {}
+  return {auto: true, shops: []};
+}
+function ozSaveKeys(v) { try { localStorage.setItem(OZK, JSON.stringify(v)); } catch { toast('Браузер не дал сохранить ключ'); } }
+const ozShops = () => ozKeys().shops.map((s, i) => s && s.cid && s.key ? {i, cid: String(s.cid), key: String(s.key)} : null).filter(Boolean);
+const ozName = i => PRS.shops[i] || `Магазин ${i + 1}`;
+function ozMark(sec, ok, msg, extra) { OZ.st[sec] = {at: Date.now(), ok, msg: String(msg || '').slice(0, 300), ...(extra || {})}; try { localStorage.setItem(OZS, JSON.stringify(OZ.st)); } catch {} }
+
+function ozErrText(status, j, txt, path) {
+  const m = j && (j.message || j.error || (j.helper && 'помощник не дозвонился до Ozon: ' + j.helper)) || String(txt || '').slice(0, 160);
+  if (status === 401 || status === 403) return `Ozon не принял ключ (${status}). Проверьте Client ID и ключ: у ключа должна быть роль с доступом к этому разделу.${m ? ' Ответ Ozon: ' + m : ''}`;
+  if (status === 404) return `Ozon не знает запрос ${path}: возможно, он изменился. Сохраните «Проверку Ozon» и пришлите файл.`;
+  if (status === 429) return 'Ozon просит подождать: слишком много запросов. Программа повторит позже.';
+  if (status === 502 && j && j.helper) return m;
+  if (status >= 500) return `Ozon сейчас не отвечает (${status}). Программа повторит позже.`;
+  return `Ozon ответил ошибкой ${status}${m ? ': ' + m : ''}`;
+}
+// one question to Ozon: straight away, or through the helper when the browser does not allow that
+async function ozFetch(shop, path, body, method = 'POST') {
+  const headers = {'Client-Id': shop.cid, 'Api-Key': shop.key, 'Content-Type': 'application/json'};
+  const order = OZ.via === 'relay' ? ['relay', 'direct'] : ['direct', 'relay'];
+  for (const via of order) {
+    const ac = typeof AbortController === 'function' ? new AbortController() : null, t = ac && setTimeout(() => ac.abort(), 60000);
+    let res;
+    try { res = await fetch((via === 'direct' ? OZ_HOST : OZ_RELAY + '/ozon') + path, {method, headers, body: method === 'GET' ? undefined : JSON.stringify(body || {}), signal: ac ? ac.signal : undefined, cache: 'no-store'}); }
+    catch { clearTimeout(t); continue; }
+    try {
+      const txt = await res.text(); let j = null; try { j = JSON.parse(txt); } catch {}
+      // the helper answers 502 itself when it cannot reach Ozon; Ozon's own answers come back as they are
+      if (!(via === 'relay' && res.status === 502 && j && j.helper) && OZ.via !== via) { OZ.via = via; lsSet('sklad-ozon-via', via); }
+      if (res.ok) return j || {};
+      const e = new Error(ozErrText(res.status, j, txt, path)); e.status = res.status; e.oz = true; throw e;
+    } finally { clearTimeout(t); }
+  }
+  const e = new Error(location.protocol === 'file:'
+    ? 'Нет связи с Ozon. Проверьте интернет. Если он есть, закройте программу и откройте её ярлыком на рабочем столе: ярлык запускает помощника для Ozon. Если ярлык старый, установите программу заново.'
+    : 'Нет связи с Ozon: браузер не пустил запрос. Откройте программу, установленную на компьютер (ярлык на рабочем столе).');
+  e.net = true; throw e;
+}
+const ozList = (j, k) => (j && (j[k] || (j.result && (Array.isArray(j.result) ? (k === 'result' ? j.result : null) : j.result[k])))) || [];
+async function ozPostings(shop, since, to, status, max = 60) {
+  const out = []; let offset = 0;
+  for (let page = 0; page < max; page++) {
+    const j = await ozFetch(shop, '/v3/posting/fbs/list', {dir: 'ASC', filter: {since, to, ...(status ? {status} : {})}, limit: 1000, offset, with: {analytics_data: false, financial_data: false, barcodes: false}});
+    const ps = ozList(j, 'postings');
+    out.push(...ps);
+    const next = j.result ? j.result.has_next : j.has_next;
+    if (!next || !ps.length) break;
+    offset += ps.length;
+  }
+  return out;
+}
+const ozIso = ms => new Date(ms).toISOString();
+
+/* orders: everything waiting to be packed or handed over, from every connected shop, replaces the picking list */
+async function ozSyncOrders(manual) {
+  const shops = ozShops(); if (!shops.length) return;
+  const now = Date.now(), lines0 = [], cancelled = new Set(), count = {};
+  let posts = 0;
+  try {
+    for (const sh of shops) {
+      for (const st of OZ_OPEN) for (const p of await ozPostings(sh, ozIso(now - 30 * DAYMS), ozIso(now + DAYMS), st)) {
+        posts++; count[st] = (count[st] || 0) + 1;
+        for (const pr of p.products || []) { const a = String(pr.offer_id ?? '').trim(); if (a) lines0.push({s: String(p.posting_number), a, n: String(pr.name || ''), q: +pr.quantity || 1, sh: sh.i}); }
+      }
+      for (const p of await ozPostings(sh, ozIso(now - 14 * DAYMS), ozIso(now + DAYMS), 'cancelled', 10)) cancelled.add(String(p.posting_number));
+    }
+  } catch (e) { ozMark('orders', false, e.message); diag('ozon', 'orders-fail', String(e.message).slice(0, 200)); if (manual) toast(e.message, 12000); render(); return; }
+  const open = [...lines.items.values()].filter(ln => ln.s && ln.got < ln.q).length;
+  if (!posts && open) { ozMark('orders', false, 'Ozon не вернул ни одного отправления, а в программе их ' + fmt(open) + '. Ничего не меняю: проверьте кабинет Ozon.'); if (manual) toast(OZ.st.orders.msg, 10000); render(); return; }
+  // cancelled after the coat was already given out: it is still in the warehouse, offer to put it back
+  const known = new Set(OZR.back.map(x => x.s + '|' + x.a)); let newBack = 0;
+  for (const [k, ln] of lines.items) if (ln.s && cancelled.has(ln.s) && ln.got > 0 && !known.has(ln.s + '|' + ln.a)) { OZR.back.push({k, a: ln.a, n: ln.n || '', q: ln.got, s: ln.s}); newBack++; }
+  if (newBack) saveMeta('meta/ozret');
+  loadList(lines0, {date: new Date().toLocaleDateString('ru-RU'), file: 'Ozon API', expected: 0, noHist: true, quiet: !manual});
+  // with every shop connected Ozon knows all orders: what it no longer has is shipped or cancelled
+  const incoming = new Set(lines0.map(l => l.s)), gone = [];
+  if (shops.length >= 2) for (const [k, ln] of [...lines.items]) if (ln.s && !incoming.has(ln.s) && ln.got < ln.q) gone.push(k);
+  if (gone.length > 20 && gone.length > open / 2 && !manual) { ozMark('orders', false, `Ozon не знает ${fmt(gone.length)} отправлений из программы — проверьте и нажмите «Обновить заказы из Ozon»`); render(); return; }
+  for (const k of gone) lines.remove(k);
+  if (gone.length) log(`Ozon: убраны отправления, которых больше нет в работе (отправлены или отменены): ${fmt(gone.length)}`);
+  ozMark('orders', true, '', {posts, count, shops: shops.length});
+  diag('ozon', 'orders', {posts, lines: lines0.length, gone: gone.length, back: newBack, via: OZ.via});
+  render();
+  ozPhotos(lines0).catch(e => diag('ozon', 'photos-fail', String(e.message).slice(0, 200)));
+}
+// photos of models the program has not seen in a picking list
+async function ozPhotos(ls) {
+  const need = new Map();
+  for (const l of ls) { const mk = parseArt(l.a).mkey; if (mk && !PHOTO.has(mk) && !need.has(mk)) need.set(mk, l); }
+  if (!need.size) return;
+  const shops = ozShops(), byShop = new Map();
+  for (const [mk, l] of [...need].slice(0, 300)) (byShop.get(l.sh) || byShop.set(l.sh, []).get(l.sh)).push([mk, l.a]);
+  let made = 0;
+  for (const [si, arr] of byShop) {
+    const sh = shops.find(s => s.i === si); if (!sh) continue;
+    const j = await ozFetch(sh, '/v3/product/info/list', {offer_id: arr.map(x => x[1])});
+    const urls = new Map();
+    for (const it of ozList(j, 'items')) {
+      const pick = v => Array.isArray(v) ? pick(v[0]) : v && typeof v === 'object' ? (v.url || v.file_name || v.default_url || '') : String(v || '');
+      const u = pick(it.primary_image) || pick(it.images);
+      if (u) urls.set(String(it.offer_id), u);
+    }
+    for (const [mk, a] of arr) {
+      const u = urls.get(a); if (!u || PHOTO.has(mk)) continue;
+      try { const bmp = await ozImage(u); savePhoto(mk, bmp, {x: 0, y: 0, w: bmp.width, h: bmp.height}, 360); made++; } catch {}
+    }
+  }
+  if (made) { diag('ozon', 'photos', made); render(); }
+}
+async function ozImage(u) {
+  for (const src of [u, OZ_RELAY + '/img?u=' + encodeURIComponent(u)]) {
+    try { const r = await fetch(src, {cache: 'force-cache'}); if (!r.ok) continue; return await createImageBitmap(await r.blob()); } catch {}
+  }
+  throw new Error('no image');
+}
+
+/* customer returns: what is coming back to the warehouse; accepting one puts the item on the shelf */
+let OZR = {list: [], got: new Set(), hide: new Set(), at: 0, back: []};
+META['meta/ozret'] = () => ({list: OZR.list, got: [...OZR.got], hide: [...OZR.hide], at: OZR.at, back: OZR.back});
+function ozrLoad(d) {
+  const x = {list: [], got: new Set(), hide: new Set(), at: 0, back: []};
+  if (!d) return x;
+  x.back = (Array.isArray(d.back) ? d.back : []).filter(b => b && b.a && +b.q > 0).map(b => ({k: String(b.k || ''), a: String(b.a), n: String(b.n || ''), q: +b.q, s: String(b.s || '')}));
+  x.list = (Array.isArray(d.list) ? d.list : []).filter(r => Array.isArray(r) && r[0] != null).map(r => r.slice(0, 9));
+  x.got = new Set((d.got || []).map(String)); x.hide = new Set((d.hide || []).map(String)); x.at = +d.at || 0;
+  return x;
+}
+// [id, shop, article, name, qty, status, date, posting, scheme]
+const ozrRow = r => ({id: String(r[0]), sh: +r[1] || 0, a: String(r[2] || ''), n: String(r[3] || ''), q: +r[4] || 1, st: String(r[5] || ''), at: +r[6] || 0, ps: String(r[7] || ''), sch: String(r[8] || '')});
+async function ozReturns(shop) {
+  const out = [];
+  const tryBody = async (filter, last) => ozFetch(shop, '/v1/returns/list', {filter, limit: 500, last_id: last});
+  let filter = {}, last = 0;
+  for (let page = 0; page < 40; page++) {
+    let j;
+    try { j = await tryBody(filter, last); }
+    catch (e) {
+      // an empty filter may be refused: then the last 60 days by the return date
+      if (e.status === 400 && !page && !Object.keys(filter).length) { filter = {logistic_return_date: {time_from: ozIso(Date.now() - 60 * DAYMS), time_to: ozIso(Date.now() + DAYMS)}}; j = await tryBody(filter, last); }
+      else throw e;
+    }
+    const rs = ozList(j, 'returns');
+    out.push(...rs);
+    if (!(j.has_next || (j.result && j.result.has_next)) || !rs.length) break;
+    last = rs[rs.length - 1].id;
+  }
+  return out;
+}
+async function ozSyncReturns(manual) {
+  const shops = ozShops(); if (!shops.length) return;
+  const rows = [];
+  try {
+    for (const sh of shops) for (const r of await ozReturns(sh)) {
+      const pr = r.product || (Array.isArray(r.products) ? r.products[0] : null) || r, lg = r.logistic || {}, vs = (r.visual && r.visual.status) || {};
+      const sch = String(r.schema || r.scheme || '');
+      if (/fbo/i.test(sch)) continue;   // FBO returns go back to Ozon's warehouse, not to ours
+      const when = Date.parse(lg.return_date || lg.final_moment || r.returned_to_seller_date_time || r.return_date || (r.visual && r.visual.change_moment) || r.accepted_from_customer_moment || '') || 0;
+      rows.push([String(r.id ?? r.return_id ?? ''), sh.i, String(pr.offer_id ?? '').trim(), String(pr.name || pr.product_name || ''), +pr.quantity || +r.quantity || 1, String(vs.display_name || r.status_name || r.status || ''), when, String(r.posting_number || ''), sch]);
+    }
+  } catch (e) { ozMark('returns', false, e.message); diag('ozon', 'returns-fail', String(e.message).slice(0, 200)); if (manual) toast(e.message, 12000); render(); return; }
+  const keep = Date.now() - 90 * DAYMS;
+  OZR.list = rows.filter(r => r[0] && r[2] && (!r[6] || r[6] >= keep)).sort((x, y) => y[6] - x[6]).slice(0, 800);
+  OZR.at = Date.now();
+  saveMeta('meta/ozret');
+  ozMark('returns', true, '', {n: OZR.list.length});
+  diag('ozon', 'returns', {n: rows.length, via: OZ.via});
+  render();
+}
+
+/* sales for «Анализ»: every order by its day, cancelled ones left out */
+async function ozSyncHist(manual) {
+  const shops = ozShops(); if (!shops.length) return;
+  const st = OZ.st.hist || {}, today = isoToday();
+  const from = st.ok && st.done ? isoAdd(st.done, -1) : isoAdd(today, -Math.max(14, (S.anWin || 14) + 2));
+  const byDay = new Map();
+  try {
+    for (const sh of shops) for (const p of await ozPostings(sh, new Date(from + 'T00:00:00').toISOString(), ozIso(Date.now()), '', 80)) {
+      if (/cancel/.test(String(p.status || ''))) continue;
+      const t = Date.parse(p.in_process_at || p.shipment_date || ''); if (!t) continue;
+      const iso = isoOf(new Date(t)); if (iso < from) continue;
+      const day = byDay.get(iso) || byDay.set(iso, new Map()).get(iso);
+      for (const pr of p.products || []) { const a = String(pr.offer_id ?? '').trim(), k = normKey(a); if (!k) continue; const e = day.get(k); if (e) e[1] = round(e[1] + (+pr.quantity || 1)); else day.set(k, [a, +pr.quantity || 1]); }
+    }
+  } catch (e) { ozMark('hist', false, e.message, {done: st.done}); diag('ozon', 'hist-fail', String(e.message).slice(0, 200)); if (manual) toast(e.message, 12000); return; }
+  const isos = [...byDay.keys()].sort();
+  isos.forEach((iso, i) => {
+    const day = byDay.get(iso), doc = {date: isoRu(iso), at: new Date(iso + 'T12:00:00').getTime(), src: 'ozon-api', file: 'Ozon API', items: [...day.values()]};
+    saveDoc('hist/d' + iso, () => doc, 60 + i * 40);
+    if (HIST) HIST.set(iso, new Map(day));
+  });
+  ozMark('hist', true, '', {done: today, days: isos.length});
+  diag('ozon', 'hist', {days: isos.length, from});
+  if (ui.tab === 'an' || ui.tab === 'home') render();
+}
+
+/* prices and promotions right now, to look at: changes still go through Ozon's Excel file */
+async function ozSyncPrices(manual) {
+  const shops = ozShops(); if (!shops.length || OZ.prBusy) return;
+  OZ.prBusy = true; renderOzPrices();
+  const out = [];
+  for (const sh of shops) {
+    const x = {i: sh.i, items: [], actions: [], err: ''};
+    try {
+      let cursor = '';
+      for (let page = 0; page < 30; page++) {
+        const j = await ozFetch(sh, '/v5/product/info/prices', {cursor, filter: {visibility: 'ALL'}, limit: 1000});
+        const its = ozList(j, 'items');
+        for (const it of its) {
+          const p = it.price || {};
+          x.items.push({a: String(it.offer_id ?? '').trim(), price: pnum(p.price), old: pnum(p.old_price), min: pnum(p.min_price), mkt: pnum(p.marketing_seller_price) || pnum(p.marketing_price)});
+        }
+        cursor = j.cursor || (j.result && j.result.cursor) || '';
+        if (!cursor || !its.length) break;
+      }
+      const ja = await ozFetch(sh, '/v1/actions', null, 'GET');
+      x.actions = ozList(ja, 'result').map(a => ({id: a.id, t: String(a.title || ''), from: Date.parse(a.date_start || '') || 0, to: Date.parse(a.date_end || '') || 0, inN: +a.participating_products_count || 0, can: +a.potential_products_count || 0, on: !!a.is_participating}));
+    } catch (e) { x.err = e.message; }
+    out.push(x);
+  }
+  OZ.pr = {at: Date.now(), shops: out};
+  OZ.prBusy = false;
+  diag('ozon', 'prices', out.map(x => ({i: x.i, items: x.items.length, actions: x.actions.length, err: x.err.slice(0, 80)})));
+  if (manual && out.every(x => x.err)) toast(out[0].err, 12000);
+  renderOzPrices();
+}
+
+// one round: orders and returns every time, sales once in a few hours
+async function ozSync(manual) {
+  if (OZ.run) return OZ.run;
+  OZ.run = (async () => {
+    try {
+      await ozSyncOrders(manual);
+      await ozSyncReturns(manual);
+      const h = OZ.st.hist;
+      if (manual || !h || !h.ok || Date.now() - h.at > 6 * 3600000 || h.done !== isoToday()) await ozSyncHist(manual);
+    } finally { OZ.run = null; render(); }
+  })();
+  return OZ.run;
+}
+function ozAuto() { if (!EMP && allReady() && ozShops().length && ozKeys().auto && document.visibilityState !== 'hidden') ozSync(false); }
+setInterval(ozAuto, 15 * 60 * 1000);
+
+/* «Проверка Ozon»: a sample of every answer, for Claude to see Ozon's real format. No key, no buyers' data */
+const OZ_SECRET = /^(customer|addressee|address|address_tail|phone|email|buyer|recipient|courier|driver|name_of_receiver|client|fio|full_name|passport|inn|requirements)$/i;
+function ozRedact(v, depth = 0) {
+  if (depth > 12) return '…';
+  if (Array.isArray(v)) return v.slice(0, 3).map(x => ozRedact(x, depth + 1)).concat(v.length > 3 ? [`… ещё ${v.length - 3}`] : []);
+  if (v && typeof v === 'object') { const o = {}; for (const [k, x] of Object.entries(v)) o[k] = OZ_SECRET.test(k) && x != null && x !== '' ? '[скрыто]' : ozRedact(x, depth + 1); return o; }
+  return v;
+}
+async function ozDiagnose() {
+  const shops = ozShops();
+  if (!shops.length) { toast('Сначала впишите Client ID и ключ хотя бы одного магазина'); return; }
+  const btn = $('#ozDiag'); btn.disabled = true; btn.lastChild.textContent = 'Проверяю…';
+  const rep = {app: 'sklad', ver: APP_VERSION, at: new Date().toISOString(), page: location.protocol, shops: []};
+  const now = Date.now();
+  for (const sh of shops) {
+    const res = [];
+    const one = async (name, path, body, method) => {
+      const t0 = performance.now();
+      try { const j = await ozFetch(sh, path, body, method); res.push({name, path, ms: Math.round(performance.now() - t0), via: OZ.via, ok: true, sample: ozRedact(j)}); return j; }
+      catch (e) { res.push({name, path, ms: Math.round(performance.now() - t0), via: OZ.via, ok: false, status: e.status || 0, error: e.message}); return null; }
+    };
+    const fb = await one('Отправления FBS', '/v3/posting/fbs/list', {dir: 'ASC', filter: {since: ozIso(now - 3 * DAYMS), to: ozIso(now + DAYMS)}, limit: 3, offset: 0, with: {analytics_data: false, financial_data: false}});
+    await one('Отправления: ожидают сборки', '/v3/posting/fbs/list', {dir: 'ASC', filter: {since: ozIso(now - 30 * DAYMS), to: ozIso(now + DAYMS), status: 'awaiting_packaging'}, limit: 3, offset: 0});
+    if (!await one('Возвраты', '/v1/returns/list', {filter: {}, limit: 3, last_id: 0})) await one('Возвраты за 60 дней', '/v1/returns/list', {filter: {logistic_return_date: {time_from: ozIso(now - 60 * DAYMS), time_to: ozIso(now + DAYMS)}}, limit: 3, last_id: 0});
+    const pr = await one('Цены', '/v5/product/info/prices', {cursor: '', filter: {visibility: 'ALL'}, limit: 3});
+    await one('Акции', '/v1/actions', null, 'GET');
+    const offer = (ozList(fb, 'postings')[0] || {products: []}).products.map(p => p.offer_id)[0] || (ozList(pr, 'items')[0] || {}).offer_id;
+    if (offer) await one('Карточка товара', '/v3/product/info/list', {offer_id: [String(offer)]});
+    await one('Остатки', '/v4/product/info/stocks', {cursor: '', filter: {visibility: 'ALL'}, limit: 3});
+    rep.shops.push({shop: ozName(sh.i), results: res});
+  }
+  rep.via = OZ.via;
+  const d = new Date(), name = `Проверка Ozon ${today()} ${p2(d.getHours())}-${p2(d.getMinutes())}.json`;
+  await saveFile(name, JSON.stringify(rep, null, 2), 'application/json', 'Не получилось сохранить файл проверки');
+  const ok = rep.shops.flatMap(s => s.results).filter(r => r.ok).length, all = rep.shops.flatMap(s => s.results).length;
+  btn.disabled = false; btn.lastChild.textContent = 'Проверка Ozon';
+  toast(`Проверка готова: ответили ${ok} из ${all} разделов. Пришлите сохранённый файл в чат Claude — ключа в нём нет.`, 12000);
+  diag('ozon', 'diagnose', {ok, all, via: OZ.via});
+}
+
+/* ---------- the Ozon parts of the screens ---------- */
+const ozAgo = t => { if (!t) return ''; const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'только что' : m < 60 ? `${m} мин назад` : when(t); };
+function renderOz() {
+  const on = ozShops().length > 0, st = OZ.st.orders;
+  $('#ozOrdersBtn').hidden = !on || EMP;
+  const dm = $('#ozDayMeta');
+  dm.hidden = !on || !st;
+  if (on && st) dm.innerHTML = st.ok
+    ? `<span>Заказы из Ozon: обновлено <b>${esc(ozAgo(st.at))}</b>${st.count ? ' · ' + Object.entries(st.count).map(([k, v]) => `${OZ_STATUS[k] || k} ${fmt(v)}`).join(' · ') : ''}${OZ.run ? ' · обновляю…' : ''}</span>`
+    : `<span class="chip bad">Ozon: ${esc(st.msg)}</span>`;
+  const cg = $('#ozCancel'), back = OZR.back;
+  cg.hidden = !back.length;
+  if (back.length) cg.innerHTML = `<p><b>Ozon отменил ${cnt(back.length, W.ship)}, под ${back.length % 10 === 1 && back.length % 100 !== 11 ? 'которое' : 'которые'} товар уже был отложен: ${fmt(back.reduce((s, x) => s + x.q, 0))} шт.</b> ${esc(back.slice(0, 6).map(x => x.a).join(', '))}${back.length > 6 ? '…' : ''}. Если товар у вас, верните его на склад.</p><button class="btn primary" type="button" data-ozback="1">Вернуть на склад</button><button class="btn" type="button" data-ozback="0">Убрать без склада</button>`;
+  renderOzRet();
+  if (ui.tab === 'settings') renderOzSet();
+}
+function renderOzRet() {
+  const list = OZR.list.map(ozrRow).filter(r => !OZR.got.has(r.id) && !OZR.hide.has(r.id));
+  const card = $('#ozRetCard');
+  card.hidden = !OZR.list.length && !ozShops().length;
+  if (card.hidden) return;
+  const st = OZ.st.returns;
+  $('#ozRetSum').textContent = list.length ? `${cnt(list.length, W.pos)}, ${fmt(list.reduce((s, r) => s + r.q, 0))} шт.` : '';
+  $('#ozRetBtn').hidden = !ozShops().length || EMP;
+  setBody($('#ozRetList'), (st && !st.ok ? `<p class="hint small" style="color:var(--bad)">${esc(st.msg)}</p>` : '') + (list.slice(0, 120).map(r => `<div class="arow">${thumb(r.a, 'sm')}<div><span class="art">${esc(r.a)}</span>${r.n ? `<span class="nm">${esc(r.n)}</span>` : ''}<div class="why">${r.st ? `<span class="chip plain">${esc(r.st)}</span> ` : ''}${r.at ? esc(new Date(r.at).toLocaleDateString('ru-RU')) : ''}${r.ps ? ' · ' + esc(r.ps) : ''}${ozShops().length > 1 || PRS.shops.length > 1 ? ' · ' + esc(ozName(r.sh)) : ''}</div><div class="row" style="margin-top:6px"><button class="btn sm primary" type="button" data-ozacc="${esc(r.id)}">Принять на склад</button><button class="btn sm ghost" type="button" data-ozhide="${esc(r.id)}">Скрыть</button></div></div><div class="tot">${fmt(r.q)}<small>шт.</small></div></div>`).join('') || `<p class="hint" style="margin:0">${OZR.at ? 'Новых возвратов нет.' : 'Возвраты появятся после обновления из Ozon.'}</p>`));
+}
+function renderOzSet() {
+  const k = ozKeys();
+  [0, 1].forEach(i => {
+    const s = k.shops[i] || {}, el = $('#ozSt' + i);
+    $('#ozName' + i).textContent = ozName(i);
+    if (document.activeElement !== $('#ozCid' + i)) $('#ozCid' + i).value = s.cid || '';
+    $('#ozKey' + i).placeholder = s.key ? `сохранён ••••${String(s.key).slice(-4)}` : 'вставьте ключ';
+    $('#ozDel' + i).hidden = !s.key;
+    el.innerHTML = s.key ? (s.err ? `<span class="chip bad">${esc(s.err)}</span>` : `<span class="chip good">подключён${s.at ? ', проверен ' + esc(when(s.at)) : ''}</span>`) : '';
+  });
+  $('#ozAuto').checked = k.auto;
+  $('#ozDiag').hidden = !ozShops().length;
+  const sec = [['orders', 'заказы'], ['returns', 'возвраты'], ['hist', 'продажи']].filter(([s]) => OZ.st[s]).map(([s, n]) => `${n}: ${OZ.st[s].ok ? esc(ozAgo(OZ.st[s].at)) : '<span style="color:var(--bad)">ошибка</span>'}`);
+  $('#ozVia').innerHTML = ozShops().length ? `${OZ.via === 'relay' ? 'Связь с Ozon через помощника на этом компьютере.' : OZ.via === 'direct' ? 'Связь с Ozon напрямую.' : ''}${sec.length ? ' Обновлено — ' + sec.join(', ') + '.' : ''}` : '';
+}
+function renderOzPrices() {
+  const card = $('#ozPrCard'); if (!card) return;
+  card.hidden = !ozShops().length;
+  if (card.hidden) return;
+  $('#ozPrBtn').disabled = OZ.prBusy; $('#ozPrBtn').lastChild.textContent = OZ.prBusy ? 'Загружаю…' : 'Обновить из Ozon';
+  const P = OZ.pr;
+  $('#ozPrSum').textContent = P ? `обновлено ${ozAgo(P.at)}` : '';
+  if (!P) { setBody($('#ozPrBody'), `<p class="hint" style="margin:0">${OZ.prBusy ? 'Загружаю цены и акции из Ozon…' : 'Нажмите «Обновить из Ozon», чтобы увидеть цены и акции.'}</p>`); return; }
+  const now = Date.now();
+  setBody($('#ozPrBody'), P.shops.map(x => {
+    if (x.err) return `<div class="ozpshop"><h4>${esc(ozName(x.i))}</h4><p class="hint small" style="color:var(--bad)">${esc(x.err)}</p></div>`;
+    const low = [];
+    for (const it of x.items) {
+      if (!it.a) continue;
+      const k = parseRaw(it.a).mkey || normKey(it.a), cost = PRS.cost[k] || prAutoCost(it.a), f = prFloorOf(cost), pay = [it.price, it.mkt].filter(v => v > 0);
+      const now2 = pay.length ? Math.min(...pay) : 0;
+      if (f && now2 && now2 < f) low.push({...it, f, now: now2});
+    }
+    low.sort((p, q) => (p.now - p.f) - (q.now - q.f));
+    const acts = x.actions.filter(a => !a.to || a.to >= now).sort((p, q) => (q.on - p.on) || (p.from - q.from));
+    return `<div class="ozpshop"><h4>${esc(ozName(x.i))} · ${cnt(x.items.length, W.pos)}</h4>
+      ${low.length ? `<div class="manbar"><p>Цена в Ozon ниже защиты у <b>${cnt(low.length, WG.pos)}</b>: ${esc(low.slice(0, 8).map(l => `${l.a} — ${fmt(l.now)} ₽ (нужно не ниже ${fmt(l.f)})`).join('; '))}${low.length > 8 ? '…' : ''}</p></div>` : '<p class="hint small">Все цены не ниже защиты.</p>'}
+      ${acts.length ? `<div class="tw mt"><table class="t"><thead><tr><th>Акция</th><th>Даты</th><th class="num">Участвует</th><th class="num">Можно добавить</th></tr></thead><tbody>${acts.slice(0, 40).map(a => `<tr><td>${a.on ? '<span class="chip good">вы участвуете</span> ' : ''}${esc(a.t)}</td><td class="num">${a.from ? esc(new Date(a.from).toLocaleDateString('ru-RU')) : ''}${a.to ? ' — ' + esc(new Date(a.to).toLocaleDateString('ru-RU')) : ''}</td><td class="num">${fmt(a.inN)}</td><td class="num">${fmt(a.can)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="hint small">Сейчас акций нет.</p>'}</div>`;
+  }).join(''));
+}
+
+// settings: one form per shop
+for (const i of [0, 1]) $('#ozForm' + i).addEventListener('submit', async e => {
+  e.preventDefault();
+  const k = ozKeys(), cur = k.shops[i] || {};
+  const cid = $('#ozCid' + i).value.replace(/\s+/g, ''), key = $('#ozKey' + i).value.trim() || cur.key || '';
+  if (!/^\d{3,12}$/.test(cid)) { toast('Client ID — это число из кабинета Ozon, рядом с ключом'); $('#ozCid' + i).focus(); return; }
+  if (!/^[\w-]{20,64}$/.test(key)) { toast('Ключ — длинная строка из букв, цифр и дефисов. Скопируйте его из кабинета Ozon целиком'); $('#ozKey' + i).focus(); return; }
+  const btn = e.submitter || $(`#ozForm${i} button[type=submit]`); btn.disabled = true;
+  let err = '', at = 0, net = false;
+  try { await ozFetch({cid, key}, '/v3/posting/fbs/list', {dir: 'ASC', filter: {since: ozIso(Date.now() - DAYMS), to: ozIso(Date.now() + DAYMS)}, limit: 1, offset: 0}); at = Date.now(); }
+  catch (er) { err = er.message; net = !!er.net; }
+  btn.disabled = false;
+  if (net) { toast(err, 12000); diag('ozon', 'check-fail', {shop: i, net: true}); return; }   // no link at all: nothing saved
+  while (k.shops.length <= i) k.shops.push(null);
+  k.shops[i] = {cid, key, at, err: err ? err.slice(0, 200) : ''};
+  ozSaveKeys(k); $('#ozKey' + i).value = '';
+  diag('ozon', 'check', {shop: i, ok: !err, via: OZ.via});
+  toast(err ? 'Ключ сохранён, но Ozon ответил ошибкой: ' + err : `Магазин «${ozName(i)}» подключён. Загружаю заказы и возвраты из Ozon…`, err ? 12000 : 6000);
+  renderOzSet(); render();
+  if (!err) ozSync(true);
+});
+document.addEventListener('click', e => {
+  const t = e.target.closest && e.target.closest('button'); if (!t) return;
+  if (t.id === 'ozDel0' || t.id === 'ozDel1') {
+    const i = +t.id.slice(-1);
+    confirmIn('#ozConfirm', `Удалить ключ магазина «${esc(ozName(i))}» с этого компьютера? Заказы из Ozon перестанут обновляться, пока не впишете его снова.`, 'Удалить', () => { const k = ozKeys(); if (k.shops[i]) k.shops[i] = null; ozSaveKeys(k); renderOzSet(); }, true);
+    return;
+  }
+  if (t.id === 'ozDiag') { ozDiagnose(); return; }
+  if (t.id === 'ozOrdersBtn') { t.disabled = true; ozSync(true).finally(() => { t.disabled = false; }); return; }
+  if (t.id === 'ozRetBtn') { t.disabled = true; ozSyncReturns(true).finally(() => { t.disabled = false; }); return; }
+  if (t.id === 'ozPrBtn') { ozSyncPrices(true); return; }
+  if (t.dataset.ozback != null) {
+    const back = OZR.back, put = t.dataset.ozback === '1';
+    const snap = takeSnap();
+    for (const x of back) { if (put) stockAdd(x.a, x.q, x.n); if (lines.items.has(x.k)) lines.remove(x.k); }
+    OZR.back = []; saveMeta('meta/ozret'); render();
+    log(put ? `Ozon отменил отправления: товар возвращён на склад, ${fmt(back.reduce((s, x) => s + x.q, 0))} шт.` : `Ozon отменил отправления: убраны без склада, ${fmt(back.length)}`);
+    toastUndo(put ? 'Товар возвращён на склад' : 'Отменённые отправления убраны', snap, 'отменённые отправления');
+    return;
+  }
+  if (t.dataset.ozacc) {
+    const r = OZR.list.map(ozrRow).find(x => x.id === t.dataset.ozacc); if (!r) return;
+    stockAdd(r.a, r.q, r.n); OZR.got.add(r.id); saveMeta('meta/ozret');
+    log(`Возврат от покупателя принят на склад: ${r.a} × ${fmt(r.q)}`);
+    toast(`На склад: ${r.a} × ${fmt(r.q)}`, 8000, {label: 'Отменить', fn: () => { stockAdd(r.a, -r.q, r.n); OZR.got.delete(r.id); saveMeta('meta/ozret'); render(); }});
+    render(); return;
+  }
+  if (t.dataset.ozhide) { OZR.hide.add(t.dataset.ozhide); saveMeta('meta/ozret'); render(); return; }
+});
+$('#ozAuto').addEventListener('change', () => { const k = ozKeys(); k.auto = $('#ozAuto').checked; ozSaveKeys(k); if (k.auto) ozAuto(); });
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
-  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }};
+  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }, ozSync, ozSyncPrices, get OZ() { return OZ; }, get OZR() { return OZR; }, get PHOTO() { return PHOTO; }};
 start();
 })();
 </script>

@@ -78,12 +78,15 @@ console.log(`${out}: ${(fs.statSync(out).size / 1024 / 1024).toFixed(2)} MB, ${f
 
 // the installer: cmd runs only its first lines and never reads past «exit /b»; they start PowerShell,
 // which runs the script between the PS and HTML marker lines (tools/install.ps1); the app follows the HTML marker unchanged
-const ps = fs.readFileSync(path.join(here, 'install.ps1'), 'utf8').replace('__ICON__', fs.readFileSync(path.join(here, 'icon.ico')).toString('base64'));
+const helper = fs.readFileSync(path.join(here, 'ozon-helper.ps1'), 'utf8').replace(/^\uFEFF/, '');
+if (/^'@/m.test(helper)) throw new Error('ozon-helper.ps1 must not have a line starting with \'@');
+const ps = fs.readFileSync(path.join(here, 'install.ps1'), 'utf8').replace('__ICON__', fs.readFileSync(path.join(here, 'icon.ico')).toString('base64')).replace('__HELPER__', () => helper.trimEnd());
 const head = [
   '@echo off',
   'rem ULTIMATE SHOP СКЛАД: установка программы для склада.',
   'rem Откройте этот файл двойным щелчком. Он положит программу в папку AppData\\Local\\UltimateShopSklad,',
-  'rem создаст ярлык на рабочем столе и в меню «Пуск» и откроет программу. В интернет ничего не отправляет.',
+  'rem создаст ярлык на рабочем столе и в меню «Пуск» и откроет программу. Сам он в интернет ничего не отправляет.',
+  'rem Ещё он кладёт рядом помощника для Ozon: тот передаёт в Ozon только запросы программы, когда вы ими пользуетесь.',
   'rem Ниже обычным текстом записано всё, что он делает, а после строки с меткой HTML лежит сама программа.',
   'powershell -NoProfile -Command "$t=[IO.File]::ReadAllText(\'%~f0\',[Text.Encoding]::UTF8); $a=$t.IndexOf(\'#\'+\'#PS\'+\'#\'+\'#\')+6; $b=$t.IndexOf(\'#\'+\'#HTML\'+\'#\'+\'#\'); & ([scriptblock]::Create($t.Substring($a,$b-$a))) \'%~f0\'"',
   'exit /b',
