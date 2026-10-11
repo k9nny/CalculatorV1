@@ -42,6 +42,11 @@ try {
   $html = $all.Substring($at + $mark.Length).TrimStart("`r", "`n")
   if (-not $html.StartsWith('<!doctype html>') -or -not $html.TrimEnd().EndsWith('</html>')) { throw 'файл установки скачался не полностью, скачайте его ещё раз' }
   $isUpdate = Test-Path -LiteralPath $app
+  # the secret the helper asks for before it gives the program the copy of its Ozon keys; an update keeps it
+  $token = ''
+  try { $prev0 = Get-Content -LiteralPath (Join-Path $dest 'start.json') -Raw -Encoding UTF8 | ConvertFrom-Json; if ([string]$prev0.token -match '^[0-9a-f]{64}$') { $token = [string]$prev0.token } } catch {}
+  if (-not $token) { $token = [guid]::NewGuid().ToString('N') + [guid]::NewGuid().ToString('N') }
+  $html = $html.Replace('<meta name="sklad-local" content="">', '<meta name="sklad-local" content="' + $token + '">')
   New-Item -ItemType Directory -Force -Path $dest | Out-Null
   [IO.File]::WriteAllText($app, $html, (New-Object Text.UTF8Encoding $false))
 
@@ -88,7 +93,7 @@ try {
 __HELPER__
 '@
   [IO.File]::WriteAllText($helper, $helperText, (New-Object Text.UTF8Encoding $true))
-  [IO.File]::WriteAllText((Join-Path $dest 'start.json'), (ConvertTo-Json @{target = $target; args = $argv}), (New-Object Text.UTF8Encoding $false))
+  [IO.File]::WriteAllText((Join-Path $dest 'start.json'), (ConvertTo-Json @{target = $target; args = $argv; token = $token}), (New-Object Text.UTF8Encoding $false))
   $ps = Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
   if (-not $env:WINDIR -or -not (Test-Path -LiteralPath $ps)) { $ps = (Get-Command powershell.exe -ErrorAction SilentlyContinue).Source }
   # the script text is read and run as a command, so Windows' rule against running script files does not stop it
