@@ -938,6 +938,18 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
   .btn::after,.mark::after,.toast,.toast.out,.modal,.modal .sheet,#pageTitle.swap,.badge.pop{animation:none!important}
   .toast .ti svg path{animation:none;stroke-dashoffset:0}
 }
+/* ============ «?» tips: the explanation shows on hover, focus or tap ============ */
+.qt{appearance:none;-webkit-appearance:none;position:relative;display:inline-grid;place-items:center;flex:none;width:18px;height:18px;margin:0 0 0 2px;padding:0;border:1px solid var(--muted);border-radius:50%;background:transparent;color:var(--muted);font:600 11.5px/1 var(--f-ui);letter-spacing:0;text-transform:none;vertical-align:2px;cursor:help;-webkit-tap-highlight-color:transparent;transition:color .15s,border-color .15s,background-color .15s}
+.qt::after{content:"";position:absolute;inset:-8px;border-radius:50%}
+.qt:hover,.qt[aria-describedby]{color:var(--ink);border-color:var(--ink);background:var(--surface-2)}
+.qt:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.lhead>.qt{margin-left:-10px}
+.sheet>header>h2:has(+.qt){margin-right:0}
+.sheet>header>.qt{margin:0 auto 0 -4px}
+#ozDiag[hidden]+.qt{display:none}
+#qtip{position:fixed;left:0;top:0;z-index:100;max-width:320px;padding:9px 12px;border-radius:10px;background:var(--ink);color:var(--surface);font:500 13.5px/1.45 var(--f-ui);letter-spacing:0;text-align:left;text-transform:none;overflow-wrap:anywhere;box-shadow:0 12px 30px -12px rgba(0,0,0,.5);opacity:0;transform:translateY(-3px);transition:opacity .14s ease-out,transform .14s ease-out}
+#qtip.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.qt,#qtip{transition:none}#qtip{transform:none}}
 /* ============ Ozon API ============ */
 :root{--money-bar:#B08A3E}
 .mlist{display:grid;margin-top:8px}
@@ -1222,8 +1234,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
     <!-- ДЕНЬ -->
     <section class="pane stack" id="pane-day" role="tabpanel" aria-labelledby="t-day">
       <div class="card">
-        <h2>Лист подбора</h2>
-        <p class="hint">Загрузите лист подбора Озона (PDF) или выгрузку отправлений из Excel. Товар со склада достаётся сначала отправлениям с прошлых дней, потом новым. Отправления, которые уже есть в программе, не задвоятся.</p>
+        <h2>Лист подбора <button type="button" class="qt" data-tip="Загрузите лист подбора Озона (PDF) или выгрузку отправлений из Excel. Товар со склада достаётся сначала отправлениям прошлых дней, потом новым. Отправления, которые уже есть в программе, не задвоятся." aria-label="Подсказка">?</button></h2>
         <div class="row mt">
           <button class="btn primary" type="button" data-import="orders"><svg class="ic"><use href="#i-up"/></svg>Загрузить лист подбора</button>
           <button class="btn" type="button" data-paste="orders">Вставить из Excel</button>
@@ -1280,8 +1291,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
     <!-- ЗАКУПКА -->
     <section class="pane stack" id="pane-buy" role="tabpanel" aria-labelledby="t-buy" hidden>
       <div class="card">
-        <div class="lhead"><h2 id="buyTitle">Закупка</h2><span class="sum" id="buySum"></span></div>
-        <p class="hint">Здесь всё, чего не хватает под отправления, по павильонам. В поле «Заказать» можно вписать больше, на целый мешок: лишнее поедет на склад. Когда заказали у поставщиков, нажмите «Оформить закупку».</p>
+        <div class="lhead"><h2 id="buyTitle">Закупка</h2><button type="button" class="qt" data-tip="Здесь всё, чего не хватает под отправления, по павильонам. В поле «Заказать» можно вписать больше, на целый мешок: лишнее поедет на склад. Когда заказали у поставщиков, нажмите «Оформить закупку»." aria-label="Подсказка: закупка">?</button><span class="sum" id="buySum"></span></div>
         <form class="addrow" id="addForm" autocomplete="off">
           <label class="fld">Добавить артикул в закупку<input class="in mono" id="addArt" placeholder="например, A04-LM9-Ser-1900-46" spellcheck="false"></label>
           <label class="fld">Шт.<input class="in" id="addQty" inputmode="decimal" value="1"></label>
@@ -1314,14 +1324,12 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
     <section class="pane stack" id="pane-recv" role="tabpanel" aria-labelledby="t-recv" hidden>
       <div class="stack" id="recvHome">
         <div class="card">
-          <h2>Приёмка мешков</h2>
-          <p class="hint">Выберите закупку, которая приехала, и посчитайте, что пришло на самом деле. Программа сравнит это с заказом, разложит товар по отправлениям, а остаток отправит на склад.</p>
+          <h2>Приёмка мешков <button type="button" class="qt" data-tip="Выберите закупку, которая приехала, и посчитайте, что пришло на самом деле. Программа сравнит это с заказом, разложит товар по отправлениям, а остаток отправит на склад. Закупка появляется здесь, когда вы оформите её на вкладке «Закупка»." aria-label="Подсказка">?</button></h2>
           <div class="golist mt" id="recvGo"></div>
           <div class="confirm" id="recvGoConfirm" hidden></div>
         </div>
         <div class="card" id="ozRetCard" hidden>
-          <div class="lhead"><h3>Возвраты от покупателей (Ozon)</h3><span class="sum" id="ozRetSum"></span><button class="btn sm" type="button" id="ozRetBtn">Обновить</button></div>
-          <p class="hint small" style="margin:0 0 10px">Что покупатели вернули по заказам FBS. Когда возврат у вас на руках, нажмите «Принять на склад»: товар добавится на склад. «Скрыть» — если он не вернётся к вам.</p>
+          <div class="lhead"><h3>Возвраты от покупателей (Ozon) <button type="button" class="qt" data-tip="Что вернули покупатели. Когда возврат у вас на руках, нажмите «Принять на склад»: товар добавится на склад. «Скрыть» — если он к вам не вернётся." aria-label="Подсказка">?</button></h3><span class="sum" id="ozRetSum"></span><button class="btn sm" type="button" id="ozRetBtn">Обновить</button></div>
           <div id="ozRetList"></div>
         </div>
         <div class="card"><h3>Недавние приёмки</h3><div class="mt" id="recvHist"></div></div>
@@ -1336,8 +1344,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         </div>
         <div class="stack" id="recvModels"></div>
         <div class="card">
-          <h3>Не из заказа</h3>
-          <p class="hint">Шуба, которой нет в списке выше. Впишите артикул с бирки и выберите, что с ней делать.</p>
+          <h3>Не из заказа <button type="button" class="qt" data-tip="Шуба, которой нет в списке выше. Впишите артикул с бирки и выберите, что с ней делать." aria-label="Подсказка">?</button></h3>
           <form class="addrow ex" id="exForm" autocomplete="off">
             <label class="fld">Артикул<input class="in mono" id="exArt" list="artList" spellcheck="false"></label>
             <label class="fld">Шт.<input class="in" id="exQty" inputmode="decimal" value="1"></label>
@@ -1396,8 +1403,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
       </div>
 
       <div class="card">
-        <h2>Пересчёт и ручной приход</h2>
-        <p class="hint">Введите артикул и количество или просканируйте штрихкод. Одинаковые артикулы складываются. Потом <span class="noemp">добавьте список на склад или замените им весь склад, если это полный пересчёт.</span><span class="onlyemp">нажмите «Добавить на склад».</span></p>
+        <h2>Пересчёт и ручной приход <button type="button" class="qt" data-tip="Введите артикул и количество или просканируйте штрихкод. Одинаковые артикулы складываются. Потом нажмите «Добавить на склад»." aria-label="Подсказка">?</button></h2>
         <form class="scan" id="scanForm" autocomplete="off">
           <label class="fld">Артикул или штрихкод<input class="in big" id="scanArt" spellcheck="false" autocapitalize="characters" enterkeyhint="done"></label>
           <label class="fld">Кол-во, шт.<input class="in big" id="scanQty" inputmode="decimal" value="1"></label>
@@ -1443,8 +1449,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
     <!-- АНАЛИЗ -->
     <section class="pane stack" id="pane-an" role="tabpanel" aria-labelledby="t-an" hidden>
       <div class="card">
-        <div class="lhead"><h2>Анализ продаж</h2><span class="sum" id="anCover"></span></div>
-        <p class="hint">Продажи считаются по загруженным листам подбора и по выгрузке заказов из Озона. Отсюда подсказки: что закупить впрок, что залежалось, где поменять цену.</p>
+        <div class="lhead"><h2>Анализ продаж <button type="button" class="qt" data-tip="Продажи считаются по загруженным листам подбора и по выгрузке заказов из Озона. Отсюда подсказки: что закупить впрок, что залежалось, где поменять цену." aria-label="Подсказка">?</button></h2><span class="sum" id="anCover"></span></div>
         <form class="anparams mt" id="anForm" autocomplete="off">
           <label class="fld">Закупать впрок на, дней<input class="in" id="anDays" inputmode="numeric"></label>
           <label class="fld">Мешок едет, дней<input class="in" id="anLead" inputmode="numeric"></label>
@@ -1457,7 +1462,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         </div>
       </div>
       <div class="card" id="ozMoney" hidden>
-        <div class="lhead"><h3>Деньги в Ozon: куда уходят и зачем</h3>
+        <div class="lhead"><h3>Деньги в Ozon: куда уходят и зачем <button type="button" class="qt" data-tip="Программа берёт из Ozon все начисления и удержания за выбранный срок и показывает, на что ушли деньги с продаж и сколько принёс каждый товар." aria-label="Подсказка">?</button></h3>
           <div class="seg" role="group" aria-label="Срок" id="ozmPer"><button type="button" data-per="7" aria-pressed="false">7 дней</button><button type="button" data-per="30" aria-pressed="true">30 дней</button><button type="button" data-per="m" aria-pressed="false">Этот месяц</button><button type="button" data-per="pm" aria-pressed="false">Прошлый месяц</button></div>
           <select class="in sortsel" id="ozmShop" aria-label="Магазин" hidden></select>
           <button class="btn primary" type="button" id="ozmGo"><svg class="ic"><use href="#i-an"/></svg>Посчитать</button>
@@ -1466,8 +1471,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         <div id="ozmBody"></div>
       </div>
       <div class="card" id="anEmpty" hidden>
-        <h3>Пока нет истории продаж</h3>
-        <p class="hint">Её можно набрать двумя способами: каждый день загружать лист подбора на вкладке «Заказы» (история копится сама) или сразу загрузить выгрузку заказов из кабинета Озона за 1–3 месяца кнопкой выше. Нужны колонки с датой заказа, артикулом и количеством; колонка статуса поможет не считать отменённые заказы.</p>
+        <h3>Пока нет истории продаж <button type="button" class="qt" data-tip="Загружайте лист подбора на вкладке «Заказы» каждый день — история накопится сама. Или сразу загрузите выгрузку заказов из кабинета Озона за 1–3 месяца кнопкой выше. Нужны колонки: дата заказа, артикул и количество. Колонка статуса поможет не считать отменённые заказы." aria-label="Подсказка">?</button></h3>
       </div>
       <div class="tiles four" id="anTiles">
         <div class="tile"><span class="k">Продаётся в день</span><span class="v" id="aSale">0</span><span class="s" id="aSaleS"></span></div>
@@ -1481,8 +1485,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         <details class="small mt" id="chartTable"><summary>Таблица по дням</summary><div class="tw mt"><table class="t"><thead><tr><th>День</th><th class="num">Продано, шт.</th></tr></thead><tbody id="chartRows"></tbody></table></div></details>
       </div>
       <div class="card">
-        <div class="lhead"><h3>Закупить впрок</h3><span class="sum" id="anBuySum"></span><button class="btn primary" type="button" id="anBuyAll">Добавить всё в закупку</button></div>
-        <p class="hint small" style="margin:0 0 10px">Сколько взять сверх сегодняшних заказов, чтобы товар был на складе на выбранное число дней и заказы собирались день в день. Считается по продажам в день минус то, что уже лежит и едет.</p>
+        <div class="lhead"><h3>Закупить впрок <button type="button" class="qt" data-tip="Сколько взять сверх сегодняшних заказов, чтобы товар был на складе на выбранное число дней и заказы собирались день в день. Считается по продажам в день минус то, что уже лежит и едет." aria-label="Подсказка">?</button></h3><span class="sum" id="anBuySum"></span><button class="btn primary" type="button" id="anBuyAll">Добавить всё в закупку</button></div>
         <div id="anBuy"></div>
       </div>
       <div class="card">
@@ -1494,9 +1497,8 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         <div id="anHot"></div>
       </div>
       <div class="card">
-        <h3>Размеры на складе</h3>
-        <p class="hint small" style="margin:6px 0 10px">На сколько дней хватит каждого размера при нынешних продажах. Так видно перекос: например, 40-го лежит на полгода, а 44-го на день.</p>
-        <div class="tw"><table class="t"><thead><tr><th>Размер</th><th class="num">На складе</th><th class="num">Продаётся в день</th><th class="num">Хватит на</th><th></th></tr></thead><tbody id="anSizes"></tbody></table></div>
+        <h3>Размеры на складе <button type="button" class="qt" data-tip="На сколько дней хватит каждого размера при нынешних продажах. Так видно перекос: например, 40-го лежит на полгода, а 44-го на день." aria-label="Подсказка">?</button></h3>
+        <div class="tw mt"><table class="t"><thead><tr><th>Размер</th><th class="num">На складе</th><th class="num">Продаётся в день</th><th class="num">Хватит на</th><th></th></tr></thead><tbody id="anSizes"></tbody></table></div>
       </div>
       <div class="card">
         <h3>Поставщики: насколько точно привозят</h3>
@@ -1580,17 +1582,14 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
     <!-- НАСТРОЙКИ -->
     <section class="pane stack" id="pane-settings" role="tabpanel" aria-labelledby="t-settings" hidden>
       <div class="card empcard">
-        <h2>Режим сотрудника</h2>
-        <p class="hint">Для телефона приёмщика. На этом устройстве останутся только «Приёмка» и «Склад», без денег, закупки, анализа и настроек. Спрячутся и кнопки, которыми можно испортить склад: замена склада, загрузка файлов, правка остатков. На других устройствах ничего не изменится.</p>
+        <h2>Режим сотрудника <button type="button" class="qt" data-tip="Для телефона приёмщика. На этом устройстве останутся только «Приёмка» и «Склад», без денег, закупки, анализа и настроек. Кнопки, которыми можно испортить склад, спрячутся. На других устройствах ничего не изменится. Без кода выйти сможет любой, с кодом — только по нему." aria-label="Подсказка">?</button></h2>
         <form class="addrow" id="empForm" autocomplete="off">
           <label class="fld">Код для выхода, если нужен<input class="in" id="empPin" inputmode="numeric" maxlength="6" placeholder="например, 2580" autocomplete="off"></label>
           <button class="btn primary" type="submit">Включить на этом устройстве</button>
         </form>
-        <p class="hint small">Без кода выйти сможет любой, кто нажмёт «Выйти из режима сотрудника». С кодом выход только по нему.</p>
       </div>
       <div class="card" id="ozSet">
-        <h2>Ozon API</h2>
-        <p class="hint">По ключу только для чтения программа сама берёт из Ozon заказы, возвраты, цены, акции и продажи. Ключ хранится только на этом компьютере и не пропадает при обновлении программы. В резервную копию, журнал и на другие устройства он не попадает. Изменить что-то в Ozon с таким ключом нельзя. Ключ создаёт владелец: кабинет Ozon → «Настройки» → «API ключи» → «Seller API» → «Сгенерировать ключ», роль «Admin read only».</p>
+        <h2>Ozon API <button type="button" class="qt" data-tip="Программа сама берёт из Ozon заказы, возвраты, цены, акции и продажи. Ключ только для чтения: изменить что-то в Ozon им нельзя. Он хранится только на этом компьютере и не попадает в резервную копию, журнал и на другие устройства. Где взять ключ: кабинет Ozon → «Настройки» → «API ключи» → «Seller API» → «Сгенерировать ключ», роль «Admin read only»." aria-label="Подсказка">?</button></h2>
         <form class="addrow ozf mt" id="ozForm0" autocomplete="off">
           <div class="fld">Магазин<b id="ozName0">Магазин 1</b></div>
           <label class="fld">Client ID<input class="in mono" id="ozCid0" inputmode="numeric" autocomplete="off" spellcheck="false"></label>
@@ -1607,29 +1606,26 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
           <button class="btn ghost" type="button" id="ozDel1" hidden>Удалить</button>
         </form>
         <p class="hint small" id="ozSt1"></p>
-        <label class="opt"><input type="checkbox" id="ozAuto"><div><b>Обновлять заказы и возвраты сами</b><span>При открытии программы и каждые 15 минут. Когда подключены оба магазина, отправления, которых больше нет в работе у Ozon (отправлены или отменены), программа убирает сама.</span></div></label>
-        <div class="row mt"><button class="btn" type="button" id="ozDiag" hidden><svg class="ic"><use href="#i-dl"/></svg>Проверка Ozon</button><span class="hint small" style="margin:0">Сохраняет файл с образцами ответов Ozon — без ключа и данных покупателей. Его можно прислать Claude, чтобы подогнать программу.</span></div>
+        <label class="opt"><input type="checkbox" id="ozAuto"><div><b>Обновлять заказы и возвраты сами <button type="button" class="qt" data-tip="Когда подключены оба магазина, программа сама убирает отправления, которые Ozon уже отправил или отменил." aria-label="Подсказка">?</button></b><span>При открытии программы и каждые 15 минут.</span></div></label>
+        <div class="row mt"><button class="btn" type="button" id="ozDiag" hidden><svg class="ic"><use href="#i-dl"/></svg>Проверка Ozon</button><button type="button" class="qt" data-tip="Сохраняет файл с образцами ответов Ozon, без ключа и данных покупателей. Его можно прислать Claude, чтобы подогнать программу." aria-label="Подсказка: проверка Ozon">?</button></div>
         <p class="hint small" id="ozVia"></p>
         <div class="confirm" id="ozConfirm" hidden></div>
       </div>
       <div class="card">
         <h2>Как читать артикул</h2>
-        <label class="opt"><input type="checkbox" id="optPrice"><div><b>Число в артикуле — закупочная цена</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> цена — <code class="k">1900</code>. По ней программа считает, сколько денег нужно на закупку, сколько стоит склад и сколько денег лежит в залежавшемся товаре. Если число означает что-то другое, выключите.</span></div></label>
-        <label class="opt"><input type="checkbox" id="optPav"><div><b>Первая часть артикула — павильон</b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> павильон — <code class="k">A04</code>. По нему закупка делится на части. Последняя часть, если это размер (<code class="k">42</code>, <code class="k">3XL</code>), всегда считается размером.</span></div></label>
+        <label class="opt"><input type="checkbox" id="optPrice"><div><b>Число в артикуле — закупочная цена <button type="button" class="qt" data-tip="По этой цене программа считает, сколько денег нужно на закупку, сколько стоит склад и сколько денег лежит в залежавшемся товаре. Если число означает что-то другое, выключите." aria-label="Подсказка">?</button></b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> цена — <code class="k">1900</code>.</span></div></label>
+        <label class="opt"><input type="checkbox" id="optPav"><div><b>Первая часть артикула — павильон <button type="button" class="qt" data-tip="По павильону закупка делится на части. Последняя часть артикула, если это размер (42, 3XL), всегда считается размером." aria-label="Подсказка">?</button></b><span>В <code class="k">A04-LM9-Ser-1900-3XL</code> павильон — <code class="k">A04</code>.</span></div></label>
       </div>
       <div class="card">
-        <h2>Размеры: буквы и цифры</h2>
-        <p class="hint">Один магазин пишет размер буквой, другой цифрой. По этой таблице программа считает их одним размером: заказы и остатки складываются, а в закупке, приёмке и заказе поставщику видны оба названия, например «M/44».</p>
+        <h2>Размеры: буквы и цифры <button type="button" class="qt" data-tip="Один магазин пишет размер буквой, другой цифрой. По этой таблице программа считает их одним размером: заказы и остатки складываются, а в закупке, приёмке и заказе поставщику видны оба названия, например «M/44». XXL и 2XL, XXXL и 3XL — одно и то же. Если очистить поле, буквы и цифры снова будут разными размерами." aria-label="Подсказка">?</button></h2>
         <label class="fld mt" style="max-width:560px">Таблица размеров<input class="in mono" id="optSizes" spellcheck="false" autocomplete="off"></label>
-        <p class="hint small">Через запятую: буква=цифра. XXL и 2XL, XXXL и 3XL — одно и то же. Если очистить поле, буквы и цифры снова будут разными размерами.</p>
+        <p class="hint small">Через запятую: буква=цифра.</p>
       </div>
       <div class="card">
-        <h2>Как сравнивать артикулы</h2>
-        <p class="hint">Один и тот же товар в разных файлах бывает записан по-разному. Эти правила помогают понять, что это один артикул. Большие и маленькие буквы не различаются никогда.</p>
-        <label class="opt"><input type="checkbox" id="optLatin"><div><b>Русские и английские буквы — одно и то же</b><span>Похожие буквы <code class="k">А В Е К М Н О Р С Т У Х</code> считаются одинаковыми: <code class="k">АВ-12</code> на русском = <code class="k">AB-12</code> на английском.</span></div></label>
-        <label class="opt"><input type="checkbox" id="optZeros"><div><b>Не учитывать нули в начале</b><span>Excel часто убирает нули: <code class="k">00123</code> превращается в <code class="k">123</code>. С этим правилом они совпадут.</span></div></label>
+        <h2>Как сравнивать артикулы <button type="button" class="qt" data-tip="Один и тот же товар в разных файлах бывает записан по-разному. Эти правила помогают понять, что это один артикул. Большие и маленькие буквы не различаются никогда. Если включить правило, совпавшие по нему артикулы на складе объединятся и их количество сложится. Выключение правила обратно их не разделит." aria-label="Подсказка">?</button></h2>
+        <label class="opt"><input type="checkbox" id="optLatin"><div><b>Русские и английские буквы — одно и то же <button type="button" class="qt" data-tip="Одинаковыми считаются похожие буквы: А В Е К М Н О Р С Т У Х." aria-label="Подсказка">?</button></b><span><code class="k">АВ-12</code> на русском = <code class="k">AB-12</code> на английском.</span></div></label>
+        <label class="opt"><input type="checkbox" id="optZeros"><div><b>Не учитывать нули в начале</b><span>Excel часто убирает нули: <code class="k">00123</code> превращается в <code class="k">123</code>.</span></div></label>
         <label class="opt"><input type="checkbox" id="optPunct"><div><b>Не учитывать пробелы, дефисы, точки и слэши</b><span><code class="k">AB-123</code>, <code class="k">AB 123</code> и <code class="k">AB123</code> — один артикул.</span></div></label>
-        <p class="hint small">Если включить правило, совпавшие по нему артикулы на складе объединятся и их количество сложится. Выключение правила обратно их не разделит.</p>
         <div class="tester">
           <label class="fld">Проверить артикул<input class="in mono" id="testIn" placeholder="например, 00АВ-123" spellcheck="false"></label>
           <div class="fld">Программа видит его как<div class="keyout" id="testOut">—</div></div>
@@ -1637,8 +1633,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         <p class="hint" id="testMatch"></p>
       </div>
       <div class="card">
-        <h2>Товары двух магазинов</h2>
-        <p class="hint">Одна и та же шуба в двух магазинах бывает под разными артикулами. Объединённые артикулы программа считает одним товаром: заказы складываются в одну строку закупки, остаток на складе общий.</p>
+        <h2>Товары двух магазинов <button type="button" class="qt" data-tip="Одна и та же шуба в двух магазинах бывает под разными артикулами. Объединённые артикулы программа считает одним товаром: заказы складываются в одну строку закупки, остаток на складе общий." aria-label="Подсказка">?</button></h2>
         <div class="row mt" style="gap:12px;align-items:center"><span class="sum" id="twSetSum"></span><button class="btn" type="button" data-twin="*"><svg class="ic"><use href="#i-link"/></svg>Одинаковые товары</button></div>
         <h3 class="mt">Модели в другом павильоне</h3>
         <p class="hint small">Сюда попадает модель после кнопки «Перенести» на вкладке «Закупка».</p>
@@ -1650,8 +1645,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         <label class="fld mt" style="max-width:420px">Поставщик<input class="in" id="optSupplier"></label>
       </div>
       <div class="card">
-        <h2>Поставщики в WhatsApp</h2>
-        <p class="hint">У каждого павильона свой поставщик. Впишите имя и номер WhatsApp: тогда на вкладке «Закупка» у павильона появится кнопка «WhatsApp» — она откроет чат с этим поставщиком, где уже вписан его заказ.</p>
+        <h2>Поставщики в WhatsApp <button type="button" class="qt" data-tip="У каждого павильона свой поставщик. Впишите имя и номер WhatsApp: тогда на вкладке «Закупка» у павильона появится кнопка «WhatsApp» — она откроет чат с этим поставщиком, где уже вписан его заказ. Павильоны появляются здесь сами, когда в программе есть товары или заказы." aria-label="Подсказка">?</button></h2>
         <div class="tw mt"><table class="suptab"><thead><tr><th>Павильон</th><th>Поставщик</th><th>WhatsApp</th><th></th></tr></thead><tbody id="supList"></tbody></table></div>
         <form class="addrow ex" id="supAdd" autocomplete="off" style="grid-template-columns:120px 1fr 1fr auto">
           <label class="fld">Павильон<input class="in mono" id="supPav" placeholder="A04"></label>
@@ -1661,8 +1655,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
         </form>
       </div>
       <div class="card">
-        <h2>Служебный журнал</h2>
-        <p class="hint">Технические записи для Claude: ошибки, загрузки файлов, проведённые операции, скорость работы и устройство. Claude читает их сам, когда вы просите разобраться, что происходит. Здесь последние записи с этого устройства.</p>
+        <h2>Служебный журнал <button type="button" class="qt" data-tip="Технические записи для Claude: ошибки, загрузки файлов, проведённые операции, скорость работы и устройство. Claude читает их сам, когда вы просите разобраться, что происходит. Здесь последние записи с этого устройства." aria-label="Подсказка">?</button></h2>
         <ol class="log" id="diagList"></ol>
         <button class="btn mt" type="button" id="diagCopy">Скопировать журнал</button>
       </div>
@@ -1707,7 +1700,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
           <label class="fld" id="impDateF">Колонка «Дата заказа»<select class="in" id="impDate"></select></label>
           <label class="fld" id="impStatF">Колонка «Статус»<select class="in" id="impStat"></select></label>
         </div>
-        <p class="hint small" style="margin:0">Ниже первые строки файла — только чтобы проверить, правильно ли найдены колонки. Загрузятся все строки.</p>
+        <p class="hint small" style="margin:0">Первые строки файла <button type="button" class="qt" data-tip="Только чтобы проверить, правильно ли найдены колонки. Загрузятся все строки." aria-label="Подсказка">?</button></p>
         <div class="tw prev"><table class="t" id="impPrev"></table></div>
         <div class="stats" id="impStats"></div>
         <fieldset class="modes" id="impModes"></fieldset>
@@ -1756,7 +1749,7 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
 </div>
 <div class="modal" id="mv" role="dialog" aria-modal="true" aria-labelledby="mvTitle" hidden>
   <div class="sheet mvsheet">
-    <header><h2 id="mvTitle">Перенести в другой павильон</h2><button class="x" type="button" id="mvX" aria-label="Закрыть">×</button></header>
+    <header><h2 id="mvTitle">Перенести в другой павильон</h2><button type="button" class="qt" data-tip="Программа запомнит выбор: и в следующих закупках эта модель будет у нового павильона." aria-label="Подсказка: перенос">?</button><button class="x" type="button" id="mvX" aria-label="Закрыть">×</button></header>
     <div class="sbody">
       <div class="mvmodel" id="mvModel"></div>
       <form class="mvform" id="mvForm" autocomplete="off">
@@ -1767,13 +1760,12 @@ body.emp #ozOrdersBtn,body.emp #ozRetBtn,body.emp [data-import="receipt"],body.e
       <p class="mvnew" id="mvNew" hidden></p>
       <p class="hint small" id="mvListHint" style="margin:14px 0 0">Или нажмите павильон, который уже есть в программе:</p>
       <div class="mvpavs" id="mvPavs" role="group" aria-label="Павильоны"></div>
-      <p class="hint small" style="margin:12px 0 0">Программа запомнит выбор: и в следующих закупках эта модель будет у нового павильона.</p>
     </div>
   </div>
 </div>
 <div class="modal" id="tw" role="dialog" aria-modal="true" aria-labelledby="twTitle" hidden>
   <div class="sheet twsheet">
-    <header><h2 id="twTitle">Одинаковые товары двух магазинов</h2><button class="x" type="button" id="twX" aria-label="Закрыть">×</button></header>
+    <header><h2 id="twTitle">Одинаковые товары двух магазинов</h2><button type="button" class="qt" data-tip="Если одна и та же шуба продаётся в двух магазинах под разными артикулами, объедините их. Заказы обоих магазинов сложатся в одну строку закупки, остаток на складе станет общим, а в заказах Озона у каждого магазина останется свой артикул. Если программа пропустила пару, нажмите «Объединить» у модели на вкладке «Закупка»." aria-label="Подсказка: одинаковые товары">?</button><button class="x" type="button" id="twX" aria-label="Закрыть">×</button></header>
     <div class="sbody" id="twBody"></div>
   </div>
 </div>
@@ -3948,7 +3940,7 @@ function renderRecv() {
   $('#recvHome').hidden = !!ui.recvId; $('#recvView').hidden = !ui.recvId;
   if (!ui.recvId) {
     const go = going();
-    setBody($('#recvGo'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), c = round(x.lines.reduce((s, l) => s + l.c, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт.${c ? ` · посчитано ${fmt(c)}` : ''}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">${c ? 'Продолжить приёмку' : 'Начать приёмку'}</button><button class="btn" type="button" data-recv-asis="${esc(x.id)}" title="Пришло всё, как заказано — без пересчёта">Без проверки</button></div>`; }).join('') + (go.length > 1 ? `<div class="goall"><button class="btn ghost" type="button" data-recv-asis="*">Принять все мешки без проверки</button></div>` : '') || '<p class="hint" style="margin:0">Нет закупок в пути. Закупка появится здесь, когда вы оформите её на вкладке «Закупка».</p>');
+    setBody($('#recvGo'), go.map(x => { const q = round(x.lines.reduce((s, l) => s + l.q, 0)), c = round(x.lines.reduce((s, l) => s + l.c, 0)); return `<div class="go"><b>${esc(x.pav || '—')}</b><span class="sum">заказано ${when(x.at)} · ${fmt(q)} шт.${c ? ` · посчитано ${fmt(c)}` : ''}</span><button class="btn primary" type="button" data-recv="${esc(x.id)}">${c ? 'Продолжить приёмку' : 'Начать приёмку'}</button><button class="btn" type="button" data-recv-asis="${esc(x.id)}" title="Пришло всё, как заказано — без пересчёта">Без проверки</button></div>`; }).join('') + (go.length > 1 ? `<div class="goall"><button class="btn ghost" type="button" data-recv-asis="*">Принять все мешки без проверки</button></div>` : '') || '<p class="hint" style="margin:0">Нет закупок в пути.</p>');
     const done = [...PUR.values()].filter(x => x.st === 'done' && x.rep).sort((a, b) => b.doneAt - a.doneAt).slice(0, 20);
     setBody($('#recvHist'), done.map(x => {
       const r = x.rep, miss = round(r.ord - r.got), ex = (r.extra || []).reduce((s, e) => s + (+e[1] || 0), 0);
@@ -3964,7 +3956,7 @@ function renderRecv() {
   }
   const ord = round(pur.lines.reduce((s, l) => s + l.q, 0)), got = round(pur.lines.reduce((s, l) => s + l.c, 0));
   $('#recvTitle').textContent = `Приёмка: ${pur.pav ? 'павильон ' + pur.pav : 'без павильона'}`;
-  $('#recvSub').textContent = `Заказано ${when(pur.at)} · ${fmt(ord)} шт. Берите шубу, находите её по фото и нажимайте «+» у размера с бирки.`;
+  setBody($('#recvSub'), `Заказано ${esc(when(pur.at))} · ${fmt(ord)} шт. ${tip('Берите шубу, находите её по фото и нажимайте «+» у размера с бирки.')}`);
   $('#recvFill').style.width = Math.min(100, ord ? 100 * got / ord : 0) + '%';
   $('#recvCount').innerHTML = `Посчитано <b>${fmt(got)}</b> из ${fmt(ord)}${pur.extra.length ? ` · не из заказа ${fmt(pur.extra.reduce((s, e) => s + e.q, 0))}` : ''}`;
   const groups = new Map();
@@ -4076,7 +4068,7 @@ function renderModelsSet() {
 }
 function renderSuppliers() {
   const pavs = knownPavs();
-  setBody($('#supList'), pavs.map(pav => { const sup = SUP.get(pav) || {name: '', phone: ''}, link = waLink(sup.phone, ''); return `<tr data-sup-pav="${esc(pav)}"><td><span class="pavtag">${esc(pav)}</span></td><td><input class="in" data-f="name" value="${esc(sup.name)}" placeholder="имя" aria-label="Поставщик павильона ${esc(pav)}"></td><td><input class="in" data-f="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00" aria-label="WhatsApp павильона ${esc(pav)}"></td><td>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>Чат</a>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="4" class="hint">Павильоны появятся здесь, когда в программе будут товары или заказы. Можно добавить павильон вручную ниже.</td></tr>');
+  setBody($('#supList'), pavs.map(pav => { const sup = SUP.get(pav) || {name: '', phone: ''}, link = waLink(sup.phone, ''); return `<tr data-sup-pav="${esc(pav)}"><td><span class="pavtag">${esc(pav)}</span></td><td><input class="in" data-f="name" value="${esc(sup.name)}" placeholder="имя" aria-label="Поставщик павильона ${esc(pav)}"></td><td><input class="in" data-f="phone" type="tel" inputmode="tel" value="${esc(sup.phone)}" placeholder="+7 900 000-00-00" aria-label="WhatsApp павильона ${esc(pav)}"></td><td>${link ? `<a class="btn wa" href="${esc(link)}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-wa"/></svg>Чат</a>` : ''}</td></tr>`; }).join('') || '<tr><td colspan="4" class="hint">Павильонов пока нет. Можно добавить вручную ниже.</td></tr>');
 }
 function renderReturns() {
   const by = new Map();
@@ -4095,11 +4087,12 @@ function renderSettings() {
   if (document.activeElement !== $('#optSupplier')) $('#optSupplier').value = S.supplier;
   if (document.activeElement !== $('#optSizes')) $('#optSizes').value = S.sizes;
   const note = {
-    db: 'Склад, отправления, закупки и журнал хранятся вместе с этой страницей. Они видны на любом устройстве, где вы открываете эту ссылку.',
-    local: 'Данные хранятся только в этом браузере на этом компьютере. Если очистить историю браузера, они пропадут, поэтому раз в неделю нажимайте «Скачать резервную копию».',
-    memory: 'Браузер не разрешает сохранять данные: после закрытия страницы они пропадут. Перед закрытием скачайте остатки в Excel.',
+    db: ['Данные хранятся вместе с этой страницей.', 'Склад, отправления, закупки и журнал видны на любом устройстве, где вы открываете эту ссылку.'],
+    local: ['Данные хранятся только в этом браузере.', 'Если очистить историю браузера, данные пропадут. Раз в неделю нажимайте «Скачать резервную копию».'],
+    memory: ['Браузер не сохраняет данные: после закрытия страницы они пропадут.', 'Перед закрытием скачайте остатки в Excel.'],
   };
-  $('#storeNote').textContent = Backend ? note[Backend.kind] : 'Подключение к хранилищу…';
+  const nt = Backend && note[Backend.kind];
+  setBody($('#storeNote'), nt ? `${esc(nt[0])} ${tip(nt[1])}` : Backend ? '' : 'Подключение к хранилищу…');
   renderTester(); renderDiag(); renderSuppliers(); renderAutoBk();
 }
 const diagAll = () => [...DIAG.events, ...DIAG.buf];
@@ -4135,6 +4128,61 @@ function setTab(t) {
   placePill(); placeThumbs();
   if (changed) enterPane(t);
 }
+
+/* ---------- «?» tips: one floating box serves every .qt button, also the ones drawn later ---------- */
+const tip = (text, label) => `<button type="button" class="qt" data-tip="${esc(text)}" aria-label="${esc(label ? 'Подсказка: ' + label : 'Подсказка')}">?</button>`;
+const QT = {box: null, btn: null, pin: false, at: 0, out: 0, tick: 0};
+function qtShow(b, pin) {
+  clearTimeout(QT.out);
+  if (QT.btn === b) { if (pin) QT.pin = true; return; }
+  qtHide();
+  if (!QT.box) {
+    const box = QT.box = document.createElement('div');
+    box.id = 'qtip'; box.setAttribute('role', 'tooltip'); box.hidden = true;
+    box.addEventListener('pointerenter', () => clearTimeout(QT.out));   // the pointer may rest on the tip to read it
+    box.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch' && !QT.pin) qtLater(); });
+    document.body.appendChild(box);
+  }
+  QT.btn = b; QT.pin = !!pin; QT.at = performance.now();
+  b.setAttribute('aria-describedby', 'qtip');
+  QT.box.textContent = b.dataset.tip || '';
+  QT.box.hidden = false; qtPlace(); QT.box.classList.add('on');
+  QT.tick = setInterval(() => { const x = QT.btn; if (!x || !x.isConnected || !x.getClientRects().length) qtHide(); }, 300);   // redrawn or hidden under it
+}
+function qtHide() {
+  clearTimeout(QT.out); clearInterval(QT.tick);
+  if (QT.btn) QT.btn.removeAttribute('aria-describedby');
+  QT.btn = null; QT.pin = false;
+  if (QT.box) { QT.box.classList.remove('on'); QT.box.hidden = true; }
+}
+function qtLater() { clearTimeout(QT.out); QT.out = setTimeout(qtHide, 150); }
+// below the button, above it when there is no room; never past the screen edges
+function qtPlace() {
+  const b = QT.btn, box = QT.box, M = 12, de = document.documentElement, vw = de.clientWidth, vh = de.clientHeight;
+  box.style.cssText = `left:0;top:0;max-width:${Math.min(320, vw - 2 * M)}px`;
+  const r = b.getBoundingClientRect(), w = Math.ceil(box.getBoundingClientRect().width);
+  box.style.width = w + 'px';
+  const h = box.offsetHeight, below = r.bottom + 8, above = r.top - 8 - h;
+  const y = below + h <= vh - M || (above < M && vh - r.bottom >= r.top) ? below : above;
+  box.style.left = Math.round(Math.max(M, Math.min(r.left + r.width / 2 - w / 2, vw - M - w))) + 'px';
+  box.style.top = Math.round(Math.max(M, Math.min(y, vh - M - h))) + 'px';
+}
+const qtOf = e => (e.target && e.target.closest ? e.target.closest('.qt') : null);
+document.addEventListener('pointerover', e => { const b = e.pointerType !== 'touch' && qtOf(e); if (b) qtShow(b); });
+document.addEventListener('pointerleave', e => { if (e.target === QT.btn && e.pointerType !== 'touch' && !QT.pin) qtLater(); }, true);
+document.addEventListener('focusin', e => { const b = qtOf(e); if (b) qtShow(b); });
+document.addEventListener('focusout', e => { if (e.target === QT.btn) qtHide(); });
+// a tap or click pins the tip open and the next one closes it; a «?» does nothing else, not even inside a label
+document.addEventListener('click', e => {
+  const b = qtOf(e); if (!b) return;
+  e.preventDefault(); e.stopPropagation();
+  if (QT.btn === b && QT.pin) qtHide(); else qtShow(b, true);
+}, true);
+document.addEventListener('pointerdown', e => { if (QT.btn && qtOf(e) !== QT.btn) qtHide(); }, true);
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && QT.btn) { e.preventDefault(); e.stopPropagation(); qtHide(); } }, true);
+// the scroll that brought the «?» into view (Tab to it) arrives just after it opened: follow it, later ones close it
+document.addEventListener('scroll', () => { if (QT.btn) { if (performance.now() - QT.at < 300) qtPlace(); else qtHide(); } }, {capture: true, passive: true});
+addEventListener('resize', () => { if (QT.btn) qtHide(); });
 
 /* ---------- confirm & toast ---------- */
 function confirmIn(box, html, okLabel, onOk, danger) {
@@ -4431,21 +4479,20 @@ function renderTw() {
   const {list, M} = twinSuggest(), box = $('#twBody');
   const done = [...TWIN].map(([k, t]) => ({k, t, m: M.get(k), main: M.get(t.to)})).filter(x => x.m || x.main);
   const doneHtml = done.length ? `<div class="twdone"><h3>Уже объединены (${fmt(done.length)})</h3>${done.map(x => `<div class="twrow"><span><b class="art">${esc(shortModel((x.main || parseRaw(x.t.a)).model))}</b> = <b class="art">${esc(x.m ? shortModel(x.m.model) : x.k)}</b></span><button class="btn sm ghost" type="button" data-tw-split="${esc(x.k)}">Разъединить</button></div>`).join('')}</div>` : '';
-  const intro = '<p class="hint" style="margin:0 0 14px">Если одна и та же шуба продаётся в двух магазинах под разными артикулами, объедините их. Заказы обоих магазинов сложатся в одну строку закупки, остаток на складе станет общим, а в заказах Озона у каждого магазина останется свой артикул.</p>';
   if (TWV.focus) {
     const me = M.get(TWV.focus) || [...M.values()].find(m => TWIN.has(m.mk) ? false : parseArt(m.a).mkey === TWV.focus);
     if (!me) { TWV.focus = ''; renderTw(); return; }
     let cand = twinRank(me.mk);
     if (TWV.q) cand = [...M.values()].filter(m => m.mk !== me.mk && !TWIN.has(m.mk) && matches(TWV.q, m.model, m.n, m.a)).map(m => ({m, sc: 0}));
-    box.innerHTML = `${intro}<div class="twpair pick" style="border-color:var(--ink)">${twSide(me)}<span class="chip good">этот товар</span></div>
-      <div class="twhead" style="margin-top:16px"><h3>Какой товар — та же шуба?</h3><input class="in search" id="twQ" placeholder="Поиск во всех павильонах: артикул или название" value="${esc(TWV.q)}" aria-label="Поиск товара во всех павильонах"></div>
-      ${cand.slice(0, 12).map(c => `<div class="twpair pick">${twSide(c.m)}<button class="btn primary" type="button" data-tw-join="${esc(me.mk)}" data-tw-other="${esc(c.m.mk)}">Это она</button></div>`).join('') || `<p class="hint">${TWV.q ? 'Ничего не нашлось. Попробуйте часть артикула или номер модели.' : 'Похожих шуб не нашлось ни в одном павильоне. Найдите нужную поиском: впишите номер модели или часть артикула.'}</p>`}
-      ${TWV.q ? '' : '<p class="hint small" style="margin-top:10px">Здесь похожие шубы из всех павильонов, сверху — из того же павильона (с учётом переноса). Если нужной нет, найдите её поиском.</p>'}${doneHtml}`;
+    box.innerHTML = `<div class="twpair pick" style="border-color:var(--ink)">${twSide(me)}<span class="chip good">этот товар</span></div>
+      <div class="twhead" style="margin-top:16px"><h3>Какой товар — та же шуба? ${tip('Здесь похожие шубы из всех павильонов, сверху — из того же павильона (с учётом переноса). Если нужной нет, найдите её поиском.')}</h3><input class="in search" id="twQ" placeholder="Поиск во всех павильонах: артикул или название" value="${esc(TWV.q)}" aria-label="Поиск товара во всех павильонах"></div>
+      ${cand.slice(0, 12).map(c => `<div class="twpair pick">${twSide(c.m)}<button class="btn primary" type="button" data-tw-join="${esc(me.mk)}" data-tw-other="${esc(c.m.mk)}">Это она</button></div>`).join('') || `<p class="hint">${TWV.q ? 'Ничего не нашлось. Попробуйте часть артикула или номер модели.' : 'Похожих шуб не нашлось. Найдите нужную поиском: номер модели или часть артикула.'}</p>`}
+      ${doneHtml}`;
     hashPairs(cand.slice(0, 12).map(c => ({main: me, other: c.m})));
     return;
   }
   const sure = list.filter(twSure);
-  box.innerHTML = `${intro}${list.length ? `<div class="twhead"><h3>Похожие пары: ${fmt(list.length)}</h3>${sure.length ? `<button class="btn primary" type="button" data-tw-all>Объединить все уверенные (${fmt(sure.length)})</button>` : ''}</div>` : '<p class="empty" style="padding:18px 0">Похожих пар не нашлось. Если программа что-то пропустила, нажмите «Объединить» у модели на вкладке «Закупка».</p>'}
+  box.innerHTML = `${list.length ? `<div class="twhead"><h3>Похожие пары: ${fmt(list.length)}</h3>${sure.length ? `<button class="btn primary" type="button" data-tw-all>Объединить все уверенные (${fmt(sure.length)})</button>` : ''}</div>` : '<p class="empty" style="padding:18px 0">Похожих пар не нашлось.</p>'}
     ${list.slice(0, TWV.more).map((c, i) => { const d = photoDist(c.main.mk, c.other.mk); return `<div class="twpair" data-tw-i="${i}">${twSide(c.main)}<span class="tweq" aria-hidden="true">=</span>${twSide(c.other)}<div class="twact"><span class="why">похожи на ${Math.round(c.sc * 100)}%${d == null ? '' : d <= 8 ? ' · <b>фото одинаковые</b>' : d > 20 ? ' · фото разные' : ''}${twWhere(c)}</span><button class="btn ghost" type="button" data-tw-no="${i}">Разные товары</button><button class="btn primary" type="button" data-tw-yes="${i}">Один товар</button></div></div>`; }).join('')}
     ${list.length > TWV.more ? `<button class="btn more" type="button" data-tw-more>Показать ещё ${fmt(Math.min(30, list.length - TWV.more))}</button>` : ''}${doneHtml}`;
   hashPairs(list.slice(0, TWV.more));
@@ -7841,8 +7888,7 @@ async function prMakeFile(P = PR, plan = prPlan(P)) {
   const was = OZ.load; OZ.load = {what: 'Готовлю файл для Ozon', n: 0, total: 0}; renderOzLoad();
   let bytes, name;
   try {
-    const offers = rows0.map(r => r.a).filter(a => !/^ID /.test(a)), known = OZ.info[sh.i] || new Map(), need = offers.filter(a => { const o = known.get(a); return !o || !o.sku; });
-    const info = promo || need.length > 3000 ? known : await ozInfo(sh, offers);
+    const info = promo ? (OZ.info[sh.i] || new Map()) : await ozInfo(sh, rows0.map(r => r.a).filter(a => !/^ID /.test(a)));
     const I = a => info.get(a) || {};
     const out = [];
     if (!promo) {
@@ -7873,7 +7919,7 @@ async function prMakeFile(P = PR, plan = prPlan(P)) {
           const m = new Map(), put = (c, v) => { if (c >= 0 && v != null && v !== '') m.set(c, v); };
           const inNow = prInOut(r), part = inNow ? (!prChg(r, 'part') && PR_YES(r.o.part) ? r.o.part : 'Да') : '';
           put(C.pid, r.pid); put(C.sku, I(r.a).sku ? String(I(r.a).sku) : null); put(C.art, /^ID /.test(r.a) ? null : r.a); put(C.name, I(r.a).name || r.n);
-          put(C.old, r.o.old); put(C.price, r.o.price); put(C.min, r.o.min ?? 0); put(C.site, r.o.site); put(C.maxp, r.o.maxp);
+          put(C.old, r.o.old); put(C.price, r.o.price); put(C.min, String(r.o.min ?? 0));   // Ozon keeps this one as text put(C.site, r.o.site); put(C.maxp, r.o.maxp);
           m.set(C.part, part); put(C.promo, inNow ? prOut(r, 'promo') : r.o.promo); put(C.qty, r.o.stock || 0);
           out.push(m);
         }
@@ -8018,7 +8064,7 @@ function renderOzMoney() {
   if (shops.length > 1 && sel.options.length !== shops.length + 1) sel.innerHTML = `<option value="all">Все магазины</option>` + shops.map(s => `<option value="${s.i}">${esc(ozName(s.i))}</option>`).join('');
   sel.value = OZM.shop;
   const go = $('#ozmGo'); go.disabled = OZM.busy; go.lastChild.textContent = OZM.busy ? 'Считаю…' : OZM.data ? 'Пересчитать' : 'Посчитать';
-  $('#ozmProg').textContent = OZM.busy ? OZM.prog : OZM.err ? '' : OZM.data ? `Посчитано ${when(OZM.data.at)} · ${fmt(OZM.data.ops)} операций Ozon` : 'Нажмите «Посчитать»: программа возьмёт из Ozon все начисления и удержания за выбранный срок.';
+  $('#ozmProg').textContent = OZM.busy ? OZM.prog : OZM.err ? '' : OZM.data ? `Посчитано ${when(OZM.data.at)} · ${fmt(OZM.data.ops)} операций Ozon` : 'Нажмите «Посчитать».';
   const D = OZM.data, box = $('#ozmBody');
   if (OZM.err) { setBody(box, `<p class="hint" style="color:var(--bad)">${esc(OZM.err)}</p>`); return; }
   if (!D) { setBody(box, ''); return; }
@@ -8043,9 +8089,8 @@ function renderOzMoney() {
     <div class="mlist">${cats.map(c => `<div class="mrow" title="${esc(c.why)}"><div class="mname"><b>${esc(c.n)}</b><span>${esc(c.why)}</span></div>${bar(c.v, sale)}<div class="mval">${rubS(c.v)}<small>${pct(c.v)}</small></div></div>`).join('') || '<p class="hint">За этот срок удержаний нет.</p>'}</div>
     ${top.length ? `<h4 class="mt">Подробно: на что именно</h4><div class="mlist">${top.map(s => `<div class="mrow" title="${esc(ozWhy(s.name))}"><div class="mname"><b>${esc(s.name)}</b><span>${esc([ozWhy(s.name), s.c ? cnt(s.c, ['операция', 'операции', 'операций']) : ''].filter(Boolean).join(' · '))}</span></div>${bar(s.v, maxSvc)}<div class="mval">${rubS(s.v)}<small>${pct(s.v)}</small></div></div>`).join('')}</div>` : ''}
     ${loss.length ? `<div class="manbar mt"><p><b>${cnt(loss.length, W.model)} в минус</b> после удержаний Ozon и закупки: ${esc(loss.slice(0, 5).map(m => `${m.model || m.a} (${rubS(m.profit)})`).join(', '))}${loss.length > 5 ? '…' : ''}. Поднимите цену или уберите их из акций.</p><button class="btn sm primary" type="button" id="ozmToPrices">Исправить в «Ценах»</button></div>` : ''}
-    <div class="lhead mt"><h4 style="margin:0">Товары: сколько принесли</h4><button class="btn sm" type="button" id="ozmXls"><svg class="ic"><use href="#i-dl"/></svg>Скачать в Excel</button></div>
-    <div class="tw"><table class="t"><thead><tr><th>Модель</th><th class="num">Продано, шт.</th><th class="num">Продажи</th><th class="num">К выплате</th><th class="num">Закупка</th><th class="num">Прибыль</th></tr></thead><tbody>${mods.slice(0, 15).map(row).join('') || '<tr><td colspan="6" class="empty">Продаж за этот срок нет</td></tr>'}${loss.length ? `<tr><td colspan="6" class="hint small" style="padding-top:14px">Самые убыточные</td></tr>${loss.slice(0, 10).map(row).join('')}` : ''}</tbody></table></div>
-    <p class="hint small">«К выплате» — что осталось от продаж после всех удержаний Ozon по этим отправлениям. Закупка — число в артикуле или то, что вы вписали на вкладке «Цены». Деньги, которые Ozon перевёл на счёт, не считаются расходом${D.tot.money_transfer ? `: за этот срок переведено ${rub(Math.abs(D.tot.money_transfer))}` : ''}.</p>`);
+    <div class="lhead mt"><h4 style="margin:0">Товары: сколько принесли ${tip(`«К выплате» — что осталось от продаж после всех удержаний Ozon по этим отправлениям. Закупка — число в артикуле или то, что вы вписали на вкладке «Цены». Деньги, которые Ozon перевёл на счёт, не считаются расходом${D.tot.money_transfer ? `: за этот срок переведено ${rub(Math.abs(D.tot.money_transfer))}` : ''}.`)}</h4><button class="btn sm" type="button" id="ozmXls"><svg class="ic"><use href="#i-dl"/></svg>Скачать в Excel</button></div>
+    <div class="tw"><table class="t"><thead><tr><th>Модель</th><th class="num">Продано, шт.</th><th class="num">Продажи</th><th class="num">К выплате</th><th class="num">Закупка</th><th class="num">Прибыль</th></tr></thead><tbody>${mods.slice(0, 15).map(row).join('') || '<tr><td colspan="6" class="empty">Продаж за этот срок нет</td></tr>'}${loss.length ? `<tr><td colspan="6" class="hint small" style="padding-top:14px">Самые убыточные</td></tr>${loss.slice(0, 10).map(row).join('')}` : ''}</tbody></table></div>`);
 }
 document.addEventListener('click', e => {
   const t = e.target.closest && e.target.closest('#ozMoney button'); if (!t) return;
