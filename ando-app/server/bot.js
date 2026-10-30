@@ -57,14 +57,14 @@ function carSummary(car) {
     car.wheel === 'Правый' && 'правый руль', car.city].filter(Boolean).join(' · ');
   return [
     `<b>${esc([car.make, car.model, car.generation].filter(Boolean).join(' ') || 'Без названия')}${car.year ? ', ' + car.year : ''}</b>`,
-    car.price ? `💰 ${money(car.price)}${car.marketPrice ? ` (рынок ${money(car.marketPrice)})` : ''}` : '',
-    car.mileage != null ? `🛣 ${km(car.mileage)}` : '',
-    specs ? `⚙️ ${esc(specs)}` : '',
-    extra ? `🚗 ${esc(extra)}` : '',
+    car.price ? `Цена ${money(car.price)}${car.marketPrice ? ` (рынок ${money(car.marketPrice)})` : ''}` : '',
+    car.mileage != null ? `Пробег ${km(car.mileage)}` : '',
+    specs ? esc(specs) : '',
+    extra ? esc(extra) : '',
     car.vin ? `VIN ${esc(car.vin)}` : '',
-    car.serviceDone && car.serviceDone.length ? '🔧 Сделали в сервисе:\n' + car.serviceDone.map((s) => '• ' + esc(s)).join('\n') : '',
-    car.tags && car.tags.length ? '🏷 ' + esc(car.tags.join(', ')) : '',
-    car.description ? '📝 ' + esc(car.description) : ''
+    car.serviceDone && car.serviceDone.length ? 'Сделали в сервисе:\n' + car.serviceDone.map((s) => '• ' + esc(s)).join('\n') : '',
+    car.tags && car.tags.length ? esc(car.tags.join(', ')) : '',
+    car.description ? esc(car.description) : ''
   ].filter(Boolean).join('\n');
 }
 
@@ -113,10 +113,10 @@ function createBot(options) {
     const lines = [
       '<b>Черновик объявления</b>', '',
       carSummary(car), '',
-      `📷 Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}`,
-      lack.length ? `⚠️ Не хватает: ${lack.join(', ')}. Допишите строкой, например «${lack[0]} …».` : '✅ Всё нужное есть.'
+      `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}`,
+      lack.length ? `Не хватает: ${lack.join(', ')}. Допишите строкой, например «${lack[0]} …».` : 'Всё нужное есть.'
     ];
-    const buttons = [[{ text: '✅ Опубликовать', callback_data: 'pub' }, { text: '✖️ Отменить', callback_data: 'cancel' }]];
+    const buttons = [[{ text: 'Опубликовать', callback_data: 'pub' }, { text: 'Отменить', callback_data: 'cancel' }]];
     await send(chatId, lines.join('\n'), { reply_markup: { inline_keyboard: buttons } });
   }
 
@@ -156,8 +156,8 @@ function createBot(options) {
     drafts.delete(chatId);
     const link = appLink ? `${appLink}${appLink.includes('?') ? '&' : '?'}startapp=car_${id}` : '';
     const lostPhotos = draft.photos.length - photos.length;
-    let report = `✅ Опубликовано: объявление № ${id}. Машина уже в приложении.`;
-    if (lostPhotos) report += `\n⚠️ Не удалось сохранить фото: ${lostPhotos}.`;
+    let report = `Опубликовано: объявление № ${id}. Машина уже в приложении.`;
+    if (lostPhotos) report += `\nНе удалось сохранить фото: ${lostPhotos}.`;
     if (link) report += `\nСсылка на машину: ${link}`;
     report += '\n\nТекст для канала:\n\n' + channelPost(car, link);
     await send(chatId, report);
@@ -170,11 +170,11 @@ function createBot(options) {
     const specs = [e.volume && `${Number(e.volume).toFixed(1)} л`, e.power && `${e.power} л.с.`, car.transmission, car.drive && `${car.drive.toLowerCase()} привод`]
       .filter(Boolean).join(', ');
     return [
-      `🚗 ${esc(car.make)} ${esc(car.model)}, ${car.year}`,
-      `💰 ${money(car.price)}`,
-      `🛣 ${km(car.mileage)}`,
-      specs ? `⚙️ ${esc(specs)}` : '',
-      car.serviceDone && car.serviceDone.length ? `🔧 Подготовили в нашем сервисе: ${esc(car.serviceDone.join(', ').toLowerCase())}` : '',
+      `${esc(car.make)} ${esc(car.model)}, ${car.year}`,
+      money(car.price),
+      `Пробег ${km(car.mileage)}`,
+      specs ? esc(specs) : '',
+      car.serviceDone && car.serviceDone.length ? `Подготовили в нашем сервисе: ${esc(car.serviceDone.join(', ').toLowerCase())}` : '',
       link ? `\nФото и запись на осмотр: ${link}` : ''
     ].filter(Boolean).join('\n');
   }

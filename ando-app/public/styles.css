@@ -7,10 +7,8 @@
   --accent: #00EAFF; --accent-2: #FF0040; --hot: #FF1F3D;
   --accent-soft: rgba(0, 234, 255, .1);
   --hot-soft: rgba(255, 31, 61, .12);
-  --dot: rgba(255, 255, 255, .06);
-  --shiny-bg: #030303; --shiny-bg-subtle: #1F1F1F; --shiny-fg: #FAFAFA; --shiny-hl: #00EAFF; --shiny-hl-subtle: #FF3366;
   --overlay: rgba(0, 0, 0, .62);
-  --glow: 0 0 0 1px rgba(0, 234, 255, .35), 0 0 28px rgba(0, 234, 255, .18);
+  --glow: 0 0 0 1px var(--accent);
   --f-display: "Unbounded", "Arial", sans-serif;
   --f-body: "Onest", "Helvetica Neue", Arial, sans-serif;
   --radius: 4px;
@@ -27,8 +25,6 @@
   --accent: #111113; --accent-2: #111113; --hot: #D90F2B;
   --accent-soft: rgba(17, 17, 19, .06);
   --hot-soft: rgba(217, 15, 43, .08);
-  --dot: rgba(17, 17, 19, .12);
-  --shiny-bg: #111113; --shiny-bg-subtle: #34343A; --shiny-fg: #F7F7F8; --shiny-hl: #9EA3AB; --shiny-hl-subtle: #E6E8EB;
   --overlay: rgba(17, 17, 19, .45);
   --glow: 0 0 0 1px var(--text);
   color-scheme: light;
@@ -40,8 +36,6 @@ html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
   background-color: var(--bg);
-  background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.3px);
-  background-size: 28px 28px; background-position: 14px 14px;
   color: var(--text);
   font: 400 15px/1.5 var(--f-body);
   -webkit-font-smoothing: antialiased;
@@ -142,13 +136,7 @@ h1, h2, h3, p { margin: 0; }
 @media (hover: hover) { .card:hover { border-color: var(--line-strong); } .card:hover .card-media img { transform: scale(1.04); } }
 .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--surface-2); overflow: hidden; }
 .card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--ease); }
-.card-media::after { /* мягкий блик по фото при появлении */
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .14) 50%, transparent 65%);
-  transform: translateX(-120%);
-}
-.card.in .card-media::after { animation: sweep 1.4s var(--ease) calc(var(--d, 0s) + .25s) both; }
-@keyframes sweep { to { transform: translateX(120%); } }
+
 .media-count, .status {
   position: absolute; bottom: 10px; padding: 4px 9px; border-radius: 360px;
   font-size: 12px; font-weight: 600; color: #fff; background: rgba(0, 0, 0, .6);
@@ -167,9 +155,7 @@ h1, h2, h3, p { margin: 0; }
   border: 1px solid currentColor;
 }
 .badge.good { color: var(--text-2); }
-.badge.great { color: var(--accent); background: var(--accent-soft); animation: badge-glow 2.6s ease-in-out infinite; }
-@keyframes badge-glow { 50% { box-shadow: 0 0 14px rgba(0, 234, 255, .35); } }
-:root[data-scheme="light"] .badge.great { animation: none; }
+.badge.great { color: var(--accent); background: var(--accent-soft); }
 .card-title { font-size: 16px; font-weight: 600; margin-top: 2px; }
 .card-title a { color: inherit; text-decoration: none; }
 .card-title a::after { content: ""; position: absolute; inset: 0; } /* вся карточка — ссылка */
@@ -204,13 +190,6 @@ h1, h2, h3, p { margin: 0; }
   background: var(--surface); border: 1px solid var(--line-strong); color: var(--text);
   text-align: left; width: 100%;
 }
-.promo::before { /* бегущий по рамке блик, как у кнопки сайта */
-  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
-  background: conic-gradient(from var(--gradient-angle), transparent 70%, var(--hot) 85%, transparent);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  animation: gradient-angle 4s linear infinite;
-}
 .promo strong { display: block; font: 500 14px/1.3 var(--f-display); text-transform: uppercase; letter-spacing: -.01em; }
 .promo span { font-size: 13px; color: var(--text-2); }
 .promo svg { width: 28px; height: 28px; flex: none; color: var(--hot); }
@@ -240,10 +219,9 @@ h1, h2, h3, p { margin: 0; }
 .tabbar-in { position: relative; display: flex; width: 100%; max-width: 640px; }
 .tab-ink { /* полоска под активной вкладкой переезжает */
   position: absolute; top: -1px; left: 0; height: 2px; width: calc(100% / 3);
-  background: var(--accent); box-shadow: 0 0 12px var(--accent);
+  background: var(--accent);
   transition: transform .5s var(--spring);
 }
-:root[data-scheme="light"] .tab-ink { box-shadow: none; }
 .tab {
   flex: 1; height: var(--tabbar-h); border: 0; background: transparent; color: var(--text-3);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
@@ -265,8 +243,6 @@ h1, h2, h3, p { margin: 0; }
 .page {
   position: fixed; inset: 0; z-index: 30; overflow-y: auto; -webkit-overflow-scrolling: touch;
   background-color: var(--bg);
-  background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.3px);
-  background-size: 28px 28px;
 }
 .page.enter { animation: page-in .55s var(--ease) both; }
 .page.leave { animation: page-out .32s var(--ease) both; }
@@ -289,7 +265,6 @@ html.in-web .page-back { display: inline-flex; } /* в мессенджере �
 .gallery-track img { flex: 0 0 100%; width: 100%; height: 100%; object-fit: cover; scroll-snap-align: center; }
 .page.enter .gallery-track img:first-child { animation: zoom-out 1.4s var(--ease) both; }
 @keyframes zoom-out { from { transform: scale(1.12); filter: brightness(.6); } }
-.gallery::after { content: ""; position: absolute; inset: auto 0 0; height: 40%; pointer-events: none; background: linear-gradient(transparent, rgba(5, 5, 5, .55)); }
 .gallery-dots { position: absolute; bottom: 12px; left: 0; right: 0; z-index: 2; display: flex; justify-content: center; gap: 6px; }
 .gallery-dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .45); transition: width .35s var(--spring), background-color .3s; }
 .gallery-dots i.on { width: 20px; background: #fff; }
@@ -331,11 +306,7 @@ html.in-web .page-back { display: inline-flex; } /* в мессенджере �
 @keyframes rise-in { from { transform: translateY(100%); } }
 .action-bar-in { max-width: 608px; margin: 0 auto; display: flex; gap: 10px; }
 
-/* ---------- Кнопки: основная — «блестящая» капсула с сайта ---------- */
-@property --gradient-angle { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
-@property --gradient-angle-offset { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
-@property --gradient-percent { syntax: "<percentage>"; initial-value: 5%; inherits: false; }
-@property --gradient-shine { syntax: "<color>"; initial-value: white; inherits: false; }
+/* ---------- Кнопки ---------- */
 .btn {
   height: 52px; padding: 0 22px; border-radius: 360px; border: 1px solid transparent;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
@@ -344,38 +315,8 @@ html.in-web .page-back { display: inline-flex; } /* в мессенджере �
 }
 .btn:active { transform: scale(.97); }
 .btn svg { width: 19px; height: 19px; }
-.btn-primary {
-  --duration: 3s; --shadow-size: 2px; --transition: 800ms cubic-bezier(.25, 1, .5, 1);
-  flex: 1; position: relative; overflow: hidden; isolation: isolate; color: var(--shiny-fg);
-  background: linear-gradient(var(--shiny-bg), var(--shiny-bg)) padding-box,
-    conic-gradient(from calc(var(--gradient-angle) - var(--gradient-angle-offset)), transparent, var(--shiny-hl) var(--gradient-percent),
-      var(--gradient-shine) calc(var(--gradient-percent) * 2), var(--shiny-hl) calc(var(--gradient-percent) * 3), transparent calc(var(--gradient-percent) * 4)) border-box;
-  box-shadow: inset 0 0 0 1px var(--shiny-bg-subtle);
-  transition: var(--transition); transition-property: --gradient-angle-offset, --gradient-percent, --gradient-shine, transform;
-  animation: gradient-angle var(--duration) linear infinite;
-}
-.btn-primary::before, .btn-primary::after { content: ""; pointer-events: none; position: absolute; left: 50%; top: 50%; translate: -50% -50%; z-index: -1; }
-/* Точки внутри, подсвеченные бликом */
-.btn-primary::before {
-  --size: calc(100% - var(--shadow-size) * 3); --position: 2px; --space: calc(var(--position) * 2);
-  width: var(--size); height: var(--size);
-  background: radial-gradient(circle at var(--position) var(--position), #fff calc(var(--position) / 4), transparent 0) padding-box;
-  background-size: var(--space) var(--space); background-repeat: space;
-  -webkit-mask-image: conic-gradient(from calc(var(--gradient-angle) + 45deg), #000, transparent 10% 90%, #000);
-  mask-image: conic-gradient(from calc(var(--gradient-angle) + 45deg), #000, transparent 10% 90%, #000);
-  border-radius: inherit; opacity: .4; animation: gradient-angle var(--duration) linear infinite;
-}
-/* Мерцание */
-.btn-primary::after {
-  width: 100%; aspect-ratio: 1;
-  background: linear-gradient(-50deg, transparent, var(--shiny-hl), transparent);
-  -webkit-mask-image: radial-gradient(circle at bottom, transparent 40%, #000); mask-image: radial-gradient(circle at bottom, transparent 40%, #000);
-  opacity: .5; animation: shimmer 6s linear infinite;
-}
-.btn-primary:is(:hover, :focus-visible, :active) { --gradient-percent: 20%; --gradient-angle-offset: 95deg; --gradient-shine: var(--shiny-hl-subtle); }
+.btn-primary { flex: 1; background: var(--text); color: var(--bg); border-color: var(--text); }
 .btn-primary[disabled] { opacity: .65; }
-@keyframes gradient-angle { to { --gradient-angle: 360deg; } }
-@keyframes shimmer { to { rotate: 360deg; } }
 .btn-ghost { background: transparent; color: var(--text); border-color: var(--line-strong); }
 .btn-ghost:active { border-color: var(--text); }
 .btn-block { width: 100%; }
