@@ -7,6 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { validateInitData } = require('./initdata');
 const { validateLead, formatLeadMessage } = require('./leads');
+const { createBot, telegramApi } = require('./bot');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -42,6 +43,8 @@ function readConfig(env = process.env) {
     telegramToken: env.TELEGRAM_BOT_TOKEN || '',
     maxToken: env.MAX_BOT_TOKEN || '',
     managerChatIds: String(env.MANAGER_CHAT_IDS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    adminIds: String(env.ADMIN_IDS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    appLink: env.APP_LINK || '',
     requireInitData: env.REQUIRE_INIT_DATA === '1',
     trustProxy: env.TRUST_PROXY === '1',
     allowedOrigins: String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean)
@@ -259,6 +262,17 @@ if (require.main === module) {
     const notify = config.telegramToken && config.managerChatIds.length ? `в Telegram (${config.managerChatIds.length} чат.)` : 'только в журнал';
     console.log(`ANDO AUTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);
   });
+  // Бот для объявлений: администраторы присылают фото и текст — машина появляется в каталоге.
+  if (config.telegramToken && config.adminIds.length) {
+    createBot({
+      api: telegramApi(config.telegramToken),
+      adminIds: config.adminIds,
+      carsFile: config.carsFile,
+      photosDir: path.join(config.publicDir, 'img', 'cars'),
+      appLink: config.appLink
+    }).start();
+    console.log(`Бот объявлений запущен, администраторов: ${config.adminIds.length}`);
+  }
 }
 
 module.exports = { createApp, readConfig, createRateLimiter };
