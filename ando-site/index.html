@@ -7,9 +7,7 @@
 <meta name="description" content="ANDO AUTO: срочный выкуп автомобилей за один день и продажа проверенных машин из наличия.">
 <meta name="theme-color" content="#050505">
 <script>(function(){var d=document.documentElement;try{if(localStorage.getItem('ando-theme')==='light')d.setAttribute('data-scheme','light')}catch(e){}if('IntersectionObserver' in window&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('js')})()</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@300;400;500;600&display=swap">
+<link rel="stylesheet" href="assets/fonts.css">
 <style>
 /* ============ Темная тема (Noir): по умолчанию ============ */
 :root{
@@ -146,7 +144,8 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 .hero-form-card .form-note{margin-top:14px}
 .form-row{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto;gap:16px;align-items:start}
 .form-row .btn{margin-top:21px}
-@media (max-width:760px){.form-row{grid-template-columns:minmax(0,1fr)}.form-row .btn{margin-top:4px;width:100%}}
+.form-row .consent-field{grid-column:1/-1;order:1}
+@media (max-width:760px){.form-row{grid-template-columns:minmax(0,1fr)}.form-row .btn{margin-top:4px;width:100%}.form-row .consent-field{order:0}}
 
 
 /* ============ Карточка заявки ============ */
@@ -230,7 +229,13 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 
 
 .site-footer{padding-block:40px;border-top:1px solid var(--line);font-size:13px;color:var(--text-3)}
-.site-footer .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px}
+.site-footer .wrap{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:20px}
+.requisites{display:grid;gap:4px;font-style:normal;line-height:1.5}
+.requisites a{color:var(--text-2)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--text-2);cursor:pointer}
+.consent input{flex:none;width:18px;height:18px;margin:1px 0 0;accent-color:var(--text)}
+.consent a{color:var(--text)}
+.field.has-error .consent{color:var(--danger)}
 .footer-links{display:flex;flex-wrap:wrap;gap:8px 24px}
 .footer-links a{color:var(--text-2);text-decoration:none}
 .footer-links a:hover{color:var(--text)}
@@ -467,12 +472,18 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
               <input class="input" id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
               <span class="err" aria-live="polite"></span>
             </div>
+            <div class="field consent-field">
+              <label class="consent">
+                <input type="checkbox" id="hero-consent" name="consent" required>
+                <span>Даю <a href="consent.html" target="_blank">согласие на обработку персональных данных</a> на условиях <a href="privacy.html" target="_blank">политики</a></span>
+              </label>
+              <span class="err" aria-live="polite"></span>
+            </div>
             <button class="btn btn-primary" type="submit">
               <span class="btn-label">Заказать звонок
               <svg class="ico" viewBox="0 0 20 20" aria-hidden="true"><path d="M5.5 2.5h2.6l1.3 3.6-1.8 1.2a9 9 0 0 0 5.1 5.1l1.2-1.8 3.6 1.3v2.6a1.7 1.7 0 0 1-1.8 1.7A14.3 14.3 0 0 1 3.8 4.3 1.7 1.7 0 0 1 5.5 2.5Z"/></svg></span>
             </button>
           </div>
-          <p class="form-note">Нажимая кнопку, вы соглашаетесь с <a href="#privacy">политикой обработки персональных данных</a>.</p>
         </form>
         <div class="done" hidden tabindex="-1">
           <span class="done-mark"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 9.5 7 14 16 4"/></svg></span>
@@ -596,10 +607,18 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       </svg>
       <span class="brand-sub">AUTO</span>
     </a>
-    <!-- Замените реквизиты и добавьте ссылку на документ политики -->
-    <span>© 2026 ANDO AUTO · ИП Фамилия И. О., ИНН 000000000000</span>
+    <!-- Реквизиты продавца обязательны (Закон о защите прав потребителей, ст. 9; Правила продажи товаров, ПП РФ № 2463).
+         Замените всё в квадратных скобках на настоящие данные. -->
+    <address class="requisites">
+      <span>[ИП Фамилия Имя Отчество]</span>
+      <span>ИНН [000000000000] · ОГРНИП [000000000000000]</span>
+      <span>Адрес: [индекс, город, улица, дом]</span>
+      <span>Телефон: <a href="tel:+79890853177">+7 (989) 085-31-77</a> · E-mail: <a href="mailto:[почта]">[почта]</a></span>
+      <span>Режим работы: [ежедневно, 9:00–21:00]</span>
+    </address>
     <div class="footer-links">
-      <a href="#privacy" id="privacy">Политика обработки персональных данных</a>
+      <a href="privacy.html" id="privacy">Политика обработки персональных данных</a>
+      <a href="consent.html">Согласие на обработку персональных данных</a>
       <a href="#top">Наверх</a>
     </div>
   </div>
@@ -781,10 +800,15 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 
   var hModel = document.getElementById('hero-model');
   var hPhone = document.getElementById('hero-phone');
+  var hConsent = document.getElementById('hero-consent');
+  hConsent.addEventListener('change', function () { if (hConsent.checked) setError(hConsent, ''); });
   submitWith(document.getElementById('form-hero'), function () {
-    return checkPhone(hPhone) ? null : hPhone;
+    if (!checkPhone(hPhone)) return hPhone;
+    // Согласие — отдельной галочкой, которую человек ставит сам (152-ФЗ, ст. 9).
+    if (!setError(hConsent, hConsent.checked ? '' : 'Отметьте согласие на обработку персональных данных')) return hConsent;
+    return null;
   }, function () {
-    return { source: 'hero', model: hModel.value.trim(), phone: hPhone.value };
+    return { source: 'hero', model: hModel.value.trim(), phone: hPhone.value, consent: true, consentAt: new Date().toISOString() };
   });
 
   /* Снимаем ошибку, как только поле исправлено */
