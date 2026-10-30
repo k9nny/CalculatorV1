@@ -299,7 +299,7 @@
     var screen = document.getElementById('screen');
     if (S.tab === 'catalog') {
       screen.innerHTML = headerHtml() +
-        '<section class="intro"><p class="eyebrow">' + esc(CFG.tagline || '') + '</p><h1>Машины <span class="hot">в продаже</span></h1></section>' +
+        '<section class="intro"><h1>Машины <span class="hot">в продаже</span></h1></section>' +
         (S.demo ? '<p class="demo-note">Демо-объявления для проверки приложения. Замените их своими машинами в data/cars.json.</p>' : '') +
         '<label class="search">' + icon('search') +
         '<input id="q" type="search" placeholder="Марка или модель" value="' + esc(S.query) + '" enterkeyhint="search" autocomplete="off" aria-label="Поиск по марке и модели"></label>' +
