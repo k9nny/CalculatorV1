@@ -108,8 +108,11 @@
 
   function applyTelegramTheme() {
     root.setAttribute('data-scheme', sdk.colorScheme === 'dark' ? 'dark' : 'light');
-    call(function () { return sdk.setHeaderColor('secondary_bg_color'); });
-    call(function () { return sdk.setBackgroundColor('secondary_bg_color'); });
+    // Цвета приложения — фирменные (как на сайте); от Telegram берём только светлую или тёмную тему.
+    var bg = getComputedStyle(root).getPropertyValue('--bg').trim() || '#050505';
+    call(function () { return sdk.setHeaderColor(bg); });
+    call(function () { return sdk.setBackgroundColor(bg); });
+    call(function () { return sdk.setBottomBarColor && sdk.setBottomBarColor(bg); });
   }
 
   function claimStartParam(value, launchId) {

@@ -116,15 +116,17 @@
 
   // Заглушка вместо фото: силуэт машины в её цвете.
   function placeholder(car) {
+    var dark = document.documentElement.getAttribute('data-scheme') !== 'light';
+    var bg = dark ? ['#17191C', '#0B0C0E'] : ['#E4E5E8', '#C9CBD0'];
     var body = CAR_COLORS[car.color] || '#80868F';
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">' +
-      '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9DCE1"/><stop offset="1" stop-color="#B7BCC4"/></linearGradient></defs>' +
+      '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + bg[0] + '"/><stop offset="1" stop-color="' + bg[1] + '"/></linearGradient></defs>' +
       '<rect width="400" height="300" fill="url(#g)"/><g transform="translate(0 22)"><ellipse cx="205" cy="192" rx="170" ry="10" fill="#000" opacity=".12"/>' +
       '<path d="M40 170 L62 140 Q72 128 92 126 L142 121 L176 92 Q186 84 202 84 L270 84 Q285 84 296 94 L326 121 L350 126 Q368 130 372 146 L376 170 Q376 178 368 178 L48 178 Q40 178 40 170 Z" fill="' + body + '" stroke="#000" stroke-opacity=".25"/>' +
       '<path d="M152 121 L181 97 Q187 92 197 92 L232 92 L232 121 Z M242 92 L268 92 Q280 92 288 100 L310 121 L242 121 Z" fill="#2B3440" opacity=".82"/>' +
       '<g fill="#1C1F24"><circle cx="110" cy="178" r="25"/><circle cx="300" cy="178" r="25"/></g>' +
       '<g fill="#AEB4BD"><circle cx="110" cy="178" r="11"/><circle cx="300" cy="178" r="11"/></g></g>' +
-      '<text x="200" y="252" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#5A606A">фото скоро</text></svg>';
+      '<text x="200" y="252" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" letter-spacing="3" fill="#6B6B73">ФОТО СКОРО</text></svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
   function photos(car) { return car.photos && car.photos.length ? car.photos : [placeholder(car)]; }
@@ -204,6 +206,8 @@
     P.haptic('select');
     document.querySelectorAll('.fav[data-id="' + CSS.escape(id) + '"]').forEach(function (btn) {
       btn.setAttribute('aria-pressed', String(isFav(id)));
+      btn.classList.remove('pop');
+      if (isFav(id)) { void btn.offsetWidth; btn.classList.add('pop'); }
       btn.setAttribute('aria-label', isFav(id) ? 'Убрать из избранного' : 'В избранное');
     });
     renderTabbar();
@@ -266,16 +270,27 @@
 
   function renderTabbar() {
     var tabs = [['catalog', 'Каталог', 'grid'], ['favorites', 'Избранное', 'heart'], ['sell', 'Продать авто', 'tag']];
-    document.getElementById('tabbar').innerHTML = '<div class="tabbar-in">' + tabs.map(function (t) {
+    var at = Math.max(0, tabs.map(function (t) { return t[0]; }).indexOf(S.tab));
+    var bar = document.getElementById('tabbar');
+    var prev = bar.querySelector('.tab-ink');
+    var from = prev ? prev.style.transform : 'translateX(' + at * 100 + '%)';
+    bar.innerHTML = '<div class="tabbar-in"><span class="tab-ink" style="transform:' + from + '"></span>' + tabs.map(function (t) {
       var dot = t[0] === 'favorites' && S.favs.length ? '<span class="dot">' + S.favs.length + '</span>' : '';
       return '<button class="tab" data-action="tab" data-tab="' + t[0] + '"' + (S.tab === t[0] ? ' aria-current="page"' : '') + '>' +
         icon(t[2]) + '<span>' + t[1] + '</span>' + dot + '</button>';
     }).join('') + '</div>';
+    var ink = bar.querySelector('.tab-ink');
+    requestAnimationFrame(function () { ink.style.transform = 'translateX(' + at * 100 + '%)'; });
   }
 
+  var WORDMARK = '<svg class="wordmark" viewBox="0 0 112 22" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true">' +
+    '<polyline points="1,21 12,1 23,21"/><polyline points="32,21 32,1 52,21 52,1"/><path d="M61 1H71A10 10 0 0 1 71 21H61Z"/>' +
+    '<g class="logo-wheel"><circle cx="100" cy="11" r="10"/><circle cx="100" cy="11" r="6.3" stroke-width="1"/>' +
+    '<path d="M100 4.7V8.6M106 9.05 102.3 10.26M103.7 16.1 101.4 12.94M96.3 16.1 98.6 12.94M94 9.05 97.7 10.26" stroke-width="1.1" stroke-linecap="round"/>' +
+    '<circle cx="100" cy="11" r="1.7" fill="currentColor" stroke="none"/></g></svg>';
+
   function headerHtml() {
-    return '<header class="top"><div class="brand"><span class="logo">ANDO<b>AUTO</b></span>' +
-      '<span class="tagline">' + esc(CFG.tagline || '') + '</span></div>' +
+    return '<header class="top"><div class="brand" aria-label="ANDO AUTO">' + WORDMARK + '<span class="brand-sub">AUTO</span></div>' +
       (CFG.phone ? '<a class="icon-btn" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
       '</header>';
   }
@@ -284,6 +299,7 @@
     var screen = document.getElementById('screen');
     if (S.tab === 'catalog') {
       screen.innerHTML = headerHtml() +
+        '<section class="intro"><p class="eyebrow">' + esc(CFG.tagline || '') + '</p><h1>Машины <span class="hot">в продаже</span></h1></section>' +
         (S.demo ? '<p class="demo-note">Демо-объявления для проверки приложения. Замените их своими машинами в data/cars.json.</p>' : '') +
         '<label class="search">' + icon('search') +
         '<input id="q" type="search" placeholder="Марка или модель" value="' + esc(S.query) + '" enterkeyhint="search" autocomplete="off" aria-label="Поиск по марке и модели"></label>' +
@@ -304,7 +320,9 @@
             '<button class="btn btn-ghost" data-action="tab" data-tab="catalog">Открыть каталог</button></div>');
     } else {
       screen.innerHTML = headerHtml() + sellHtml();
+      startRotator();
     }
+    if (S.tab === 'favorites') reveal(screen.querySelector('.cards'));
     renderTabbar();
   }
 
@@ -333,6 +351,30 @@
         '<button class="btn btn-ghost" data-action="reset-all">Сбросить фильтры</button></div>');
     }
     document.getElementById('list').innerHTML = html.join('');
+    reveal(document.getElementById('list'));
+  }
+
+  // Карточки проявляются снизу вверх по мере прокрутки, соседние — с небольшой задержкой.
+  var observer = null;
+  if ('IntersectionObserver' in window && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) {
+    document.documentElement.classList.add('js-reveal');
+    observer = new IntersectionObserver(function (entries) {
+      var batch = 0;
+      entries.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        e.target.style.setProperty('--d', (batch++ * 0.08) + 's');
+        e.target.classList.add('in');
+        observer.unobserve(e.target);
+      });
+    }, { rootMargin: '0px 0px -8% 0px' });
+  }
+  function reveal(container) {
+    if (!container) return;
+    Array.prototype.forEach.call(container.children, function (el) {
+      if (!observer) { el.classList.add('in'); return; }
+      el.classList.add('reveal');
+      observer.observe(el);
+    });
   }
 
   function cardHtml(car) {
@@ -396,7 +438,7 @@
       '<div class="gallery-track" id="gtrack">' + ph.map(function (src, i) {
         return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + ', фото ' + (i + 1) + '"' + (i ? ' loading="lazy"' : '') + '>';
       }).join('') + '</div>' +
-      (ph.length > 1 ? '<span class="gallery-count" id="gcount">1 / ' + ph.length + '</span>' : '') +
+      (ph.length > 1 ? '<div class="gallery-dots" id="gdots">' + ph.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>' : '') +
       favButton(car.id) + '</div>' +
 
       '<section class="block"><h1 class="d-title">' + esc(car.make + ' ' + car.model + (car.generation ? ' ' + car.generation : '')) + ', ' + car.year + '</h1>' +
@@ -434,14 +476,38 @@
     page.hidden = false;
     page.scrollTop = 0;
     var track = document.getElementById('gtrack');
-    var count = document.getElementById('gcount');
-    if (track && count) {
+    var dots = document.getElementById('gdots');
+    if (track && dots) {
       track.addEventListener('scroll', function () {
         var i = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
-        count.textContent = (i + 1) + ' / ' + ph.length;
+        Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
       }, { passive: true });
     }
-    openLayer(function () { page.hidden = true; page.innerHTML = ''; }, car.id);
+    // Блоки страницы проявляются по очереди, цена «набегает».
+    Array.prototype.forEach.call(page.querySelectorAll('.block, .d-foot'), function (el, i) {
+      el.style.setProperty('--d', (0.12 + i * 0.07) + 's');
+    });
+    countUp(page.querySelector('.d-price .price'), car.price);
+    page.classList.remove('leave');
+    page.classList.add('enter');
+    openLayer(function () {
+      page.classList.remove('enter');
+      page.classList.add('leave');
+      setTimeout(function () { if (page.classList.contains('leave')) { page.hidden = true; page.innerHTML = ''; page.classList.remove('leave'); } }, 300);
+    }, car.id);
+  }
+
+  function countUp(el, value) {
+    if (!el || !observer) return;
+    var start = null, duration = 900;
+    function frame(t) {
+      if (!start) start = t;
+      var k = Math.min(1, (t - start) / duration);
+      var eased = 1 - Math.pow(1 - k, 3);
+      el.textContent = rub(Math.round(value * eased / 1000) * 1000);
+      if (k < 1) requestAnimationFrame(frame); else el.textContent = rub(value);
+    }
+    requestAnimationFrame(frame);
   }
 
   function formatDate(iso) {
@@ -455,7 +521,11 @@
     var root = document.getElementById('sheet-root');
     root.innerHTML = '<div class="sheet-wrap" data-action="sheet-bg"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">' +
       '<div class="sheet-grip"></div>' + html + '</div></div>';
-    openLayer(function () { root.innerHTML = ''; });
+    var wrap = root.firstChild;
+    openLayer(function () {
+      wrap.classList.add('leave');
+      setTimeout(function () { if (wrap.parentNode === root) root.innerHTML = ''; }, 240);
+    });
     if (onOpen) onOpen(root.querySelector('.sheet'));
   }
   function sheetHead(text) {
@@ -525,11 +595,30 @@
       '" data-action="privacy">обработку персональных данных</a></span></label>';
   }
 
+  var ROTATE = ['ваше авто', 'после ДТП', 'не на ходу', 'под ремонт'];
+  var rotTimer = null;
+  function startRotator() {
+    clearInterval(rotTimer);
+    var words = document.querySelectorAll('.rot-word');
+    if (!words.length || !observer) return;
+    var i = 0;
+    rotTimer = setInterval(function () {
+      if (!document.body.contains(words[0])) { clearInterval(rotTimer); return; }
+      words[i].classList.remove('on'); words[i].classList.add('off');
+      var old = words[i];
+      setTimeout(function () { old.classList.remove('off'); }, 650);
+      i = (i + 1) % words.length;
+      words[i].classList.add('on');
+    }, 2200);
+  }
+
   function sellHtml() {
-    return '<section class="sell-hero"><h1>Продать машину</h1>' +
+    return '<section class="sell-hero"><p class="eyebrow">Выкуп авто</p><h1>Выкупим<span class="rotator" aria-hidden="true">' +
+      ROTATE.map(function (w, i) { return '<span class="rot-word' + (i ? '' : ' on') + '">' + w + '</span>'; }).join('') +
+      '</span><span class="sr-only">ваше авто в любом состоянии</span></h1>' +
       '<p>Оставьте данные — оценим автомобиль и перезвоним. Берём машины в любом состоянии: ремонтируем в своём автосервисе.</p></section>' +
-      '<div class="steps"><div class="step"><b>1</b>Заявка</div><div class="step"><b>2</b>Оценка и осмотр</div><div class="step"><b>3</b>Сделка и деньги</div></div>' +
-      '<form class="block form" id="sell-form" data-type="sell" novalidate>' +
+      '<div class="steps"><div class="step" style="--d:.3s"><b>1</b>Заявка</div><div class="step" style="--d:.55s"><b>2</b>Оценка и осмотр</div><div class="step" style="--d:.8s"><b>3</b>Сделка и деньги</div></div>' +
+      '<form class="block form sell-form" id="sell-form" data-type="sell" novalidate>' +
       '<div class="grid-2"><label class="field"><span>Марка</span><input name="make" maxlength="40" placeholder="Toyota" required></label>' +
       '<label class="field"><span>Модель</span><input name="model" maxlength="40" placeholder="Camry" required></label></div>' +
       '<div class="grid-2"><label class="field"><span>Год выпуска</span><input name="year" inputmode="numeric" maxlength="4" placeholder="2018" required></label>' +
@@ -790,6 +879,8 @@
 
   P.init().then(function () {
     shell();
+    document.getElementById('screen').innerHTML = headerHtml() +
+      '<div class="cards" style="margin-top:16px"><div class="skeleton"></div><div class="skeleton"></div></div>';
     return loadCars().then(function () {
       renderTab();
       handleStart(P.startParam);

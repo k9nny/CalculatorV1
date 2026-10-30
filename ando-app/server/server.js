@@ -29,7 +29,7 @@ const SECURITY_HEADERS = {
   // Встраивание не запрещаем: веб-версии Telegram и MAX открывают приложение во фрейме.
   'Content-Security-Policy':
     "default-src 'self'; script-src 'self' https://telegram.org https://st.max.ru; " +
-    "style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'; base-uri 'none'; form-action 'self'"
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; base-uri 'none'; form-action 'self'"
 };
 
 function readConfig(env = process.env) {
