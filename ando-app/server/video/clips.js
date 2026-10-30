@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
+const http = require('http');
 const say = require('./speech');
 
 const W = 1080, H = 1920, FPS = 30;
@@ -225,6 +226,28 @@ function probeDuration(file, ffprobe = 'ffprobe') {
   });
 }
 
+// Озвучка через сервис Qwen3-TTS (tts/qwen_tts_server.py): POST /speak → WAV.
+function speakHttp(url, text, outFile, timeoutMs = 600000) {
+  return new Promise((resolve, reject) => {
+    const body = JSON.stringify({ text });
+    const u = new URL('/speak', url);
+    const req = http.request({ hostname: u.hostname, port: u.port, path: u.pathname, method: 'POST', timeout: timeoutMs,
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        const data = Buffer.concat(chunks);
+        if (res.statusCode !== 200) return reject(new Error(`озвучка Qwen: ${res.statusCode} ${data.toString('utf8').slice(0, 200)}`));
+        fs.writeFileSync(outFile, data);
+        resolve();
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('озвучка Qwen: нет ответа')));
+    req.on('error', (e) => reject(new Error(`озвучка Qwen недоступна (${url}): ${e.message}`)));
+    req.end(body);
+  });
+}
+
 const esc = (p) => p.replace(/\\/g, '/').replace(/[:']/g, (m) => '\\' + m);
 
 // drawtext для одной строки: проявляется и чуть поднимается, со сдвигом по времени.
@@ -254,7 +277,8 @@ function layout(scene, hasPhoto) {
 async function renderScene(scene, i, ctx) {
   const dir = ctx.tmp;
   const wav = path.join(dir, `s${i}.wav`);
-  await run(ctx.rhvoice, ['-p', ctx.voice, '-o', wav], say.abbr(scene.voice));
+  if (ctx.ttsUrl) await speakHttp(ctx.ttsUrl, say.abbr(scene.voice), wav);
+  else await run(ctx.rhvoice, ['-p', ctx.voice, '-o', wav], say.abbr(scene.voice));
   const dur = Math.max(2.4, (await probeDuration(wav, ctx.ffprobe)) + 0.6);
   const frames = Math.ceil(dur * FPS);
   const photo = scene.end ? null : scene.photo && path.join(ctx.publicDir, scene.photo);
@@ -299,10 +323,11 @@ async function renderScene(scene, i, ctx) {
 }
 
 // Рендер одного сценария в mp4. Возвращает путь к файлу.
-async function renderClip(clip, { car, publicDir, outFile, tmpDir, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', rhvoice = 'RHVoice-test' }) {
+// ttsUrl — адрес сервиса Qwen3-TTS; без него озвучивает RHVoice.
+async function renderClip(clip, { car, publicDir, outFile, tmpDir, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', rhvoice = 'RHVoice-test', ttsUrl = process.env.TTS_URL || '' }) {
   const tmp = fs.mkdtempSync(path.join(tmpDir, `clip-${car.id}-${clip.key}-`));
   try {
-    const ctx = { tmp, publicDir, ffmpeg, ffprobe, rhvoice, voice: clip.voice, demo: Boolean(car.demo) };
+    const ctx = { tmp, publicDir, ffmpeg, ffprobe, rhvoice, ttsUrl, voice: clip.voice, demo: Boolean(car.demo) };
     const parts = [];
     for (let i = 0; i < clip.scenes.length; i++) parts.push(await renderScene(clip.scenes[i], i, ctx));
     const list = path.join(tmp, 'list.txt');
