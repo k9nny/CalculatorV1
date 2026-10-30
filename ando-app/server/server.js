@@ -47,7 +47,14 @@ function readConfig(env = process.env) {
     appLink: env.APP_LINK || '',
     requireInitData: env.REQUIRE_INIT_DATA === '1',
     trustProxy: env.TRUST_PROXY === '1',
-    allowedOrigins: String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean)
+    allowedOrigins: String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    clipsEnabled: env.CLIPS !== '0',
+    clipsDir: path.resolve(env.CLIPS_DIR || path.join(root, 'data-private', 'clips')),
+    clipTimes: env.CLIP_TIMES || '10:40,15:20,19:40',
+    clipTelegramChannel: env.CLIP_TG_CHANNEL || '',
+    vkToken: env.VK_TOKEN || '',
+    vkGroupId: env.VK_GROUP_ID || '',
+    phoneLabel: env.PHONE_LABEL || '+7 989 085-31-77'
   };
 }
 
@@ -264,12 +271,36 @@ if (require.main === module) {
   });
   // Бот для объявлений: администраторы присылают фото и текст — машина появляется в каталоге.
   if (config.telegramToken && config.adminIds.length) {
+    const api = telegramApi(config.telegramToken);
+    let clips = null;
+    if (config.clipsEnabled) {
+      // Ролики: 3 на машину, после одобрения выходят по расписанию (CLIP_TIMES, МСК).
+      const { renderCar } = require('./video/clips');
+      const { createQueue, startScheduler, parseTimes } = require('./video/queue');
+      const { createPublishers } = require('./video/publish');
+      const queue = createQueue(path.join(config.clipsDir, 'queue.json'));
+      const times = parseTimes(config.clipTimes);
+      const publishers = createPublishers({ ...config, telegramBotToken: config.telegramToken });
+      clips = {
+        queue, times, targets: publishers.map((p) => p.name),
+        render: (car, link) => renderCar(car, { publicDir: config.publicDir, outDir: config.clipsDir, appLink: link, phoneLabel: config.phoneLabel })
+      };
+      startScheduler({
+        queue, times, publishers,
+        notify: (item, results) => Promise.all(config.adminIds.map((id) => api.request('sendMessage', {
+          chat_id: id, text: `Вышел ролик «${item.name}» по № ${item.carId}: ` +
+            Object.entries(results).map(([k, v]) => `${k} — ${v === 'ok' ? 'готово' : 'ошибка: ' + v}`).join('; ')
+        }).catch(() => {})))
+      });
+      console.log(`Ролики: слоты ${times.join(', ')} МСК, публикация в ${publishers.map((p) => p.name).join(', ') || 'никуда (не настроено)'}`);
+    }
     createBot({
-      api: telegramApi(config.telegramToken),
+      api,
       adminIds: config.adminIds,
       carsFile: config.carsFile,
       photosDir: path.join(config.publicDir, 'img', 'cars'),
-      appLink: config.appLink
+      appLink: config.appLink,
+      clips
     }).start();
     console.log(`Бот объявлений запущен, администраторов: ${config.adminIds.length}`);
   }

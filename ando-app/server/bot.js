@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { parseListing, toCar, missing } = require('./listing-parser');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
+const { telegramVideo } = require('./video/publish');
 
 const MAX_PHOTOS = 15;
 const STATUS_NAMES = { available: 'в продаже', reserved: 'забронирована', sold: 'продана' };
@@ -42,7 +43,8 @@ function telegramApi(token) {
       }).on('error', reject);
     });
   }
-  return { request, download };
+  const sendVideo = (chatId, file, caption, extra) => telegramVideo(token, chatId, file, caption, extra);
+  return { request, download, sendVideo };
 }
 
 function esc(s) { return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c])); }
@@ -83,13 +85,17 @@ const HELP = [
   '/reserve 101 — забронирована · /sold 101 — продана (скрыть) · /available 101 — снова в продаже',
   '/price 101 1350000 — новая цена',
   '/cleardemo — убрать демо-объявления',
+  '/video 101 — заново сделать ролики по машине · /queue — очередь роликов',
   '/cancel — удалить черновик'
 ].join('\n');
 
+// clips (необязательно): { render(car) → [{ key, name, file, caption }], queue } — ролики по машине.
 function createBot(options) {
-  const { api, adminIds, carsFile, photosDir, photosUrlPrefix = 'img/cars/', appLink = '', debounceMs = 2500, now = () => new Date() } = options;
+  const { api, adminIds, carsFile, photosDir, photosUrlPrefix = 'img/cars/', appLink = '', debounceMs = 2500, now = () => new Date(), clips = null } = options;
   const drafts = new Map(); // chatId → { fields, photos: [file_id], timer, previewId }
   const admins = new Set(adminIds.map(String));
+
+  let clipJob = Promise.resolve(); // ролики рендерятся по одному, чтобы не грузить сервер
 
   const send = (chatId, text, extra = {}) => api.request('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true, ...extra });
 
@@ -161,7 +167,58 @@ function createBot(options) {
     if (link) report += `\nСсылка на машину: ${link}`;
     report += '\n\nТекст для канала:\n\n' + channelPost(car, link);
     await send(chatId, report);
+    if (clips) makeClips(chatId, car);
     return car;
+  }
+
+  const carLink = (id) => (appLink ? `${appLink}${appLink.includes('?') ? '&' : '?'}startapp=car_${id}` : '');
+
+  // Три ролика по машине: рендер, затем каждый — админу с кнопками «В очередь» / «Не публиковать».
+  function makeClips(chatId, car) {
+    clipJob = clipJob.then(async () => {
+      await send(chatId, `Делаю 3 ролика по № ${esc(car.id)} — пришлю через минуту.`);
+      let made;
+      try {
+        made = await clips.render(car, carLink(car.id));
+      } catch (e) {
+        return send(chatId, `Не получилось сделать ролики: ${esc(e.message.slice(0, 300))}`);
+      }
+      const entries = made.map((c) => ({ carId: String(car.id), key: c.key, name: c.name, file: c.file, caption: c.caption,
+        title: `${car.make} ${car.model}, ${car.year} — ${c.name}`.slice(0, 128) }));
+      const queued = car.demo ? entries : clips.queue.add(entries);
+      for (const item of queued) {
+        const head = car.demo ? `Ролик «${item.name}» — демо, в очередь не ставится.` : `Ролик «${item.name}». Ставим в очередь на публикацию?`;
+        const extra = car.demo ? {} : { reply_markup: { inline_keyboard: [[
+          { text: 'В очередь', callback_data: `clip_ok:${item.id}` }, { text: 'Не публиковать', callback_data: `clip_no:${item.id}` }]] } };
+        await api.sendVideo(chatId, item.file, `${head}\n\n${item.caption}`, extra)
+          .catch((e) => send(chatId, `Ролик «${esc(item.name)}» не отправился: ${esc(e.message)}`));
+      }
+    }).catch(() => {});
+    return clipJob;
+  }
+
+  async function clipDecision(q, approve) {
+    const id = q.data.split(':')[1];
+    const item = clips && clips.queue.setStatus(id, approve ? 'approved' : 'rejected');
+    const chatId = q.message.chat.id;
+    await api.request('editMessageReplyMarkup', { chat_id: chatId, message_id: q.message.message_id, reply_markup: { inline_keyboard: [] } }).catch(() => {});
+    if (!item) return send(chatId, 'Этого ролика уже нет в очереди.');
+    if (!approve) return send(chatId, `Ролик «${esc(item.name)}» по № ${esc(item.carId)} не будет опубликован.`);
+    const waiting = clips.queue.read().items.filter((i) => i.status === 'approved').length;
+    return send(chatId, `Ролик «${esc(item.name)}» по № ${esc(item.carId)} в очереди. Ждут публикации: ${waiting}.`);
+  }
+
+  function queueReport() {
+    const items = clips.queue.read().items;
+    const count = (st) => items.filter((i) => i.status === st).length;
+    const next = items.filter((i) => i.status === 'approved').slice(0, 6)
+      .map((i) => `№ ${esc(i.carId)} · ${esc(i.name)}`);
+    return [
+      `Ждут публикации: ${count('approved')} · на проверке: ${count('pending')} · опубликовано: ${count('posted')}`,
+      clips.times && clips.times.length ? `Время выхода (МСК): ${clips.times.join(', ')}` : '',
+      clips.targets && clips.targets.length ? `Куда: ${clips.targets.join(', ')}` : 'Соцсети не подключены — ролики только копятся в очереди.',
+      next.length ? '\nСледующие:\n' + next.join('\n') : '',
+    ].filter(Boolean).join('\n');
   }
 
   // Готовый пост для каналов Telegram, MAX, VK.
@@ -213,6 +270,17 @@ function createBot(options) {
       writeCatalog(carsFile, catalog, now());
       return send(chatId, `№ ${esc(car.id)}: новая цена ${money(price)}.`);
     }
+    if (name === '/video') {
+      if (!clips) return send(chatId, 'Ролики выключены на сервере.');
+      const car = readCatalog(carsFile).cars.find((c) => String(c.id) === String(args[0]));
+      if (!car) return send(chatId, 'Пример: /video 101 — номер машины из /list.');
+      makeClips(chatId, car);
+      return null;
+    }
+    if (name === '/queue') {
+      if (!clips) return send(chatId, 'Ролики выключены на сервере.');
+      return send(chatId, queueReport());
+    }
     if (name === '/cleardemo') {
       const catalog = readCatalog(carsFile);
       const before = catalog.cars.length;
@@ -251,6 +319,7 @@ function createBot(options) {
     if (!admins.has(String(q.from.id)) || chatId == null) return null;
     if (q.data === 'pub') return publish(chatId);
     if (q.data === 'cancel') { drafts.delete(chatId); return send(chatId, 'Черновик удалён.'); }
+    if (/^clip_(ok|no):\d+$/.test(q.data || '')) return clipDecision(q, q.data.startsWith('clip_ok'));
     return null;
   }
 
@@ -267,7 +336,8 @@ function createBot(options) {
     await api.request('setMyCommands', {
       commands: [
         { command: 'list', description: 'Машины в каталоге' }, { command: 'help', description: 'Как добавить машину' },
-        { command: 'cancel', description: 'Удалить черновик' }
+        { command: 'cancel', description: 'Удалить черновик' },
+        ...(clips ? [{ command: 'queue', description: 'Очередь роликов' }] : [])
       ],
       scope: { type: 'all_private_chats' }
     }).catch(() => {});
@@ -285,7 +355,7 @@ function createBot(options) {
     }
   }
 
-  return { handleUpdate, start, drafts, publish };
+  return { handleUpdate, start, drafts, publish, clipsIdle: () => clipJob };
 }
 
 module.exports = { createBot, telegramApi, carSummary };
