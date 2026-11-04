@@ -760,10 +760,25 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
     return setError(input, phoneDigits(input.value).length === 11 ? '' : 'Введите номер полностью: +7 и 10 цифр');
   }
 
+  /* Заявка уходит на сервер ANDO AUTO (ando-app): менеджеру в Telegram и в журнал на сервере в России.
+     На GitHub Pages сервера нет — тогда просим позвонить. */
+  var LEAD_API = window.ANDO_LEAD_API || (/github\.io$/.test(location.hostname) || location.protocol === 'file:' ? '' : '/api/lead');
+  var CALL_US = 'Не получилось отправить. Позвоните: +7 (989) 085-31-77';
   function sendLead(data) {
-    /* Сюда подключается реальная отправка заявки: Telegram-бот, CRM или почта
-       через серверный обработчик. Пока заявка никуда не уходит. */
-    return Promise.resolve(data);
+    if (!LEAD_API) return Promise.reject(new Error(CALL_US));
+    return fetch(LEAD_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'callback', platform: 'web', phone: data.phone, consent: data.consent,
+        comment: data.model ? 'Выкуп. Машина: ' + data.model : 'Выкуп'
+      })
+    }).then(function (res) {
+      return res.json().catch(function () { return {}; }).then(function (body) {
+        if (!res.ok || !body.ok) throw new Error(body.error || CALL_US);
+        return body;
+      });
+    }, function () { throw new Error(CALL_US); });
   }
 
   function showDone(form, phone) {
@@ -794,7 +809,11 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
       var btn = form.querySelector('[type="submit"]');
       btn.disabled = true;
       var data = collect();
-      sendLead(data).then(function () { showDone(form, data.phone); }, function () { btn.disabled = false; });
+      sendLead(data).then(function () { showDone(form, data.phone); }, function (err) {
+        btn.disabled = false;
+        var phone = form.querySelector('[data-phone]');
+        if (phone) { setError(phone, err.message); phone.focus(); }
+      });
     });
   }
 
