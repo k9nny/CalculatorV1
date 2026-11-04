@@ -39,6 +39,8 @@ function readConfig(env = process.env) {
     host: env.HOST || '0.0.0.0',
     publicDir: path.resolve(env.PUBLIC_DIR || path.join(root, 'public')),
     carsFile: path.resolve(env.CARS_FILE || path.join(root, 'public', 'data', 'cars.json')),
+    // Фото машин из бота. На сервере — вне репозитория, чтобы обновления кода их не трогали.
+    photosDir: path.resolve(env.PHOTOS_DIR || path.join(env.PUBLIC_DIR || path.join(root, 'public'), 'img', 'cars')),
     leadsLog: path.resolve(env.LEADS_LOG || path.join(root, 'data-private', 'leads.jsonl')),
     telegramToken: env.TELEGRAM_BOT_TOKEN || '',
     maxToken: env.MAX_BOT_TOKEN || '',
@@ -225,8 +227,12 @@ function createApp(config = readConfig(), deps = {}) {
       return;
     }
     if (pathname.endsWith('/')) pathname += 'index.html';
-    const file = path.normalize(path.join(config.publicDir, pathname));
-    const inside = file.startsWith(config.publicDir + path.sep);
+    // Каталог и фото могут лежать вне public (CARS_FILE, PHOTOS_DIR) — отдаём их по тем же адресам.
+    let base = config.publicDir;
+    let file = path.normalize(path.join(base, pathname));
+    if (pathname === '/data/cars.json') { base = path.dirname(config.carsFile); file = config.carsFile; }
+    else if (pathname.startsWith('/img/cars/')) { base = config.photosDir; file = path.normalize(path.join(base, pathname.slice('/img/cars/'.length))); }
+    const inside = file.startsWith(base + path.sep);
     const hidden = pathname.split('/').some((part) => part.startsWith('.'));
     if (!inside || hidden) {
       res.writeHead(404, SECURITY_HEADERS);
@@ -283,7 +289,7 @@ if (require.main === module) {
       const publishers = createPublishers({ ...config, telegramBotToken: config.telegramToken });
       clips = {
         queue, times, targets: publishers.map((p) => p.name),
-        render: (car, link) => renderCar(car, { publicDir: config.publicDir, outDir: config.clipsDir, appLink: link, phoneLabel: config.phoneLabel })
+        render: (car, link) => renderCar(car, { publicDir: config.publicDir, photosDir: config.photosDir, outDir: config.clipsDir, appLink: link, phoneLabel: config.phoneLabel })
       };
       startScheduler({
         queue, times, publishers,
@@ -298,7 +304,7 @@ if (require.main === module) {
       api,
       adminIds: config.adminIds,
       carsFile: config.carsFile,
-      photosDir: path.join(config.publicDir, 'img', 'cars'),
+      photosDir: config.photosDir,
       appLink: config.appLink,
       clips
     }).start();

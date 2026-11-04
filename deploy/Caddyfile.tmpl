@@ -1,0 +1,26 @@
+# Сгенерировано deploy/install.sh из deploy/Caddyfile.tmpl. Правьте шаблон, а не этот файл.
+# Caddy сам получает и продлевает HTTPS-сертификаты Let's Encrypt.
+
+__DOMAIN__, www.__DOMAIN__ {
+	encode zstd gzip
+	# Заявки с сайта — на тот же сервер приложения.
+	handle /api/* {
+		reverse_proxy 127.0.0.1:8080
+	}
+	handle {
+		root * /opt/ando/ando-site
+		file_server
+	}
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+}
+
+# Мини-приложение Telegram и MAX, заявки из него, каталог и фото машин.
+app.__DOMAIN__ {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:8080
+	header -Server
+}

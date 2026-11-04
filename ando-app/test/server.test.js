@@ -116,6 +116,23 @@ test('сервер: отдаёт приложение и не выпускает
   });
 });
 
+test('сервер: каталог и фото из папки данных вне public', async () => {
+  const data = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-data-'));
+  fs.mkdirSync(path.join(data, 'photos'));
+  fs.writeFileSync(path.join(data, 'cars.json'), JSON.stringify({ cars: [{ id: '500' }] }));
+  fs.writeFileSync(path.join(data, 'photos', '500-1.jpg'), 'jpg');
+  fs.writeFileSync(path.join(data, 'secret.txt'), 'no');
+  await withServer({ carsFile: path.join(data, 'cars.json'), photosDir: path.join(data, 'photos') }, async (base) => {
+    assert.equal((await (await fetch(base + '/data/cars.json')).json()).cars[0].id, '500');
+    const photo = await fetch(base + '/img/cars/500-1.jpg');
+    assert.equal(photo.status, 200);
+    assert.equal(await photo.text(), 'jpg');
+    for (const evil of ['/img/cars/../secret.txt', '/img/cars/%2e%2e/secret.txt', '/img/cars/..%2fcars.json']) {
+      assert.equal((await fetch(base + evil)).status, 404, evil);
+    }
+  });
+});
+
 test('сервер: заявка из Telegram с подписью уходит менеджеру и пишется в журнал', async () => {
   await withServer({ telegramToken: TOKEN, managerChatIds: ['111', '222'] }, async (base, { sent, log }) => {
     const res = await post(base, { type: 'buy', carId: '101', phone: '89001234567', consent: true, platform: 'telegram' },

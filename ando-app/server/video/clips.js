@@ -281,7 +281,8 @@ async function renderScene(scene, i, ctx) {
   else await run(ctx.rhvoice, ['-p', ctx.voice, '-o', wav], say.abbr(scene.voice));
   const dur = Math.max(2.4, (await probeDuration(wav, ctx.ffprobe)) + 0.6);
   const frames = Math.ceil(dur * FPS);
-  const photo = scene.end ? null : scene.photo && path.join(ctx.publicDir, scene.photo);
+  const photo = scene.end ? null : scene.photo && (ctx.photosDir && scene.photo.startsWith('img/cars/')
+    ? path.join(ctx.photosDir, scene.photo.slice('img/cars/'.length)) : path.join(ctx.publicDir, scene.photo));
   const hasPhoto = Boolean(photo && fs.existsSync(photo));
 
   const placed = layout(scene, hasPhoto);
@@ -324,10 +325,10 @@ async function renderScene(scene, i, ctx) {
 
 // Рендер одного сценария в mp4. Возвращает путь к файлу.
 // ttsUrl — адрес сервиса Qwen3-TTS; без него озвучивает RHVoice.
-async function renderClip(clip, { car, publicDir, outFile, tmpDir, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', rhvoice = 'RHVoice-test', ttsUrl = process.env.TTS_URL || '' }) {
+async function renderClip(clip, { car, publicDir, photosDir = '', outFile, tmpDir, ffmpeg = 'ffmpeg', ffprobe = 'ffprobe', rhvoice = 'RHVoice-test', ttsUrl = process.env.TTS_URL || '' }) {
   const tmp = fs.mkdtempSync(path.join(tmpDir, `clip-${car.id}-${clip.key}-`));
   try {
-    const ctx = { tmp, publicDir, ffmpeg, ffprobe, rhvoice, ttsUrl, voice: clip.voice, demo: Boolean(car.demo) };
+    const ctx = { tmp, publicDir, photosDir, ffmpeg, ffprobe, rhvoice, ttsUrl, voice: clip.voice, demo: Boolean(car.demo) };
     const parts = [];
     for (let i = 0; i < clip.scenes.length; i++) parts.push(await renderScene(clip.scenes[i], i, ctx));
     const list = path.join(tmp, 'list.txt');

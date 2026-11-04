@@ -1,0 +1,22 @@
+[Unit]
+Description=ANDO AUTO: мини-приложение, заявки, бот объявлений, ролики
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ando
+Group=ando
+WorkingDirectory=/opt/ando/ando-app
+EnvironmentFile=/etc/ando/ando.env
+ExecStart=/usr/bin/env node server/server.js
+Restart=always
+RestartSec=3
+# Процесс может писать только в папку данных.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/ando
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=ANDO AUTO: обновление кода из GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/opt/ando/deploy/update.sh
