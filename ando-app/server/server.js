@@ -1,5 +1,5 @@
 'use strict';
-// Сервер мини-приложения ANDO AUTO: раздаёт приложение и принимает заявки.
+// Сервер мини-приложения ANDO AVTO: раздаёт приложение и принимает заявки.
 // Без зависимостей, Node 18+. Настройки — переменные окружения (см. .env.example).
 const http = require('node:http');
 const https = require('node:https');
@@ -273,7 +273,7 @@ if (require.main === module) {
   const config = readConfig();
   createApp(config).listen(config.port, config.host, () => {
     const notify = config.telegramToken && config.managerChatIds.length ? `в Telegram (${config.managerChatIds.length} чат.)` : 'только в журнал';
-    console.log(`ANDO AUTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);
+    console.log(`ANDO AVTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);
   });
   // Бот для объявлений: администраторы присылают фото и текст — машина появляется в каталоге.
   if (config.telegramToken && config.adminIds.length) {

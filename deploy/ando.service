@@ -1,5 +1,5 @@
 [Unit]
-Description=ANDO AUTO: мини-приложение, заявки, бот объявлений, ролики
+Description=ANDO AVTO: мини-приложение, заявки, бот объявлений, ролики
 After=network-online.target
 Wants=network-online.target
 

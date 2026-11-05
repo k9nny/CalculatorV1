@@ -58,7 +58,7 @@ function endCard(phoneLabel) {
   return {
     end: true,
     lines: [
-      T.head('ANDO AUTO', 84),
+      T.head('ANDO AVTO', 84),
       T.sub('Каталог и запись на осмотр —'),
       T.sub('ссылка в описании'),
       ...(phoneLabel ? [{ ...T.big(phoneLabel), size: 64 }] : []),
@@ -304,7 +304,7 @@ async function renderScene(scene, i, ctx) {
     base = '[b]';
   }
   const headFile = path.join(dir, `s${i}-head.txt`);
-  fs.writeFileSync(headFile, 'ANDO AUTO');
+  fs.writeFileSync(headFile, 'ANDO AVTO');
   const top = [`drawtext=fontfile='${esc(path.join(FONTS, F.head.file))}':textfile='${esc(headFile)}':expansion=none:fontsize=36:fontcolor=${C.text}:x=80:y=150`];
   if (ctx.demo) {
     const demoFile = path.join(dir, `s${i}-demo.txt`);
