@@ -18,7 +18,7 @@ window.ANDO_CONFIG = {
 
   // Ссылки на само приложение — для кнопки «Поделиться» и для постов в каналах.
   // Telegram: 'https://t.me/<бот>/<короткое имя приложения>'. MAX: 'https://max.ru/<бот>'.
-  telegramAppLink: '',
+  telegramAppLink: 'https://t.me/andoavtobot/cars',
   maxAppLink: '',
 
   privacyUrl: 'privacy.html',
