@@ -19,7 +19,9 @@
     ['great', 'Цена ниже рынка'],
     ['under15', 'До 1,5 млн'],
     ['auto', 'Автомат'],
-    ['suv', 'Кроссоверы']
+    ['suv', 'Кроссоверы'],
+    ['clean', 'Без ДТП'],
+    ['oneowner', '1 владелец']
   ];
   var SORTS = [
     ['new', 'Сначала новые'],
@@ -33,8 +35,11 @@
     buy: 'Записаться на осмотр',
     dealer: 'Оптовая цена для перекупов',
     callback: 'Заказать звонок',
-    sell: 'Продать машину'
+    sell: 'Продать машину',
+    credit: 'Купить в рассрочку'
   };
+  // Рассрочка: кнопка открывает анкету, заявка уходит менеджеру, он перезванивает.
+  var CREDIT = Object.assign({ enabled: true, partners: '' }, CFG.credit || {});
   var CAR_COLORS = {
     'Белый': '#E9ECEF', 'Чёрный': '#2B2F36', 'Серый': '#80868F', 'Серебристый': '#B9BEC6', 'Синий': '#2F5DA8',
     'Голубой': '#6FA8DC', 'Красный': '#B3262E', 'Бордовый': '#6E1F2A', 'Коричневый': '#7A5639', 'Бежевый': '#CDBA96',
@@ -57,6 +62,15 @@
       share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/>',
       chat: '<path d="M20 12a8 8 0 0 1-11.5 7.2L4 20l.9-4.2A8 8 0 1 1 20 12z"/>',
       key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2M14 9l2 2"/>',
+      gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 13l3.5-4"/><circle cx="12" cy="13" r="1.2"/>',
+      gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
+      pin: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+      shield: '<path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
+      warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.2v.1"/>',
+      ruble: '<path d="M8 20V4h5.5a4 4 0 0 1 0 8H6M6 16h8"/>',
+      left: '<path d="M14.5 6l-6 6 6 6"/>',
+      right: '<path d="M9.5 6l6 6-6 6"/>',
+      spark: '<path d="M12 3v5M12 16v5M3 12h5M16 12h5"/>',
       car: '<path d="M4 16v-3.5L6 8a2 2 0 0 1 1.8-1.2h8.4A2 2 0 0 1 18 8l2 4.5V16"/><path d="M3 16h18v2H3z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/>'
     };
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[name] + '</svg>';
@@ -109,10 +123,40 @@
     if (!car.marketPrice || !car.price) return null;
     var r = car.price / car.marketPrice;
     var diff = Math.round((1 - r) * 100);
-    if (r <= 0.93) return { cls: 'great', label: 'Отличная цена', note: 'На ' + diff + '% ниже рыночной оценки' };
-    if (r <= 1) return { cls: 'good', label: 'Хорошая цена', note: diff >= 1 ? 'На ' + diff + '% ниже рыночной оценки' : 'На уровне рыночной оценки' };
+    var below = car.marketPrice - car.price;
+    var vs = below > 0 ? rub(below) + ' ниже рынка' : below < 0 ? rub(-below) + ' выше рынка' : 'по рынку';
+    if (r <= 0.93) return { cls: 'great', label: 'Отличная цена', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
+    if (r <= 1) return { cls: 'good', label: 'Хорошая цена', vs: vs, note: diff >= 1 ? 'На ' + diff + '% ниже рыночной оценки' : 'На уровне рыночной оценки' };
+    if (r <= 1.05) return { cls: 'fair', label: 'Цена по рынку', vs: vs, note: 'Немного выше средней рыночной оценки' };
     return null;
   }
+
+  // История машины по базам ГИБДД, реестру залогов и сервисам проверки — что внёс менеджер.
+  function historyRows(car) {
+    var h = car.history || {};
+    var rows = [];
+    if (h.accidents != null) rows.push(h.accidents ? [false, 'ДТП', h.accidents + ' в базе ГИБДД'] : [true, 'ДТП', 'Не найдены']);
+    if (car.owners) rows.push([true, 'Владельцев по ПТС', String(car.owners)]);
+    if (h.restrictions != null) rows.push(h.restrictions ? [false, 'Ограничения на регистрацию', 'Есть'] : [true, 'Ограничения на регистрацию', 'Нет']);
+    if (h.pledge != null) rows.push(h.pledge ? [false, 'Залог', 'В реестре залогов'] : [true, 'Залог', 'Не в залоге']);
+    if (h.wanted != null) rows.push(h.wanted ? [false, 'Розыск', 'В розыске'] : [true, 'Розыск', 'Не числится']);
+    if (h.taxi != null) rows.push(h.taxi ? [false, 'Такси и каршеринг', 'Использовалась'] : [true, 'Такси и каршеринг', 'Не использовалась']);
+    if (h.mileageOk != null) rows.push(h.mileageOk ? [true, 'Пробег', 'Без скруток по базам'] : [false, 'Пробег', 'Есть расхождения']);
+    return rows;
+  }
+  function historyShort(car) {
+    var h = car.history || {};
+    var out = [];
+    if (h.accidents === 0) out.push('Без ДТП');
+    if (car.owners) out.push(car.owners + '\u00a0' + plural(car.owners, 'владелец', 'владельца', 'владельцев'));
+    if (h.pledge === false && h.restrictions === false) out.push('Без залогов и ограничений');
+    return out.join(' · ');
+  }
+  function isNew(car) {
+    if (!car.publishedAt) return false;
+    return (Date.now() - new Date(car.publishedAt).getTime()) / 864e5 < 3;
+  }
+
 
   // Заглушка вместо фото: силуэт машины в её цвете.
   function placeholder(car) {
@@ -178,6 +222,8 @@
       case 'under15': return car.price <= 1500000;
       case 'auto': return car.transmission && car.transmission !== 'Механика';
       case 'suv': return car.body === 'Кроссовер' || car.body === 'Внедорожник';
+      case 'clean': return !!car.history && car.history.accidents === 0;
+      case 'oneowner': return car.owners === 1;
     }
     return true;
   }
@@ -377,27 +423,48 @@
     });
   }
 
+  // Карточка как на Edmunds: листаемые фото; слева название, справа цена и оценка рынка;
+  // факты с иконками; опции плашками; кнопки заявки.
   function cardHtml(car) {
     var r = rating(car);
-    var ph = photos(car);
+    var ph = photos(car).slice(0, 8);
     var reserved = car.status === 'reserved';
-    var tags = [];
-    if (car.serviceDone && car.serviceDone.length) tags.push('<span class="tag accent">Проверена в нашем сервисе</span>');
-    if (car.owners) tags.push('<span class="tag">' + car.owners + ' ' + plural(car.owners, 'владелец', 'владельца', 'владельцев') + '</span>');
-    if (car.pts) tags.push('<span class="tag">ПТС ' + esc(car.pts.toLowerCase()) + '</span>');
-    (car.tags || []).forEach(function (t) { tags.push('<span class="tag">' + esc(t) + '</span>'); });
+    var e = car.engine || {};
+    var hist = historyShort(car);
+    var facts = [
+      ['gauge', num(car.mileage) + ' км'],
+      ['gear', [e.volume ? Number(e.volume).toFixed(1) + ' л' : '', e.power ? e.power + ' л.с.' : '', car.transmission, car.drive ? car.drive.toLowerCase() + ' привод' : '']
+        .filter(Boolean).join(' · ')],
+      ['shield', hist],
+      ['pin', car.city]
+    ].filter(function (f) { return f[1]; });
+    var chips = (car.features && car.features.length ? car.features : (car.serviceDone || [])).slice(0, 5);
+    var open = ' data-action="open" data-id="' + esc(car.id) + '"';
     return '<article class="card' + (reserved ? ' is-reserved' : '') + '">' +
-      '<div class="card-media"><img src="' + esc(ph[0]) + '" alt="' + esc(title(car)) + '" loading="lazy" decoding="async">' +
-      (ph.length > 1 ? '<span class="media-count">' + icon('camera') + ph.length + '</span>' : '') +
-      (reserved ? '<span class="status">Забронирована</span>' : '') + '</div>' +
+      '<div class="card-media"' + open + '>' +
+      '<div class="card-track">' + ph.map(function (src, i) {
+        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + (i ? ', фото ' + (i + 1) : '') + '"' + (i ? ' loading="lazy"' : ' loading="lazy" decoding="async"') + '>';
+      }).join('') + '</div>' +
+      (ph.length > 1
+        ? '<button class="media-arrow prev" data-action="slide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +
+          '<button class="media-arrow next" data-action="slide" data-dir="1" aria-label="Следующее фото">' + icon('right') + '</button>' +
+          '<div class="card-dots">' + ph.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>'
+        : '') +
+      (reserved ? '<span class="status">Забронирована</span>' : isNew(car) ? '<span class="status new">' + icon('spark') + 'Новое</span>' : '') +
+      '</div>' + favButton(car.id) +
       '<div class="card-body">' +
-      '<div class="price-row"><span class="price">' + rub(car.price) + '</span>' +
-      (r ? '<span class="badge ' + r.cls + '">' + r.label + '</span>' : '') + '</div>' +
-      '<h3 class="card-title"><a href="?car=' + encodeURIComponent(car.id) + '" data-action="open" data-id="' + esc(car.id) + '">' + esc(title(car)) + '</a></h3>' +
-      '<p class="specs">' + esc(specsLine(car)) + '</p>' +
-      '<p class="meta">' + num(car.mileage) + '\u00a0км' + (car.city ? ' · ' + esc(car.city) : '') + '</p>' +
-      '<div class="tags">' + tags.join('') + '</div></div>' +
-      favButton(car.id) + '</article>';
+      '<div class="card-head"' + open + '>' +
+      '<div class="card-name"><h3 class="card-title"><a href="?car=' + encodeURIComponent(car.id) + '">' + car.year + ' ' + esc(car.make + ' ' + car.model) + '</a></h3>' +
+      '<p class="card-trim">' + esc([car.generation, car.trim, car.body].filter(Boolean).join(' · ')) + '</p></div>' +
+      '<div class="card-price"><span class="price">' + rub(car.price) + '</span>' +
+      (r ? '<span class="deal ' + r.cls + '">' + icon('car') + r.label + '</span><span class="vs">' + esc(r.vs) + '</span>' : '') +
+      '</div></div>' +
+      '<ul class="facts">' + facts.map(function (f) { return '<li>' + icon(f[0]) + '<span>' + esc(f[1]) + '</span></li>'; }).join('') + '</ul>' +
+      (chips.length ? '<div class="opts">' + chips.map(function (c) { return '<span class="opt">' + esc(c) + '</span>'; }).join('') + '</div>' : '') +
+      '<div class="card-actions">' +
+      '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
+      (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В рассрочку</button>' : '') +
+      '</div></div></article>';
   }
 
   function favButton(id) {
@@ -427,11 +494,22 @@
       ['Цвет', car.color],
       ['Руль', car.wheel],
       ['Владельцев по ПТС', car.owners],
+      ['Последний владеет', car.lastOwnerYears ? car.lastOwnerYears + ' ' + plural(car.lastOwnerYears, 'год', 'года', 'лет') : ''],
       ['ПТС', car.pts],
+      ['Таможня', car.customs === false ? 'Не растаможен' : car.customs === true ? 'Растаможен' : ''],
       ['Поколение', car.generation],
       ['Комплектация', car.trim],
       ['VIN', car.vin]
     ].filter(function (row) { return row[1] !== undefined && row[1] !== null && row[1] !== ''; });
+
+    var hist = historyRows(car);
+    var feats = car.features || [];
+    var summary = [
+      ['gauge', 'Пробег', num(car.mileage) + ' км'],
+      ['gear', 'Двигатель', engine],
+      ['car', 'Коробка и привод', [car.transmission, car.drive ? car.drive.toLowerCase() : ''].filter(Boolean).join(', ')],
+      ['shield', 'Владельцев', car.owners ? String(car.owners) : '']
+    ].filter(function (x) { return x[2]; });
 
     page.innerHTML = '<div class="page-in">' +
       '<div class="gallery"><button class="page-back" data-action="back">' + icon('back') + 'Назад</button>' +
@@ -441,36 +519,71 @@
       (ph.length > 1 ? '<div class="gallery-dots" id="gdots">' + ph.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>' : '') +
       favButton(car.id) + '</div>' +
 
-      '<section class="block"><h1 class="d-title">' + esc(car.make + ' ' + car.model + (car.generation ? ' ' + car.generation : '')) + ', ' + car.year + '</h1>' +
-      (car.trim ? '<p class="d-trim">' + esc(car.trim) + '</p>' : '') +
-      '<div class="d-price"><span class="price">' + rub(car.price) + '</span>' + (r ? '<span class="badge ' + r.cls + '">' + r.label + '</span>' : '') + '</div>' +
-      (r ? '<p class="d-note">' + esc(r.note) + '</p>' : '') +
-      '<p class="d-note">' + esc(specsLine(car)) + ' · ' + num(car.mileage) + '\u00a0км</p>' +
+      '<section class="block"><h1 class="d-title">' + car.year + ' ' + esc(car.make + ' ' + car.model) + '</h1>' +
+      '<p class="d-trim">' + esc([car.generation, car.trim, car.body].filter(Boolean).join(' · ')) + '</p>' +
+      '<div class="d-price"><span class="price">' + rub(car.price) + '</span>' +
+      (r ? '<span class="deal ' + r.cls + '">' + icon('car') + r.label + '</span>' : '') + '</div>' +
+      (r ? '<p class="d-note">' + esc(r.vs.charAt(0).toUpperCase() + r.vs.slice(1)) + '</p>' : '') +
       (car.status === 'reserved' ? '<p class="d-reserved">Машина забронирована. Оставьте заявку — сообщим, если бронь снимут.</p>' : '') +
+      '<div class="summary">' + summary.map(function (x) {
+        return '<div>' + icon(x[0]) + '<span>' + x[1] + '</span><b>' + esc(x[2]) + '</b></div>';
+      }).join('') + '</div>' +
       '</section>' +
+
+      (car.marketPrice ? priceAnalysisHtml(car) : '') +
+
+      '<section class="block"><h2>История автомобиля</h2>' +
+      (hist.length
+        ? '<ul class="history">' + hist.map(function (row) {
+            return '<li class="' + (row[0] ? 'ok' : 'bad') + '">' + icon(row[0] ? 'check' : 'warn') + '<span>' + esc(row[1]) + '</span><b>' + esc(row[2]) + '</b></li>';
+          }).join('') + '</ul>' +
+          '<p class="fine">' + (car.history && car.history.checkedAt ? 'Проверили по VIN ' + esc(formatDate(car.history.checkedAt)) + ': база ГИБДД, реестр залогов ФНП, сервисы проверки истории. ' : '') +
+          'Полный отчёт пришлём по запросу.</p>'
+        : '<p class="d-note" style="margin-top:0">Проверим машину по VIN в базе ГИБДД и реестре залогов и пришлём отчёт.</p>') +
+      '<button class="btn btn-ghost btn-block" data-action="lead" data-type="callback" data-id="' + esc(car.id) + '" data-comment="Пришлите отчёт по VIN">Получить отчёт по VIN</button>' +
+      '</section>' +
+
+      conditionHtml(car) +
+
+      (car.serviceDone && car.serviceDone.length
+        ? '<section class="block"><h2>Что сделали в нашем сервисе</h2><ul class="checks">' + car.serviceDone.map(function (x) {
+            return '<li>' + icon('check') + '<span>' + esc(x) + '</span></li>';
+          }).join('') + '</ul></section>'
+        : '') +
+
+      (feats.length
+        ? '<section class="block"><h2>Комплектация и опции</h2><div class="opts opts-lg' + (feats.length > 8 ? ' is-clipped' : '') + '" id="feats">' +
+            feats.map(function (f) { return '<span class="opt">' + esc(f) + '</span>'; }).join('') + '</div>' +
+            (feats.length > 8 ? '<button class="link-btn" data-action="more-feats">Показать все ' + feats.length + '</button>' : '') + '</section>'
+        : '') +
 
       '<section class="block"><h2>Характеристики</h2><dl class="spec-table">' + rows.map(function (row) {
         return '<dt>' + row[0] + '</dt><dd>' + esc(row[1]) + '</dd>';
       }).join('') + '</dl></section>' +
 
-      (car.serviceDone && car.serviceDone.length
-        ? '<section class="block"><h2>Что сделали в нашем сервисе</h2><ul class="checks">' + car.serviceDone.map(function (s) {
-            return '<li>' + icon('check') + '<span>' + esc(s) + '</span></li>';
-          }).join('') + '</ul></section>'
+      (CREDIT.enabled
+        ? '<section class="block credit-block"><h2>Рассрочка и кредит</h2>' +
+          '<p>Заполните анкету — менеджер перезвонит и подберёт рассрочку или кредит.</p>' +
+          (CREDIT.partners ? '<p class="fine" style="margin:-6px 0 14px">Рассрочку и кредит предоставляют: ' + esc(CREDIT.partners) + '.</p>' : '') +
+          '<button class="btn btn-primary btn-block" data-action="credit" data-id="' + esc(car.id) + '">Заполнить анкету</button></section>'
         : '') +
 
       (car.description ? '<section class="block"><h2>Описание</h2><p class="d-desc">' + esc(car.description) + '</p></section>' : '') +
+
+      similarHtml(car) +
 
       '<section class="block dealer"><h2>Вы перекупщик?</h2><p>Для перекупов — оптовая цена по запросу.</p>' +
       '<button class="btn btn-ghost btn-block" data-action="dealer" data-id="' + esc(car.id) + '">Узнать оптовую цену</button></section>' +
 
       '<section class="block d-foot"><span>Объявление № ' + esc(car.id) + (car.publishedAt ? ' · ' + esc(formatDate(car.publishedAt)) : '') + '</span>' +
       '<button class="link-btn" data-action="share" data-id="' + esc(car.id) + '">' + icon('share') + 'Поделиться</button></section>' +
+      sellerHtml() +
       '</div>' +
 
       '<div class="action-bar"><div class="action-bar-in">' +
       (CFG.phone ? '<a class="btn btn-ghost btn-icon" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
-      '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">Записаться на осмотр</button>' +
+      (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В рассрочку</button>' : '') +
+      '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
       '</div></div>';
 
     page.hidden = false;
@@ -496,6 +609,88 @@
       setTimeout(function () { if (page.classList.contains('leave')) { page.hidden = true; page.innerHTML = ''; page.classList.remove('leave'); } }, 300);
     }, car.id);
   }
+
+  // Анализ цены: шкала рынка, где стоит наша цена и средняя рыночная.
+  function priceAnalysisHtml(car) {
+    var m = car.marketPrice, p = car.price;
+    var lo = Math.min(p, m) * 0.9, hi = Math.max(p, m) * 1.08;
+    var pos = function (v) { return Math.max(2, Math.min(98, (v - lo) / (hi - lo) * 100)).toFixed(1); };
+    var zones = [[lo, m * 0.93, 'great'], [m * 0.93, m, 'good'], [m, m * 1.05, 'fair'], [m * 1.05, hi, 'high']];
+    var r = rating(car);
+    return '<section class="block"><h2>Анализ цены</h2>' +
+      '<p class="pa-lead">' + (r ? '<span class="deal ' + r.cls + '">' + icon('car') + r.label + '</span>' : '') + '</p>' +
+      '<p class="pa-text">' + (p < m
+        ? 'Цена на <b>' + rub(m - p) + '</b> ниже средней рыночной (' + Math.round((1 - p / m) * 100) + '%).'
+        : p > m ? 'Цена на ' + rub(p - m) + ' выше средней рыночной.' : 'Цена равна средней рыночной.') + '</p>' +
+      '<div class="pa-scale">' + zones.map(function (z) {
+        var a = Math.max(z[0], lo), b = Math.min(z[1], hi);
+        return b > a ? '<i class="z-' + z[2] + '" style="left:' + pos(a) + '%;width:' + (pos(b) - pos(a)).toFixed(1) + '%"></i>' : '';
+      }).join('') +
+      '<span class="pa-mark market" style="left:' + pos(m) + '%"><em>Рынок<br>' + rub(m) + '</em></span>' +
+      '<span class="pa-mark ours" style="left:' + pos(p) + '%"><em>Наша цена<br>' + rub(p) + '</em></span></div>' +
+      '<div class="pa-legend"><span class="z-great">Отличная</span><span class="z-good">Хорошая</span><span class="z-fair">По рынку</span><span class="z-high">Выше рынка</span></div>' +
+      '<p class="fine">Рыночная цена — оценка ANDO AUTO по похожим объявлениям (год, пробег, комплектация) на дату публикации.</p></section>';
+  }
+
+  // Состояние б/у машины и известные недостатки: о них продавец обязан сообщить (ЗоЗПП, ст. 10).
+  function conditionHtml(car) {
+    var rows = [
+      ['Окрасы и толщиномер', car.paint],
+      ['Сервисная история', car.serviceHistory],
+      ['Ключи', car.keys ? car.keys + ' ' + plural(car.keys, 'ключ', 'ключа', 'ключей') : ''],
+      ['Резина', car.tires],
+      ['Гарантия продавца', car.warranty]
+    ].filter(function (r) { return r[1]; });
+    var defects = car.defects || [];
+    return '<section class="block"><h2>Состояние</h2>' +
+      '<p class="cond-lead">Автомобиль с пробегом, был в употреблении.</p>' +
+      (defects.length
+        ? '<p class="cond-sub">Известные недостатки:</p><ul class="defects">' + defects.map(function (d) { return '<li>' + icon('warn') + '<span>' + esc(d) + '</span></li>'; }).join('') + '</ul>'
+        : car.defects ? '<p class="cond-sub">Недостатков, о которых мы знаем, нет.</p>' : '') +
+      (rows.length ? '<dl class="spec-table stacked">' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>' : '') +
+      '<p class="fine">Всё, что мы знаем о машине, перечислено здесь. Перед покупкой проверьте её на осмотре — можно со своим мастером.</p></section>';
+  }
+
+  // Реквизиты продавца — обязательны при продаже товаров потребителям (ЗоЗПП, ст. 9).
+  function sellerHtml() {
+    var sl = CFG.seller || {};
+    var parts = [sl.name, sl.ogrnip ? 'ОГРНИП ' + sl.ogrnip : '', sl.inn ? 'ИНН ' + sl.inn : '', sl.address].filter(Boolean);
+    return parts.length ? '<p class="seller">Продавец: ' + esc(parts.join(', ')) + '</p>' : '';
+  }
+
+  // Похожие машины: тот же кузов или цена в пределах ±35%.
+  function similarHtml(car) {
+    var list = S.cars.filter(function (c) {
+      return c.id !== car.id && c.status !== 'sold' && (c.body === car.body || Math.abs(c.price - car.price) <= car.price * 0.35);
+    }).sort(function (a, b) { return Math.abs(a.price - car.price) - Math.abs(b.price - car.price); }).slice(0, 6);
+    if (!list.length) return '';
+    return '<section class="block similar"><h2>Похожие машины</h2><div class="sim-track">' + list.map(function (c) {
+      var r = rating(c);
+      return '<button class="sim" data-action="open" data-id="' + esc(c.id) + '"><img src="' + esc(photos(c)[0]) + '" alt="" loading="lazy">' +
+        '<b>' + c.year + ' ' + esc(c.make + ' ' + c.model) + '</b><span class="sim-price">' + rub(c.price) + '</span>' +
+        '<span class="sim-meta">' + num(c.mileage) + ' км' + (r ? ' · ' + r.label.toLowerCase() : '') + '</span></button>';
+    }).join('') + '</div></section>';
+  }
+
+  // ---------- Кредит ----------
+  function openCredit(carId) {
+    var car = byId(carId);
+    if (!car) return;
+    openSheet(sheetHead('Купить в рассрочку') +
+      '<div class="sheet-car"><img src="' + esc(photos(car)[0]) + '" alt=""><div><b>' + esc(title(car)) + '</b><span>' + rub(car.price) + '</span></div></div>' +
+      '<p class="d-note sheet-note">Заполните анкету — менеджер перезвонит и подберёт рассрочку или кредит.</p>' +
+      '<form class="form" id="lead-form" data-type="credit" data-car="' + esc(car.id) + '" novalidate>' +
+      '<label class="field"><span>Имя</span><input name="name" autocomplete="given-name" maxlength="80" value="' + esc(P.user && P.user.first_name || '') + '"></label>' +
+      phoneField() +
+      '<label class="field"><span>Первоначальный взнос, ₽</span><input name="downPayment" inputmode="numeric" maxlength="11" placeholder="Необязательно"></label>' +
+      '<label class="field"><span>Комментарий</span><textarea name="comment" rows="2" maxlength="500" placeholder="Удобное время для звонка"></textarea></label>' +
+      consentField() +
+      '<p class="form-error" role="alert"></p>' +
+      '<button class="btn btn-primary btn-block" type="submit">Отправить анкету</button>' +
+      (CREDIT.partners ? '<p class="fine">Рассрочку и кредит предоставляют: ' + esc(CREDIT.partners) + '.</p>' : '') +
+      '</form>');
+  }
+
 
   function countUp(el, value) {
     if (!el || !observer) return;
@@ -571,7 +766,7 @@
     if (btn) btn.textContent = n ? 'Показать ' + n + ' ' + plural(n, 'машину', 'машины', 'машин') : 'Нет машин';
   }
 
-  function openLead(type, carId) {
+  function openLead(type, carId, comment) {
     var car = carId ? byId(carId) : null;
     var user = P.user;
     openSheet(sheetHead(LEAD_TITLES[type] || 'Заявка') +
@@ -581,7 +776,7 @@
       '<label class="field"><span>Имя</span><input name="name" autocomplete="given-name" maxlength="80" value="' + esc(user && user.first_name || '') + '"></label>' +
       phoneField() +
       '<label class="field"><span>Комментарий</span><textarea name="comment" rows="2" maxlength="500" placeholder="' +
-      (type === 'buy' ? 'Когда удобно приехать на осмотр' : 'Удобное время для звонка') + '"></textarea></label>' +
+      (type === 'buy' ? 'Когда удобно приехать на осмотр' : 'Удобное время для звонка') + '">' + esc(comment || '') + '</textarea></label>' +
       consentField() +
       '<p class="form-error" role="alert"></p>' +
       '<button class="btn btn-primary btn-block" type="submit">Отправить заявку</button></form>');
@@ -650,6 +845,7 @@
     var lead = { type: type, name: get('name'), phone: normalizePhone(get('phone')), comment: get('comment'), consent: form.elements.consent.checked };
     var carId = form.getAttribute('data-car');
     if (carId) lead.carId = carId;
+    if (type === 'credit') lead.credit = { downPayment: get('downPayment') ? +digits(get('downPayment')) : null };
     if (type === 'sell') {
       var pressed = form.querySelector('#condition [aria-pressed="true"]');
       lead.car = {
@@ -684,6 +880,7 @@
       lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage ? ', ' + num(c.mileage) + ' км' : '') + ', ' + c.condition +
         (c.desiredPrice ? ', хочу ' + rub(c.desiredPrice) : ''));
     }
+    if (lead.credit && lead.credit.downPayment) lines.push('Первоначальный взнос: ' + rub(lead.credit.downPayment));
     if (lead.name) lines.push('Имя: ' + lead.name);
     lines.push('Телефон: ' + lead.phone);
     if (lead.comment) lines.push('Комментарий: ' + lead.comment);
@@ -779,7 +976,12 @@
     var action = target.getAttribute('data-action');
     var id = target.getAttribute('data-id');
     switch (action) {
-      case 'open': event.preventDefault(); openDetail(id); break;
+      case 'open':
+        event.preventDefault();
+        // Из «Похожих» на открытой странице: закрываем текущую и открываем новую.
+        if (!document.getElementById('page').hidden) { closeTop(); setTimeout(function () { openDetail(id); }, 330); }
+        else openDetail(id);
+        break;
       case 'fav': event.preventDefault(); toggleFav(id); break;
       case 'tab':
         S.tab = target.getAttribute('data-tab');
@@ -820,7 +1022,21 @@
         target.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === target)); });
         P.haptic('select');
         break;
-      case 'lead': openLead(target.getAttribute('data-type'), id); break;
+      case 'lead':
+        event.preventDefault();
+        openLead(target.getAttribute('data-type'), id, target.getAttribute('data-comment'));
+        break;
+      case 'credit': event.preventDefault(); openCredit(id); break;
+      case 'slide':
+        event.preventDefault();
+        event.stopPropagation();
+        var tr = target.parentNode.querySelector('.card-track');
+        tr.scrollBy({ left: tr.clientWidth * +target.getAttribute('data-dir'), behavior: 'smooth' });
+        break;
+      case 'more-feats':
+        document.getElementById('feats').classList.remove('is-clipped');
+        target.remove();
+        break;
       case 'dealer':
         if (CFG.dealerChat) P.openLink(CFG.dealerChat);
         else openLead('dealer', id);
@@ -854,6 +1070,16 @@
     if (event.target.id === 'sort') { S.sort = event.target.value; renderList(); }
     else if (event.target.hasAttribute('data-filter')) { draft[event.target.getAttribute('data-filter')] = event.target.value; updateApplyButton(); }
   });
+  // Точки под фото в карточке следуют за прокруткой.
+  app.addEventListener('scroll', function (event) {
+    var tr = event.target;
+    if (!tr.classList || !tr.classList.contains('card-track')) return;
+    var dots = tr.parentNode.querySelector('.card-dots');
+    if (!dots) return;
+    var i = Math.round(tr.scrollLeft / Math.max(tr.clientWidth, 1));
+    Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
+  }, true);
+
   app.addEventListener('submit', function (event) {
     event.preventDefault();
     submitLead(event.target);
