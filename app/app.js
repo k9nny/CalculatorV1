@@ -654,7 +654,7 @@
   // Реквизиты продавца — обязательны при продаже товаров потребителям (ЗоЗПП, ст. 9).
   function sellerHtml() {
     var sl = CFG.seller || {};
-    var parts = [sl.name, sl.ogrnip ? 'ОГРНИП ' + sl.ogrnip : '', sl.inn ? 'ИНН ' + sl.inn : '', sl.address].filter(Boolean);
+    var parts = [sl.name, sl.inn ? 'ИНН ' + sl.inn : '', sl.ogrnip ? 'ОГРНИП ' + sl.ogrnip : '', sl.registered].filter(Boolean);
     return parts.length ? '<p class="seller">Продавец: ' + esc(parts.join(', ')) + '</p>' : '';
   }
 

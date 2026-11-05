@@ -230,8 +230,9 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
 
 .site-footer{padding-block:40px;border-top:1px solid var(--line);font-size:13px;color:var(--text-3)}
 .site-footer .wrap{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:20px}
-.requisites{display:grid;gap:4px;font-style:normal;line-height:1.5}
-.requisites a{color:var(--text-2)}
+.requisites{display:grid;gap:2px;font-style:normal;line-height:1.45;font-size:11px;color:var(--text-3);opacity:.75}
+.requisites a{color:inherit;text-decoration:none}
+.requisites .req-fine{font-size:10.5px}
 .consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--text-2);cursor:pointer}
 .consent input{flex:none;width:18px;height:18px;margin:1px 0 0;accent-color:var(--text)}
 .consent a{color:var(--text)}
@@ -609,10 +610,8 @@ h2.display{font-size:clamp(28px,3.4vw,48px)}
     </a>
     <!-- Реквизиты продавца обязательны (Закон о защите прав потребителей, ст. 9). -->
     <address class="requisites">
-      <span>ИП Семенюк Марк Вячеславович</span>
-      <span>ИНН 230914702494 · ОГРНИП 323237500354611 от 30.08.2023</span>
-      <span>Зарегистрирован Межрайонной ИФНС России № 16 по Краснодарскому краю</span>
-      <span>Телефон: <a href="tel:+79890853177">+7 (989) 085-31-77</a></span>
+      <span>ИП Семенюк Марк Вячеславович · <a href="tel:+79890853177">+7 (989) 085-31-77</a></span>
+      <span class="req-fine">ИНН 230914702494 · ОГРНИП 323237500354611 от 30.08.2023, МИФНС России № 16 по Краснодарскому краю</span>
     </address>
     <div class="footer-links">
       <a href="privacy.html" id="privacy">Политика обработки персональных данных</a>
