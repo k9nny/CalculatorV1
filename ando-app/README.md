@@ -230,7 +230,7 @@ python -m venv .venv-tts
 Подойдёт VPS из расчёта (2 ядра, 2 ГБ) и домен `.ru`. Пример с Caddy (сам получает сертификат):
 
 ```
-auto.example.ru {
+app.andoavto.ru {
     reverse_proxy 127.0.0.1:8080
 }
 ```
