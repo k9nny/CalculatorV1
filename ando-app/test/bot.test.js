@@ -133,3 +133,23 @@ test('бот: команды статуса, цены и чужие пользо
   assert.match(messages().at(-1), /Каталог машин/);
   assert.equal(bot.drafts.has(5), false);
 });
+
+test('разбор: состояние, опции и проверки по VIN', () => {
+  const car = toCar(parseListing([
+    'Kia Rio 2019', 'Цена 1 390 000', 'Пробег 74 000',
+    'Опции: подогрев сидений, камера', 'Недостатки: скол на капоте; потёртость руля', 'Окрасы: заднее крыло, 250 мкм',
+    'Таможня: не растаможен', 'Ключи: 2', 'Резина: зима на дисках', 'Гарантия: 1 месяц на двигатель и коробку',
+    'ДТП: нет', 'Залог: нет', 'Ограничения: нет', 'Розыск: не числится', 'Такси: нет', 'Скрутка: нет', 'Владеет 3 года'
+  ].join('\n')));
+  assert.deepEqual(car.features, ['Подогрев сидений', 'Камера']);
+  assert.deepEqual(car.defects, ['Скол на капоте', 'Потёртость руля']);
+  assert.equal(car.paint, 'Заднее крыло, 250 мкм');
+  assert.equal(car.customs, false);
+  assert.equal(car.keys, 2);
+  assert.equal(car.lastOwnerYears, 3);
+  assert.equal(car.mileage, 74000);
+  assert.deepEqual(car.history, { accidents: 0, pledge: false, restrictions: false, wanted: false, taxi: false, mileageOk: true });
+  const bad = toCar(parseListing('Kia Rio 2019\nДТП: 2\nЗалог: есть\nНедостатки: нет'));
+  assert.deepEqual(bad.history, { accidents: 2, pledge: true });
+  assert.deepEqual(bad.defects, []);
+});

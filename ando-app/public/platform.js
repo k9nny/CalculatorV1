@@ -98,18 +98,18 @@
   var initData = '';
   var startParam = null;
   var backHandler = null;
-  var media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  // Тема системы — сразу, до загрузки SDK: тёмная тема не мигает светлым фоном.
-  if (client !== 'telegram') root.setAttribute('data-scheme', media && media.matches ? 'dark' : 'light');
+  // Приложение всегда светлое — в Telegram, MAX и браузере, при любой теме телефона.
+  var SCHEME = 'light';
+  root.setAttribute('data-scheme', SCHEME);
 
   function applySystemScheme() {
-    root.setAttribute('data-scheme', media && media.matches ? 'dark' : 'light');
+    root.setAttribute('data-scheme', SCHEME);
   }
 
   function applyTelegramTheme() {
-    root.setAttribute('data-scheme', sdk.colorScheme === 'dark' ? 'dark' : 'light');
-    // Цвета приложения — фирменные (как на сайте); от Telegram берём только светлую или тёмную тему.
-    var bg = getComputedStyle(root).getPropertyValue('--bg').trim() || '#050505';
+    root.setAttribute('data-scheme', SCHEME);
+    // Шапка и фон Telegram — в цвет приложения, а не в тему мессенджера.
+    var bg = getComputedStyle(root).getPropertyValue('--bg').trim() || '#F2F0EF';
     call(function () { return sdk.setHeaderColor(bg); });
     call(function () { return sdk.setBackgroundColor(bg); });
     call(function () { return sdk.setBottomBarColor && sdk.setBottomBarColor(bg); });
@@ -126,7 +126,6 @@
   function init() {
     if (client === 'web') {
       applySystemScheme();
-      if (media && media.addEventListener) media.addEventListener('change', applySystemScheme);
       var car = new URLSearchParams(location.search).get('car');
       startParam = car ? 'car_' + car : null;
       return Promise.resolve(api);
@@ -157,7 +156,6 @@
       } else {
         // У MAX нет своей темы: вебвью следует системной.
         applySystemScheme();
-        if (media && media.addEventListener) media.addEventListener('change', applySystemScheme);
       }
       if (sdk) call(function () { return sdk.ready(); });
       return api;

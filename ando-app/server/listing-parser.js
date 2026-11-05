@@ -88,9 +88,26 @@ const KEYS = [
   [/^(город)$/, (v, f) => { f.city = cap(v.trim()); }],
   [/^(сделали|сделано|сервис|работы|выполнено)$/, (v, f) => { f.serviceDone = v.split(/[;,]\s*/).map((s) => cap(s.trim())).filter(Boolean); }],
   [/^(описание)$/, (v, f) => { f.description = v.trim(); }],
+  [/^(опции|оснащение)$/, (v, f) => { f.features = list(v); }],
+  [/^(недостатки|дефекты|минусы)$/, (v, f) => { f.defects = /^(нет|без)(?![а-яё])/.test(lower(v)) ? [] : list(v); }],
+  [/^(окрасы|окрас|крашено|окрашено|толщиномер|лкп)$/, (v, f) => { f.paint = cap(v.trim()); }],
+  [/^(таможня|растаможен|растаможка)$/, (v, f) => { f.customs = !/^(не|нет)(?![а-яё])/.test(lower(v)); }],
+  [/^(ключи|ключей)$/, (v, f) => { const n = parseInt(v, 10); if (n) f.keys = n; }],
+  [/^(резина|шины|колеса|колёса)$/, (v, f) => { f.tires = cap(v.trim()); }],
+  [/^(гарантия)$/, (v, f) => { f.warranty = cap(v.trim()); }],
+  [/^(сервисная история|история обслуживания|обслуживание)$/, (v, f) => { f.serviceHistory = cap(v.trim()); }],
+  [/^(владеет|срок владения)$/, (v, f) => { const n = parseInt(v, 10); if (n) f.lastOwnerYears = n; }],
+  [/^(дтп)$/, (v, f) => { hist(f).accidents = /^(нет|без|0)(?![а-яё])/.test(lower(v)) ? 0 : parseInt(v, 10) || 1; }],
+  [/^(залог)$/, (v, f) => { hist(f).pledge = !/^(нет|не)(?![а-яё])/.test(lower(v)); }],
+  [/^(ограничения|запреты)$/, (v, f) => { hist(f).restrictions = !/^(нет|без)(?![а-яё])/.test(lower(v)); }],
+  [/^(розыск)$/, (v, f) => { hist(f).wanted = !/^(нет|не)(?![а-яё])/.test(lower(v)); }],
+  [/^(такси|каршеринг)$/, (v, f) => { hist(f).taxi = !/^(нет|не)(?![а-яё])/.test(lower(v)); }],
+  [/^(скрутка|скрутки)$/, (v, f) => { hist(f).mileageOk = /^(нет|не|без)(?![а-яё])/.test(lower(v)); }],
   [/^(статус)$/, (v, f) => { const t = lower(v); f.status = /брон/.test(t) ? 'reserved' : /прод/.test(t) ? 'sold' : 'available'; }]
 ];
 
+function list(v) { return v.split(/[;,]\s*/).map((x) => cap(x.trim())).filter(Boolean); }
+function hist(f) { f.history = f.history || {}; return f.history; }
 function cap(s) { return s ? s[0].toUpperCase() + s.slice(1) : s; }
 function pick(list, text) { const t = lower(text); for (const [re, value] of list) if (re.test(t)) return value; return null; }
 
@@ -232,7 +249,8 @@ function parseListing(text) {
 function toCar(f) {
   const car = {};
   for (const k of ['make', 'model', 'generation', 'trim', 'year', 'price', 'marketPrice', 'mileage', 'transmission', 'drive', 'body',
-    'color', 'wheel', 'owners', 'pts', 'vin', 'city', 'serviceDone', 'description', 'tags', 'status']) {
+    'color', 'wheel', 'owners', 'pts', 'vin', 'city', 'serviceDone', 'description', 'tags', 'status',
+    'features', 'defects', 'paint', 'customs', 'keys', 'tires', 'warranty', 'serviceHistory', 'lastOwnerYears', 'history']) {
     if (f[k] !== undefined && f[k] !== '') car[k] = f[k];
   }
   const engine = {};

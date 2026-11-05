@@ -65,9 +65,25 @@ function carSummary(car) {
     extra ? esc(extra) : '',
     car.vin ? `VIN ${esc(car.vin)}` : '',
     car.serviceDone && car.serviceDone.length ? 'Сделали в сервисе:\n' + car.serviceDone.map((s) => '• ' + esc(s)).join('\n') : '',
+    car.defects ? (car.defects.length ? 'Недостатки: ' + esc(car.defects.join(', ')) : 'Недостатков нет') : 'Недостатки не указаны — допишите «недостатки …» или «недостатки нет»',
+    car.history ? 'Проверка: ' + esc(historyLine(car.history)) : '',
+    car.features && car.features.length ? 'Опции: ' + esc(car.features.join(', ')) : '',
+    [car.paint && `окрасы: ${car.paint}`, car.customs === false && 'не растаможен', car.keys && `ключей: ${car.keys}`, car.tires && `резина: ${car.tires}`,
+      car.warranty && `гарантия: ${car.warranty}`].filter(Boolean).map(esc).join(' · '),
     car.tags && car.tags.length ? esc(car.tags.join(', ')) : '',
     car.description ? esc(car.description) : ''
   ].filter(Boolean).join('\n');
+}
+
+function historyLine(h) {
+  return [
+    h.accidents != null && (h.accidents ? `ДТП: ${h.accidents}` : 'без ДТП'),
+    h.restrictions != null && (h.restrictions ? 'есть ограничения' : 'без ограничений'),
+    h.pledge != null && (h.pledge ? 'в залоге' : 'не в залоге'),
+    h.wanted != null && (h.wanted ? 'в розыске' : 'не в розыске'),
+    h.taxi != null && (h.taxi ? 'было такси' : 'не такси'),
+    h.mileageOk != null && (h.mileageOk ? 'пробег чистый' : 'скрутка')
+  ].filter(Boolean).join(', ');
 }
 
 const HELP = [
@@ -76,7 +92,9 @@ const HELP = [
   'Я разберу текст, покажу превью — нажмите «Опубликовать».',
   '',
   'Пример текста:',
-  '<code>Kia Rio 2019, 1.6 АКПП 123 л.с.\nПробег 74 000 км\nЦена 1 390 000\n2 владельца, ПТС оригинал, белый седан\n- Замена масла и фильтров\n- Новые колодки\nТорг</code>',
+  '<code>Kia Rio 2019, 1.6 АКПП 123 л.с.\nПробег 74 000 км\nЦена 1 390 000\nРынок 1 480 000\n2 владельца, ПТС оригинал, белый седан\n- Замена масла и фильтров\n- Новые колодки\nОпции: подогрев сидений, камера, круиз\nНедостатки: скол на капоте\nОкрасы: заднее крыло\nДТП: нет\nЗалог: нет\nОграничения: нет\nТакси: нет\nКлючи: 2\nРезина: зима на дисках</code>',
+  '',
+  'Недостатки пишите всегда, даже «недостатки нет»: о них продавец обязан сообщить покупателю.',
   '',
   'Исправить превью — отправьте строку «поле значение»: <code>цена 1 350 000</code>, <code>пробег 80 тыс</code>, <code>модель Rio X</code>, <code>рынок 1 480 000</code>, <code>описание …</code>. Ещё фото — просто пришлите.',
   '',

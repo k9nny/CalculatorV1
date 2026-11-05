@@ -5,7 +5,8 @@ const TYPES = {
   buy: 'Осмотр машины',
   dealer: 'Оптовая цена — перекуп',
   callback: 'Обратный звонок',
-  sell: 'Выкуп — продать машину'
+  sell: 'Выкуп — продать машину',
+  credit: 'Рассрочка или кредит — перезвонить'
 };
 const CONDITIONS = ['На ходу, без ДТП', 'После ДТП', 'Требует ремонта', 'Не на ходу'];
 
@@ -54,6 +55,13 @@ function validateLead(body, cars, { now = new Date() } = {}) {
     lead.car = { id: String(car.id), title: `${car.make} ${car.model}, ${car.year}`, price: car.price };
   }
 
+  if (type === 'credit') {
+    if (!lead.car) return { ok: false, error: 'Выберите машину' };
+    const downPayment = intIn((body.credit || {}).downPayment, 0, lead.car.price);
+    if (Number.isNaN(downPayment)) return { ok: false, error: 'Проверьте первоначальный взнос' };
+    lead.credit = { downPayment };
+  }
+
   if (type === 'sell') {
     const c = body.car || {};
     const year = intIn(c.year, 1960, now.getFullYear() + 1);
@@ -99,6 +107,7 @@ function formatLeadMessage(lead, source) {
         (c.desiredPrice ? `\nХочет: ${money(c.desiredPrice)}` : '')
     );
   }
+  if (lead.credit && lead.credit.downPayment) lines.push(`Первоначальный взнос: ${money(lead.credit.downPayment)}`);
   lines.push('');
   if (lead.name) lines.push(`Имя: ${escapeHtml(lead.name)}`);
   lines.push(`Телефон: ${escapeHtml(lead.phone)}`);

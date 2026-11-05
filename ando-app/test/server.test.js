@@ -166,3 +166,13 @@ test('сервер: REQUIRE_INIT_DATA не пускает заявки без п
     assert.equal(res.status, 401);
   });
 });
+
+test('заявка на рассрочку: машина из каталога, взнос необязателен', () => {
+  const ok = validateLead({ type: 'credit', carId: '102', phone: '89001234567', consent: true, credit: { downPayment: 500000 } }, CARS);
+  assert.equal(ok.ok, true);
+  assert.deepEqual(ok.lead.credit, { downPayment: 500000 });
+  assert.match(formatLeadMessage(ok.lead, { platform: 'web' }), /Рассрочка или кредит[\s\S]*Первоначальный взнос: 500 000 ₽/);
+  assert.equal(validateLead({ type: 'credit', carId: '102', phone: '89001234567', consent: true }, CARS).ok, true);
+  assert.equal(validateLead({ type: 'credit', phone: '89001234567', consent: true }, CARS).ok, false);
+  assert.equal(validateLead({ type: 'credit', carId: '102', phone: '89001234567', consent: true, credit: { downPayment: 99e9 } }, CARS).ok, false);
+});
