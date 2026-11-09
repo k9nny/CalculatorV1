@@ -104,6 +104,7 @@ try {
 # A page opened from a file may not ask api-seller.ozon.ru itself, so the program asks this helper on
 # http://127.0.0.1:37219 and the helper asks Ozon. It listens only on this computer and talks only to
 # api-seller.ozon.ru and to Ozon's picture servers.
+# It keeps the program's daily data copy in the folder backups (30 days).
 # It also keeps a copy of the program's Ozon keys, so an update or a cleared browser does not lose them:
 # the file ozon-keys.dat next to the program, encrypted by Windows for this Windows user. Only the program
 # gets it back: the installer puts a secret into the program and into start.json, and the helper answers
@@ -199,7 +200,8 @@ function Serve($client) {
   $h = @{}
   foreach ($ln in $lines | Select-Object -Skip 1) { $i = $ln.IndexOf(':'); if ($i -gt 0) { $h[$ln.Substring(0, $i).Trim().ToLower()] = $ln.Substring($i + 1).Trim() } }
   $len = 0; if ($h['content-length']) { $len = [int]$h['content-length'] }
-  if ($len -gt 1MB) { Send $stream 400 'text/plain' (Text 'too big'); return }
+  $max = 1MB; if ($path -eq '/backup') { $max = 400MB }
+  if ($len -gt $max) { Send $stream 400 'text/plain' (Text 'too big'); return }
   $body = New-Object byte[] $len
   $have = $all.Length - $end - 4
   if ($have -gt 0) { [Array]::Copy($all, $end + 4, $body, 0, [Math]::Min($have, $len)) }
@@ -210,6 +212,17 @@ function Serve($client) {
   if (($origin -and $origin -ne 'null' -and $origin -notmatch '^file:') -or ($h['host'] -notmatch "^(127\.0\.0\.1|localhost):$Port$")) { Send $stream 403 'text/plain' (Text 'forbidden'); return }
   if ($method -eq 'OPTIONS') { Send $stream 204 'text/plain' $null; return }
   if ($path -eq '/ping') { Send $stream 200 'application/json' (Text '{"ok":true,"v":2}'); return }
+  # the program's daily copy of its data: backups\sklad-<day>.json next to it, the last 30 days kept
+  if ($path -eq '/backup' -and $method -eq 'POST') {
+    if (-not $token -or $h['x-sklad-token'] -cne $token) { Send $stream 403 'text/plain' (Text 'forbidden'); return }
+    try {
+      $dir = Join-Path $here 'backups'; New-Item -ItemType Directory -Force -Path $dir | Out-Null
+      [IO.File]::WriteAllBytes((Join-Path $dir ('sklad-' + (Get-Date -Format 'yyyy-MM-dd') + '.json')), $body)
+      Get-ChildItem -LiteralPath $dir -Filter 'sklad-*.json' | Sort-Object Name -Descending | Select-Object -Skip 30 | Remove-Item -Force -ErrorAction SilentlyContinue
+      Send $stream 204 'text/plain' $null
+    } catch { Send $stream 502 'text/plain' (Text 'no room') }
+    return
+  }
   # the keys' copy: only for the program that knows the secret
   if ($path -eq '/keys') {
     if (-not $token -or -not $h['x-sklad-token'] -or $h['x-sklad-token'] -cne $token) { Send $stream 403 'text/plain' (Text 'forbidden'); return }
@@ -2520,7 +2533,7 @@ let EMP = lsGet('sklad/emp') === '1';   // employee mode on this device: receivi
 const lsOk = () => { try { localStorage.setItem('sklad/ls', '1'); return localStorage.getItem('sklad/ls') === '1'; } catch { return false; } };
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const inViewer = !!(window.claude && typeof window.claude.use === 'function');
-const APP_VERSION = '2026-10-11.4';
+const APP_VERSION = '2026-11-09.1';
 const T0 = performance.now();
 const DEV = (() => { let d = lsGet('sklad/dev'); if (!d || !/^[a-z0-9]{4,12}$/.test(d)) { d = Math.random().toString(36).slice(2, 8); lsSet('sklad/dev', d); } return d; })();
 
@@ -2665,7 +2678,7 @@ const priceOf = a => S.price ? parseArt(a).price : 0;
 const rub = n => `${nf.format(Math.round(n))} ₽`;
 
 /* ---------- storage ---------- */
-let Backend = null, DL = null, SAMPLE = null;
+let Backend = null, DL = null, SAMPLE = null, STORE_EST = null;
 const ready = {stock: false, receipt: false, lines: false, go: false, done: false, photo: false, settings: false, log: false, day: false, po: false, ret: false, sup: false, supst: false, models: false};
 const allReady = () => Object.values(ready).every(Boolean);
 
@@ -2714,6 +2727,7 @@ const IDB = (() => {
     get: k => run('readonly', (s, o) => { const r = s.get(k); r.onsuccess = () => { o.v = r.result === undefined ? null : r.result; }; }),
     set: (k, v) => run('readwrite', s => { s.put(v, k); }),
     del: k => run('readwrite', s => { s.delete(k); }),
+    setMany: pairs => run('readwrite', s => { for (const [k, v] of pairs) s.put(v, k); }),
     list: pre => run('readonly', (s, o) => { o.v = []; const r = s.openCursor(IDBKeyRange.bound(pre, pre + '\uffff')); r.onsuccess = () => { const c = r.result; if (!c) return; o.v.push([c.key, c.value]); c.continue(); }; }),
   };
 })();
@@ -2734,6 +2748,70 @@ function photoMove() {
     return n;
   })().finally(() => { photoMoving = null; });
   return photoMoving;
+}
+/* the data itself in IndexedDB: room for years of work (the browser gives it a share of the free disk, not 5–10 MB).
+   Everything is read into memory once at the start; every save goes to the disk. Data left in localStorage by
+   older versions moves over on the first start and localStorage is freed. Other tabs hear about changes. */
+const DOC_RX = /^sklad\/([^/]+\/.+)$/;
+async function idbBackend() {
+  if (!(await IDB.ok())) return null;
+  const cache = new Map();
+  try { for (const [k, v] of await IDB.list('')) if (k.includes('/') && v != null) cache.set(k, v); } catch (e) { diag('store', 'idb-read-fail', String(e && e.message)); return null; }
+  // what an older version kept in localStorage comes over once (localStorage wins only before the first move)
+  const first = lsGet('sklad/store') !== 'idb', move = [], drop = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i), m = k && k.match(DOC_RX); if (!m) continue;
+      drop.push(k);
+      if (!first && cache.has(m[1])) continue;
+      try { const v = JSON.parse(localStorage.getItem(k)); if (v != null) move.push([m[1], v]); } catch {}
+    }
+  } catch {}
+  if (move.length) {
+    try { await IDB.setMany(move); for (const [k, v] of move) cache.set(k, v); }
+    catch (e) { diag('store', 'idb-move-fail', String(e && e.message)); return null; }
+  }
+  for (const k of drop) { try { localStorage.removeItem(k); } catch {} }
+  lsSet('sklad/store', 'idb');
+  if (move.length) diag('store', 'moved to idb', {docs: move.length});
+  try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => diag('store', 'persist', ok)).catch(() => {}); } catch {}
+  const list = name => { const pre = name + '/', out = []; for (const [p, d] of cache) if (p.startsWith(pre)) { const id = p.slice(pre.length); if (id && !id.includes('/')) out.push({id, data: d}); } return out; };
+  // other tabs of the program: a change there is read here
+  const subs = [];
+  let bc = null; try { bc = new BroadcastChannel('sklad-data'); } catch {}
+  if (bc) bc.onmessage = async e => {
+    const p = e.data && e.data.p; if (!p) return;
+    const v = await IDB.get(p).catch(() => null);
+    if (v == null) cache.delete(p); else cache.set(p, v);
+    for (const s0 of subs) if (s0.pre ? p.startsWith(s0.pre) : p === s0.p) s0.fn();
+  };
+  const tell = p => { try { if (bc) bc.postMessage({p}); } catch {} };
+  const sorter = q => d => { if (q.order) { const [f, dir] = q.order; d.sort((a, b) => ((a.data[f] > b.data[f]) - (a.data[f] < b.data[f])) * (dir === 'desc' ? -1 : 1)); } return q.limit ? d.slice(0, q.limit) : d; };
+  return {
+    kind: 'local', idb: true,
+    async set(p, data) { await IDB.set(p, data); cache.set(p, data); tell(p); },
+    async del(p) { await IDB.del(p); cache.delete(p); tell(p); },
+    async get(p) { return cache.has(p) ? cache.get(p) : null; },
+    watchColl(name, cb) { const load = () => cb(list(name), false); setTimeout(load, 0); subs.push({pre: name + '/', fn: load}); },
+    watchQuery(name, q, cb) {
+      const load = () => { let d = list(name); if (q.where) { const [f, , v] = q.where; d = d.filter(x => x.data[f] === v); } cb(sorter(q)(d), false); };
+      setTimeout(load, 0); subs.push({pre: name + '/', fn: load});
+    },
+    watchDoc(p, cb) { const load = () => cb(cache.has(p) ? cache.get(p) : null); setTimeout(load, 0); subs.push({p, fn: load}); },
+    async query(name, q) {
+      const ops = {'==': (a, b) => a === b, '>=': (a, b) => a >= b, '<=': (a, b) => a <= b, '<': (a, b) => a < b, '>': (a, b) => a > b};
+      let d = list(name);
+      for (const [f, op, v] of q.where ? (Array.isArray(q.where[0]) ? q.where : [q.where]) : []) d = d.filter(x => ops[op](x.data[f], v));
+      return sorter(q)(d);
+    },
+    // the copy before an update and its return use the same «sklad/…» keys as localStorage did
+    dump(rx) { const o = {}; for (const [p, d] of cache) if (rx.test('sklad/' + p)) o['sklad/' + p] = JSON.stringify(d); return o; },
+    async load(data, rx) {
+      const drop = [...cache.keys()].filter(p => rx.test('sklad/' + p)), put = Object.entries(data).map(([k, v]) => [k.replace(/^sklad\//, ''), JSON.parse(v)]);
+      await run2(drop, put);
+    },
+  };
+  async function run2(drop, put) { for (const p of drop) { await IDB.del(p); cache.delete(p); } await IDB.setMany(put); for (const [p, v] of put) cache.set(p, v); }
 }
 function localBackend() {
   let ls = null;
@@ -3097,6 +3175,7 @@ function checkReady() {
   if (started) return;
   started = true;
   ozKeysRestore().catch(() => {}).finally(() => setTimeout(ozAuto, 1500));
+  setTimeout(fileBackup, 20000);
   const chk = checkData();
   diag('start', `v${APP_VERSION} ${Backend.kind}`, {ua: navigator.userAgent.slice(0, 200), scr: [screen.width, screen.height, devicePixelRatio], vp: [innerWidth, innerHeight], loadMs: Math.round(performance.now() - T0), stock: stock.items.size, lines: lines.items.size, going: [...PUR.values()].filter(x => x.st === 'go').length, photos: PHOTO.size, check: chk});
   if (chk.neg || chk.over || chk.orphan) diag('check', 'странные данные', chk);
@@ -4785,6 +4864,11 @@ function renderSettings() {
     local: ['Данные хранятся только в этом браузере.', 'Если очистить историю браузера, данные пропадут. Раз в неделю нажимайте «Скачать резервную копию».'],
     memory: ['Браузер не сохраняет данные: после закрытия страницы они пропадут.', 'Перед закрытием скачайте остатки в Excel.'],
   };
+  if (Backend && Backend.idb) {
+    if (!STORE_EST && navigator.storage && navigator.storage.estimate) { STORE_EST = {}; navigator.storage.estimate().then(e => { STORE_EST = e || {}; renderSettings(); }).catch(() => {}); }
+    const mb = v => v > 1e9 ? `${nf.format(Math.round(v / 1e8) / 10)} ГБ` : `${nf.format(Math.max(1, Math.round(v / 1e6)))} МБ`;
+    note.local = [`Данные хранятся на этом компьютере${STORE_EST && STORE_EST.quota ? `: занято ${mb(STORE_EST.usage || 0)} из ${mb(STORE_EST.quota)}` : ''}.`, `Данные лежат в большом хранилище браузера (IndexedDB), места хватит на годы работы.${LOCAL_TOKEN ? ' Каждый день программа сама кладёт копию в папку backups рядом с программой: %LOCALAPPDATA%\\UltimateShopSklad\\backups. Вернуть копию — «Загрузить резервную копию».' : ' Раз в неделю нажимайте «Скачать резервную копию».'}`];
+  }
   const nt = Backend && note[Backend.kind];
   setBody($('#storeNote'), nt ? `${esc(nt[0])} ${tip(nt[1])}` : Backend ? '' : 'Подключение к хранилищу…');
   renderTester(); renderDiag(); renderSuppliers(); renderAutoBk();
@@ -6286,6 +6370,17 @@ document.addEventListener('keydown', e => {
 
 // settings
 // full backup: everything the program keeps, in one JSON file
+// a copy of all data in a file on this computer, through the helper: once a day, and again when the data changed
+let fbkEpoch = -1;
+async function fileBackup() {
+  if (!LOCAL_TOKEN || !Backend || Backend.kind !== 'local' || EMP) return;
+  if (lsGet('sklad/fbk') === isoToday() && fbkEpoch === dataEpoch) return;
+  try {
+    const r = await fetch(OZ_RELAY + '/backup', {method: 'POST', headers: {'X-Sklad-Token': LOCAL_TOKEN, 'Content-Type': 'application/json'}, body: JSON.stringify(backupData())});
+    if (r.ok) { fbkEpoch = dataEpoch; lsSet('sklad/fbk', isoToday()); diag('backup', 'file', 'ok'); }
+  } catch {}
+}
+setInterval(() => { if (fbkEpoch !== dataEpoch) fileBackup(); }, 2 * 3600 * 1000);
 function backupData() {
   return {app: 'sklad', ver: APP_VERSION, at: Date.now(),
     stock: [...stock.items.values()].map(stock.o.pack), receipt: [...draft.items.values()].map(draft.o.pack), lines: [...lines.items.values()].map(lines.o.pack),
@@ -6446,7 +6541,7 @@ async function start() {
     [db, DL, SAMPLE] = await Promise.all([use('db'), use('downloads'), use('sample')]);
     $('#hAiBtn').hidden = !SAMPLE;
   }
-  Backend = db ? dbBackend(db) : localBackend();
+  Backend = db ? dbBackend(db) : (await idbBackend()) || localBackend();
   autoBackup();
   subscribe(); renderSettings();
 }
@@ -6468,7 +6563,8 @@ function autoBackup() {
   let b = null;
   try {
     const data = {};
-    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && AUTO_RX.test(k)) data[k] = localStorage.getItem(k); }
+    if (Backend.idb) Object.assign(data, Backend.dump(AUTO_RX));
+    else for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && AUTO_RX.test(k)) data[k] = localStorage.getItem(k); }
     if (Object.keys(data).length) b = {from: last || '', to: APP_VERSION, at: Date.now(), data};
   } catch {}
   lsSet('sklad/ver', APP_VERSION);
@@ -6496,7 +6592,8 @@ function renderAutoBk() {
 document.addEventListener('click', async e => {
   if (!e.target.closest('#autoBkBtn')) return;
   const b = await autoBackupData(); if (!b) { toast('Копии до обновления нет'); return; }
-  confirmIn('#setConfirm', `Вернуть данные, какими они были ${when(b.at)}, перед обновлением? Всё, что вы сделали после этого, пропадёт.`, 'Вернуть', () => {
+  confirmIn('#setConfirm', `Вернуть данные, какими они были ${when(b.at)}, перед обновлением? Всё, что вы сделали после этого, пропадёт.`, 'Вернуть', async () => {
+    if (Backend.idb) { try { await Backend.load(b.data, AUTO_RX); location.reload(); } catch { toast('Не получилось вернуть данные'); } return; }
     try {
       const drop = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && AUTO_RX.test(k)) drop.push(k); }
       for (const k of drop) localStorage.removeItem(k);
@@ -8852,7 +8949,7 @@ document.addEventListener('click', e => {
 $('#ozmShop').addEventListener('change', () => { OZM.shop = $('#ozmShop').value; OZM.data = null; renderOzMoney(); });
 // for the program's own tests: the internals are reachable only when the address ends with ?test
 if (/[?&]test\b/.test(location.search)) window.SK = {parseRaw, parseArt, akey, sheetName, sheetCode, putSup, buyRows, plan, groupModels, stockAdd, render, orderModels, pavText, going, shipsOf, trimmedPage, twinSuggest,
-  get SUP() { return SUP; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }, ozMoney, get OZM() { return OZM; }, ozSync, ozSyncPrices, get OZ() { return OZ; }, get OZR() { return OZR; }, get PHOTO() { return PHOTO; }, tplAll, tplFill, tplStrip, tplGet, u8b64, b64u8, prMakeFile, ozFileMeta, ozShops, ozKeys, diagAll, IDB, get PW() { return PW; }, pwEnsure, pwCatalog, pwAction, pwOpenAction, pwToAction, pwFixActs, pwSaveAll, prSave, prEco, prOut, prInOut, prCanIn, prFl, prProfit, prState, prSellP, prVisible, ozLogi, OZI, withPR, prSet, prSetIn, prIn, prSnapUse, prListParse, prListApply, renderPrices, renderPwHead, renderPwActs, renderGuard, renderPwTabs, renderPwList, prPlan, pwStats, pwG};
+  get SUP() { return SUP; }, get Backend() { return Backend; }, get SENT() { return SENT; }, get ORD() { return ORD; }, get TWIN() { return TWIN; }, get MOVE() { return MOVE; }, get SKIP() { return SKIP; }, get stock() { return stock; }, get PO() { return PO; }, get DAYM() { return DAYM; }, get lines() { return lines; }, loadList, shortModel, sizeShow, prOpen, prPlan, prExpr, prRoleOf, get PR() { return PR; }, get PRS() { return PRS; }, ozMoney, get OZM() { return OZM; }, ozSync, ozSyncPrices, get OZ() { return OZ; }, get OZR() { return OZR; }, get PHOTO() { return PHOTO; }, tplAll, tplFill, tplStrip, tplGet, u8b64, b64u8, prMakeFile, ozFileMeta, ozShops, ozKeys, diagAll, IDB, get PW() { return PW; }, pwEnsure, pwCatalog, pwAction, pwOpenAction, pwToAction, pwFixActs, pwSaveAll, prSave, prEco, prOut, prInOut, prCanIn, prFl, prProfit, prState, prSellP, prVisible, ozLogi, OZI, withPR, prSet, prSetIn, prIn, prSnapUse, prListParse, prListApply, renderPrices, renderPwHead, renderPwActs, renderGuard, renderPwTabs, renderPwList, prPlan, pwStats, pwG};
 start();
 })();
 </script>

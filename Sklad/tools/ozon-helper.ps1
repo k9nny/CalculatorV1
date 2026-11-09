@@ -2,6 +2,7 @@
 # A page opened from a file may not ask api-seller.ozon.ru itself, so the program asks this helper on
 # http://127.0.0.1:37219 and the helper asks Ozon. It listens only on this computer and talks only to
 # api-seller.ozon.ru and to Ozon's picture servers.
+# It keeps the program's daily data copy in the folder backups (30 days).
 # It also keeps a copy of the program's Ozon keys, so an update or a cleared browser does not lose them:
 # the file ozon-keys.dat next to the program, encrypted by Windows for this Windows user. Only the program
 # gets it back: the installer puts a secret into the program and into start.json, and the helper answers
@@ -97,7 +98,8 @@ function Serve($client) {
   $h = @{}
   foreach ($ln in $lines | Select-Object -Skip 1) { $i = $ln.IndexOf(':'); if ($i -gt 0) { $h[$ln.Substring(0, $i).Trim().ToLower()] = $ln.Substring($i + 1).Trim() } }
   $len = 0; if ($h['content-length']) { $len = [int]$h['content-length'] }
-  if ($len -gt 1MB) { Send $stream 400 'text/plain' (Text 'too big'); return }
+  $max = 1MB; if ($path -eq '/backup') { $max = 400MB }
+  if ($len -gt $max) { Send $stream 400 'text/plain' (Text 'too big'); return }
   $body = New-Object byte[] $len
   $have = $all.Length - $end - 4
   if ($have -gt 0) { [Array]::Copy($all, $end + 4, $body, 0, [Math]::Min($have, $len)) }
@@ -108,6 +110,17 @@ function Serve($client) {
   if (($origin -and $origin -ne 'null' -and $origin -notmatch '^file:') -or ($h['host'] -notmatch "^(127\.0\.0\.1|localhost):$Port$")) { Send $stream 403 'text/plain' (Text 'forbidden'); return }
   if ($method -eq 'OPTIONS') { Send $stream 204 'text/plain' $null; return }
   if ($path -eq '/ping') { Send $stream 200 'application/json' (Text '{"ok":true,"v":2}'); return }
+  # the program's daily copy of its data: backups\sklad-<day>.json next to it, the last 30 days kept
+  if ($path -eq '/backup' -and $method -eq 'POST') {
+    if (-not $token -or $h['x-sklad-token'] -cne $token) { Send $stream 403 'text/plain' (Text 'forbidden'); return }
+    try {
+      $dir = Join-Path $here 'backups'; New-Item -ItemType Directory -Force -Path $dir | Out-Null
+      [IO.File]::WriteAllBytes((Join-Path $dir ('sklad-' + (Get-Date -Format 'yyyy-MM-dd') + '.json')), $body)
+      Get-ChildItem -LiteralPath $dir -Filter 'sklad-*.json' | Sort-Object Name -Descending | Select-Object -Skip 30 | Remove-Item -Force -ErrorAction SilentlyContinue
+      Send $stream 204 'text/plain' $null
+    } catch { Send $stream 502 'text/plain' (Text 'no room') }
+    return
+  }
   # the keys' copy: only for the program that knows the secret
   if ($path -eq '/keys') {
     if (-not $token -or -not $h['x-sklad-token'] -or $h['x-sklad-token'] -cne $token) { Send $stream 403 'text/plain' (Text 'forbidden'); return }
