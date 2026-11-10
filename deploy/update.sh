@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Обновление ANDO AVTO из GitHub. Запускается таймером каждые 5 минут (ando-update.timer)
+# Обновление ANDO AUTO из GitHub. Запускается таймером каждые 5 минут (ando-update.timer)
 # и вручную: sudo /opt/ando/deploy/update.sh
 # Код лежит в /opt/ando, данные (каталог, фото, заявки, ролики) — в /var/lib/ando, их обновление не трогает.
 set -euo pipefail

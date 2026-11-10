@@ -314,7 +314,7 @@ function createBot(options) {
     const fromId = String(msg.from && msg.from.id);
     if (!admins.has(fromId)) {
       if (msg.chat.type === 'private') {
-        return send(chatId, 'Здравствуйте! Это бот ANDO AVTO. Каталог машин — по кнопке меню внизу.' +
+        return send(chatId, 'Здравствуйте! Это бот ANDO AUTO. Каталог машин — по кнопке меню внизу.' +
           (appLink ? `\n${appLink}` : ''));
       }
       return null;

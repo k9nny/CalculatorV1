@@ -94,7 +94,7 @@ function createPublishers(cfg) {
     list.push({ name: 'Telegram', post: (item) => telegramVideo(cfg.telegramBotToken, cfg.clipTelegramChannel, item.file, item.caption) });
   }
   if (cfg.vkToken && cfg.vkGroupId) {
-    list.push({ name: 'VK', post: (item) => vkVideo(cfg.vkToken, cfg.vkGroupId, item.file, item.title || 'ANDO AVTO', item.caption) });
+    list.push({ name: 'VK', post: (item) => vkVideo(cfg.vkToken, cfg.vkGroupId, item.file, item.title || 'ANDO AUTO', item.caption) });
   }
   return list;
 }
