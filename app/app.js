@@ -1,4 +1,4 @@
-/* ANDO AVTO — каталог машин с пробегом в мини-приложении Telegram и MAX. */
+/* ANDO AUTO — каталог машин с пробегом в мини-приложении Telegram и MAX. */
 (function () {
   'use strict';
 
@@ -336,7 +336,7 @@
     '<circle cx="100" cy="11" r="1.7" fill="currentColor" stroke="none"/></g></svg>';
 
   function headerHtml() {
-    return '<header class="top"><div class="brand" aria-label="ANDO AVTO">' + WORDMARK + '<span class="brand-sub">AVTO</span></div>' +
+    return '<header class="top"><div class="brand" aria-label="ANDO AUTO">' + WORDMARK + '<span class="brand-sub">AUTO</span></div>' +
       (CFG.phone ? '<a class="icon-btn" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
       '</header>';
   }
@@ -629,7 +629,7 @@
       '<span class="pa-mark market" style="left:' + pos(m) + '%"><em>Рынок<br>' + rub(m) + '</em></span>' +
       '<span class="pa-mark ours" style="left:' + pos(p) + '%"><em>Наша цена<br>' + rub(p) + '</em></span></div>' +
       '<div class="pa-legend"><span class="z-great">Отличная</span><span class="z-good">Хорошая</span><span class="z-fair">По рынку</span><span class="z-high">Выше рынка</span></div>' +
-      '<p class="fine">Рыночная цена — оценка ANDO AVTO по похожим объявлениям (год, пробег, комплектация) на дату публикации.</p></section>';
+      '<p class="fine">Рыночная цена — оценка ANDO AUTO по похожим объявлениям (год, пробег, комплектация) на дату публикации.</p></section>';
   }
 
   // Состояние б/у машины и известные недостатки: о них продавец обязан сообщить (ЗоЗПП, ст. 10).
@@ -873,7 +873,7 @@
 
   function leadText(lead) {
     var car = lead.carId ? byId(lead.carId) : null;
-    var lines = ['Здравствуйте! Заявка из приложения ' + (CFG.brand || 'ANDO AVTO') + '.', LEAD_TITLES[lead.type] || 'Заявка'];
+    var lines = ['Здравствуйте! Заявка из приложения ' + (CFG.brand || 'ANDO AUTO') + '.', LEAD_TITLES[lead.type] || 'Заявка'];
     if (car) lines.push(title(car) + ' — ' + rub(car.price) + ' (№ ' + car.id + ')');
     if (lead.car) {
       var c = lead.car;
