@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Установка ANDO AUTO на чистый сервер Ubuntu 24.04 одной командой:
+# Установка ANDO AVTO на чистый сервер Ubuntu 24.04 одной командой:
 #
 #   curl -fsSL https://raw.githubusercontent.com/k9nny/CalculatorV1/claude/eager-gates-snjxp1/deploy/install.sh -o install.sh && sudo bash install.sh
 #
@@ -41,7 +41,7 @@ if [ -f "$CONF" ]; then
   . "$CONF"
   say "Найдена прошлая установка для $DOMAIN — обновляю, настройки сохраняю."
 else
-  say "Установка ANDO AUTO"
+  say "Установка ANDO AVTO"
   echo "Домен должен быть уже куплен. Если чего-то пока нет — оставьте пустым и нажмите Enter,"
   echo "потом впишете в $ENV_FILE и выполните: sudo systemctl restart ando"
   ask DOMAIN "Домен без https и www (Enter — andoavto.ru)"
@@ -105,7 +105,7 @@ fi
 if [ ! -f "$ENV_FILE" ]; then
   umask 077
   cat > "$ENV_FILE" <<EOF
-# Настройки ANDO AUTO. После правки: sudo systemctl restart ando
+# Настройки ANDO AVTO. После правки: sudo systemctl restart ando
 # Описание всех настроек: /opt/ando/ando-app/.env.example
 PORT=8080
 HOST=127.0.0.1
