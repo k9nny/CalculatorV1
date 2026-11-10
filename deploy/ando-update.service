@@ -1,5 +1,5 @@
 [Unit]
-Description=ANDO AVTO: обновление кода из GitHub
+Description=ANDO AUTO: обновление кода из GitHub
 After=network-online.target
 Wants=network-online.target
 
