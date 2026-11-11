@@ -8,6 +8,7 @@ const path = require('node:path');
 const { validateInitData } = require('./initdata');
 const { validateLead, formatLeadMessage } = require('./leads');
 const { createBot, telegramApi, apiHost } = require('./bot');
+const { createAdmin } = require('./admin');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -259,8 +260,12 @@ function createApp(config = readConfig(), deps = {}) {
     });
   }
 
+  // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
+  const admin = createAdmin(config);
+
   return http.createServer((req, res) => {
     const pathname = (req.url || '/').split('?')[0];
+    if (admin.handle(req, res, pathname)) return;
     if (pathname === '/api/lead') {
       handleLead(req, res).catch(() => json(res, 500, { error: 'Ошибка сервера' }));
       return;

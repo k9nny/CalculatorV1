@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#F4F4F2">
+<title>Кабинет</title>
+<link rel="stylesheet" href="../fonts.css">
+<link rel="stylesheet" href="../ui.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="light">
+
+<section id="login" class="login" hidden>
+  <form id="login-form" class="login-box" autocomplete="on">
+    <h1>Вход</h1>
+    <label class="field">Пароль
+      <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="err" id="login-err" role="alert"></p>
+    <button class="btn btn-primary btn-block" type="submit">Войти</button>
+  </form>
+</section>
+
+<div id="app" hidden>
+  <header class="top">
+    <strong class="top-title">ANDO AUTO · кабинет</strong>
+    <button class="btn btn-ghost top-out" type="button" id="logout">Выйти</button>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" data-tab="add" aria-selected="true">Добавить</button>
+    <button type="button" role="tab" data-tab="cars" aria-selected="false">Машины</button>
+    <button type="button" role="tab" data-tab="leads" aria-selected="false">Заявки</button>
+  </nav>
+
+  <main class="wrap">
+    <section data-pane="add">
+      <div class="block">
+        <h2>Фото</h2>
+        <p class="hint">До 15 штук. Первое — обложка. Нажмите на фото, чтобы сделать его обложкой; ✕ — убрать.</p>
+        <div class="photos" id="photos"></div>
+        <label class="btn btn-ghost btn-block pick">
+          <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" multiple hidden>
+          Выбрать фото
+        </label>
+      </div>
+
+      <div class="block">
+        <h2>Текст объявления</h2>
+        <p class="hint">Как в обычном объявлении. Обязательно: марка, модель, год, цена, пробег. Недостатки пишите всегда, даже «недостатки нет».</p>
+        <label class="field">
+          <textarea id="text" rows="12" placeholder="Kia Rio 2019, 1.6 АКПП 123 л.с.
+Пробег 74 000 км
+Цена 1 390 000
+Рынок 1 480 000
+2 владельца, ПТС оригинал, белый седан
+Опции: подогрев сидений, камера, круиз
+Недостатки: скол на капоте
+ДТП: нет
+Залог: нет"></textarea>
+        </label>
+        <p class="lack" id="lack"></p>
+      </div>
+
+      <div class="block">
+        <h2>Как будет выглядеть</h2>
+        <div id="preview" class="preview"><p class="hint">Начните писать текст — здесь появится карточка.</p></div>
+      </div>
+
+      <p class="err" id="add-err" role="alert"></p>
+      <button class="btn btn-primary btn-block" type="button" id="publish" disabled>Опубликовать</button>
+    </section>
+
+    <section data-pane="cars" hidden>
+      <div class="list" id="cars"></div>
+      <button class="btn btn-ghost btn-block" type="button" id="cleardemo" hidden>Убрать демо-объявления</button>
+    </section>
+
+    <section data-pane="leads" hidden>
+      <div class="list" id="leads"></div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="../card.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
