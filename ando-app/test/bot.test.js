@@ -153,3 +153,27 @@ test('разбор: состояние, опции и проверки по VIN'
   assert.deepEqual(bad.history, { accidents: 2, pledge: true });
   assert.deepEqual(bad.defects, []);
 });
+
+test('бот: /delete убирает машину из каталога вместе с фото', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-del-'));
+  const carsFile = path.join(dir, 'cars.json');
+  const photosDir = path.join(dir, 'img');
+  fs.mkdirSync(photosDir);
+  fs.writeFileSync(path.join(photosDir, '300-1.jpg'), 'x');
+  fs.writeFileSync(carsFile, JSON.stringify({ cars: [
+    { id: '300', make: 'Kia', model: 'Rio', year: 2019, price: 1, mileage: 1, photos: ['img/cars/300-1.jpg'] },
+    { id: '301', make: 'Lada', model: 'Vesta', year: 2021, price: 1, mileage: 1, photos: [] }
+  ] }));
+  const sent = [];
+  const api = { request: async (m, p) => { if (m === 'sendMessage') sent.push(p.text); return {}; }, download: async () => Buffer.from('') };
+  const bot = createBot({ api, adminIds: ['7'], carsFile, photosDir, debounceMs: 0 });
+  const msg = (text, from = 7) => ({ message: { chat: { id: from, type: 'private' }, from: { id: from }, text } });
+  await bot.handleUpdate(msg('/delete 300', 99)); // чужой не может
+  assert.equal(JSON.parse(fs.readFileSync(carsFile, 'utf8')).cars.length, 2);
+  await bot.handleUpdate(msg('/delete 300'));
+  assert.deepEqual(JSON.parse(fs.readFileSync(carsFile, 'utf8')).cars.map((c) => c.id), ['301']);
+  assert.equal(fs.existsSync(path.join(photosDir, '300-1.jpg')), false);
+  assert.match(sent[sent.length - 1], /удалена из каталога/);
+  await bot.handleUpdate(msg('/delete 999'));
+  assert.match(sent[sent.length - 1], /нет в каталоге/);
+});

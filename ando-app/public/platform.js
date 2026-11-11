@@ -109,7 +109,7 @@
   function applyTelegramTheme() {
     root.setAttribute('data-scheme', SCHEME);
     // Шапка и фон Telegram — в цвет приложения, а не в тему мессенджера.
-    var bg = getComputedStyle(root).getPropertyValue('--bg').trim() || '#F2F0EF';
+    var bg = getComputedStyle(root).getPropertyValue('--bg').trim() || '#F4F4F2';
     call(function () { return sdk.setHeaderColor(bg); });
     call(function () { return sdk.setBackgroundColor(bg); });
     call(function () { return sdk.setBottomBarColor && sdk.setBottomBarColor(bg); });

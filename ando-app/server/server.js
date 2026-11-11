@@ -19,6 +19,7 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.woff2': 'font/woff2',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8'
 };
@@ -29,7 +30,7 @@ const SECURITY_HEADERS = {
   // Встраивание не запрещаем: веб-версии Telegram и MAX открывают приложение во фрейме.
   'Content-Security-Policy':
     "default-src 'self'; script-src 'self' https://telegram.org https://st.max.ru; " +
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; base-uri 'none'; form-action 'self'"
+    "style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; base-uri 'none'; form-action 'self'"
 };
 
 function readConfig(env = process.env) {

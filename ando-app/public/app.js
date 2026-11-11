@@ -5,6 +5,19 @@
   var CFG = window.ANDO_CONFIG || {};
   var P = window.AndoPlatform;
   var app = document.getElementById('app');
+  // Карточка, иконки и форматирование — общие с сайтом (card.js).
+  var UI = window.AndoCard;
+  var icon = UI.icon, esc = UI.esc, num = UI.num, rub = UI.rub, plural = UI.plural, title = UI.title,
+    rating = UI.rating, photos = UI.photos;
+  var root = document.documentElement;
+  var reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if (document.startViewTransition && !reduced) root.classList.add('vt');
+
+  // Смена состояния с переходом: карточки переезжают на новые места, фото карточки разворачивается в галерею.
+  function transition(update) {
+    if (!root.classList.contains('vt')) { update(); return; }
+    try { document.startViewTransition(update); } catch (e) { update(); }
+  }
 
   // ---------- Справочники ----------
   var OPTIONS = {
@@ -40,62 +53,14 @@
   };
   // Рассрочка: кнопка открывает анкету, заявка уходит менеджеру, он перезванивает.
   var CREDIT = Object.assign({ enabled: true, partners: '' }, CFG.credit || {});
-  var CAR_COLORS = {
-    'Белый': '#E9ECEF', 'Чёрный': '#2B2F36', 'Серый': '#80868F', 'Серебристый': '#B9BEC6', 'Синий': '#2F5DA8',
-    'Голубой': '#6FA8DC', 'Красный': '#B3262E', 'Бордовый': '#6E1F2A', 'Коричневый': '#7A5639', 'Бежевый': '#CDBA96',
-    'Зелёный': '#3D6B4F', 'Жёлтый': '#E0B532', 'Оранжевый': '#D9772B', 'Фиолетовый': '#5E4A8C'
-  };
 
-  // ---------- Иконки ----------
-  function icon(name) {
-    var paths = {
-      search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
-      phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/>',
-      heart: '<path d="M12 20.5s-7.5-4.6-7.5-10.1A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.5 2.8c0 5.5-7.5 10.1-7.5 10.1z"/>',
-      grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>',
-      tag: '<path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.5 1.5 0 0 1 0 2.1l-6.6 6.6a1.5 1.5 0 0 1-2.1 0z"/><circle cx="8" cy="8" r="1.5"/>',
-      sliders: '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
-      camera: '<path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
-      back: '<path d="M15 5l-7 7 7 7"/>',
-      close: '<path d="M6 6l12 12M18 6L6 18"/>',
-      check: '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16.5 9.5"/>',
-      share: '<path d="M12 15V4M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/>',
-      chat: '<path d="M20 12a8 8 0 0 1-11.5 7.2L4 20l.9-4.2A8 8 0 1 1 20 12z"/>',
-      key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l2 2M14 9l2 2"/>',
-      gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 13l3.5-4"/><circle cx="12" cy="13" r="1.2"/>',
-      gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/>',
-      pin: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
-      shield: '<path d="M12 3l7 3v5.5c0 4.4-3 8-7 9.5-4-1.5-7-5.1-7-9.5V6z"/><path d="M9 12l2 2 4-4"/>',
-      warn: '<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17.2v.1"/>',
-      ruble: '<path d="M8 20V4h5.5a4 4 0 0 1 0 8H6M6 16h8"/>',
-      left: '<path d="M14.5 6l-6 6 6 6"/>',
-      right: '<path d="M9.5 6l6 6-6 6"/>',
-      spark: '<path d="M12 3v5M12 16v5M3 12h5M16 12h5"/>',
-      car: '<path d="M4 16v-3.5L6 8a2 2 0 0 1 1.8-1.2h8.4A2 2 0 0 1 18 8l2 4.5V16"/><path d="M3 16h18v2H3z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/>'
-    };
-    return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[name] + '</svg>';
-  }
 
   // ---------- Утилиты ----------
-  function esc(value) {
-    return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
-    });
-  }
-  function num(n) { return Math.round(n).toLocaleString('ru-RU').replace(/[\u00a0\u2009]/g, '\u202f'); } // узкий неразрывный пробел
-  function rub(n) { return num(n) + ' ₽'; }
   function norm(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е').trim(); }
-  function plural(n, one, few, many) {
-    var m10 = n % 10, m100 = n % 100;
-    if (m10 === 1 && m100 !== 11) return one;
-    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-    return many;
-  }
   function byId(id) {
     for (var i = 0; i < S.cars.length; i++) if (String(S.cars[i].id) === String(id)) return S.cars[i];
     return null;
   }
-  function title(car) { return car.make + ' ' + car.model + ', ' + car.year; }
   function store(key, value) {
     try {
       if (value === undefined) return JSON.parse(localStorage.getItem('ando:' + key) || 'null');
@@ -119,17 +84,6 @@
   }
 
   // Оценка цены относительно рыночной: рыночную цену вносит менеджер (например, по оценке Дрома).
-  function rating(car) {
-    if (!car.marketPrice || !car.price) return null;
-    var r = car.price / car.marketPrice;
-    var diff = Math.round((1 - r) * 100);
-    var below = car.marketPrice - car.price;
-    var vs = below > 0 ? rub(below) + ' ниже рынка' : below < 0 ? rub(-below) + ' выше рынка' : 'по рынку';
-    if (r <= 0.93) return { cls: 'great', label: 'Отличная цена', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
-    if (r <= 1) return { cls: 'good', label: 'Хорошая цена', vs: vs, note: diff >= 1 ? 'На ' + diff + '% ниже рыночной оценки' : 'На уровне рыночной оценки' };
-    if (r <= 1.05) return { cls: 'fair', label: 'Цена по рынку', vs: vs, note: 'Немного выше средней рыночной оценки' };
-    return null;
-  }
 
   // История машины по базам ГИБДД, реестру залогов и сервисам проверки — что внёс менеджер.
   function historyRows(car) {
@@ -144,36 +98,9 @@
     if (h.mileageOk != null) rows.push(h.mileageOk ? [true, 'Пробег', 'Без скруток по базам'] : [false, 'Пробег', 'Есть расхождения']);
     return rows;
   }
-  function historyShort(car) {
-    var h = car.history || {};
-    var out = [];
-    if (h.accidents === 0) out.push('Без ДТП');
-    if (car.owners) out.push(car.owners + '\u00a0' + plural(car.owners, 'владелец', 'владельца', 'владельцев'));
-    if (h.pledge === false && h.restrictions === false) out.push('Без залогов и ограничений');
-    return out.join(' · ');
-  }
-  function isNew(car) {
-    if (!car.publishedAt) return false;
-    return (Date.now() - new Date(car.publishedAt).getTime()) / 864e5 < 3;
-  }
 
 
   // Заглушка вместо фото: силуэт машины в её цвете.
-  function placeholder(car) {
-    var dark = document.documentElement.getAttribute('data-scheme') !== 'light';
-    var bg = dark ? ['#17191C', '#0B0C0E'] : ['#E4E5E8', '#C9CBD0'];
-    var body = CAR_COLORS[car.color] || '#80868F';
-    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">' +
-      '<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + bg[0] + '"/><stop offset="1" stop-color="' + bg[1] + '"/></linearGradient></defs>' +
-      '<rect width="400" height="300" fill="url(#g)"/><g transform="translate(0 22)"><ellipse cx="205" cy="192" rx="170" ry="10" fill="#000" opacity=".12"/>' +
-      '<path d="M40 170 L62 140 Q72 128 92 126 L142 121 L176 92 Q186 84 202 84 L270 84 Q285 84 296 94 L326 121 L350 126 Q368 130 372 146 L376 170 Q376 178 368 178 L48 178 Q40 178 40 170 Z" fill="' + body + '" stroke="#000" stroke-opacity=".25"/>' +
-      '<path d="M152 121 L181 97 Q187 92 197 92 L232 92 L232 121 Z M242 92 L268 92 Q280 92 288 100 L310 121 L242 121 Z" fill="#2B3440" opacity=".82"/>' +
-      '<g fill="#1C1F24"><circle cx="110" cy="178" r="25"/><circle cx="300" cy="178" r="25"/></g>' +
-      '<g fill="#AEB4BD"><circle cx="110" cy="178" r="11"/><circle cx="300" cy="178" r="11"/></g></g>' +
-      '<text x="200" y="252" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" letter-spacing="3" fill="#6B6B73">ФОТО СКОРО</text></svg>';
-    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
-  }
-  function photos(car) { return car.photos && car.photos.length ? car.photos : [placeholder(car)]; }
 
   // ---------- Состояние ----------
   function emptyFilters() {
@@ -272,6 +199,11 @@
       try { history.pushState({ andoCar: String(carId) }, '', '?car=' + encodeURIComponent(carId)); } catch (e) { /* без истории */ }
     }
     syncBack();
+    return layer;
+  }
+  function dropLayer(layer) {
+    var i = layers.indexOf(layer);
+    if (i !== -1) { layers.splice(i, 1); syncBack(); }
   }
   function closeTop() {
     var top = layers[layers.length - 1];
@@ -336,17 +268,30 @@
     '<circle cx="100" cy="11" r="1.7" fill="currentColor" stroke="none"/></g></svg>';
 
   function headerHtml() {
-    return '<header class="top"><div class="brand" aria-label="ANDO AUTO">' + WORDMARK + '<span class="brand-sub">AUTO</span></div>' +
-      (CFG.phone ? '<a class="icon-btn" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
-      '</header>';
+    // В браузере логотип ведёт на сайт; в мессенджере сайт не нужен.
+    var site = P.client === 'web' ? (/\/app\/$/.test(location.pathname) ? '../' : CFG.siteUrl) : '';
+    var brand = WORDMARK + '<span class="brand-sub">AUTO</span>';
+    return '<header class="top"><div class="top-in">' +
+      (site ? '<a class="brand" href="' + esc(site) + '" aria-label="ANDO AUTO, на сайт">' + brand + '</a>' : '<div class="brand" aria-label="ANDO AUTO">' + brand + '</div>') +
+      (CFG.phone ? '<a class="top-phone" href="tel:' + esc(CFG.phone) + '">' + esc(CFG.phoneLabel || CFG.phone) + '</a>' +
+        '<a class="icon-btn" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
+      '</div></header>';
+  }
+
+  // Продавец и политика — внизу каждого экрана (ЗоЗПП, ст. 9).
+  function footHtml() {
+    var sl = CFG.seller || {};
+    var parts = [sl.name, sl.inn ? 'ИНН ' + sl.inn : '', sl.ogrnip ? 'ОГРНИП ' + sl.ogrnip : '', sl.registered].filter(Boolean);
+    return '<footer class="foot">' + (parts.length ? '<p>' + esc(parts.join(', ')) + '</p>' : '') +
+      '<a href="' + esc(CFG.privacyUrl || 'privacy.html') + '" data-action="privacy">Политика обработки персональных данных</a></footer>';
   }
 
   function renderTab() {
     var screen = document.getElementById('screen');
     if (S.tab === 'catalog') {
       screen.innerHTML = headerHtml() +
-        '<section class="intro"><h1>Машины <span class="hot">в продаже</span></h1></section>' +
-        (S.demo ? '<p class="demo-note">Демо-объявления для проверки приложения. Замените их своими машинами в data/cars.json.</p>' : '') +
+        '<section class="intro"><h1>Машины <span class="hot">в продаже</span></h1>' +
+        (S.demo ? '<p class="demo-note">Объявления демонстрационные</p>' : '') + '</section>' +
         '<label class="search">' + icon('search') +
         '<input id="q" type="search" placeholder="Марка или модель" value="' + esc(S.query) + '" enterkeyhint="search" autocomplete="off" aria-label="Поиск по марке и модели"></label>' +
         '<div class="chips" id="chips"></div>' +
@@ -354,7 +299,7 @@
         '<select class="sort" id="sort" aria-label="Сортировка">' + SORTS.map(function (s) {
           return '<option value="' + s[0] + '"' + (S.sort === s[0] ? ' selected' : '') + '>' + s[1] + '</option>';
         }).join('') + '</select></div>' +
-        '<div class="cards" id="list"></div>';
+        '<div class="cards" id="list"></div>' + footHtml();
       renderChips();
       renderList();
     } else if (S.tab === 'favorites') {
@@ -365,7 +310,7 @@
           : '<div class="empty">' + icon('heart') + '<strong>Пока пусто</strong><span>Нажмите на сердечко на карточке, чтобы сохранить машину.</span>' +
             '<button class="btn btn-ghost" data-action="tab" data-tab="catalog">Открыть каталог</button></div>');
     } else {
-      screen.innerHTML = headerHtml() + sellHtml();
+      screen.innerHTML = headerHtml() + sellHtml() + footHtml();
       startRotator();
     }
     if (S.tab === 'favorites') reveal(screen.querySelector('.cards'));
@@ -382,7 +327,7 @@
       }).join('');
   }
 
-  function renderList() {
+  function renderList(instant) {
     var list = sorted(S.cars.filter(matches));
     document.getElementById('found').textContent = list.length
       ? 'Найдено ' + list.length + ' ' + plural(list.length, 'автомобиль', 'автомобиля', 'автомобилей')
@@ -397,7 +342,7 @@
         '<button class="btn btn-ghost" data-action="reset-all">Сбросить фильтры</button></div>');
     }
     document.getElementById('list').innerHTML = html.join('');
-    reveal(document.getElementById('list'));
+    reveal(document.getElementById('list'), instant);
   }
 
   // Карточки проявляются снизу вверх по мере прокрутки, соседние — с небольшой задержкой.
@@ -414,10 +359,10 @@
       });
     }, { rootMargin: '0px 0px -8% 0px' });
   }
-  function reveal(container) {
+  function reveal(container, instant) {
     if (!container) return;
     Array.prototype.forEach.call(container.children, function (el) {
-      if (!observer) { el.classList.add('in'); return; }
+      if (!observer || instant) { el.classList.add('in'); return; }
       el.classList.add('reveal');
       observer.observe(el);
     });
@@ -425,46 +370,13 @@
 
   // Карточка как на Edmunds: листаемые фото; слева название, справа цена и оценка рынка;
   // факты с иконками; опции плашками; кнопки заявки.
+
   function cardHtml(car) {
-    var r = rating(car);
-    var ph = photos(car).slice(0, 8);
-    var reserved = car.status === 'reserved';
-    var e = car.engine || {};
-    var hist = historyShort(car);
-    var facts = [
-      ['gauge', num(car.mileage) + ' км'],
-      ['gear', [e.volume ? Number(e.volume).toFixed(1) + ' л' : '', e.power ? e.power + ' л.с.' : '', car.transmission, car.drive ? car.drive.toLowerCase() + ' привод' : '']
-        .filter(Boolean).join(' · ')],
-      ['shield', hist],
-      ['pin', car.city]
-    ].filter(function (f) { return f[1]; });
-    var chips = (car.features && car.features.length ? car.features : (car.serviceDone || [])).slice(0, 5);
-    var open = ' data-action="open" data-id="' + esc(car.id) + '"';
-    return '<article class="card' + (reserved ? ' is-reserved' : '') + '">' +
-      '<div class="card-media"' + open + '>' +
-      '<div class="card-track">' + ph.map(function (src, i) {
-        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + (i ? ', фото ' + (i + 1) : '') + '"' + (i ? ' loading="lazy"' : ' loading="lazy" decoding="async"') + '>';
-      }).join('') + '</div>' +
-      (ph.length > 1
-        ? '<button class="media-arrow prev" data-action="slide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +
-          '<button class="media-arrow next" data-action="slide" data-dir="1" aria-label="Следующее фото">' + icon('right') + '</button>' +
-          '<div class="card-dots">' + ph.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>'
-        : '') +
-      (reserved ? '<span class="status">Забронирована</span>' : isNew(car) ? '<span class="status new">' + icon('spark') + 'Новое</span>' : '') +
-      '</div>' + favButton(car.id) +
-      '<div class="card-body">' +
-      '<div class="card-head"' + open + '>' +
-      '<div class="card-name"><h3 class="card-title"><a href="?car=' + encodeURIComponent(car.id) + '">' + car.year + ' ' + esc(car.make + ' ' + car.model) + '</a></h3>' +
-      '<p class="card-trim">' + esc([car.generation, car.trim, car.body].filter(Boolean).join(' · ')) + '</p></div>' +
-      '<div class="card-price"><span class="price">' + rub(car.price) + '</span>' +
-      (r ? '<span class="deal ' + r.cls + '">' + icon('car') + r.label + '</span><span class="vs">' + esc(r.vs) + '</span>' : '') +
-      '</div></div>' +
-      '<ul class="facts">' + facts.map(function (f) { return '<li>' + icon(f[0]) + '<span>' + esc(f[1]) + '</span></li>'; }).join('') + '</ul>' +
-      (chips.length ? '<div class="opts">' + chips.map(function (c) { return '<span class="opt">' + esc(c) + '</span>'; }).join('') + '</div>' : '') +
-      '<div class="card-actions">' +
-      '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
-      (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В рассрочку</button>' : '') +
-      '</div></div></article>';
+    return UI.cardHtml(car, {
+      fav: favButton(car.id),
+      actions: '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
+        (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В рассрочку</button>' : '')
+    });
   }
 
   function favButton(id) {
@@ -511,18 +423,27 @@
       ['shield', 'Владельцев', car.owners ? String(car.owners) : '']
     ].filter(function (x) { return x[2]; });
 
-    page.innerHTML = '<div class="page-in">' +
-      '<div class="gallery"><button class="page-back" data-action="back">' + icon('back') + 'Назад</button>' +
+    var real = !!(car.photos && car.photos.length);
+    var html = '<div class="page-in">' +
+      '<div class="gallery dark"><button class="page-back" data-action="back">' + icon('back') + 'Назад</button>' +
       '<div class="gallery-track" id="gtrack">' + ph.map(function (src, i) {
-        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + ', фото ' + (i + 1) + '"' + (i ? ' loading="lazy"' : '') + '>';
+        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + ', фото ' + (i + 1) + '"' + (i ? ' loading="lazy"' : '') +
+          (real ? ' data-action="zoom" data-id="' + esc(car.id) + '" data-index="' + i + '"' : '') + '>';
       }).join('') + '</div>' +
-      (ph.length > 1 ? '<div class="gallery-dots" id="gdots">' + ph.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>' : '') +
+      (ph.length > 1
+        ? '<button class="g-arrow prev" data-action="gslide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +
+          '<button class="g-arrow next" data-action="gslide" data-dir="1" aria-label="Следующее фото">' + icon('right') + '</button>' +
+          '<span class="g-count" id="gcount">1 / ' + ph.length + '</span>' +
+          '<div class="gallery-dots" id="gdots">' + ph.map(function (_, i) { return '<i' + (i ? '' : ' class="on"') + '></i>'; }).join('') + '</div>'
+        : '') +
+      (real ? '<button class="g-zoom" data-action="zoom" data-id="' + esc(car.id) + '" data-index="0" aria-label="Открыть фото на весь экран">' + icon('zoom') + '</button>' : '') +
       favButton(car.id) + '</div>' +
+      '<div class="page-col">' +
 
       '<section class="block"><h1 class="d-title">' + car.year + ' ' + esc(car.make + ' ' + car.model) + '</h1>' +
       '<p class="d-trim">' + esc([car.generation, car.trim, car.body].filter(Boolean).join(' · ')) + '</p>' +
       '<div class="d-price"><span class="price">' + rub(car.price) + '</span>' +
-      (r ? '<span class="deal ' + r.cls + '">' + icon('car') + r.label + '</span>' : '') + '</div>' +
+      (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span>' : '') + '</div>' +
       (r ? '<p class="d-note">' + esc(r.vs.charAt(0).toUpperCase() + r.vs.slice(1)) + '</p>' : '') +
       (car.status === 'reserved' ? '<p class="d-reserved">Машина забронирована. Оставьте заявку — сообщим, если бронь снимут.</p>' : '') +
       '<div class="summary">' + summary.map(function (x) {
@@ -578,7 +499,7 @@
       '<section class="block d-foot"><span>Объявление № ' + esc(car.id) + (car.publishedAt ? ' · ' + esc(formatDate(car.publishedAt)) : '') + '</span>' +
       '<button class="link-btn" data-action="share" data-id="' + esc(car.id) + '">' + icon('share') + 'Поделиться</button></section>' +
       sellerHtml() +
-      '</div>' +
+      '</div></div>' +
 
       '<div class="action-bar"><div class="action-bar-in">' +
       (CFG.phone ? '<a class="btn btn-ghost btn-icon" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
@@ -586,28 +507,64 @@
       '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
       '</div></div>';
 
-    page.hidden = false;
-    page.scrollTop = 0;
-    var track = document.getElementById('gtrack');
-    var dots = document.getElementById('gdots');
-    if (track && dots) {
-      track.addEventListener('scroll', function () {
-        var i = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
-        Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
-      }, { passive: true });
-    }
-    // Блоки страницы проявляются по очереди, цена «набегает».
-    Array.prototype.forEach.call(page.querySelectorAll('.block, .d-foot'), function (el, i) {
-      el.style.setProperty('--d', (0.12 + i * 0.07) + 's');
+    transition(function () {
+      root.classList.add('detail-open');
+      page.innerHTML = html;
+      page.hidden = false;
+      page.scrollTop = 0;
+      page.querySelector('.gallery').style.viewTransitionName = UI.vtName(car.id);
+      var track = document.getElementById('gtrack');
+      var dots = document.getElementById('gdots');
+      var count = document.getElementById('gcount');
+      var zoom = page.querySelector('.g-zoom');
+      if (track && dots) {
+        track.addEventListener('scroll', function () {
+          var i = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
+          Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
+          if (count) count.textContent = (i + 1) + ' / ' + dots.children.length;
+          if (zoom) zoom.setAttribute('data-index', i);
+        }, { passive: true });
+      }
+      // Блоки страницы проявляются по очереди, цена «набегает».
+      Array.prototype.forEach.call(page.querySelectorAll('.block, .d-foot'), function (el, i) {
+        el.style.setProperty('--d', (0.08 + i * 0.05) + 's');
+      });
+      countUp(page.querySelector('.d-price .price'), car.price);
+      page.classList.add('enter');
     });
-    countUp(page.querySelector('.d-price .price'), car.price);
-    page.classList.remove('leave');
-    page.classList.add('enter');
     openLayer(function () {
-      page.classList.remove('enter');
-      page.classList.add('leave');
-      setTimeout(function () { if (page.classList.contains('leave')) { page.hidden = true; page.innerHTML = ''; page.classList.remove('leave'); } }, 300);
+      transition(function () {
+        page.hidden = true;
+        page.innerHTML = '';
+        page.classList.remove('enter');
+        root.classList.remove('detail-open');
+      });
     }, car.id);
+  }
+
+  // Фото на весь экран с увеличением — PhotoSwipe (MIT), https://github.com/dimsemenov/PhotoSwipe
+  function openZoom(car, index) {
+    if (!car || !car.photos || !car.photos.length) return;
+    var sized = photos(car).map(function (src) {
+      return new Promise(function (resolve) {
+        var im = new Image();
+        im.onload = function () { resolve({ src: src, width: im.naturalWidth, height: im.naturalHeight }); };
+        im.onerror = function () { resolve(null); };
+        im.src = src;
+      });
+    });
+    Promise.all([import('./vendor/photoswipe/photoswipe.esm.min.js'), Promise.all(sized)]).then(function (res) {
+      var items = res[1].filter(Boolean);
+      if (!items.length) return;
+      var pswp = new res[0].default({
+        dataSource: items, index: Math.min(index, items.length - 1), bgOpacity: 1, showHideAnimationType: 'fade', loop: items.length > 2,
+        closeTitle: 'Закрыть', zoomTitle: 'Увеличить', arrowPrevTitle: 'Предыдущее фото', arrowNextTitle: 'Следующее фото', errorMsg: 'Фото не загрузилось'
+      });
+      var byBack = false;
+      var layer = openLayer(function () { byBack = true; pswp.close(); });
+      pswp.on('destroy', function () { if (!byBack) dropLayer(layer); });
+      pswp.init();
+    }).catch(function () { toast('Не получилось открыть фото'); });
   }
 
   // Анализ цены: шкала рынка, где стоит наша цена и средняя рыночная.
@@ -618,7 +575,7 @@
     var zones = [[lo, m * 0.93, 'great'], [m * 0.93, m, 'good'], [m, m * 1.05, 'fair'], [m * 1.05, hi, 'high']];
     var r = rating(car);
     return '<section class="block"><h2>Анализ цены</h2>' +
-      '<p class="pa-lead">' + (r ? '<span class="deal ' + r.cls + '">' + icon('car') + r.label + '</span>' : '') + '</p>' +
+      '<p class="pa-lead">' + (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span>' : '') + '</p>' +
       '<p class="pa-text">' + (p < m
         ? 'Цена на <b>' + rub(m - p) + '</b> ниже средней рыночной (' + Math.round((1 - p / m) * 100) + '%).'
         : p > m ? 'Цена на ' + rub(p - m) + ' выше средней рыночной.' : 'Цена равна средней рыночной.') + '</p>' +
@@ -976,6 +933,13 @@
     var action = target.getAttribute('data-action');
     var id = target.getAttribute('data-id');
     switch (action) {
+      case 'zoom':
+        openZoom(byId(id), +target.getAttribute('data-index') || 0);
+        break;
+      case 'gslide':
+        var gt = document.getElementById('gtrack');
+        gt.scrollBy({ left: gt.clientWidth * +target.getAttribute('data-dir'), behavior: 'smooth' });
+        break;
       case 'open':
         event.preventDefault();
         // Из «Похожих» на открытой странице: закрываем текущую и открываем новую.
@@ -991,8 +955,7 @@
       case 'quick':
         S.quick = target.getAttribute('data-key');
         P.haptic('select');
-        renderChips();
-        renderList();
+        transition(function () { renderChips(); renderList(true); });
         break;
       case 'reset-all':
         S.filters = emptyFilters(); S.quick = 'all'; S.query = '';
@@ -1015,8 +978,7 @@
       case 'filters-apply':
         S.filters = draft;
         closeTop();
-        renderChips();
-        renderList();
+        transition(function () { renderChips(); renderList(true); });
         break;
       case 'condition':
         target.parentNode.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', String(b === target)); });
@@ -1027,12 +989,6 @@
         openLead(target.getAttribute('data-type'), id, target.getAttribute('data-comment'));
         break;
       case 'credit': event.preventDefault(); openCredit(id); break;
-      case 'slide':
-        event.preventDefault();
-        event.stopPropagation();
-        var tr = target.parentNode.querySelector('.card-track');
-        tr.scrollBy({ left: tr.clientWidth * +target.getAttribute('data-dir'), behavior: 'smooth' });
-        break;
       case 'more-feats':
         document.getElementById('feats').classList.remove('is-clipped');
         target.remove();
@@ -1067,18 +1023,10 @@
     }
   });
   app.addEventListener('change', function (event) {
-    if (event.target.id === 'sort') { S.sort = event.target.value; renderList(); }
+    if (event.target.id === 'sort') { S.sort = event.target.value; transition(function () { renderList(true); }); }
     else if (event.target.hasAttribute('data-filter')) { draft[event.target.getAttribute('data-filter')] = event.target.value; updateApplyButton(); }
   });
-  // Точки под фото в карточке следуют за прокруткой.
-  app.addEventListener('scroll', function (event) {
-    var tr = event.target;
-    if (!tr.classList || !tr.classList.contains('card-track')) return;
-    var dots = tr.parentNode.querySelector('.card-dots');
-    if (!dots) return;
-    var i = Math.round(tr.scrollLeft / Math.max(tr.clientWidth, 1));
-    Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
-  }, true);
+  UI.bindSlides(app);
 
   app.addEventListener('submit', function (event) {
     event.preventDefault();

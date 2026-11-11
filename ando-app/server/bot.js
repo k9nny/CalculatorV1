@@ -102,6 +102,7 @@ const HELP = [
   '/list — машины в каталоге',
   '/reserve 101 — забронирована · /sold 101 — продана (скрыть) · /available 101 — снова в продаже',
   '/price 101 1350000 — новая цена',
+  '/delete 101 — удалить объявление совсем, вместе с фото',
   '/cleardemo — убрать демо-объявления',
   '/video 101 — заново сделать ролики по машине · /queue — очередь роликов',
   '/cancel — удалить черновик'
@@ -180,7 +181,7 @@ function createBot(options) {
     drafts.delete(chatId);
     const link = appLink ? `${appLink}${appLink.includes('?') ? '&' : '?'}startapp=car_${id}` : '';
     const lostPhotos = draft.photos.length - photos.length;
-    let report = `Опубликовано: объявление № ${id}. Машина уже в приложении.`;
+    let report = `Опубликовано: объявление № ${id}. Машина уже в приложении и на сайте.`;
     if (lostPhotos) report += `\nНе удалось сохранить фото: ${lostPhotos}.`;
     if (link) report += `\nСсылка на машину: ${link}`;
     report += '\n\nТекст для канала:\n\n' + channelPost(car, link);
@@ -277,6 +278,20 @@ function createBot(options) {
     if (['/sold', '/reserve', '/available'].includes(name)) {
       if (!args[0]) return send(chatId, `Укажите номер: ${name} 101`);
       return setStatus(chatId, args[0], { '/sold': 'sold', '/reserve': 'reserved', '/available': 'available' }[name]);
+    }
+    if (name === '/delete' || name === '/remove') {
+      if (!args[0]) return send(chatId, 'Укажите номер: /delete 101');
+      const catalog = readCatalog(carsFile);
+      const car = catalog.cars.find((c) => String(c.id) === args[0]);
+      if (!car) return send(chatId, `Машины № ${esc(args[0])} нет в каталоге. /list — список.`);
+      catalog.cars = catalog.cars.filter((c) => c !== car);
+      writeCatalog(carsFile, catalog, now());
+      // Фото, которые загрузил бот, лежат в photosDir под именами «номер-n.jpg».
+      for (const src of car.photos || []) {
+        if (!src.startsWith(photosUrlPrefix)) continue;
+        try { fs.unlinkSync(path.join(photosDir, path.basename(src))); } catch { /* файла уже нет */ }
+      }
+      return send(chatId, `№ ${esc(car.id)} ${esc(car.make)} ${esc(car.model)} удалена из каталога: на сайте и в приложении её больше нет.`);
     }
     if (name === '/price') {
       const price = Number(String(args.slice(1).join('')).replace(/\D/g, ''));
