@@ -105,7 +105,7 @@
   // base — где лежит приложение относительно страницы ('' в приложении, 'app/' на сайте).
   function photos(car, base) {
     if (!car.photos || !car.photos.length) return [placeholder(car)];
-    return car.photos.map(function (src) { return /^(https?:|data:|\/)/.test(src) ? src : (base || '') + src; });
+    return car.photos.map(function (src) { return /^(https?:|data:|blob:|\/)/.test(src) ? src : (base || '') + src; });
   }
   function vtName(id) { return 'car-' + String(id).replace(/[^a-zA-Z0-9_-]/g, '_'); }
 
