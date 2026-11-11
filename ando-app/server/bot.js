@@ -11,12 +11,19 @@ const { telegramVideo } = require('./video/publish');
 const MAX_PHOTOS = 15;
 const STATUS_NAMES = { available: 'в продаже', reserved: 'забронирована', sold: 'продана' };
 
+// Адрес Telegram Bot API. Если сервер не видит api.telegram.org, укажите посредника за границей:
+// TELEGRAM_API_BASE=https://tg.example.com (см. deploy/tg-relay.sh).
+function apiHost() {
+  const u = new URL(process.env.TELEGRAM_API_BASE || 'https://api.telegram.org');
+  return { hostname: u.hostname, port: u.port || 443 };
+}
+
 function telegramApi(token) {
   function request(method, params) {
     return new Promise((resolve, reject) => {
       const body = JSON.stringify(params || {});
       const req = https.request({
-        hostname: 'api.telegram.org', path: `/bot${token}/${method}`, method: 'POST',
+        ...apiHost(), path: `/bot${token}/${method}`, method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }, timeout: 40000
       }, (res) => {
         const chunks = [];
@@ -35,7 +42,7 @@ function telegramApi(token) {
   }
   function download(filePath) {
     return new Promise((resolve, reject) => {
-      https.get({ hostname: 'api.telegram.org', path: `/file/bot${token}/${filePath}`, timeout: 30000 }, (res) => {
+      https.get({ ...apiHost(), path: `/file/bot${token}/${filePath}`, timeout: 30000 }, (res) => {
         if (res.statusCode !== 200) { res.resume(); reject(new Error('download ' + res.statusCode)); return; }
         const chunks = [];
         res.on('data', (c) => chunks.push(c));
@@ -391,4 +398,4 @@ function createBot(options) {
   return { handleUpdate, start, drafts, publish, clipsIdle: () => clipJob };
 }
 
-module.exports = { createBot, telegramApi, carSummary };
+module.exports = { createBot, telegramApi, carSummary, apiHost };

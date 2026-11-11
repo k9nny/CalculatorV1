@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { validateInitData } = require('./initdata');
 const { validateLead, formatLeadMessage } = require('./leads');
-const { createBot, telegramApi } = require('./bot');
+const { createBot, telegramApi, apiHost } = require('./bot');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -66,7 +66,7 @@ function sendTelegramMessage(token, chatId, text) {
     const body = JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true });
     const req = https.request(
       {
-        hostname: 'api.telegram.org',
+        ...apiHost(),
         path: `/bot${token}/sendMessage`,
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },

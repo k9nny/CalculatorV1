@@ -45,7 +45,8 @@ function postMultipart(url, fields, file) {
 }
 
 async function telegramVideo(token, chatId, file, caption, extra = {}) {
-  const res = await postMultipart(`https://api.telegram.org/bot${token}/sendVideo`, {
+  const base = (process.env.TELEGRAM_API_BASE || 'https://api.telegram.org').replace(/\/+$/, '');
+  const res = await postMultipart(`${base}/bot${token}/sendVideo`, {
     chat_id: chatId, caption: caption ? caption.slice(0, 1024) : '', supports_streaming: 'true',
     width: 1080, height: 1920, ...extra,
   }, { field: 'video', path: file });
