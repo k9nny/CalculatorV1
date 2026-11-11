@@ -18,17 +18,26 @@ fi
 
 say "Подключаем бота"
 TOKEN=''
+NOCHECK=''
 while :; do
   read -r -s -p "Вставьте токен бота от @BotFather (символы не видны) и нажмите Enter: " TOKEN </dev/tty; echo >/dev/tty
   TOKEN=$(printf '%s' "$TOKEN" | tr -d '[:space:]')
   if ! [[ "$TOKEN" =~ ^[0-9]+:[A-Za-z0-9_-]{30,}$ ]]; then echo "Это не похоже на токен. Он выглядит так: 123456789:AAH…"; continue; fi
-  ME=$(curl -fsS --max-time 15 "https://api.telegram.org/bot$TOKEN/getMe" 2>/dev/null || true)
+  ME=$(curl -sS --max-time 20 -w '\n%{http_code}' "https://api.telegram.org/bot$TOKEN/getMe" 2>&1 || true)
+  CODE=$(printf '%s' "$ME" | tail -n1)
   if printf '%s' "$ME" | grep -q '"ok":true'; then
-    BOT=$(printf '%s' "$ME" | sed -E 's/.*"username":"([^"]+)".*/\1/')
+    BOT=$(printf '%s' "$ME" | sed -nE 's/.*"username":"([^"]+)".*/\1/p' | head -n1)
     echo "Токен подходит: бот @$BOT"
     break
   fi
-  echo "Telegram не принял этот токен. Скопируйте его из @BotFather ещё раз (/mybots → бот → API Token)."
+  case "$CODE" in
+    401|404) echo "Telegram ответил, что такого токена нет. Возьмите его заново: @BotFather → /mybots → бот → API Token." ;;
+    *)
+      echo "Сервер не может связаться с Telegram (код ответа: ${CODE:-нет}). Токен не проверен."
+      printf '%s\n' "$ME" | head -n2 | grep -v -F "$TOKEN" | sed 's/^/  /'
+      read -r -p "Записать токен без проверки? Бот заработает, когда связь с Telegram появится [y/n]: " ANS </dev/tty
+      if [ "$ANS" = y ] || [ "$ANS" = Y ] || [ "$ANS" = д ]; then BOT=andoavtobot; NOCHECK=1; break; fi ;;
+  esac
 done
 
 IDS=''
@@ -55,6 +64,11 @@ unset TOKEN
 
 systemctl restart ando
 sleep 4
+if [ -n "${NOCHECK:-}" ]; then
+  say "Токен и id записаны, но сервер сейчас не видит Telegram — бот отвечать не будет."
+  echo "Пришлите скриншот этого экрана: разберёмся со связью."
+  exit 1
+fi
 if journalctl -u ando -n 30 --no-pager | grep -q "Бот объявлений запущен"; then
   say "ГОТОВО. Бот @$BOT запущен."
   echo "Напишите ему в Telegram /list — он пришлёт список машин."
