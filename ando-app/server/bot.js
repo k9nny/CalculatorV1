@@ -111,7 +111,8 @@ const HELP = [
   '/price 101 1350000 — новая цена',
   '/delete 101 — удалить объявление совсем, вместе с фото',
   '/cleardemo — убрать демо-объявления',
-  '/video 101 — заново сделать ролики по машине · /queue — очередь роликов',
+  '/post 101 — текст для канала',
+  '/video 101 — сделать ролики по машине (сами не делаются) · /queue — очередь роликов',
   '/cancel — удалить черновик'
 ].join('\n');
 
@@ -191,9 +192,10 @@ function createBot(options) {
     let report = `Опубликовано: объявление № ${id}. Машина уже в приложении и на сайте.`;
     if (lostPhotos) report += `\nНе удалось сохранить фото: ${lostPhotos}.`;
     if (link) report += `\nСсылка на машину: ${link}`;
-    report += '\n\nТекст для канала:\n\n' + channelPost(car, link);
-    await send(chatId, report);
-    if (clips) makeClips(chatId, car);
+    // Публикация — только в каталог. Текст для канала и ролики — отдельно, по кнопке, если нужны.
+    const buttons = [{ text: 'Текст для канала', callback_data: `post:${id}` }];
+    if (clips) buttons.push({ text: 'Сделать ролики', callback_data: `clips:${id}` });
+    await send(chatId, report, { reply_markup: { inline_keyboard: [buttons] } });
     return car;
   }
 
@@ -310,6 +312,11 @@ function createBot(options) {
       writeCatalog(carsFile, catalog, now());
       return send(chatId, `№ ${esc(car.id)}: новая цена ${money(price)}.`);
     }
+    if (name === '/post') {
+      const car = readCatalog(carsFile).cars.find((c) => String(c.id) === String(args[0]));
+      if (!car) return send(chatId, 'Пример: /post 101 — номер машины из /list.');
+      return send(chatId, channelPost(car, carLink(car.id)));
+    }
     if (name === '/video') {
       if (!clips) return send(chatId, 'Ролики выключены на сервере.');
       const car = readCatalog(carsFile).cars.find((c) => String(c.id) === String(args[0]));
@@ -360,6 +367,14 @@ function createBot(options) {
     if (q.data === 'pub') return publish(chatId);
     if (q.data === 'cancel') { drafts.delete(chatId); return send(chatId, 'Черновик удалён.'); }
     if (/^clip_(ok|no):\d+$/.test(q.data || '')) return clipDecision(q, q.data.startsWith('clip_ok'));
+    const ask = /^(post|clips):(\d+)$/.exec(q.data || '');
+    if (ask) {
+      const car = readCatalog(carsFile).cars.find((c) => String(c.id) === ask[2]);
+      if (!car) return send(chatId, `Машины № ${esc(ask[2])} уже нет.`);
+      if (ask[1] === 'post') return send(chatId, channelPost(car, carLink(car.id)));
+      if (!clips) return send(chatId, 'Ролики выключены на сервере.');
+      makeClips(chatId, car);
+    }
     return null;
   }
 
@@ -377,7 +392,8 @@ function createBot(options) {
       commands: [
         { command: 'list', description: 'Машины в каталоге' }, { command: 'help', description: 'Как добавить машину' },
         { command: 'cancel', description: 'Удалить черновик' },
-        ...(clips ? [{ command: 'queue', description: 'Очередь роликов' }] : [])
+        { command: 'post', description: 'Текст для канала: /post 101' },
+        ...(clips ? [{ command: 'video', description: 'Сделать ролики: /video 101' }, { command: 'queue', description: 'Очередь роликов' }] : [])
       ],
       scope: { type: 'all_private_chats' }
     }).catch(() => {});

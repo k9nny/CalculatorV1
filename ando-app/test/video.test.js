@@ -91,7 +91,7 @@ test('очередь: если соцсеть не приняла ролик, о
   assert.equal(q.read().items[0].status, 'approved');
 });
 
-test('бот: после публикации делает ролики и ставит их в очередь по кнопке', async () => {
+test('бот: ролики только по кнопке «Сделать ролики», не сами после публикации', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-bot-clips-'));
   const carsFile = path.join(dir, 'cars.json');
   fs.writeFileSync(carsFile, JSON.stringify({ cars: [] }));
@@ -107,6 +107,10 @@ test('бот: после публикации делает ролики и ст�
   const msg = (text) => ({ message: { chat: { id: 7, type: 'private' }, from: { id: 7 }, text } });
   await bot.handleUpdate(msg('Kia Rio 2019\nЦена 1 390 000\nПробег 74 000'));
   await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 7 }, data: 'pub', message: { chat: { id: 7 }, message_id: 5 } } });
+  await bot.clipsIdle();
+  assert.equal(videos.length, 0);
+  const id = JSON.parse(fs.readFileSync(carsFile, 'utf8')).cars[0].id;
+  await bot.handleUpdate({ callback_query: { id: 'q1', from: { id: 7 }, data: `clips:${id}`, message: { chat: { id: 7 }, message_id: 5 } } });
   await bot.clipsIdle();
   assert.equal(videos.length, 3);
   const okData = videos[0].extra.reply_markup.inline_keyboard[0][0].callback_data;

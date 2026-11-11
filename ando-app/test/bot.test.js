@@ -92,7 +92,7 @@ function harness() {
 const msg = (extra) => ({ message: { chat: { id: 1, type: 'private' }, from: { id: 1 }, ...extra } });
 
 test('бот: фото + текст → превью → «Опубликовать» → машина в каталоге с фото', async () => {
-  const { bot, messages, read, dir } = harness();
+  const { bot, sent, messages, read, dir } = harness();
   await bot.handleUpdate(msg({ photo: [{ file_id: 'small' }, { file_id: 'A' }], caption: 'Hyundai Solaris 2017 1.6 АКПП\nпробег 112 тыс\nцена 1 090 000' }));
   await bot.handleUpdate(msg({ photo: [{ file_id: 'B' }] }));
   assert.match(messages().at(-1), /Hyundai Solaris, 2017/);
@@ -108,8 +108,13 @@ test('бот: фото + текст → превью → «Опубликова�
   assert.deepEqual(car.photos, ['img/cars/102-1.jpg', 'img/cars/102-2.jpg']);
   assert.equal(fs.readFileSync(path.join(dir, 'img', '102-1.jpg'), 'utf8'), 'jpeg:photos/A.jpg');
   assert.match(messages().at(-1), /startapp=car_102/);
-  assert.match(messages().at(-1), /Текст для канала/);
+  assert.doesNotMatch(messages().at(-1), /Текст для канала/);
+  const pubMsg = sent.filter((s) => s.method === 'sendMessage').at(-1);
+  const postBtn = pubMsg.params.reply_markup.inline_keyboard[0][0];
+  assert.equal(postBtn.callback_data, 'post:102');
   assert.equal(bot.drafts.size, 0);
+  await bot.handleUpdate({ callback_query: { id: 'q2', from: { id: 1 }, data: 'post:102', message: { chat: { id: 1 } } } });
+  assert.match(messages().at(-1), /Hyundai Solaris/);
 });
 
 test('бот: без обязательных полей не публикует', async () => {
