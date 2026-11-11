@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Подключить Telegram-бота к уже установленному серверу ANDO AUTO:
-#   curl -fsSL k9nny.github.io/CalculatorV1/b -o b && bash b
+#   curl -fsSL raw.githubusercontent.com/k9nny/CalculatorV1/gh-pages/b -o b && bash b
 # Спрашивает токен и id, проверяет токен у Telegram, вписывает в /etc/ando/ando.env и перезапускает.
 set -euo pipefail
 
@@ -11,7 +11,7 @@ fail() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || fail "Запустите от root: sudo bash b"
 if [ ! -f "$ENV_FILE" ]; then
   say "Сервер ещё не установлен — сначала установка (3–5 минут)."
-  curl -fsSL https://k9nny.github.io/CalculatorV1/i -o /root/i
+  curl -fsSL https://raw.githubusercontent.com/k9nny/CalculatorV1/gh-pages/i -o /root/i
   bash /root/i
   [ -f "$ENV_FILE" ] || fail "Установка не закончилась. Пришлите скриншот экрана."
 fi
