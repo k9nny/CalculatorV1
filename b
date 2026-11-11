@@ -16,6 +16,10 @@ if [ ! -f "$ENV_FILE" ]; then
   [ -f "$ENV_FILE" ] || fail "Установка не закончилась. Пришлите скриншот экрана."
 fi
 
+# Если Telegram доступен только через посредника (deploy/tg-relay.sh), берём его адрес из настроек.
+API=$(sed -n 's/^TELEGRAM_API_BASE=//p' "$ENV_FILE" | tail -n1)
+API=${API:-https://api.telegram.org}
+
 say "Подключаем бота"
 TOKEN=''
 NOCHECK=''
@@ -23,7 +27,7 @@ while :; do
   read -r -s -p "Вставьте токен бота от @BotFather (символы не видны) и нажмите Enter: " TOKEN </dev/tty; echo >/dev/tty
   TOKEN=$(printf '%s' "$TOKEN" | tr -d '[:space:]')
   if ! [[ "$TOKEN" =~ ^[0-9]+:[A-Za-z0-9_-]{30,}$ ]]; then echo "Это не похоже на токен. Он выглядит так: 123456789:AAH…"; continue; fi
-  ME=$(curl -sS --max-time 20 -w '\n%{http_code}' "https://api.telegram.org/bot$TOKEN/getMe" 2>&1 || true)
+  ME=$(curl -sS --max-time 20 -w '\n%{http_code}' "$API/bot$TOKEN/getMe" 2>&1 || true)
   CODE=$(printf '%s' "$ME" | tail -n1)
   if printf '%s' "$ME" | grep -q '"ok":true'; then
     BOT=$(printf '%s' "$ME" | sed -nE 's/.*"username":"([^"]+)".*/\1/p' | head -n1)
