@@ -9,6 +9,7 @@ const { validateInitData } = require('./initdata');
 const { validateLead, formatLeadMessage } = require('./leads');
 const { createBot, telegramApi, apiHost } = require('./bot');
 const { createAdmin } = require('./admin');
+const { createSeo } = require('./seo');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -52,6 +53,8 @@ function readConfig(env = process.env) {
     requireInitData: env.REQUIRE_INIT_DATA === '1',
     trustProxy: env.TRUST_PROXY === '1',
     allowedOrigins: String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
+    // Адрес сайта для ссылок в карте сайта и IndexNow. По умолчанию — первый из ALLOWED_ORIGINS (основной домен).
+    siteUrl: (env.SITE_URL || String(env.ALLOWED_ORIGINS || '').split(',')[0] || '').trim(),
     clipsEnabled: env.CLIPS !== '0',
     clipsDir: path.resolve(env.CLIPS_DIR || path.join(root, 'data-private', 'clips')),
     clipTimes: env.CLIP_TIMES || '10:40,15:20,19:40',
@@ -262,10 +265,13 @@ function createApp(config = readConfig(), deps = {}) {
 
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
   const admin = createAdmin(config);
+  // Страницы машин, список и карта сайта для поисковиков.
+  const seo = createSeo(config, deps.seo);
 
   return http.createServer((req, res) => {
     const pathname = (req.url || '/').split('?')[0];
     if (admin.handle(req, res, pathname)) return;
+    if (seo.handle(req, res, pathname)) return;
     if (pathname === '/api/lead') {
       handleLead(req, res).catch(() => json(res, 500, { error: 'Ошибка сервера' }));
       return;
@@ -281,6 +287,14 @@ if (require.main === module) {
     const notify = config.telegramToken && config.managerChatIds.length ? `в Telegram (${config.managerChatIds.length} чат.)` : 'только в журнал';
     console.log(`ANDO AUTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);
   });
+  // IndexNow: каталог изменился (бот или админка) — через минуту сообщаем Яндексу адреса изменённых машин.
+  if (config.siteUrl && process.env.INDEXNOW !== '0') {
+    const indexNow = require('./seo').createIndexNow(config);
+    let timer = null;
+    const later = () => { clearTimeout(timer); timer = setTimeout(() => indexNow.check().catch(() => {}), 60000); };
+    fs.watchFile(config.carsFile, { interval: 15000 }, later);
+    later();
+  }
   // Бот для объявлений: администраторы присылают фото и текст — машина появляется в каталоге.
   if (config.telegramToken && config.adminIds.length) {
     const api = telegramApi(config.telegramToken);

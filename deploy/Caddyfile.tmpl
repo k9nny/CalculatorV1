@@ -7,6 +7,11 @@ __DOMAIN__, www.__DOMAIN__ {
 	handle /api/* {
 		reverse_proxy 127.0.0.1:8080
 	}
+	# Страницы машин и карта сайта для поисковиков — их собирает сервер приложения из каталога.
+	@seo path /cars /cars/* /sitemap.xml
+	handle @seo {
+		reverse_proxy 127.0.0.1:8080
+	}
 	# Каталог на сайте: то же приложение и тот же список машин, что в Telegram и MAX.
 	redir /app /app/ 308
 	handle_path /app/* {

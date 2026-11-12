@@ -185,8 +185,8 @@
   var hModel = document.getElementById('hero-model');
   var hPhone = document.getElementById('hero-phone');
   var hConsent = document.getElementById('hero-consent');
-  hConsent.addEventListener('change', function () { if (hConsent.checked) setError(hConsent, ''); });
-  submitWith(document.getElementById('form-hero'), function () {
+  if (hConsent) hConsent.addEventListener('change', function () { if (hConsent.checked) setError(hConsent, ''); });
+  if (hConsent) submitWith(document.getElementById('form-hero'), function () {
     if (!checkPhone(hPhone)) return hPhone;
     // Согласие — отдельной галочкой, которую человек ставит сам (152-ФЗ, ст. 9).
     if (!setError(hConsent, hConsent.checked ? '' : 'Отметьте согласие на обработку персональных данных')) return hConsent;
@@ -209,6 +209,10 @@
     var list = document.getElementById('stock-list');
     var UI = window.AndoCard;
     var APP = 'app/';
+    // Страница машины на сервере (/cars/101/) видна поисковикам; на GitHub Pages сервера нет — открываем каталог.
+    var PAGE = /github\.io$/.test(location.hostname) || location.protocol === 'file:'
+      ? function (id) { return APP + '?car=' + encodeURIComponent(id); }
+      : function (id) { return 'cars/' + encodeURIComponent(id) + '/'; };
     function fail() {
       list.innerHTML = '<p class="stock-note">Каталог сейчас не загрузился. Откройте его по кнопке ниже или позвоните — расскажем, что есть в наличии.</p>';
     }
@@ -228,7 +232,7 @@
         var all = document.getElementById('stock-all');
         if (all && cars.length > 6) all.firstChild.textContent = 'Все ' + cars.length + ' ' + UI.plural(cars.length, 'машина', 'машины', 'машин') + ' ';
         list.innerHTML = cars.slice(0, 6).map(function (car) {
-          var href = APP + '?car=' + encodeURIComponent(car.id);
+          var href = PAGE(car.id);
           return UI.cardHtml(car, {
             base: APP, href: href,
             actions: '<a class="btn btn-primary" href="' + UI.esc(href) + '">Подробнее</a>' +
@@ -247,7 +251,7 @@
     list.addEventListener('click', function (event) {
       if (event.target.closest('a, button')) return;
       var zone = event.target.closest('[data-action="open"]');
-      if (zone) location.href = APP + '?car=' + encodeURIComponent(zone.getAttribute('data-id'));
+      if (zone) location.href = PAGE(zone.getAttribute('data-id'));
     });
   })();
 })();
