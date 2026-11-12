@@ -1,0 +1,61 @@
+/* Внутренние страницы: услуги (выкуп после ДТП и т. п.) и страницы машин. Основа — site.css и ui.css. */
+
+/* ---------- Первый экран внутренней страницы ---------- */
+.page-hero { padding-block: calc(64px + env(safe-area-inset-top, 0px) + 24px) 48px; }
+.page-hero .wrap { display: grid; gap: 24px 64px; align-items: start; }
+@media (min-width: 960px) {
+  .page-hero { padding-block: 120px 72px; }
+  .page-hero .wrap { grid-template-columns: minmax(0, 1fr) 400px; }
+  .page-hero .lead-card { margin-top: 0; }
+}
+.page-hero h1 { margin-top: 16px; font: 700 clamp(32px, 4.6vw, 56px)/1.04 var(--f); letter-spacing: -.035em; text-wrap: balance; }
+.page-hero .hero-lead { max-width: 32em; }
+.page-points { display: grid; gap: 12px; margin: 24px 0 0; padding: 0; list-style: none; }
+.page-points li { display: flex; gap: 12px; align-items: flex-start; color: var(--text-2); }
+.page-points .i { flex: none; width: 20px; height: 20px; margin-top: 2px; color: var(--accent); }
+
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px 8px; font-size: 13px; color: var(--text-3); }
+.crumbs a { color: var(--text-2); text-decoration: none; }
+.crumbs a:hover { color: var(--text); }
+
+/* ---------- Текст статьи ---------- */
+.prose { display: grid; gap: 16px; max-width: 70ch; font-size: 17px; line-height: 1.6; color: var(--text-2); }
+.prose h2 { margin-top: 16px; font: 700 clamp(22px, 2.4vw, 28px)/1.2 var(--f); letter-spacing: -.02em; color: var(--text); }
+.prose h2:first-child { margin-top: 0; }
+.prose ul { display: grid; gap: 8px; margin: 0; padding-left: 20px; }
+.prose a { color: var(--text); text-underline-offset: 3px; }
+.cols { display: grid; gap: 16px; }
+@media (min-width: 720px) { .cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.related { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.related a { height: 40px; padding: 0 16px; display: inline-flex; align-items: center; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); color: var(--text); text-decoration: none; font: 500 14px/1 var(--f); }
+.related a:hover { border-color: var(--text); }
+
+/* ---------- Страница машины ---------- */
+.car-hero { padding-block: calc(64px + env(safe-area-inset-top, 0px) + 24px) 32px; }
+@media (min-width: 960px) { .car-hero { padding-block: 112px 40px; } }
+.car-hero h1 { margin-top: 12px; font: 700 clamp(28px, 4vw, 48px)/1.08 var(--f); letter-spacing: -.03em; }
+.car-hero .car-sub { margin-top: 8px; color: var(--text-2); }
+.car-layout { display: grid; gap: 32px; align-items: start; }
+@media (min-width: 960px) { .car-layout { grid-template-columns: minmax(0, 1fr) 360px; } .car-aside { position: sticky; top: 88px; } }
+.gallery { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.gallery a { display: block; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 3; }
+.gallery a:first-child { grid-column: 1 / -1; border-radius: var(--radius); }
+.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.car-aside .box { display: grid; gap: 12px; padding: 24px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
+.car-price { font: 700 32px/1.1 var(--f); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.car-aside .deal { justify-self: start; }
+.car-status { justify-self: start; padding: 4px 8px; border-radius: 6px; background: var(--text); color: var(--bg); font: 600 12px/1 var(--f); }
+.specs { display: grid; margin: 0; border-top: 1px solid var(--line); }
+.specs div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.specs dt { color: var(--text-3); }
+.specs dd { margin: 0; color: var(--text); }
+.car-block { display: grid; gap: 16px; }
+.car-block h2 { font: 700 22px/1.2 var(--f); letter-spacing: -.02em; }
+.car-block p { color: var(--text-2); line-height: 1.6; white-space: pre-line; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips span { padding: 6px 10px; border-radius: 6px; background: var(--surface-2); font-size: 14px; }
+.car-list { margin-top: 24px; }
+.empty-note { padding: 24px; border-radius: var(--radius); border: 1px dashed var(--line-strong); color: var(--text-2); }
+.hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-3); }
+.car-block > h2 { margin-top: 8px; }
