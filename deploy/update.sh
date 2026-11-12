@@ -9,6 +9,9 @@ APP_DIR=/opt/ando
 # shellcheck source=/dev/null
 . "$CONF"   # REPO_URL, BRANCH, DOMAIN
 
+# Короткая команда «ando» — меню настроек (ставится при каждом запуске, даже без нового кода).
+printf '#!/bin/sh\nexec bash /opt/ando/deploy/ando.sh "$@"\n' > /usr/local/bin/ando && chmod 755 /usr/local/bin/ando
+
 cd "$APP_DIR"
 old=$(git rev-parse HEAD)
 git fetch -q --depth 1 origin "$BRANCH"

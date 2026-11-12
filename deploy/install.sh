@@ -145,6 +145,8 @@ done
 bash "$APP_DIR/deploy/caddyfile.sh" /etc/caddy/Caddyfile
 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1 || fail "ошибка в конфигурации Caddy"
 systemctl daemon-reload
+# Короткая команда «ando» — меню настроек.
+printf '#!/bin/sh\nexec bash /opt/ando/deploy/ando.sh "$@"\n' > /usr/local/bin/ando && chmod 755 /usr/local/bin/ando
 systemctl enable -q --now ando ando-update.timer caddy
 systemctl restart ando
 systemctl reload caddy || systemctl restart caddy
