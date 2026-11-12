@@ -164,7 +164,8 @@
       lack.classList.toggle('ok', !data.missing.length);
       var seen = (data.fromPhoto || []).map(function (k) { return { make: 'марка', model: 'модель', generation: 'поколение', body: 'кузов', color: 'цвет' }[k]; });
       lack.textContent = (data.missing.length ? 'Не хватает: ' + data.missing.join(', ') : 'Всё нужное есть') +
-        (seen.length ? '. По фото определено: ' + seen.join(', ') + ' — проверьте в превью' : '');
+        (seen.length ? '. По фото определено: ' + seen.join(', ') + ' — проверьте в превью' : '') +
+        (data.via === 'llm' ? '. Разобрала нейросеть' : data.via === 'rules' ? '. Нейросеть не ответила' + (data.llmError ? ' (' + data.llmError + ')' : '') + ' — разобрано обычным способом' : '');
       renderPreview();
       refreshPublish();
     }).catch(function (err) { toast(err.message, true); });

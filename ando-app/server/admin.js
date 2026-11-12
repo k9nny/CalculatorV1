@@ -74,6 +74,7 @@ function createAdmin(config, opts = {}) {
   // После сохранения настроек Telegram сервер перезапускается (systemd поднимает его за 3 секунды) — бот стартует с ними.
   const restart = opts.restart || (() => setTimeout(() => process.exit(0), 800));
   const smart = parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
+  const parseDetailed = smart.parseDetailed || (async (t) => ({ fields: await smart.parse(t), via: 'rules', error: '' }));
   const photoSeen = new Map(); // имя временного фото → что нейросеть увидела (чтобы не спрашивать дважды)
   const dir = path.dirname(config.leadsLog);
   const stateFile = path.join(dir, 'admin.json');
@@ -146,15 +147,17 @@ function createAdmin(config, opts = {}) {
 
   // Поля из текста; чего нет в тексте (марка, модель, кузов, цвет) — по первому фото.
   async function fieldsFor(text, photos) {
-    const fields = await smart.parse(String(text || ''));
+    const parsed = await parseDetailed(String(text || ''));
+    const fields = parsed.fields;
+    const info = { via: smart.enabled ? parsed.via : 'off', llmError: parsed.error || '' };
     const first = (Array.isArray(photos) ? photos : []).map((n) => path.basename(String(n)))
       .find((n) => /^tmp-[0-9a-f]{16}\.(jpg|png|webp)$/.test(n));
-    if (!first || !smart.enabled || !smart.fillFromPhoto) return { fields, fromPhoto: [] };
-    if (['make', 'model', 'body', 'color'].every((k) => fields[k] != null && fields[k] !== '')) return { fields, fromPhoto: [] };
+    if (!first || !smart.enabled || !smart.fillFromPhoto) return { fields, fromPhoto: [], ...info };
+    if (['make', 'model', 'body', 'color'].every((k) => fields[k] != null && fields[k] !== '')) return { fields, fromPhoto: [], ...info };
     let seen = photoSeen.get(first);
     if (!seen) {
       let buf;
-      try { buf = fs.readFileSync(photoPath(first)); } catch { return { fields, fromPhoto: [] }; }
+      try { buf = fs.readFileSync(photoPath(first)); } catch { return { fields, fromPhoto: [], ...info }; }
       const mime = first.endsWith('.png') ? 'image/png' : first.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
       seen = await smart.fillFromPhoto({}, buf, mime);
       if (photoSeen.size > 100) photoSeen.delete(photoSeen.keys().next().value);
@@ -168,7 +171,7 @@ function createAdmin(config, opts = {}) {
       if ((k === 'model' || k === 'generation') && !sameMake) continue;
       if (seen[k] != null) { out[k] = seen[k]; fromPhoto.push(k); }
     }
-    return { fields: out, fromPhoto };
+    return { fields: out, fromPhoto, ...info };
   }
 
   function leadsList() {
@@ -283,8 +286,8 @@ function createAdmin(config, opts = {}) {
 
     if (pathname === '/api/admin/parse' && m === 'POST') {
       const body = await readJson(req);
-      const { fields, fromPhoto } = await fieldsFor(body.text, body.photos);
-      return json(res, 200, { car: toCar(fields), missing: missing(fields), fromPhoto });
+      const { fields, fromPhoto, via, llmError } = await fieldsFor(body.text, body.photos);
+      return json(res, 200, { car: toCar(fields), missing: missing(fields), fromPhoto, via, llmError });
     }
 
     // Фото загружается до публикации: временное имя, при публикации переименуется в «номер-n».

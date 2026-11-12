@@ -122,6 +122,7 @@ function createBot(options) {
   const { api, adminIds, carsFile, photosDir, photosUrlPrefix = 'img/cars/', appLink = '', debounceMs = 2500, now = () => new Date(), clips = null } = options;
   // Разбор текста: нейросеть (server/llm.js), если подключена, иначе обычный.
   const parser = options.parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
+  const parseDetailed = parser.parseDetailed || (async (t) => ({ fields: await parser.parse(t), via: 'rules', error: '' }));
   const drafts = new Map(); // chatId → { fields, photos: [file_id], timer, previewId }
   const admins = new Set(adminIds.map(String));
 
@@ -162,6 +163,8 @@ function createBot(options) {
       '<b>Черновик объявления</b>', '',
       carSummary(car), '',
       `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}`,
+      ...(parser.enabled && draft.parsedBy ? [draft.parsedBy.via === 'llm' ? 'Разобрала нейросеть.'
+        : `Нейросеть не ответила${draft.parsedBy.error ? ` (${esc(draft.parsedBy.error)})` : ''} — разобрано обычным способом, проверьте марку и модель.`] : []),
       ...(draft.fromPhoto && draft.fromPhoto.length ? [`По фото определил: ${draft.fromPhoto.map((k) => ({ make: 'марка', model: 'модель', generation: 'поколение', body: 'кузов', color: 'цвет' }[k])).join(', ')}. Проверьте.`] : []),
       lack.length ? `Не хватает: ${lack.join(', ')}. Допишите строкой, например «${lack[0]} …».` : 'Всё нужное есть.'
     ];
@@ -361,7 +364,11 @@ function createBot(options) {
     const photo = msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1].file_id
       : msg.document && /^image\//.test(msg.document.mime_type || '') ? msg.document.file_id : null;
     if (photo && draft.photos.length < MAX_PHOTOS && !draft.photos.includes(photo)) draft.photos.push(photo);
-    if (text) mergeFields(draft.fields, await parser.parse(text));
+    if (text) {
+      const r = await parseDetailed(text);
+      mergeFields(draft.fields, r.fields);
+      if (r.via !== 'edit') draft.parsedBy = r;
+    }
     return schedulePreview(chatId);
   }
 

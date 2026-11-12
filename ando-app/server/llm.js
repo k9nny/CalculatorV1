@@ -156,26 +156,29 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
   let noTemperature = false;
   let lastPhotoError = '';
   const cache = new Map();
+  // Совместимость с посредниками: 0 — всё, 1 — без temperature, 2 — ещё и без response_format.
+  let compat = 0;
   async function ask(text) {
     const { baseUrl, apiKey, model, timeoutMs } = conf();
     const body = {
       model,
       messages: [{ role: 'system', content: PROMPT }, { role: 'user', content: redact(text) }],
-      response_format: { type: 'json_object' },
-      max_tokens: 2000
+      max_tokens: 4096
     };
-    if (!noTemperature) body.temperature = 0; // одинаковый текст — одинаковый результат
+    if (compat < 2) body.response_format = { type: 'json_object' };
+    if (compat < 1) body.temperature = 0; // одинаковый текст — одинаковый результат
     let res;
     try {
-      res = await post(baseUrl.replace(/\/+$/, '') + '/chat/completions', body, { Authorization: 'Bearer ' + apiKey }, timeoutMs);
+      res = await post(baseUrl.replace(/\/+$/, '') + '/chat/completions', body, { Authorization: 'Bearer ' + apiKey }, Math.max(timeoutMs, 60000));
     } catch (e) {
-      // Некоторые модели не принимают temperature — повторяем без неё.
-      if (!noTemperature && /temperature/i.test(e.message)) { noTemperature = true; return ask(text); }
+      // Модель или посредник не принимает какой-то параметр — повторяем проще.
+      if (compat < 2 && /HTTP (400|422)/.test(e.message)) { compat++; return ask(text); }
       throw e;
     }
-    const content = res && res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content;
-    const m = /\{[\s\S]*\}/.exec(String(content || ''));
-    if (!m) throw new Error('в ответе нет JSON');
+    const msg = res && res.choices && res.choices[0] && res.choices[0].message;
+    const content = String((msg && msg.content) || '');
+    const m = /\{[\s\S]*\}/.exec(content);
+    if (!m) throw new Error(content ? 'в ответе нет JSON: ' + content.slice(0, 80) : 'пустой ответ модели');
     return JSON.parse(m[0]);
   }
   // По фото: марка, модель, поколение, кузов, цвет. Нейросеть без зрения или ошибка — пустой ответ.
@@ -221,12 +224,14 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
     return out;
   }
   // Поля объявления: нейросеть + обычный разбор (он заполняет то, что нейросеть пропустила).
-  async function parse(text) {
+  // Поля и кто их разобрал: { fields, via: 'llm' | 'rules', error }.
+  async function parseDetailed(text) {
     const rules = parseListing(text);
     const { enabled, model } = conf();
-    if (!enabled || isEdit(text)) return rules;
+    if (!enabled) return { fields: rules, via: 'rules', error: '' };
+    if (isEdit(text)) return { fields: rules, via: 'edit', error: '' };
     const key = crypto.createHash('sha256').update(model + '\n' + String(text)).digest('hex');
-    if (cache.has(key)) return { ...cache.get(key) };
+    if (cache.has(key)) return { fields: { ...cache.get(key) }, via: 'llm', error: '' };
     try {
       const ai = clean(await ask(text), text);
       // Описание и список работ пишет только нейросеть: обычный разбор кладёт туда сырые строки продавца
@@ -243,13 +248,15 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
       }
       if (cache.size > 200) cache.delete(cache.keys().next().value);
       cache.set(key, merged);
-      return { ...merged };
+      return { fields: { ...merged }, via: 'llm', error: '' };
     } catch (e) {
       log('Нейросеть не разобрала объявление, обычный разбор: ' + e.message);
-      return rules;
+      return { fields: rules, via: 'rules', error: String(e.message).slice(0, 160) };
     }
   }
-  return { parse, photo, fillFromPhoto, ask, get enabled() { return conf().enabled; }, get model() { return conf().model; }, get lastPhotoError() { return lastPhotoError; } };
+  async function parse(text) { return (await parseDetailed(text)).fields; }
+
+  return { parse, parseDetailed, photo, fillFromPhoto, ask, get enabled() { return conf().enabled; }, get model() { return conf().model; }, get lastPhotoError() { return lastPhotoError; } };
 }
 
 function getJson(url, headers, timeoutMs = 20000) {
