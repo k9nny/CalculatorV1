@@ -44,8 +44,8 @@ else
   say "Установка ANDO AUTO"
   echo "Домен должен быть уже куплен. Если чего-то пока нет — оставьте пустым и нажмите Enter,"
   echo "потом впишете в $ENV_FILE и выполните: sudo systemctl restart ando"
-  ask DOMAIN "Домен без https и www (Enter — andoavto.ru)"
-  DOMAIN=$(printf '%s' "${DOMAIN:-andoavto.ru}" | tr 'A-Z' 'a-z' | sed -E 's#^https?://##; s#^www\.##; s#/.*$##')
+  ask DOMAIN "Домен без https и www (Enter — andoauto.ru)"
+  DOMAIN=$(printf '%s' "${DOMAIN:-andoauto.ru}" | tr 'A-Z' 'a-z' | sed -E 's#^https?://##; s#^www\.##; s#/.*$##')
   [[ "$DOMAIN" =~ ^[a-z0-9.-]+\.[a-z]{2,}$ || "$DOMAIN" =~ ^xn--[a-z0-9.-]+$ ]] || fail "домен «$DOMAIN» не похож на домен"
   ask TELEGRAM_BOT_TOKEN "Токен Telegram-бота от @BotFather (ввод скрыт)" secret
   if [ -n "${TELEGRAM_BOT_TOKEN:-}" ] && ! [[ "$TELEGRAM_BOT_TOKEN" =~ ^[0-9]+:[A-Za-z0-9_-]{30,}$ ]]; then

@@ -10,8 +10,8 @@ say()  { printf '\n\033[1m%s\033[0m\n' "$*"; }
 fail() { printf '\n\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || fail "Запустите от root: sudo bash r"
 
-read -r -p "Адрес посредника (Enter — tg.andoavto.ru): " HOST </dev/tty
-HOST=${HOST:-tg.andoavto.ru}
+read -r -p "Адрес посредника (Enter — tg.andoauto.ru): " HOST </dev/tty
+HOST=${HOST:-tg.andoauto.ru}
 read -r -p "IP основного сервера в России (Enter — 168.113.191.212): " MAIN_IP </dev/tty
 MAIN_IP=${MAIN_IP:-168.113.191.212}
 [[ "$MAIN_IP" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || fail "IP «$MAIN_IP» не похож на IPv4"

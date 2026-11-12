@@ -47,7 +47,7 @@ curl -fsSL https://raw.githubusercontent.com/k9nny/CalculatorV1/claude/eager-gat
 
     curl -fsSL raw.githubusercontent.com/k9nny/CalculatorV1/gh-pages/a -o a && bash a
 
-Скрипт спросит пароль (от 10 символов) и покажет секретную ссылку вида `https://andoavto.ru/app/<24 случайных символа>/`.
+Скрипт спросит пароль (от 10 символов) и покажет секретную ссылку вида `https://andoauto.ru/app/<24 случайных символа>/`.
 
 - Ссылка создаётся на сервере и хранится только там (`/var/lib/ando/private/admin.json`), в репозитории её нет. По любому другому адресу — обычный 404.
 - Пароль задаётся только на сервере: страницы «создать пароль» в браузере нет.
@@ -69,3 +69,8 @@ curl -fsSL https://raw.githubusercontent.com/k9nny/CalculatorV1/claude/eager-gat
 (`curl -fsSL raw.githubusercontent.com/k9nny/CalculatorV1/gh-pages/d -o d && bash d`).
 Домен записывается в `ALIASES` в `/etc/ando/deploy.conf`; `deploy/caddyfile.sh` добавляет для него
 переадресацию 301 на основной домен с тем же адресом страницы. Обновления сохраняют эту настройку.
+
+Сделать основным другой домен: `bash /opt/ando/deploy/domain.sh --main` (или `ando` → 8). Прежний основной
+станет вторым: страницы сайта ведут на новый, а приложение (`/app/`), заявки и `app.<домен>` работают на обоих,
+так что ссылка на приложение в @BotFather и старая ссылка на админку не ломаются. Пока новый домен не указывает
+на сервер, переключение не выполняется.

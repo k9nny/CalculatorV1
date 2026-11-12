@@ -9,6 +9,7 @@ case "${1:-}" in
   1|admin)  shift || true; exec bash "$D/admin.sh" "$@" ;;
   2|tg)     shift || true; exec bash "$D/tg.sh" "$@" ;;
   3|domain) exec bash "$D/domain.sh" ;;
+  8|main)   exec bash "$D/domain.sh" --main ;;
   4|bot)    exec bash "$D/bot.sh" ;;
   5|update) exec bash "$D/update.sh" --force ;;
 esac
@@ -23,6 +24,7 @@ ANDO AUTO — что сделать?
   5  Обновить код сейчас
   6  Показать ссылку на админку
   7  Проверить связь с Telegram и Cloudflare
+  8  Сделать другой домен основным
 EOF
 read -r -p "Номер и Enter: " N </dev/tty
 case "$N" in
@@ -33,5 +35,6 @@ case "$N" in
   5) exec bash "$D/update.sh" --force ;;
   6) exec bash "$D/admin.sh" --show ;;
   7) exec bash "$D/tg.sh" --check ;;
+  8) exec bash "$D/domain.sh" --main ;;
   *) echo "Нет такого номера." ;;
 esac
