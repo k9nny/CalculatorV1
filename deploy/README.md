@@ -62,3 +62,10 @@ curl -fsSL https://raw.githubusercontent.com/k9nny/CalculatorV1/claude/eager-gat
 Бесплатный посредник на Cloudflare Workers: код — `deploy/cf-worker.js`, подключение — `bash t`
 (`curl -fsSL raw.githubusercontent.com/k9nny/CalculatorV1/gh-pages/t -o t && bash t`).
 Проверить, видит ли сервер Cloudflare: `bash t --check`. Платный вариант — свой посредник за границей, `deploy/tg-relay.sh`.
+
+## Второй домен
+
+У регистратора второго домена — A-записи `@` и `www` на IP сервера, затем на сервере `bash d`
+(`curl -fsSL raw.githubusercontent.com/k9nny/CalculatorV1/gh-pages/d -o d && bash d`).
+Домен записывается в `ALIASES` в `/etc/ando/deploy.conf`; `deploy/caddyfile.sh` добавляет для него
+переадресацию 301 на основной домен с тем же адресом страницы. Обновления сохраняют эту настройку.

@@ -20,7 +20,7 @@ git reset -q --hard FETCH_HEAD
 
 # Конфигурация Caddy — из шаблона в репозитории; перезагружаем, только если она изменилась.
 tmp=$(mktemp)
-sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/Caddyfile.tmpl" > "$tmp"
+bash "$APP_DIR/deploy/caddyfile.sh" "$tmp"
 if ! cmp -s "$tmp" /etc/caddy/Caddyfile; then
   if caddy validate --config "$tmp" --adapter caddyfile >/dev/null 2>&1; then
     install -m 644 "$tmp" /etc/caddy/Caddyfile

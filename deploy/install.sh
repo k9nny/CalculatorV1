@@ -142,7 +142,7 @@ say "Настраиваю автозапуск и HTTPS…"
 for unit in ando.service ando-update.service ando-update.timer; do
   install -m 644 "$APP_DIR/deploy/$unit" "/etc/systemd/system/$unit"
 done
-sed "s/__DOMAIN__/$DOMAIN/g" "$APP_DIR/deploy/Caddyfile.tmpl" > /etc/caddy/Caddyfile
+bash "$APP_DIR/deploy/caddyfile.sh" /etc/caddy/Caddyfile
 caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1 || fail "ошибка в конфигурации Caddy"
 systemctl daemon-reload
 systemctl enable -q --now ando ando-update.timer caddy
