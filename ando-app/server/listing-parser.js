@@ -46,6 +46,30 @@ function parseAmount(s) {
   return m ? Number(m[0].replace(/\D/g, '')) : null;
 }
 
+// Цена машины: «500» или «500 рублей» в объявлении — это 500 000 ₽, «1.5» — 1 500 000 ₽.
+// Меньше 20 — миллионы, от 20 до 10 000 — тысячи, дальше — как написано.
+function normalizePrice(n) {
+  if (!(n > 0)) return null;
+  if (n < 20) return Math.round(n * 1e6);
+  if (n < 10000) return Math.round(n * 1000);
+  return Math.round(n);
+}
+// Пробег: «пробег 120» — это 120 000 км.
+function normalizeMileage(n) {
+  if (n == null || !(n >= 0)) return null;
+  return n > 0 && n < 1000 ? Math.round(n * 1000) : Math.round(n);
+}
+// Цена из строки: явные «млн», «тыс», «к» — как написано; голое число — по правилу выше.
+function priceOf(s) {
+  const t = lower(s).replace(/[\u00a0\u202f]/g, ' ');
+  if (/\d\s*(?:млн|миллион|тыс|т\.?\s?р|к(?![а-яa-z])|k(?![a-z]))/.test(t)) return parseAmount(s);
+  const m = t.match(/\d{1,3}(?:[ .]\d{3})+(?![.,]?\d)|\d+(?:[.,]\d+)?/);
+  if (!m) return null;
+  const grouped = /^\d{1,3}(?:[ .]\d{3})+$/.test(m[0]);
+  const n = grouped ? Number(m[0].replace(/\D/g, '')) : parseFloat(m[0].replace(',', '.'));
+  return normalizePrice(n);
+}
+
 function maskVin(vin) {
   const v = vin.toUpperCase();
   return v.slice(0, 5) + '****' + v[9] + '*****' + v.slice(15);
@@ -73,9 +97,9 @@ const KEYS = [
   [/^(поколение)$/, (v, f) => { f.generation = v.trim(); }],
   [/^(комплектация)$/, (v, f) => { f.trim = v.trim(); }],
   [/^(год|год выпуска)$/, (v, f) => { const m = YEAR_RE.exec(v); if (m) f.year = +m[1]; }],
-  [/^(цена|стоимость)$/, (v, f) => { const n = parseAmount(v); if (n) f.price = n; }],
-  [/^(рынок|рыночная цена|рыночная|оценка)$/, (v, f) => { const n = parseAmount(v); if (n) f.marketPrice = n; }],
-  [/^(пробег)$/, (v, f) => { const n = parseAmount(v); if (n != null) f.mileage = n; }],
+  [/^(цена|стоимость)$/, (v, f) => { const n = priceOf(v); if (n) f.price = n; }],
+  [/^(рынок|рыночная цена|рыночная|оценка)$/, (v, f) => { const n = priceOf(v); if (n) f.marketPrice = n; }],
+  [/^(пробег)$/, (v, f) => { const n = normalizeMileage(parseAmount(v)); if (n != null) f.mileage = n; }],
   [/^(двигатель|мотор)$/, (v, f) => { Object.assign(f, engineOf(v)); }],
   [/^(коробка|кпп|трансмиссия)$/, (v, f) => { const x = transmissionOf(v); if (x) f.transmission = x; }],
   [/^(привод)$/, (v, f) => { const x = driveOf(v); if (x) f.drive = x; }],
@@ -177,17 +201,22 @@ function parseListing(text) {
       if (item && !/^(торг|обмен)/i.test(item)) { service.push(item); used.add(i); return; }
     }
     if (fields.marketPrice == null && /рынок|рыночн|оценк/.test(t)) {
-      const n = parseAmount(t.replace(/^[^\d]*/, '')); if (n) { fields.marketPrice = n; used.add(i); return; }
+      const n = priceOf(t.replace(/^[^\d]*/, '')); if (n) { fields.marketPrice = n; used.add(i); return; }
     }
     if (fields.price == null && /цена|стоимость|₽|руб|(?<![а-я])р\.|млн/.test(t)) {
-      const n = parseAmount(t.replace(/^[^\d]*/, '')); if (n && n >= 10000) { fields.price = n; used.add(i); return; }
+      // Со словом «цена» («цена 500 рублей») голое число — тысячи; без него берём только полные суммы,
+      // чтобы «налог 5000 руб» не стал ценой.
+      const said = /цена|стоимость|отдам|прошу|продам за|продаю за/.test(t);
+      const n = said ? priceOf(t.replace(/^[^\d]*/, '')) : parseAmount(t.replace(/^[^\d]*/, ''));
+      if (n && n >= 10000) { fields.price = n; used.add(i); return; }
     }
     if (fields.mileage == null && /пробег|км(?![а-я])/.test(t)) {
       // Число после слова «пробег», иначе первое число в строке.
       const after = t.indexOf('пробег');
       const rel = after === -1 ? -1 : t.slice(after).search(/\d/);
       const at = rel !== -1 ? after + rel : t.search(/\d/);
-      const n = at === -1 ? null : parseAmount(t.slice(at).replace(/км.*$/, ''));
+      const raw = at === -1 ? null : parseAmount(t.slice(at).replace(/км.*$/, ''));
+      const n = after !== -1 ? normalizeMileage(raw) : raw;
       // Строка вида «Kia Rio 2019, пробег 74 000» — пробег берём, но марку и год из неё тоже разбираем ниже.
       if (n != null) { fields.mileage = n; if (!findMake(line)) used.add(i); }
     }
@@ -268,4 +297,4 @@ function toCar(f) {
 const REQUIRED = { make: 'марка', model: 'модель', year: 'год', price: 'цена', mileage: 'пробег' };
 function missing(f) { return Object.keys(REQUIRED).filter((k) => f[k] == null || f[k] === '').map((k) => REQUIRED[k]); }
 
-module.exports = { parseListing, toCar, missing, parseAmount, maskVin };
+module.exports = { parseListing, toCar, missing, parseAmount, priceOf, normalizePrice, normalizeMileage, maskVin };

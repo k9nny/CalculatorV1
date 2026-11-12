@@ -249,3 +249,16 @@ test('llm: сторонний адрес без списка моделей — 
   const denied = await discover('sk-x', { base: 'https://1-2-3-4.sslip.io/v1', get: async () => ({ status: 401, body: {} }) });
   assert.equal(denied.ok, false);
 });
+
+test('цена и пробег «как пишут»: 500 рублей — 500 000, 1.5 — 1,5 млн, пробег 120 — 120 000 км', async () => {
+  const { parseListing } = require('../server/listing-parser');
+  const cases = { 'цена 500 рублей': 500000, 'цена 500р': 500000, 'Цена: 500': 500000, 'цена 1.5': 1500000, 'цена 2,65': 2650000,
+    'цена 1390': 1390000, 'цена 1 390 000': 1390000, 'цена 1.390.000': 1390000, 'цена 650 тыс': 650000, 'цена 1,39 млн': 1390000 };
+  for (const [t, v] of Object.entries(cases)) assert.equal(parseListing(t).price, v, t);
+  assert.equal(parseListing('Kia Rio 2019\nпробег 120\nцена 500').mileage, 120000);
+  assert.equal(parseListing('Kia Rio 2019\nналог 5000 руб').price, undefined, 'налог — не цена');
+  // Нейросеть вернула «500» — это тоже 500 000.
+  assert.equal(clean({ price: 500, mileage: 120 }, '').price, 500000);
+  assert.equal(clean({ price: 500, mileage: 120 }, '').mileage, 120000);
+  assert.equal(clean({ price: 1.5 }, '').price, 1500000);
+});

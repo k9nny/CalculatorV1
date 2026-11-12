@@ -6,7 +6,7 @@
 const https = require('node:https');
 const http = require('node:http');
 const crypto = require('node:crypto');
-const { parseListing, maskVin } = require('./listing-parser');
+const { parseListing, maskVin, normalizePrice, normalizeMileage } = require('./listing-parser');
 
 const ENUMS = {
   transmission: ['Автомат', 'Механика', 'Вариатор', 'Робот'],
@@ -29,9 +29,9 @@ const PROMPT = `Ты разбираешь объявления о продаже
 - generation: поколение или кузов, если указаны (IV, W213, F30, рестайлинг)
 - trim: комплектация (Comfort, Prestige…)
 - year: год выпуска, число
-- price: цена продажи в рублях, число («1,39 млн» → 1390000, «1390к» → 1390000)
+- price: цена продажи в рублях, число («1,39 млн» → 1390000, «1390к» → 1390000). Это цена машины: «500», «500 рублей», «500р» без «тыс» — это 500000; «1.5» или «полтора» — 1500000; «лям сто» — 1100000
 - marketPrice: рыночная цена или оценка, если указана отдельно, число
-- mileage: пробег в км, число («74 тыс» → 74000)
+- mileage: пробег в км, число («74 тыс» → 74000, «пробег 120» → 120000)
 - volume: объём двигателя в литрах, число (1.6)
 - power: мощность в л.с., число
 - fuel: одно из ${ENUMS.fuel.join(', ')}
@@ -87,9 +87,11 @@ function clean(raw, text) {
   if (str(raw.generation, 40)) f.generation = str(raw.generation, 40);
   if (str(raw.trim, 60)) f.trim = str(raw.trim, 60);
   if (isInt(raw.year, 1960, year)) f.year = Math.round(+raw.year);
-  if (isInt(raw.price, 10000, 5e8)) f.price = Math.round(+raw.price);
-  if (isInt(raw.marketPrice, 10000, 5e8)) f.marketPrice = Math.round(+raw.marketPrice);
-  if (isInt(raw.mileage, 0, 3e6)) f.mileage = Math.round(+raw.mileage);
+  // «500 рублей» за машину — это 500 000 ₽; «пробег 120» — 120 000 км.
+  const price = normalizePrice(+raw.price), market = normalizePrice(+raw.marketPrice), mileage = normalizeMileage(+raw.mileage);
+  if (isInt(price, 10000, 5e8)) f.price = price;
+  if (isInt(market, 10000, 5e8)) f.marketPrice = market;
+  if (raw.mileage != null && raw.mileage !== '' && mileage != null && isInt(mileage, 0, 3e6)) f.mileage = mileage;
   if (isInt(raw.volume, 0.5, 9)) f.volume = Math.round(+raw.volume * 10) / 10;
   if (isInt(raw.power, 30, 2000)) f.power = Math.round(+raw.power);
   for (const k of ['fuel', 'transmission', 'drive', 'body', 'wheel', 'pts']) { const x = oneOf(raw[k], ENUMS[k]); if (x) f[k] = x; }
