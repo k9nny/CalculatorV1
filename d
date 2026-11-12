@@ -25,7 +25,7 @@ NEW=$(printf '%s' "${NEW:-andoauto.ru}" | tr 'A-Z' 'a-z' | sed -E 's#^https?://#
 
 ip=$(curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null || hostname -I | awk '{print $1}')
 for host in "$NEW" "www.$NEW"; do
-  got=$(getent ahostsv4 "$host" | awk 'NR==1{print $1}')
+  got=$(getent ahostsv4 "$host" 2>/dev/null | awk 'NR==1{print $1}' || true)
   if [ "$got" = "$ip" ]; then echo "$host → $ip — верно"
   else echo "ВНИМАНИЕ: $host → ${got:-не найден}, а нужно $ip. Проверьте A-записи у регистратора (обновляются до нескольких часов)."
   fi
