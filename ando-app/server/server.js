@@ -61,7 +61,7 @@ function readConfig(env = process.env) {
     clipTelegramChannel: env.CLIP_TG_CHANNEL || '',
     vkToken: env.VK_TOKEN || '',
     vkGroupId: env.VK_GROUP_ID || '',
-    phoneLabel: env.PHONE_LABEL || '+7 989 085-31-77'
+    phoneLabel: env.PHONE_LABEL || '+7 928 333-95-70'
   };
 }
 

@@ -362,7 +362,7 @@ if (require.main === module) {
   const car = cars.find((c) => c.id === id);
   if (!car) { console.error('Нет машины с id', id); process.exit(1); }
   fs.mkdirSync(outDir, { recursive: true });
-  renderCar(car, { publicDir: path.join(root, 'public'), outDir, phoneLabel: '+7 989 085-31-77', appLink: process.env.APP_LINK || '' })
+  renderCar(car, { publicDir: path.join(root, 'public'), outDir, phoneLabel: '+7 928 333-95-70', appLink: process.env.APP_LINK || '' })
     .then((r) => r.forEach((c) => console.log(c.file + '\n' + c.caption + '\n')))
     .catch((e) => { console.error(e.message); process.exit(1); });
 }

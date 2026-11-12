@@ -36,7 +36,7 @@ test('озвучка: марки, модели и аббревиатуры по-
 });
 
 test('сценарии: три разных ролика, в тексте нет цифр для синтезатора', () => {
-  const list = scripts(CAR, { phoneLabel: '+7 989 085-31-77' });
+  const list = scripts(CAR, { phoneLabel: '+7 928 333-95-70' });
   assert.deepEqual(list.map((c) => c.key), ['obzor', 'cena', 'servis']);
   const voices = list.map((c) => c.scenes.map((s) => s.voice).join(' '));
   assert.equal(new Set(voices).size, 3);

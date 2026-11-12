@@ -12,6 +12,12 @@ APP_DIR=/opt/ando
 # Короткая команда «ando» — меню настроек (ставится при каждом запуске, даже без нового кода).
 printf '#!/bin/sh\nexec bash /opt/ando/deploy/ando.sh "$@"\n' > /usr/local/bin/ando && chmod 755 /usr/local/bin/ando
 
+# Новый телефон в роликах: заменить прежний номер в настройках, если его не меняли вручную.
+if grep -qx 'PHONE_LABEL=+7 989 085-31-77' /etc/ando/ando.env 2>/dev/null; then
+  sed -i 's/^PHONE_LABEL=+7 989 085-31-77$/PHONE_LABEL=+7 928 333-95-70/' /etc/ando/ando.env
+  systemctl restart ando
+fi
+
 cd "$APP_DIR"
 old=$(git rev-parse HEAD)
 git fetch -q --depth 1 origin "$BRANCH"

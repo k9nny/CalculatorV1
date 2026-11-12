@@ -3,8 +3,8 @@
 // Используют страницы машин (server/seo.js, на лету) и страницы услуг (internal/build-pages.js, при сборке).
 // root — путь до корня сайта от текущей страницы: '' для главной, '../' для /cars/, '../../' для /cars/101/.
 
-const PHONE = '+79890853177';
-const PHONE_LABEL = '+7 (989) 085-31-77';
+const PHONE = '+79283339570';
+const PHONE_LABEL = '+7 (928) 333-95-70';
 const CITY = 'Москва';
 const REGION = 'Москва и Московская область';
 const BRAND = 'ANDO AUTO';
