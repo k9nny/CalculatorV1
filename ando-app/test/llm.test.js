@@ -239,3 +239,13 @@ test('llm: поиск адреса по ключу — Moonshot, kimi.com, OpenR
   const down = await discover('sk-x', { get: async () => { throw new Error('timeout'); } });
   assert.match(down.error, /не может связаться/);
 });
+
+test('llm: сторонний адрес без списка моделей — модель из поля или kimi-k3', async () => {
+  const { discover } = require('../server/llm');
+  const r = await discover('sk-x', { base: 'https://1-2-3-4.sslip.io/v1/', get: async () => ({ status: 404, body: null }) });
+  assert.deepEqual(r, { ok: true, baseUrl: 'https://1-2-3-4.sslip.io/v1', model: 'kimi-k3', models: [] });
+  const named = await discover('sk-x', { base: 'https://1-2-3-4.sslip.io/v1', model: 'kimi-k3-preview', get: async () => ({ status: 404, body: null }) });
+  assert.equal(named.model, 'kimi-k3-preview');
+  const denied = await discover('sk-x', { base: 'https://1-2-3-4.sslip.io/v1', get: async () => ({ status: 401, body: {} }) });
+  assert.equal(denied.ok, false);
+});

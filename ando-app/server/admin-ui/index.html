@@ -97,6 +97,9 @@
             <label class="field">Адрес API (base URL) из кабинета, где брали ключ
               <input id="llm-base" name="base" type="url" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="https://…/v1">
             </label>
+            <label class="field">Модель, если сервис её указал
+              <input id="llm-model" name="model" type="text" autocapitalize="off" spellcheck="false" placeholder="kimi-k3">
+            </label>
             <p class="hint">Например, у OpenRouter — https://openrouter.ai/api/v1. Пусто — сервер попробует адреса Kimi сам.</p>
           </details>
           <p class="err" id="llm-err" role="alert"></p>

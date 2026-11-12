@@ -281,7 +281,7 @@ function basesFor(apiKey, custom) {
 }
 
 // По ключу: какой адрес его принимает и какую модель взять (K3, иначе K2, иначе первую).
-async function discover(apiKey, { get = getJson, bases = null, base = '' } = {}) {
+async function discover(apiKey, { get = getJson, bases = null, base = '', model: wanted = '' } = {}) {
   const list = bases || basesFor(apiKey, base);
   const answers = [];
   for (const b of list) {
@@ -295,6 +295,8 @@ async function discover(apiKey, { get = getJson, bases = null, base = '' } = {})
         return { ok: true, baseUrl: b, model, models: ids.sort() };
       }
     }
+    // Сторонний адрес без списка моделей: модель проверим пробным разбором.
+    if (base && r.status !== 401 && r.status !== 403) return { ok: true, baseUrl: b, model: wanted || 'kimi-k3', models: [] };
     const why = r.status === 401 || r.status === 403 ? 'ключ не подходит' : r.status === 402 || r.status === 429 ? 'нет средств или превышен лимит' : 'ответ ' + r.status;
     answers.push(`${HOSTS[new URL(b).host] || new URL(b).host}: ${why} (${r.status})`);
   }

@@ -359,7 +359,7 @@
     btn.textContent = 'Проверяю ключ…';
     $('llm-err').textContent = '';
     $('llm-result').textContent = '';
-    api('llm', { method: 'POST', json: { key: $('llm-key').value, base: $('llm-base').value } })
+    api('llm', { method: 'POST', json: { key: $('llm-key').value, base: $('llm-base').value, model: $('llm-model').value } })
       .then(function (data) {
         $('llm-key').value = '';
         showLlm(data);

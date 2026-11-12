@@ -222,10 +222,11 @@ function createAdmin(config, opts = {}) {
       if (!/^[\x21-\x7e]{16,300}$/.test(key)) return json(res, 400, { error: 'Это не похоже на ключ. Скопируйте его целиком из кабинета Kimi.' });
       const base = String(body.base || '').trim();
       if (base && !/^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w.\/-]*)?$/i.test(base)) return json(res, 400, { error: 'Адрес API должен начинаться с https://' });
-      const found = await discover(key, { base });
+      const wanted = String(body.model || '').trim().slice(0, 100);
+      const found = await discover(key, { base, model: wanted });
       if (!found.ok) return json(res, 400, { error: found.error, details: found.details || [] });
-      const settings = { baseUrl: found.baseUrl, apiKey: key, model: String(body.model || found.model) };
-      if (!found.models.includes(settings.model)) settings.model = found.model;
+      const settings = { baseUrl: found.baseUrl, apiKey: key, model: wanted || found.model };
+      if (found.models.length && !found.models.includes(settings.model)) settings.model = found.model;
       const test = makeParser(settings);
       let sample;
       try { sample = llm.clean(await test.ask(SAMPLE), SAMPLE); } catch (e) {
