@@ -183,9 +183,13 @@ function parseListing(text) {
       const n = parseAmount(t.replace(/^[^\d]*/, '')); if (n && n >= 10000) { fields.price = n; used.add(i); return; }
     }
     if (fields.mileage == null && /пробег|км(?![а-я])/.test(t)) {
-      const at = t.search(/\d/);
+      // Число после слова «пробег», иначе первое число в строке.
+      const after = t.indexOf('пробег');
+      const rel = after === -1 ? -1 : t.slice(after).search(/\d/);
+      const at = rel !== -1 ? after + rel : t.search(/\d/);
       const n = at === -1 ? null : parseAmount(t.slice(at).replace(/км.*$/, ''));
-      if (n != null) { fields.mileage = n; used.add(i); }
+      // Строка вида «Kia Rio 2019, пробег 74 000» — пробег берём, но марку и год из неё тоже разбираем ниже.
+      if (n != null) { fields.mileage = n; if (!findMake(line)) used.add(i); }
     }
   });
 

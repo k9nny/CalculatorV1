@@ -5,6 +5,7 @@ const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
 const { parseListing, toCar, missing } = require('./listing-parser');
+const { listingText } = require('./listing-text');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
 const { telegramVideo } = require('./video/publish');
 
@@ -119,6 +120,8 @@ const HELP = [
 // clips (необязательно): { render(car) → [{ key, name, file, caption }], queue } — ролики по машине.
 function createBot(options) {
   const { api, adminIds, carsFile, photosDir, photosUrlPrefix = 'img/cars/', appLink = '', debounceMs = 2500, now = () => new Date(), clips = null } = options;
+  // Разбор текста: нейросеть (server/llm.js), если подключена, иначе обычный.
+  const parser = options.parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
   const drafts = new Map(); // chatId → { fields, photos: [file_id], timer, previewId }
   const admins = new Set(adminIds.map(String));
 
@@ -141,12 +144,25 @@ function createBot(options) {
     const draft = drafts.get(chatId);
     if (!draft) return;
     draft.timer = null;
+    // Марка, модель, кузов или цвет не написаны — смотрим первое фото (один раз на черновик).
+    if (parser.enabled && parser.fillFromPhoto && draft.photos.length && !draft.photoChecked &&
+        ['make', 'model', 'body', 'color'].some((k) => draft.fields[k] == null || draft.fields[k] === '')) {
+      draft.photoChecked = true;
+      try {
+        const file = await api.request('getFile', { file_id: draft.photos[0] });
+        const buf = await api.download(file.file_path);
+        const filled = await parser.fillFromPhoto(draft.fields, buf, /\.png$/i.test(file.file_path || '') ? 'image/png' : 'image/jpeg');
+        const seen = Object.keys(filled).filter((k) => draft.fields[k] == null || draft.fields[k] === '');
+        if (seen.length) { draft.fields = filled; draft.fromPhoto = seen; }
+      } catch { /* фото не скачалось — без него */ }
+    }
     const car = draftCar(draft);
     const lack = missing(draft.fields);
     const lines = [
       '<b>Черновик объявления</b>', '',
       carSummary(car), '',
       `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}`,
+      ...(draft.fromPhoto && draft.fromPhoto.length ? [`По фото определил: ${draft.fromPhoto.map((k) => ({ make: 'марка', model: 'модель', generation: 'поколение', body: 'кузов', color: 'цвет' }[k])).join(', ')}. Проверьте.`] : []),
       lack.length ? `Не хватает: ${lack.join(', ')}. Допишите строкой, например «${lack[0]} …».` : 'Всё нужное есть.'
     ];
     const buttons = [[{ text: 'Опубликовать', callback_data: 'pub' }, { text: 'Отменить', callback_data: 'cancel' }]];
@@ -250,19 +266,8 @@ function createBot(options) {
   }
 
   // Готовый пост для каналов Telegram, MAX, VK.
-  function channelPost(car, link) {
-    const e = car.engine || {};
-    const specs = [e.volume && `${Number(e.volume).toFixed(1)} л`, e.power && `${e.power} л.с.`, car.transmission, car.drive && `${car.drive.toLowerCase()} привод`]
-      .filter(Boolean).join(', ');
-    return [
-      `${esc(car.make)} ${esc(car.model)}, ${car.year}`,
-      money(car.price),
-      `Пробег ${km(car.mileage)}`,
-      specs ? esc(specs) : '',
-      car.serviceDone && car.serviceDone.length ? `Подготовили в нашем сервисе: ${esc(car.serviceDone.join(', ').toLowerCase())}` : '',
-      link ? `\nФото и запись на осмотр: ${link}` : ''
-    ].filter(Boolean).join('\n');
-  }
+  // Текст для канала и площадок — по общему шаблону (server/listing-text.js), одинаковый для всех машин.
+  function channelPost(car, link) { return esc(listingText(car, link)); }
 
   async function setStatus(chatId, id, status) {
     const catalog = readCatalog(carsFile);
@@ -356,7 +361,7 @@ function createBot(options) {
     const photo = msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1].file_id
       : msg.document && /^image\//.test(msg.document.mime_type || '') ? msg.document.file_id : null;
     if (photo && draft.photos.length < MAX_PHOTOS && !draft.photos.includes(photo)) draft.photos.push(photo);
-    if (text) mergeFields(draft.fields, parseListing(text));
+    if (text) mergeFields(draft.fields, await parser.parse(text));
     return schedulePreview(chatId);
   }
 

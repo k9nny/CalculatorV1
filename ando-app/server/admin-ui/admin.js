@@ -115,7 +115,11 @@
         })
         .then(function (data) { p.name = data.name; p.state = 'ok'; })
         .catch(function (err) { p.state = 'failed'; toast('Фото не загрузилось: ' + err.message, true); })
-        .then(renderPhotos);
+        .then(function () {
+          renderPhotos();
+          // Первое фото готово — нейросеть может дополнить марку, модель, кузов и цвет.
+          if (photos[0] === p && $('text').value.trim()) parseText();
+        });
     });
     renderPhotos();
   });
@@ -142,19 +146,24 @@
   var parseSeq = 0;
   $('text').addEventListener('input', function () {
     clearTimeout(parseTimer);
-    parseTimer = setTimeout(parseText, 400);
+    parseTimer = setTimeout(parseText, 1200);
   });
 
   function parseText() {
     var text = $('text').value.trim();
     var seq = ++parseSeq;
     if (!text) { parsed = null; $('lack').textContent = ''; renderPreview(); refreshPublish(); return; }
-    api('parse', { method: 'POST', json: { text: text } }).then(function (data) {
+    $('lack').classList.remove('ok');
+    $('lack').textContent = 'Разбираю объявление…';
+    var names = photos.filter(function (p) { return p.state === 'ok'; }).map(function (p) { return p.name; });
+    api('parse', { method: 'POST', json: { text: text, photos: names } }).then(function (data) {
       if (seq !== parseSeq) return;
       parsed = data;
       var lack = $('lack');
       lack.classList.toggle('ok', !data.missing.length);
-      lack.textContent = data.missing.length ? 'Не хватает: ' + data.missing.join(', ') : 'Всё нужное есть';
+      var seen = (data.fromPhoto || []).map(function (k) { return { make: 'марка', model: 'модель', generation: 'поколение', body: 'кузов', color: 'цвет' }[k]; });
+      lack.textContent = (data.missing.length ? 'Не хватает: ' + data.missing.join(', ') : 'Всё нужное есть') +
+        (seen.length ? '. По фото определено: ' + seen.join(', ') + ' — проверьте в превью' : '');
       renderPreview();
       refreshPublish();
     }).catch(function (err) { toast(err.message, true); });
@@ -218,6 +227,7 @@
           }).join('') + '</select>' +
           '<input data-price inputmode="numeric" aria-label="Цена, ₽" value="' + esc(UI.num(c.price || 0)) + '">' +
           '<button class="btn btn-ghost" type="button" data-delete>Удалить</button>' +
+          '<button class="btn btn-ghost row-text" type="button" data-text>Текст объявления</button>' +
           '</div></div>';
       }).join('');
     }).catch(function (err) { $('cars').innerHTML = '<p class="empty">' + esc(err.message) + '</p>'; });
@@ -248,6 +258,15 @@
     if (e.key === 'Enter' && e.target.matches('[data-price]')) e.target.blur();
   });
   $('cars').addEventListener('click', function (e) {
+    if (e.target.matches('[data-text]')) {
+      var id = e.target.closest('.row').dataset.id;
+      api('cars/' + encodeURIComponent(id) + '/text').then(function (data) {
+        var done = function () { toast('Текст объявления скопирован'); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(data.text).then(done, function () { prompt('Скопируйте текст:', data.text); });
+        else prompt('Скопируйте текст:', data.text);
+      }).catch(function (err) { toast(err.message, true); });
+      return;
+    }
     if (!e.target.matches('[data-delete]')) return;
     var row = e.target.closest('.row');
     var title = row.querySelector('.row-title').textContent;

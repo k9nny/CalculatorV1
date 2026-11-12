@@ -10,6 +10,7 @@ case "${1:-}" in
   2|tg)     shift || true; exec bash "$D/tg.sh" "$@" ;;
   3|domain) exec bash "$D/domain.sh" ;;
   8|main)   exec bash "$D/domain.sh" --main ;;
+  9|ai)     shift || true; exec bash "$D/llm.sh" "$@" ;;
   4|bot)    exec bash "$D/bot.sh" ;;
   5|update) exec bash "$D/update.sh" --force ;;
 esac
@@ -25,6 +26,7 @@ ANDO AUTO — что сделать?
   6  Показать ссылку на админку
   7  Проверить связь с Telegram и Cloudflare
   8  Сделать другой домен основным
+  9  Нейросеть Kimi: подключить ключ
 EOF
 read -r -p "Номер и Enter: " N </dev/tty
 case "$N" in
@@ -36,5 +38,6 @@ case "$N" in
   6) exec bash "$D/admin.sh" --show ;;
   7) exec bash "$D/tg.sh" --check ;;
   8) exec bash "$D/domain.sh" --main ;;
+  9) exec bash "$D/llm.sh" ;;
   *) echo "Нет такого номера." ;;
 esac

@@ -9,6 +9,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { parseListing, toCar, missing } = require('./listing-parser');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
+const { listingText } = require('./listing-text');
 
 const COOKIE = 'ando_admin';
 const SESSION_DAYS = 30;
@@ -61,7 +62,9 @@ const safeEqual = (a, b) => {
 };
 const hashPassword = (password, salt) => crypto.scryptSync(String(password), salt, 32).toString('hex');
 
-function createAdmin(config, { now = () => new Date() } = {}) {
+function createAdmin(config, { now = () => new Date(), parser = null } = {}) {
+  const smart = parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
+  const photoSeen = new Map(); // имя временного фото → что нейросеть увидела (чтобы не спрашивать дважды)
   const dir = path.dirname(config.leadsLog);
   const stateFile = path.join(dir, 'admin.json');
   const leadsStateFile = path.join(dir, 'leads-state.json');
@@ -131,6 +134,33 @@ function createAdmin(config, { now = () => new Date() } = {}) {
   }
   const PREFIX = 'img/cars/';
 
+  // Поля из текста; чего нет в тексте (марка, модель, кузов, цвет) — по первому фото.
+  async function fieldsFor(text, photos) {
+    const fields = await smart.parse(String(text || ''));
+    const first = (Array.isArray(photos) ? photos : []).map((n) => path.basename(String(n)))
+      .find((n) => /^tmp-[0-9a-f]{16}\.(jpg|png|webp)$/.test(n));
+    if (!first || !smart.enabled || !smart.fillFromPhoto) return { fields, fromPhoto: [] };
+    if (['make', 'model', 'body', 'color'].every((k) => fields[k] != null && fields[k] !== '')) return { fields, fromPhoto: [] };
+    let seen = photoSeen.get(first);
+    if (!seen) {
+      let buf;
+      try { buf = fs.readFileSync(photoPath(first)); } catch { return { fields, fromPhoto: [] }; }
+      const mime = first.endsWith('.png') ? 'image/png' : first.endsWith('.webp') ? 'image/webp' : 'image/jpeg';
+      seen = await smart.fillFromPhoto({}, buf, mime);
+      if (photoSeen.size > 100) photoSeen.delete(photoSeen.keys().next().value);
+      photoSeen.set(first, seen);
+    }
+    const out = { ...fields };
+    const sameMake = !fields.make || (seen.make && String(seen.make).toLowerCase() === String(fields.make).toLowerCase());
+    const fromPhoto = [];
+    for (const k of ['make', 'model', 'generation', 'body', 'color']) {
+      if (out[k] != null && out[k] !== '') continue;
+      if ((k === 'model' || k === 'generation') && !sameMake) continue;
+      if (seen[k] != null) { out[k] = seen[k]; fromPhoto.push(k); }
+    }
+    return { fields: out, fromPhoto };
+  }
+
   function leadsList() {
     let lines = [];
     try { lines = fs.readFileSync(config.leadsLog, 'utf8').split('\n'); } catch { /* заявок ещё нет */ }
@@ -175,8 +205,8 @@ function createAdmin(config, { now = () => new Date() } = {}) {
 
     if (pathname === '/api/admin/parse' && m === 'POST') {
       const body = await readJson(req);
-      const fields = parseListing(String(body.text || ''));
-      return json(res, 200, { car: toCar(fields), missing: missing(fields) });
+      const { fields, fromPhoto } = await fieldsFor(body.text, body.photos);
+      return json(res, 200, { car: toCar(fields), missing: missing(fields), fromPhoto });
     }
 
     // Фото загружается до публикации: временное имя, при публикации переименуется в «номер-n».
@@ -198,7 +228,7 @@ function createAdmin(config, { now = () => new Date() } = {}) {
 
     if (pathname === '/api/admin/cars' && m === 'POST') {
       const body = await readJson(req);
-      const fields = parseListing(String(body.text || ''));
+      const { fields } = await fieldsFor(body.text, body.photos);
       const lack = missing(fields);
       if (lack.length) return json(res, 400, { error: 'Не хватает: ' + lack.join(', ') });
       const catalog = readCatalog(config.carsFile);
@@ -216,6 +246,15 @@ function createAdmin(config, { now = () => new Date() } = {}) {
       catalog.cars.unshift(car);
       writeCatalog(config.carsFile, catalog, now());
       return json(res, 200, { car });
+    }
+
+    // Готовый текст объявления по общему шаблону — для канала, Авито и других площадок.
+    const txt = /^\/api\/admin\/cars\/([^/]+)\/text$/.exec(pathname);
+    if (txt && m === 'GET') {
+      const car = readCatalog(config.carsFile).cars.find((c) => String(c.id) === decodeURIComponent(txt[1]));
+      if (!car) return json(res, 404, { error: 'Такой машины уже нет' });
+      const link = config.siteUrl ? `${config.siteUrl.replace(/\/?$/, '/')}cars/${encodeURIComponent(car.id)}/` : '';
+      return json(res, 200, { text: listingText(car, link) });
     }
 
     const one = /^\/api\/admin\/cars\/([^/]+)$/.exec(pathname);

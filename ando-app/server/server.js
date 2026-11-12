@@ -10,6 +10,7 @@ const { validateLead, formatLeadMessage } = require('./leads');
 const { createBot, telegramApi, apiHost } = require('./bot');
 const { createAdmin } = require('./admin');
 const { createSeo } = require('./seo');
+const { createSmartParser } = require('./llm');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -61,6 +62,8 @@ function readConfig(env = process.env) {
     clipTelegramChannel: env.CLIP_TG_CHANNEL || '',
     vkToken: env.VK_TOKEN || '',
     vkGroupId: env.VK_GROUP_ID || '',
+    // Нейросеть для разбора объявлений и фото (Kimi или другая с API как у OpenAI). Пусто — обычный разбор.
+    llm: { baseUrl: env.LLM_BASE_URL || '', apiKey: env.LLM_API_KEY || '', model: env.LLM_MODEL || '', vision: env.LLM_VISION !== '0' },
     phoneLabel: env.PHONE_LABEL || '+7 928 333-95-70'
   };
 }
@@ -119,6 +122,13 @@ function readBody(req, limit = 16 * 1024) {
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
     req.on('error', reject);
   });
+}
+
+// Один разборщик на процесс: его кэш общий у бота и админки.
+let sharedParser = null;
+function smartParser(config) {
+  if (!sharedParser) sharedParser = createSmartParser(config.llm || {});
+  return sharedParser;
 }
 
 function createApp(config = readConfig(), deps = {}) {
@@ -264,7 +274,7 @@ function createApp(config = readConfig(), deps = {}) {
   }
 
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
-  const admin = createAdmin(config);
+  const admin = createAdmin(config, { parser: deps.parser || smartParser(config) });
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 
@@ -326,9 +336,11 @@ if (require.main === module) {
       carsFile: config.carsFile,
       photosDir: config.photosDir,
       appLink: config.appLink,
+      parser: smartParser(config),
       clips
     }).start();
     console.log(`Бот объявлений запущен, администраторов: ${config.adminIds.length}`);
+    if (smartParser(config).enabled) console.log(`Разбор объявлений нейросетью: ${config.llm.model}`);
   }
 }
 
