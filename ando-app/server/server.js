@@ -10,7 +10,7 @@ const { validateLead, formatLeadMessage } = require('./leads');
 const { createBot, telegramApi, apiHost } = require('./bot');
 const { createAdmin } = require('./admin');
 const { createSeo } = require('./seo');
-const { createSmartParser } = require('./llm');
+const { createSmartParser, createLlmStore } = require('./llm');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -125,11 +125,17 @@ function readBody(req, limit = 16 * 1024) {
 }
 
 // Один разборщик на процесс: его кэш общий у бота и админки.
-let sharedParser = null;
+// Ключ можно задать в админке (llm.json) или в ando.env (LLM_*); админка важнее.
+const shared = new Map();
 function smartParser(config) {
-  if (!sharedParser) sharedParser = createSmartParser(config.llm || {});
-  return sharedParser;
+  const key = config.leadsLog;
+  if (!shared.has(key)) {
+    const store = createLlmStore(path.dirname(config.leadsLog), config.llm || {});
+    shared.set(key, { store, parser: createSmartParser(() => store.get()) });
+  }
+  return shared.get(key).parser;
 }
+function llmStore(config) { smartParser(config); return shared.get(config.leadsLog).store; }
 
 function createApp(config = readConfig(), deps = {}) {
   const send = deps.sendTelegramMessage || sendTelegramMessage;
@@ -274,7 +280,7 @@ function createApp(config = readConfig(), deps = {}) {
   }
 
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
-  const admin = createAdmin(config, { parser: deps.parser || smartParser(config) });
+  const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser });
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 

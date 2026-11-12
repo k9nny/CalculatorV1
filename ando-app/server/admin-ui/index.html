@@ -33,6 +33,7 @@
     <button type="button" role="tab" data-tab="add" aria-selected="true">Добавить</button>
     <button type="button" role="tab" data-tab="cars" aria-selected="false">Машины</button>
     <button type="button" role="tab" data-tab="leads" aria-selected="false">Заявки</button>
+    <button type="button" role="tab" data-tab="settings" aria-selected="false">Настройки</button>
   </nav>
 
   <main class="wrap">
@@ -80,6 +81,23 @@
 
     <section data-pane="leads" hidden>
       <div class="list" id="leads"></div>
+    </section>
+
+    <section data-pane="settings" hidden>
+      <div class="block">
+        <h2>Нейросеть Kimi</h2>
+        <p class="hint">Разбирает объявления со сленгом и сокращениями, по фото определяет марку и модель, если их нет в тексте. Ничего не додумывает: чего нет в тексте — поле пустое.</p>
+        <p class="lack ok" id="llm-status"></p>
+        <form id="llm-form" class="llm-form" autocomplete="off">
+          <label class="field">Ключ API из platform.moonshot.ai → API Keys
+            <input id="llm-key" name="key" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-…" required>
+          </label>
+          <p class="err" id="llm-err" role="alert"></p>
+          <button class="btn btn-primary btn-block" type="submit">Сохранить и проверить</button>
+        </form>
+        <p class="hint" id="llm-result"></p>
+        <button class="btn btn-ghost btn-block" type="button" id="llm-off" hidden>Выключить нейросеть</button>
+      </div>
     </section>
   </main>
 </div>

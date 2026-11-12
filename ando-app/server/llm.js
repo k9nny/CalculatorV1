@@ -141,11 +141,21 @@ function isEdit(text) {
   return lines.length > 0 && lines.length <= 2 && lines.every((l) => EDIT_KEY.test(l));
 }
 
-function createSmartParser({ baseUrl = '', apiKey = '', model = '', vision = true, timeoutMs = 40000 } = {}, { post = postJson, log = console.log } = {}) {
-  const enabled = !!(baseUrl && apiKey && model);
+// source — настройки { baseUrl, apiKey, model, vision } или функция, которая их возвращает
+// (ключ можно поменять в админке без перезапуска).
+function createSmartParser(source = {}, { post = postJson, log = console.log } = {}) {
+  const getSource = typeof source === 'function' ? source : () => source;
+  function conf() {
+    const x = getSource() || {};
+    const c = { baseUrl: x.baseUrl || '', apiKey: x.apiKey || '', model: x.model || '', vision: x.vision !== false, timeoutMs: x.timeoutMs || 40000 };
+    c.enabled = !!(c.baseUrl && c.apiKey && c.model);
+    return c;
+  }
   let noTemperature = false;
+  let lastPhotoError = '';
   const cache = new Map();
   async function ask(text) {
+    const { baseUrl, apiKey, model, timeoutMs } = conf();
     const body = {
       model,
       messages: [{ role: 'system', content: PROMPT }, { role: 'user', content: redact(text) }],
@@ -168,7 +178,9 @@ function createSmartParser({ baseUrl = '', apiKey = '', model = '', vision = tru
   }
   // По фото: марка, модель, поколение, кузов, цвет. Нейросеть без зрения или ошибка — пустой ответ.
   async function photo(buffer, mime = 'image/jpeg') {
+    const { baseUrl, apiKey, model, timeoutMs, enabled, vision } = conf();
     if (!enabled || !vision || !buffer || !buffer.length || buffer.length > 8 * 1024 * 1024) return {};
+    lastPhotoError = '';
     try {
       const res = await post(baseUrl.replace(/\/+$/, '') + '/chat/completions', {
         model,
@@ -187,6 +199,7 @@ function createSmartParser({ baseUrl = '', apiKey = '', model = '', vision = tru
       for (const k of PHOTO_KEYS) if (f[k] != null) out[k] = f[k];
       return out;
     } catch (e) {
+      lastPhotoError = e.message;
       log('Нейросеть не разобрала фото: ' + e.message);
       return {};
     }
@@ -208,8 +221,9 @@ function createSmartParser({ baseUrl = '', apiKey = '', model = '', vision = tru
   // Поля объявления: нейросеть + обычный разбор (он заполняет то, что нейросеть пропустила).
   async function parse(text) {
     const rules = parseListing(text);
+    const { enabled, model } = conf();
     if (!enabled || isEdit(text)) return rules;
-    const key = crypto.createHash('sha256').update(String(text)).digest('hex');
+    const key = crypto.createHash('sha256').update(model + '\n' + String(text)).digest('hex');
     if (cache.has(key)) return { ...cache.get(key) };
     try {
       const ai = clean(await ask(text), text);
@@ -233,7 +247,70 @@ function createSmartParser({ baseUrl = '', apiKey = '', model = '', vision = tru
       return rules;
     }
   }
-  return { parse, photo, fillFromPhoto, enabled, ask };
+  return { parse, photo, fillFromPhoto, ask, get enabled() { return conf().enabled; }, get model() { return conf().model; }, get lastPhotoError() { return lastPhotoError; } };
 }
 
-module.exports = { createSmartParser, clean, redact, isEdit, PROMPT };
+function getJson(url, headers, timeoutMs = 20000) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const lib = u.protocol === 'http:' ? http : https;
+    const req = lib.request({ hostname: u.hostname, port: u.port, path: u.pathname + u.search, method: 'GET', timeout: timeoutMs, headers }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        let body = null;
+        try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); } catch { /* не JSON */ }
+        resolve({ status: res.statusCode, body });
+      });
+    });
+    req.on('timeout', () => req.destroy(new Error('timeout')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+const KIMI_BASES = ['https://api.moonshot.ai/v1', 'https://api.moonshot.cn/v1'];
+// По ключу: какой адрес его принимает и какую модель взять (K3, иначе самую новую K).
+async function discover(apiKey, { get = getJson, bases = KIMI_BASES } = {}) {
+  let reached = false;
+  for (const base of bases) {
+    let r;
+    try { r = await get(base + '/models', { Authorization: 'Bearer ' + apiKey }); } catch { continue; }
+    reached = true;
+    if (r.status !== 200 || !r.body) continue;
+    const ids = (r.body.data || []).map((m) => m && m.id).filter(Boolean);
+    if (!ids.length) continue;
+    const pick = (re) => ids.filter((id) => re.test(id)).sort((a, b) => a.length - b.length)[0];
+    const model = pick(/k3/i) || pick(/k2/i) || ids.sort()[0];
+    return { ok: true, baseUrl: base, model, models: ids.sort() };
+  }
+  return { ok: false, error: reached ? 'Kimi не принял ключ. Проверьте, что скопировали его целиком.' : 'Сервер не может связаться с Kimi.' };
+}
+
+// Настройки нейросети: из админки (файл llm.json рядом с журналом заявок, только для владельца) или из ando.env.
+function createLlmStore(dir, fromEnv = {}) {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const file = path.join(dir, 'llm.json');
+  let cache = { mtime: -1, data: null };
+  function read() {
+    let mtime;
+    try { mtime = fs.statSync(file).mtimeMs; } catch { cache = { mtime: -1, data: null }; return null; }
+    if (mtime !== cache.mtime) {
+      try { cache = { mtime, data: JSON.parse(fs.readFileSync(file, 'utf8')) }; } catch { cache = { mtime, data: null }; }
+    }
+    return cache.data;
+  }
+  return {
+    get() { const d = read(); return d && d.apiKey ? d : (d && d.off ? {} : fromEnv); },
+    save(data) {
+      fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(file + '.tmp', JSON.stringify(data), { mode: 0o600 });
+      fs.renameSync(file + '.tmp', file);
+    },
+    // Выключить: пустая запись, чтобы и ключ из ando.env не использовался.
+    off() { this.save({ off: true }); }
+  };
+}
+
+module.exports = { createSmartParser, createLlmStore, discover, clean, redact, isEdit, PROMPT };

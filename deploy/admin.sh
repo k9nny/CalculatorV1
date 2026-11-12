@@ -48,12 +48,15 @@ chmod 600 "$STATE" 2>/dev/null || true
 SLUG=$(printf '%s' "$OUT" | sed -n 's/^SLUG=//p')
 [ -n "$SLUG" ] || fail "Что-то пошло не так. Пришлите скриншот экрана."
 
-say "Готово. Ваша админка:"
-printf '\n    https://%s/app/%s/\n\n' "$DOMAIN" "$SLUG"
-cat <<EOF
-Сохраните ссылку в «Избранное» Telegram или в закладки телефона и никому не пересылайте.
-По любому другому адресу сервер отвечает «страница не найдена», так что найти админку без ссылки нельзя.
-Забыли ссылку:   bash a --show
-Ссылка утекла:   bash a --new-link   (старая сразу перестанет работать)
-Сменить пароль:  bash a
-EOF
+URL="https://$DOMAIN/app/$SLUG/"
+# QR-код, чтобы не перепечатывать ссылку: навести камеру телефона на экран.
+command -v qrencode >/dev/null || DEBIAN_FRONTEND=noninteractive apt-get install -y -q qrencode >/dev/null 2>&1 || true
+clear 2>/dev/null || true
+echo "Админка готова. Ссылку никому не пересылайте: без неё админку не найти."
+echo "Показать ещё раз: ando → 6.  Новая ссылка, если старая утекла: bash /opt/ando/deploy/admin.sh --new-link"
+echo
+echo "    $URL"
+if command -v qrencode >/dev/null; then
+  qrencode -t ANSI -m 2 "$URL"
+  echo "Наведите камеру телефона на QR-код — откроется админка. Сохраните её в закладки."
+fi

@@ -66,6 +66,7 @@
     document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== name; });
     if (name === 'cars') loadCars();
     if (name === 'leads') loadLeads();
+    if (name === 'settings') loadLlm();
     window.scrollTo(0, 0);
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { openTab(b.dataset.tab); }); });
@@ -340,6 +341,40 @@
   setInterval(function () {
     if (!$('app').hidden && document.visibilityState === 'visible') loadLeads();
   }, 60000);
+
+  /* ---------- нейросеть ---------- */
+  function showLlm(data) {
+    $('llm-status').classList.toggle('ok', !!data.enabled);
+    $('llm-status').classList.toggle('off', !data.enabled);
+    $('llm-status').textContent = data.enabled
+      ? 'Включена: ' + data.model + ' · ключ ' + data.keyEnd + (data.vision ? ' · понимает фото' : ' · фото не принимает')
+      : 'Выключена: объявления разбираются обычным способом.';
+    $('llm-off').hidden = !data.enabled;
+  }
+  function loadLlm() { api('llm').then(showLlm).catch(function (err) { $('llm-status').textContent = err.message; }); }
+  $('llm-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = e.target.querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'Проверяю ключ…';
+    $('llm-err').textContent = '';
+    $('llm-result').textContent = '';
+    api('llm', { method: 'POST', json: { key: $('llm-key').value } })
+      .then(function (data) {
+        $('llm-key').value = '';
+        showLlm(data);
+        var s = data.sample || {};
+        $('llm-result').textContent = 'Проверка: «мерс ешка 2017, 98т.км, 2 млн 650» → ' +
+          [s.make, s.model, s.year, s.mileage != null ? UI.num(s.mileage) + ' км' : '', s.price ? UI.rub(s.price) : ''].filter(Boolean).join(', ');
+        toast('Нейросеть подключена');
+      })
+      .catch(function (err) { $('llm-err').textContent = err.message; })
+      .then(function () { btn.disabled = false; btn.textContent = 'Сохранить и проверить'; });
+  });
+  $('llm-off').addEventListener('click', function () {
+    if (!confirm('Выключить нейросеть? Объявления будут разбираться обычным способом.')) return;
+    api('llm', { method: 'DELETE' }).then(function (data) { showLlm(data); $('llm-result').textContent = ''; }).catch(function (err) { toast(err.message, true); });
+  });
 
   /* ---------- старт ---------- */
   UI.bindSlides($('preview'));

@@ -169,3 +169,51 @@ test('админка: разбор с фото и готовый текст об
     assert.match(t.text, /https:\/\/andoauto\.ru\/cars\/\d+\//);
   } finally { server.close(); }
 });
+
+test('админка: ключ Kimi вставляется в настройках, проверяется и сразу включает разбор', async () => {
+  const { createLlmStore } = require('../server/llm');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-llm-key-'));
+  fs.mkdirSync(path.join(dir, 'private'));
+  fs.writeFileSync(path.join(dir, 'cars.json'), JSON.stringify({ cars: [] }));
+  const config = { ...readConfig({}), carsFile: path.join(dir, 'cars.json'), photosDir: path.join(dir, 'photos'), leadsLog: path.join(dir, 'private', 'leads.jsonl') };
+  const { setPassword, stateFile } = require('../server/admin-cli');
+  const slug = setPassword(stateFile({ LEADS_LOG: config.leadsLog }), 'correct-horse-42');
+  const store = createLlmStore(path.join(dir, 'private'), {});
+  const mockPost = async (u, b, h) => {
+    assert.equal(h.Authorization, 'Bearer sk-good-key-1234567890');
+    if (Array.isArray(b.messages[0].content)) return reply({});
+    return reply({ make: 'Mercedes-Benz', model: 'E-Class', year: 2017, price: 2650000, mileage: 98000 });
+  };
+  const deps = {
+    llmStore: store,
+    parser: createSmartParser(() => store.get(), { post: mockPost, ...quiet }),
+    makeParser: (c) => createSmartParser(c, { post: mockPost, ...quiet }),
+    discover: async (key) => key === 'sk-good-key-1234567890'
+      ? { ok: true, baseUrl: 'https://api.moonshot.ai/v1', model: 'kimi-k3', models: ['kimi-k2', 'kimi-k3'] }
+      : { ok: false, error: 'Kimi не принял ключ.' }
+  };
+  const server = createApp(config, deps);
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  const origin = `http://127.0.0.1:${server.address().port}`;
+  const base = `${origin}/${slug}/api/`;
+  try {
+    const login = await fetch(base + 'login', { method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ password: 'correct-horse-42' }) });
+    const h = { Origin: origin, Cookie: login.headers.get('set-cookie').split(';')[0], 'Content-Type': 'application/json' };
+    assert.equal((await (await fetch(base + 'llm', { headers: h })).json()).enabled, false);
+    const bad = await fetch(base + 'llm', { method: 'POST', headers: h, body: JSON.stringify({ key: 'sk-wrong-key-000000000' }) });
+    assert.equal(bad.status, 400);
+    const ok = await (await fetch(base + 'llm', { method: 'POST', headers: h, body: JSON.stringify({ key: ' sk-good-key-1234567890 \n' }) })).json();
+    assert.equal(ok.model, 'kimi-k3');
+    assert.equal(ok.sample.make, 'Mercedes-Benz');
+    assert.equal(ok.keyEnd, '…7890');
+    const st = await (await fetch(base + 'llm', { headers: h })).json();
+    assert.equal(st.enabled, true);
+    assert.equal(JSON.stringify(st).includes('sk-good'), false, 'ключ целиком наружу не отдаётся');
+    assert.equal(fs.statSync(path.join(dir, 'private', 'llm.json')).mode & 0o777, 0o600);
+    // Разбор сразу идёт через нейросеть, без перезапуска.
+    const parsed = await (await fetch(base + 'parse', { method: 'POST', headers: h, body: JSON.stringify({ text: 'мерс ешка 17г 98т.км 2 млн 650 торг, полный, бенз' }) })).json();
+    assert.equal(parsed.car.model, 'E-Class');
+    await fetch(base + 'llm', { method: 'DELETE', headers: h });
+    assert.equal((await (await fetch(base + 'llm', { headers: h })).json()).enabled, false);
+  } finally { server.close(); }
+});

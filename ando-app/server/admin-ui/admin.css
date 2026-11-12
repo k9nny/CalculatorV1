@@ -13,7 +13,8 @@ h2 { font-size: 17px; }
 .top-title { font-size: 15px; color: var(--text); }
 .top-out { height: 36px; padding: 0 12px; font-size: 14px; }
 
-.tabs { position: sticky; top: 56px; z-index: 4; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 8px 16px; background: var(--bg); }
+.tabs { position: sticky; top: 56px; z-index: 4; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 8px 16px; background: var(--bg); }
+.llm-form { display: grid; gap: 12px; }
 .tabs button {
   height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: transparent;
   font: 600 14px/1 var(--f); color: var(--text-2); cursor: pointer;
@@ -28,6 +29,7 @@ h2 { font-size: 17px; }
 .lack { margin: 0; font-size: 13px; color: var(--accent); }
 .lack:empty { display: none; }
 .lack.ok { color: var(--ok); }
+.lack.off { color: var(--text-3); }
 
 .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
 .photos:empty { display: none; }

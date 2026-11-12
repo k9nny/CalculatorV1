@@ -10,6 +10,9 @@ const crypto = require('node:crypto');
 const { parseListing, toCar, missing } = require('./listing-parser');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
 const { listingText } = require('./listing-text');
+const llm = require('./llm');
+const SAMPLE = 'Продаю мерс ешку 2017г, 2.0 бенз 184 лс, полный привод, пробег 98т.км, 2 хозяина, цена 2 млн 650, торг';
+const SAMPLE_PHOTO = path.join(__dirname, '..', '..', 'ando-site', 'assets', 'logo.png');
 
 const COOKIE = 'ando_admin';
 const SESSION_DAYS = 30;
@@ -62,7 +65,10 @@ const safeEqual = (a, b) => {
 };
 const hashPassword = (password, salt) => crypto.scryptSync(String(password), salt, 32).toString('hex');
 
-function createAdmin(config, { now = () => new Date(), parser = null } = {}) {
+function createAdmin(config, opts = {}) {
+  const { now = () => new Date(), parser = null, llmStore = null } = opts;
+  const discover = opts.discover || llm.discover;
+  const makeParser = opts.makeParser || ((c) => llm.createSmartParser(c, { log: () => {} }));
   const smart = parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
   const photoSeen = new Map(); // имя временного фото → что нейросеть увидела (чтобы не спрашивать дважды)
   const dir = path.dirname(config.leadsLog);
@@ -202,6 +208,41 @@ function createAdmin(config, { now = () => new Date(), parser = null } = {}) {
     }
 
     if (!session(req)) return json(res, 401, { error: 'Войдите заново' });
+
+    // Нейросеть: ключ вставляется здесь (на телефоне удобнее, чем в консоли сервера).
+    if (pathname === '/api/admin/llm' && m === 'GET') {
+      const c = (llmStore && llmStore.get()) || {};
+      return json(res, 200, { enabled: !!(c.apiKey && c.model && c.baseUrl), model: c.model || '', vision: c.vision !== false && !!c.apiKey,
+        keyEnd: c.apiKey ? '…' + String(c.apiKey).slice(-4) : '' });
+    }
+    if (pathname === '/api/admin/llm' && m === 'POST') {
+      if (!llmStore) return json(res, 500, { error: 'Настройка недоступна' });
+      const body = await readJson(req);
+      const key = String(body.key || '').replace(/\s+/g, '');
+      if (!/^[\x21-\x7e]{16,300}$/.test(key)) return json(res, 400, { error: 'Это не похоже на ключ. Скопируйте его целиком из кабинета Kimi.' });
+      const found = await discover(key);
+      if (!found.ok) return json(res, 400, { error: found.error });
+      const settings = { baseUrl: found.baseUrl, apiKey: key, model: String(body.model || found.model) };
+      if (!found.models.includes(settings.model)) settings.model = found.model;
+      const test = makeParser(settings);
+      let sample;
+      try { sample = llm.clean(await test.ask(SAMPLE), SAMPLE); } catch (e) {
+        return json(res, 400, { error: `Модель ${settings.model} не ответила: ${String(e.message).slice(0, 120)}` });
+      }
+      let vision = false;
+      try {
+        const probe = makeParser({ ...settings, vision: true });
+        const seen = await probe.photo(fs.readFileSync(SAMPLE_PHOTO), 'image/png');
+        vision = !!seen && typeof seen === 'object' && !probe.lastPhotoError;
+      } catch { vision = false; }
+      llmStore.save({ ...settings, vision });
+      return json(res, 200, { enabled: true, model: settings.model, models: found.models, vision, keyEnd: '…' + key.slice(-4),
+        sample: { make: sample.make, model: sample.model, year: sample.year, price: sample.price, mileage: sample.mileage } });
+    }
+    if (pathname === '/api/admin/llm' && m === 'DELETE') {
+      if (llmStore) llmStore.off();
+      return json(res, 200, { enabled: false });
+    }
 
     if (pathname === '/api/admin/parse' && m === 'POST') {
       const body = await readJson(req);
