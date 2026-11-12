@@ -23,6 +23,13 @@ const PROMPT = `Ты разбираешь объявления о продаже
 - Расшифровывать очевидное можно: сленг и сокращения («мерс ешка» → Mercedes-Benz E-Class, «бэха» → BMW, «солярис» → Hyundai Solaris, «бенз» → Бензин, «дизель/соляра» → Дизель, «98т.км» → 98000, «2 млн 650» → 2650000, «2 хоз» → 2 владельца, «не бита не крашена» → accidents 0 и paint «Без окрасов»).
 - Додумывать нельзя: если чего-то нет в тексте, поле не включай. Не угадывай мощность, комплектацию, поколение, цвет, число владельцев, историю ДТП по году или модели.
 - Если сомневаешься — не включай поле.
+- Марки и модели в тексте часто нет совсем (её видно на фото) — тогда make и model не включай, не угадывай по году и мотору.
+- Сленг продавцов: «🍋», «лимон», «лям», «кк» — миллион («1🍋» → 1000000, «1.2кк» → 1200000); «900к» → 900000; «550₽» в объявлении о машине → 550000;
+  «130 пробег» → mileage 130000; «1хоз», «1 хоз» → owners 1; «хоз я», «я хозяин», «от хозяина» — продаёт сам владелец, число владельцев из этого не следует;
+  «по толщику вся в родне», «родная краска», «не крашена» → paint «Без окрасов»; «N окраса» → paint «N элемента в окрасе»;
+  «подкрасы: низ двери, низ крышки багажника» → paint «Подкрасы: низ водительской двери, низ крышки багажника»;
+  «N элемента кручены» (снимались, откручивались) → добавь в paint: «N элемента снимались»;
+  «два комплекта колёс/резины» → tires «Два комплекта колёс»; «полная комплектация», «фарш» → trim «Максимальная комплектация» (это не привод!).
 Поля:
 - make: марка латиницей, как пишет производитель (Kia, Hyundai, Mercedes-Benz, Lada, Haval, Geely, Chery, BMW…); «Мерс» → Mercedes-Benz, «Ваз» → Lada
 - model: модель латиницей или как принято (Rio, Solaris, Camry, Vesta, E-Class, X5, Jolion); без года и комплектации
@@ -187,15 +194,23 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
     if (!enabled || !vision || !buffer || !buffer.length || buffer.length > 8 * 1024 * 1024) return {};
     lastPhotoError = '';
     try {
-      const res = await post(baseUrl.replace(/\/+$/, '') + '/chat/completions', {
+      const body = (simple) => ({
         model,
         messages: [{ role: 'user', content: [
           { type: 'image_url', image_url: { url: `data:${mime};base64,${buffer.toString('base64')}` } },
           { type: 'text', text: PHOTO_PROMPT }
         ] }],
-        response_format: { type: 'json_object' },
-        max_tokens: 600
-      }, { Authorization: 'Bearer ' + apiKey }, timeoutMs);
+        ...(simple ? {} : { response_format: { type: 'json_object' } }),
+        max_tokens: 2048
+      });
+      const url = baseUrl.replace(/\/+$/, '') + '/chat/completions';
+      const auth = { Authorization: 'Bearer ' + apiKey };
+      let res;
+      try { res = await post(url, body(compat >= 2), auth, Math.max(timeoutMs, 60000)); } catch (e) {
+        // Посредник не принимает response_format — повторяем без него.
+        if (compat < 2 && /HTTP (400|422)/.test(e.message)) res = await post(url, body(true), auth, Math.max(timeoutMs, 60000));
+        else throw e;
+      }
       const content = res && res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content;
       const m = /\{[\s\S]*\}/.exec(String(content || ''));
       if (!m) return {};

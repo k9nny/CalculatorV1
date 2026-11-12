@@ -13,7 +13,8 @@ const { listingText } = require('./listing-text');
 const llm = require('./llm');
 const telegramSettings = require('./telegram-settings');
 const SAMPLE = 'Продаю мерс ешку 2017г, 2.0 бенз 184 лс, полный привод, пробег 98т.км, 2 хозяина, цена 2 млн 650, торг';
-const SAMPLE_PHOTO = path.join(__dirname, '..', '..', 'ando-site', 'assets', 'logo.png');
+// Проверка зрения — на фото машины (обложка для соцсетей), а не на логотипе.
+const SAMPLE_PHOTO = path.join(__dirname, '..', '..', 'ando-site', 'assets', 'og.jpg');
 
 const COOKIE = 'ando_admin';
 const SESSION_DAYS = 30;
@@ -240,13 +241,15 @@ function createAdmin(config, opts = {}) {
         return json(res, 400, { error: `Модель ${settings.model} не ответила: ${String(e.message).slice(0, 120)}` });
       }
       let vision = false;
+      let visionError = '';
       try {
         const probe = makeParser({ ...settings, vision: true });
-        const seen = await probe.photo(fs.readFileSync(SAMPLE_PHOTO), 'image/png');
-        vision = !!seen && typeof seen === 'object' && !probe.lastPhotoError;
-      } catch { vision = false; }
+        const seen = await probe.photo(fs.readFileSync(SAMPLE_PHOTO), 'image/jpeg');
+        visionError = probe.lastPhotoError || '';
+        vision = !!seen && typeof seen === 'object' && !visionError;
+      } catch (e) { vision = false; visionError = e.message; }
       llmStore.save({ ...settings, vision });
-      return json(res, 200, { enabled: true, model: settings.model, models: found.models, vision, keyEnd: '…' + key.slice(-4),
+      return json(res, 200, { enabled: true, model: settings.model, models: found.models, vision, visionError: String(visionError).slice(0, 160), keyEnd: '…' + key.slice(-4),
         sample: { make: sample.make, model: sample.model, year: sample.year, price: sample.price, mileage: sample.mileage } });
     }
     if (pathname === '/api/admin/llm' && m === 'DELETE') {

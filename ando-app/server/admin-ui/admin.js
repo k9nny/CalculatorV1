@@ -394,7 +394,8 @@
         showLlm(data);
         var s = data.sample || {};
         $('llm-result').textContent = 'Проверка: «мерс ешка 2017, 98т.км, 2 млн 650» → ' +
-          [s.make, s.model, s.year, s.mileage != null ? UI.num(s.mileage) + ' км' : '', s.price ? UI.rub(s.price) : ''].filter(Boolean).join(', ');
+          [s.make, s.model, s.year, s.mileage != null ? UI.num(s.mileage) + ' км' : '', s.price ? UI.rub(s.price) : ''].filter(Boolean).join(', ') +
+          (data.vision ? '. Фото: понимает.' : '. Фото: модель не приняла фото' + (data.visionError ? ' (' + data.visionError + ')' : '') + ' — марку и модель придётся писать в тексте.');
         toast('Нейросеть подключена');
       })
       .catch(function (err) { $('llm-err').textContent = err.message + (err.details && err.details.length ? '\n' + err.details.join('\n') : ''); })

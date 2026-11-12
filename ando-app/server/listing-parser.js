@@ -38,7 +38,8 @@ function lower(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е'); }
 // «1 390 000», «1,39 млн», «1390 тыс», «1390к» → число.
 function parseAmount(s) {
   const t = lower(s).replace(/[   ]/g, ' ');
-  let m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:млн|миллион)/);
+  // Миллион: «млн», «кк», «лям», «лимон», 🍋.
+  let m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:млн|миллион|кк(?![а-яa-z])|kk(?![a-z])|лям|лимон|🍋)/);
   if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1e6);
   m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:тыс|т\.?\s?р|к(?![а-яa-z])|k(?![a-z]))/);
   if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
@@ -62,7 +63,7 @@ function normalizeMileage(n) {
 // Цена из строки: явные «млн», «тыс», «к» — как написано; голое число — по правилу выше.
 function priceOf(s) {
   const t = lower(s).replace(/[\u00a0\u202f]/g, ' ');
-  if (/\d\s*(?:млн|миллион|тыс|т\.?\s?р|к(?![а-яa-z])|k(?![a-z]))/.test(t)) return parseAmount(s);
+  if (/\d\s*(?:млн|миллион|кк|kk|лям|лимон|🍋|тыс|т\.?\s?р|к(?![а-яa-z])|k(?![a-z]))/.test(t)) return parseAmount(s);
   const m = t.match(/\d{1,3}(?:[ .]\d{3})+(?![.,]?\d)|\d+(?:[.,]\d+)?/);
   if (!m) return null;
   const grouped = /^\d{1,3}(?:[ .]\d{3})+$/.test(m[0]);
@@ -159,7 +160,8 @@ function transmissionOf(text) {
 }
 function driveOf(text) {
   const t = lower(text);
-  if (/полн|4wd|4x4|4х4|awd|4matic|quattro|xdrive/.test(t)) return 'Полный';
+  // «Полная комплектация» — не привод.
+  if (/полн\S*\s+привод|полный(?!\s*(?:комплект|фарш|пакет|бак|электропакет))|4wd|4x4|4х4|awd|4matic|quattro|xdrive/.test(t)) return 'Полный';
   if (/задн|rwd/.test(t)) return 'Задний';
   if (/передн|fwd/.test(t)) return 'Передний';
   return null;
@@ -202,6 +204,12 @@ function parseListing(text) {
     }
     if (fields.marketPrice == null && /рынок|рыночн|оценк/.test(t)) {
       const n = priceOf(t.replace(/^[^\d]*/, '')); if (n) { fields.marketPrice = n; used.add(i); return; }
+    }
+    // Строка, где только цена: «900к», «1🍋», «550₽», «1.2кк», «1 390 000».
+    if (fields.price == null && /^\s*\d[\d\s.,]*\s*(?:к|кк|kk|k|т\.?\s?р\.?|тыс\S*|₽|р\.?|руб\S*|🍋|лимон\S*|лям\S*|млн)?\s*$/i.test(line) &&
+        (/[^\d\s.,]/.test(t) || Number(t.replace(/\D/g, '')) >= 10000)) {
+      const n = priceOf(t);
+      if (n && n >= 10000) { fields.price = n; used.add(i); return; }
     }
     if (fields.price == null && /цена|стоимость|₽|руб|(?<![а-я])р\.|млн/.test(t)) {
       // Со словом «цена» («цена 500 рублей») голое число — тысячи; без него берём только полные суммы,
@@ -258,6 +266,7 @@ function parseListing(text) {
     else if (/(один|первый|1-й)\s+(влад|хоз|собств)/.test(all)) fields.owners = 1;
   }
   if (!fields.pts && /птс|оригинал|дубликат/.test(all)) { const p = ptsOf(all); if (p) fields.pts = p; }
+  if (!fields.keys) { const k = /(\d|два|две|один|одна|три)\s+(?:комплекта\s+)?ключ/.exec(all); if (k) fields.keys = { 'один': 1, 'одна': 1, 'два': 2, 'две': 2, 'три': 3 }[k[1]] || +k[1]; }
   if (!fields.vin) { const v = /(?<![a-z0-9])[a-hj-npr-z0-9]{17}(?![a-z0-9])/i.exec(free); if (v && /\d/.test(v[0])) fields.vin = maskVin(v[0]); }
   if (!fields.city) { const c = /(?:г\.|город)\s*([А-ЯЁ][а-яё-]+)/.exec(free); if (c) fields.city = c[1]; }
   const tags = [];

@@ -262,3 +262,15 @@ test('цена и пробег «как пишут»: 500 рублей — 500 0
   assert.equal(clean({ price: 500, mileage: 120 }, '').mileage, 120000);
   assert.equal(clean({ price: 1.5 }, '').price, 1500000);
 });
+
+test('настоящие тексты продавцов: цена, год, пробег, ключи без нейросети; «полная комплектация» — не привод', () => {
+  const { parseListing } = require('../server/listing-parser');
+  const a = parseListing('2017 год \n130 пробег \n1хоз\nДва комплекта колес\nПодкрасы\nНиз водительской\nдвери \nниз крышки багажника \n900к');
+  assert.equal(a.year, 2017); assert.equal(a.mileage, 130000); assert.equal(a.owners, 1); assert.equal(a.price, 900000);
+  const b = parseListing('2021 год \n1.6 автомат \n2 элемента кручены, по толщику вся в родне \nХоз я \n2 ключа \n1🍋');
+  assert.equal(b.price, 1000000); assert.equal(b.keys, 2); assert.equal(b.transmission, 'Автомат'); assert.equal(b.volume, 1.6);
+  const c = parseListing('2010 год \n1.6 автомат \nПолная комплектация \n3 окраса \nХозяин \nБесключевой доступ,складывание зеркал, климат\n550₽');
+  assert.equal(c.price, 550000); assert.equal(c.drive, undefined); assert.equal(c.year, 2010);
+  assert.equal(parseListing('цена 1.2кк').price, 1200000);
+  assert.equal(parseListing('полный привод').drive, 'Полный');
+});
