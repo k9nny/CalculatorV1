@@ -128,7 +128,7 @@
   /* Заявка уходит на сервер ANDO AUTO (ando-app): менеджеру в Telegram и в журнал на сервере в России.
      На GitHub Pages сервера нет — тогда просим позвонить. */
   var LEAD_API = window.ANDO_LEAD_API || (/github\.io$/.test(location.hostname) || location.protocol === 'file:' ? '' : '/api/lead');
-  var CALL_US = 'Не получилось отправить. Позвоните: +7 (989) 085-31-77';
+  var CALL_US = 'Не получилось отправить. Позвоните: +7 (928) 333-95-70';
   function sendLead(data) {
     if (!LEAD_API) return Promise.reject(new Error(CALL_US));
     return fetch(LEAD_API, {
@@ -236,7 +236,7 @@
           return UI.cardHtml(car, {
             base: APP, href: href,
             actions: '<a class="btn btn-primary" href="' + UI.esc(href) + '">Подробнее</a>' +
-              '<a class="btn btn-ghost" href="tel:+79890853177">Позвонить</a>'
+              '<a class="btn btn-ghost" href="tel:+79283339570">Позвонить</a>'
           });
         }).join('');
         Array.prototype.forEach.call(list.children, function (el, i) {
