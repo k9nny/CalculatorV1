@@ -85,6 +85,25 @@
 
     <section data-pane="settings" hidden>
       <div class="block">
+        <h2>Telegram-бот</h2>
+        <p class="hint">Сервер в России не видит Telegram напрямую, поэтому бот работает через посредника на Cloudflare. Вставьте его адрес, токен бота и свой Telegram id — сервер проверит связь и запустит бота.</p>
+        <p class="lack off" id="tg-status"></p>
+        <form id="tg-form" class="llm-form" autocomplete="off">
+          <label class="field">Адрес посредника из Cloudflare
+            <input id="tg-base" type="url" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="https://ando-tg.имя.workers.dev" required>
+          </label>
+          <label class="field">Токен бота из @BotFather → /mybots → бот → API Token
+            <input id="tg-token" type="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="123456789:AA…">
+          </label>
+          <label class="field">Ваш Telegram id из @userinfobot (несколько — через запятую)
+            <input id="tg-ids" type="text" inputmode="numeric" autocapitalize="off" spellcheck="false" placeholder="123456789" required>
+          </label>
+          <p class="err" id="tg-err" role="alert"></p>
+          <button class="btn btn-primary btn-block" type="submit">Подключить бота</button>
+        </form>
+      </div>
+
+      <div class="block">
         <h2>Нейросеть Kimi</h2>
         <p class="hint">Разбирает объявления со сленгом и сокращениями, по фото определяет марку и модель, если их нет в тексте. Ничего не додумывает: чего нет в тексте — поле пустое.</p>
         <p class="lack ok" id="llm-status"></p>

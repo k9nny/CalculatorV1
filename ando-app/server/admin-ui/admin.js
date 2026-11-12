@@ -66,7 +66,7 @@
     document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== name; });
     if (name === 'cars') loadCars();
     if (name === 'leads') loadLeads();
-    if (name === 'settings') loadLlm();
+    if (name === 'settings') { loadLlm(); loadTg(); }
     window.scrollTo(0, 0);
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { openTab(b.dataset.tab); }); });
@@ -341,6 +341,34 @@
   setInterval(function () {
     if (!$('app').hidden && document.visibilityState === 'visible') loadLeads();
   }, 60000);
+
+  /* ---------- Telegram ---------- */
+  function loadTg() {
+    api('telegram').then(function (d) {
+      $('tg-status').classList.toggle('ok', !!d.bot);
+      $('tg-status').classList.toggle('off', !d.bot);
+      $('tg-status').textContent = d.bot ? 'Подключён: @' + d.bot + ' · токен ' + d.tokenEnd : 'Бот ещё не подключён через админку.';
+      if (!$('tg-base').value) $('tg-base').value = d.apiBase || '';
+      if (!$('tg-ids').value) $('tg-ids').value = d.ids || '';
+      $('tg-token').placeholder = d.tokenEnd ? 'Токен уже есть (' + d.tokenEnd + ') — можно не вставлять' : '123456789:AA…';
+    }).catch(function (err) { $('tg-status').textContent = err.message; });
+  }
+  $('tg-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = e.target.querySelector('button');
+    btn.disabled = true;
+    btn.textContent = 'Проверяю связь с Telegram…';
+    $('tg-err').textContent = '';
+    api('telegram', { method: 'POST', json: { apiBase: $('tg-base').value, token: $('tg-token').value, ids: $('tg-ids').value } })
+      .then(function (d) {
+        $('tg-token').value = '';
+        toast('Бот @' + d.bot + ' подключён. Сервер перезапускается — 10 секунд.');
+        $('tg-status').classList.add('ok'); $('tg-status').classList.remove('off');
+        $('tg-status').textContent = 'Подключён: @' + d.bot + '. Напишите боту /list — он должен ответить.';
+      })
+      .catch(function (err) { $('tg-err').textContent = err.message; })
+      .then(function () { btn.disabled = false; btn.textContent = 'Подключить бота'; });
+  });
 
   /* ---------- нейросеть ---------- */
   function showLlm(data) {

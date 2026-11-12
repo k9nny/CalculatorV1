@@ -11,6 +11,7 @@ const { createBot, telegramApi, apiHost } = require('./bot');
 const { createAdmin } = require('./admin');
 const { createSeo } = require('./seo');
 const { createSmartParser, createLlmStore } = require('./llm');
+const telegramSettings = require('./telegram-settings');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -280,7 +281,8 @@ function createApp(config = readConfig(), deps = {}) {
   }
 
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
-  const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser });
+  const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser,
+    telegram: deps.telegram, restart: deps.restart });
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 
@@ -298,7 +300,8 @@ function createApp(config = readConfig(), deps = {}) {
 }
 
 if (require.main === module) {
-  const config = readConfig();
+  // Настройки Telegram из админки (telegram.json) важнее ando.env.
+  const config = telegramSettings.apply(readConfig());
   createApp(config).listen(config.port, config.host, () => {
     const notify = config.telegramToken && config.managerChatIds.length ? `в Telegram (${config.managerChatIds.length} чат.)` : 'только в журнал';
     console.log(`ANDO AUTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);

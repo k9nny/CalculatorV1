@@ -11,6 +11,7 @@ const { parseListing, toCar, missing } = require('./listing-parser');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
 const { listingText } = require('./listing-text');
 const llm = require('./llm');
+const telegramSettings = require('./telegram-settings');
 const SAMPLE = 'Продаю мерс ешку 2017г, 2.0 бенз 184 лс, полный привод, пробег 98т.км, 2 хозяина, цена 2 млн 650, торг';
 const SAMPLE_PHOTO = path.join(__dirname, '..', '..', 'ando-site', 'assets', 'logo.png');
 
@@ -69,6 +70,9 @@ function createAdmin(config, opts = {}) {
   const { now = () => new Date(), parser = null, llmStore = null } = opts;
   const discover = opts.discover || llm.discover;
   const makeParser = opts.makeParser || ((c) => llm.createSmartParser(c, { log: () => {} }));
+  const telegram = opts.telegram || telegramSettings;
+  // После сохранения настроек Telegram сервер перезапускается (systemd поднимает его за 3 секунды) — бот стартует с ними.
+  const restart = opts.restart || (() => setTimeout(() => process.exit(0), 800));
   const smart = parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
   const photoSeen = new Map(); // имя временного фото → что нейросеть увидела (чтобы не спрашивать дважды)
   const dir = path.dirname(config.leadsLog);
@@ -245,6 +249,36 @@ function createAdmin(config, opts = {}) {
     if (pathname === '/api/admin/llm' && m === 'DELETE') {
       if (llmStore) llmStore.off();
       return json(res, 200, { enabled: false });
+    }
+
+    // Telegram: адрес посредника (Cloudflare), токен бота, id администраторов — вставляются с телефона.
+    if (pathname === '/api/admin/telegram' && m === 'GET') {
+      const t = telegram.read(config) || {};
+      const token = t.token || config.telegramToken || '';
+      return json(res, 200, {
+        apiBase: t.apiBase || process.env.TELEGRAM_API_BASE || '',
+        ids: (t.adminIds && t.adminIds.length ? t.adminIds : config.adminIds || []).join(', '),
+        tokenEnd: token ? '…' + token.slice(-4) : '',
+        bot: t.bot || '',
+        saved: !!t.token
+      });
+    }
+    if (pathname === '/api/admin/telegram' && m === 'POST') {
+      const body = await readJson(req);
+      const t = telegram.read(config) || {};
+      const apiBase = String(body.apiBase || '').trim().replace(/\/+$/, '');
+      if (!/^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(apiBase)) return json(res, 400, { error: 'Адрес посредника — вида https://ando-tg.имя.workers.dev (без пути в конце).' });
+      const token = String(body.token || '').replace(/\s+/g, '') || t.token || config.telegramToken || '';
+      if (!/^\d{5,15}:[A-Za-z0-9_-]{30,}$/.test(token)) return json(res, 400, { error: 'Нужен токен бота из @BotFather → /mybots → бот → API Token.' });
+      const ids = String(body.ids || '').split(/[\s,;]+/).filter(Boolean);
+      if (!ids.length || !ids.every((x) => /^\d{5,15}$/.test(x))) return json(res, 400, { error: 'Telegram id — число из @userinfobot. Несколько — через запятую.' });
+      const me = await telegram.getMe(apiBase, token);
+      if (!me.ok) return json(res, 400, { error: me.error });
+      telegram.save(config, { apiBase, token, adminIds: ids, managerChatIds: ids, bot: me.username,
+        appLink: config.appLink || (me.username ? `https://t.me/${me.username}/cars` : '') });
+      json(res, 200, { ok: true, bot: me.username, tokenEnd: '…' + token.slice(-4) });
+      restart();
+      return undefined;
     }
 
     if (pathname === '/api/admin/parse' && m === 'POST') {
