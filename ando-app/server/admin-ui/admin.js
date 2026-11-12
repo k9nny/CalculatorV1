@@ -18,7 +18,7 @@
     return fetch('api/' + path, init).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (data) {
         if (res.status === 401) { showLogin(); throw new Error(data.error || 'Войдите заново'); }
-        if (!res.ok) throw new Error(data.error || 'Ошибка ' + res.status);
+        if (!res.ok) { var e = new Error(data.error || 'Ошибка ' + res.status); e.details = data.details; throw e; }
         return data;
       });
     });
@@ -359,7 +359,7 @@
     btn.textContent = 'Проверяю ключ…';
     $('llm-err').textContent = '';
     $('llm-result').textContent = '';
-    api('llm', { method: 'POST', json: { key: $('llm-key').value } })
+    api('llm', { method: 'POST', json: { key: $('llm-key').value, base: $('llm-base').value } })
       .then(function (data) {
         $('llm-key').value = '';
         showLlm(data);
@@ -368,7 +368,7 @@
           [s.make, s.model, s.year, s.mileage != null ? UI.num(s.mileage) + ' км' : '', s.price ? UI.rub(s.price) : ''].filter(Boolean).join(', ');
         toast('Нейросеть подключена');
       })
-      .catch(function (err) { $('llm-err').textContent = err.message; })
+      .catch(function (err) { $('llm-err').textContent = err.message + (err.details && err.details.length ? '\n' + err.details.join('\n') : ''); })
       .then(function () { btn.disabled = false; btn.textContent = 'Сохранить и проверить'; });
   });
   $('llm-off').addEventListener('click', function () {

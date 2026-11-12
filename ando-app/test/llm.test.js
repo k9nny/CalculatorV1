@@ -217,3 +217,25 @@ test('админка: ключ Kimi вставляется в настройка
     assert.equal((await (await fetch(base + 'llm', { headers: h })).json()).enabled, false);
   } finally { server.close(); }
 });
+
+test('llm: поиск адреса по ключу — Moonshot, kimi.com, OpenRouter, свой адрес; понятная причина отказа', async () => {
+  const { discover, basesFor } = require('../server/llm');
+  const asked = [];
+  const get = async (url) => {
+    asked.push(url);
+    if (url.startsWith('https://api.kimi.com/')) return { status: 200, body: { data: [{ id: 'kimi-for-coding' }, { id: 'kimi-k3' }] } };
+    return { status: 401, body: { error: 'invalid' } };
+  };
+  const r = await discover('sk-abc', { get });
+  assert.equal(r.ok, true);
+  assert.equal(r.baseUrl, 'https://api.kimi.com/coding/v1');
+  assert.equal(r.model, 'kimi-k3');
+  assert.equal(asked.length, 3);
+  assert.deepEqual(basesFor('sk-or-v1-xyz'), ['https://openrouter.ai/api/v1']);
+  assert.deepEqual(basesFor('k', 'https://api.vsegpt.ru/v1/chat/completions'), ['https://api.vsegpt.ru/v1']);
+  const bad = await discover('sk-bad', { get: async () => ({ status: 401, body: {} }) });
+  assert.equal(bad.ok, false);
+  assert.match(bad.details.join('\n'), /Moonshot: ключ не подходит \(401\)/);
+  const down = await discover('sk-x', { get: async () => { throw new Error('timeout'); } });
+  assert.match(down.error, /не может связаться/);
+});

@@ -269,22 +269,41 @@ function getJson(url, headers, timeoutMs = 20000) {
   });
 }
 
-const KIMI_BASES = ['https://api.moonshot.ai/v1', 'https://api.moonshot.cn/v1'];
-// По ключу: какой адрес его принимает и какую модель взять (K3, иначе самую новую K).
-async function discover(apiKey, { get = getJson, bases = KIMI_BASES } = {}) {
-  let reached = false;
-  for (const base of bases) {
+// Где бывают ключи к Kimi: сам Moonshot (международный и китайский), подписка kimi.com, OpenRouter.
+const KIMI_BASES = ['https://api.moonshot.ai/v1', 'https://api.moonshot.cn/v1', 'https://api.kimi.com/coding/v1'];
+const OPENROUTER = 'https://openrouter.ai/api/v1';
+const HOSTS = { 'api.moonshot.ai': 'Moonshot', 'api.moonshot.cn': 'Moonshot (Китай)', 'api.kimi.com': 'kimi.com', 'openrouter.ai': 'OpenRouter' };
+
+function basesFor(apiKey, custom) {
+  if (custom) return [String(custom).trim().replace(/\/+$/, '').replace(/\/(chat\/completions|models)$/, '')];
+  if (/^sk-or-/.test(apiKey)) return [OPENROUTER];
+  return KIMI_BASES;
+}
+
+// По ключу: какой адрес его принимает и какую модель взять (K3, иначе K2, иначе первую).
+async function discover(apiKey, { get = getJson, bases = null, base = '' } = {}) {
+  const list = bases || basesFor(apiKey, base);
+  const answers = [];
+  for (const b of list) {
     let r;
-    try { r = await get(base + '/models', { Authorization: 'Bearer ' + apiKey }); } catch { continue; }
-    reached = true;
-    if (r.status !== 200 || !r.body) continue;
-    const ids = (r.body.data || []).map((m) => m && m.id).filter(Boolean);
-    if (!ids.length) continue;
-    const pick = (re) => ids.filter((id) => re.test(id)).sort((a, b) => a.length - b.length)[0];
-    const model = pick(/k3/i) || pick(/k2/i) || ids.sort()[0];
-    return { ok: true, baseUrl: base, model, models: ids.sort() };
+    try { r = await get(b + '/models', { Authorization: 'Bearer ' + apiKey }); } catch (e) { answers.push(`${HOSTS[new URL(b).host] || new URL(b).host}: нет связи`); continue; }
+    if (r.status === 200 && r.body) {
+      const ids = (r.body.data || []).map((m) => m && m.id).filter(Boolean);
+      if (ids.length) {
+        const pick = (re) => ids.filter((id) => re.test(id)).sort((a, x) => a.length - x.length)[0];
+        const model = pick(/kimi.*k3|k3/i) || pick(/kimi.*k2|k2/i) || pick(/kimi/i) || ids.sort()[0];
+        return { ok: true, baseUrl: b, model, models: ids.sort() };
+      }
+    }
+    const why = r.status === 401 || r.status === 403 ? 'ключ не подходит' : r.status === 402 || r.status === 429 ? 'нет средств или превышен лимит' : 'ответ ' + r.status;
+    answers.push(`${HOSTS[new URL(b).host] || new URL(b).host}: ${why} (${r.status})`);
   }
-  return { ok: false, error: reached ? 'Kimi не принял ключ. Проверьте, что скопировали его целиком.' : 'Сервер не может связаться с Kimi.' };
+  const allDown = answers.every((a) => /нет связи/.test(a));
+  return {
+    ok: false,
+    error: allDown ? 'Сервер не может связаться с Kimi.' : 'Ключ не подошёл. Проверьте, что скопировали его целиком. Если ключ не с platform.moonshot.ai, укажите адрес API ниже.',
+    details: answers
+  };
 }
 
 // Настройки нейросети: из админки (файл llm.json рядом с журналом заявок, только для владельца) или из ando.env.
@@ -313,4 +332,4 @@ function createLlmStore(dir, fromEnv = {}) {
   };
 }
 
-module.exports = { createSmartParser, createLlmStore, discover, clean, redact, isEdit, PROMPT };
+module.exports = { createSmartParser, createLlmStore, discover, basesFor, clean, redact, isEdit, PROMPT };

@@ -92,6 +92,13 @@
           <label class="field">Ключ API из platform.moonshot.ai → API Keys
             <input id="llm-key" name="key" type="text" inputmode="text" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="sk-…" required>
           </label>
+          <details class="llm-more">
+            <summary>Ключ не с platform.moonshot.ai?</summary>
+            <label class="field">Адрес API (base URL) из кабинета, где брали ключ
+              <input id="llm-base" name="base" type="url" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="https://…/v1">
+            </label>
+            <p class="hint">Например, у OpenRouter — https://openrouter.ai/api/v1. Пусто — сервер попробует адреса Kimi сам.</p>
+          </details>
           <p class="err" id="llm-err" role="alert"></p>
           <button class="btn btn-primary btn-block" type="submit">Сохранить и проверить</button>
         </form>
