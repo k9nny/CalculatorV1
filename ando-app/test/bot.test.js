@@ -47,7 +47,7 @@ test('разбор: по-русски, цена в миллионах, проб�
   const f = parseListing('Продаю Тойота Камри XV70 2018 г.\n2.5 бензин, автомат, 181 л.с.\nпробег 98 тыс км\n2,45 млн\nчёрный, один владелец\nVIN XW7BF4FK10S123456\nг. Краснодар');
   const car = toCar(f);
   assert.equal(car.make, 'Toyota');
-  assert.equal(car.model, 'Камри');
+  assert.equal(car.model, 'Camry');
   assert.equal(car.generation, 'XV70');
   assert.equal(car.year, 2018);
   assert.equal(car.price, 2450000);

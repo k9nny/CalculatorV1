@@ -165,6 +165,7 @@ function createBot(options) {
       `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}`,
       ...(parser.enabled && draft.parsedBy ? [draft.parsedBy.via === 'llm' ? 'Разобрала нейросеть.'
         : `Нейросеть не ответила${draft.parsedBy.error ? ` (${esc(draft.parsedBy.error)})` : ''} — разобрано обычным способом, проверьте марку и модель.`] : []),
+      ...(draft.fields.unclear && draft.fields.unclear.length ? ['Уточните: ' + esc(draft.fields.unclear.join(' '))] : []),
       ...(draft.fromPhoto && draft.fromPhoto.length ? [`По фото определил: ${draft.fromPhoto.map((k) => ({ make: 'марка', model: 'модель', generation: 'поколение', body: 'кузов', color: 'цвет' }[k])).join(', ')}. Проверьте.`] : []),
       lack.length ? `Не хватает: ${lack.join(', ')}. Допишите строкой, например «${lack[0]} …».` : 'Всё нужное есть.'
     ];

@@ -338,7 +338,8 @@ function createAdmin(config, opts = {}) {
       const car = readCatalog(config.carsFile).cars.find((c) => String(c.id) === decodeURIComponent(txt[1]));
       if (!car) return json(res, 404, { error: 'Такой машины уже нет' });
       const link = config.siteUrl ? `${config.siteUrl.replace(/\/?$/, '/')}cars/${encodeURIComponent(car.id)}/` : '';
-      return json(res, 200, { text: listingText(car, link) });
+      const mode = new URL(req.url, 'http://x').searchParams.get('mode') === 'market' ? 'market' : 'channel';
+      return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
     const one = /^\/api\/admin\/cars\/([^/]+)$/.exec(pathname);

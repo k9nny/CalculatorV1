@@ -1,4 +1,5 @@
 'use strict';
+const { detectCar } = require('./car-dictionary');
 // Разбор объявления в свободной форме («Kia Rio 2019, 1.6 АКПП, пробег 74 тыс, цена 1 390 000»)
 // в поля каталога. Строки вида «ключ: значение» (например, «цена 1 450 000») имеют приоритет —
 // ими же правят черновик в боте.
@@ -38,8 +39,11 @@ function lower(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е'); }
 // «1 390 000», «1,39 млн», «1390 тыс», «1390к» → число.
 function parseAmount(s) {
   const t = lower(s).replace(/[   ]/g, ' ');
+  // «2 млн 650» → 2 650 000.
+  let m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:млн|миллион\S*|лям\S*)\s+(\d{1,3})(?![\d.,]|\s*(?:км|т\.?\s?км|тыс\s*км))/);
+  if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1e6 + +m[2] * 1000);
   // Миллион: «млн», «кк», «лям», «лимон», 🍋.
-  let m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:млн|миллион|кк(?![а-яa-z])|kk(?![a-z])|лям|лимон|🍋)/);
+  m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:млн|миллион|кк(?![а-яa-z])|kk(?![a-z])|лям|лимон|🍋)/);
   if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1e6);
   m = t.match(/(\d+(?:[.,]\d+)?)\s*(?:тыс|т\.?\s?р|к(?![а-яa-z])|k(?![a-z]))/);
   if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1000);
@@ -59,6 +63,16 @@ function normalizePrice(n) {
 function normalizeMileage(n) {
   if (n == null || !(n >= 0)) return null;
   return n > 0 && n < 1000 ? Math.round(n * 1000) : Math.round(n);
+}
+// Цена словами: «лям» — 1 000 000, «лям сто» — 1 100 000, «полтора» — 1 500 000, «пол-ляма» — 500 000.
+function wordsPrice(text) {
+  const t = lower(text);
+  if (/пол[\s-]?лям/.test(t)) return 500000;
+  if (/полтора/.test(t)) return 1500000;
+  const m = /(?:(\d+)\s*)?(?:лям|лимон)\S*(?:\s+(сто|двести|триста|четыреста|пятьсот|шестьсот|семьсот|восемьсот|девятьсот))?/.exec(t);
+  if (!m) return null;
+  const hundreds = { 'сто': 1, 'двести': 2, 'триста': 3, 'четыреста': 4, 'пятьсот': 5, 'шестьсот': 6, 'семьсот': 7, 'восемьсот': 8, 'девятьсот': 9 };
+  return (m[1] ? +m[1] : 1) * 1e6 + (m[2] ? hundreds[m[2]] * 100000 : 0);
 }
 // Цена из строки: явные «млн», «тыс», «к» — как написано; голое число — по правилу выше.
 function priceOf(s) {
@@ -87,6 +101,15 @@ function findMake(text) {
     }
   }
   return best;
+}
+
+// «17г», «99 года», «18 г.в.» → 2017, 1999, 2018.
+function twoDigitYear(text) {
+  const m = /(?<![\d.,])(\d{2})\s*(?:г\.?\s*в\.?|г(?![а-яё])|г\.|год|года|гв)(?![а-яё])/.exec(lower(text));
+  if (!m) return null;
+  const yy = +m[1];
+  const now = (new Date().getFullYear() % 100) + 1;
+  return yy <= now ? 2000 + yy : 1900 + yy;
 }
 
 const YEAR_RE = /(?<!\d)(19[6-9]\d|20[0-4]\d)(?!\d)(?![\s.]?\d{3})/;
@@ -147,14 +170,14 @@ function engineOf(text) {
   else if (/гибрид|hybrid/.test(t)) out.fuel = 'Гибрид';
   else if (/дизел|tdi|crdi/.test(t)) out.fuel = 'Дизель';
   else if (/гбо|газ\s*[/-]\s*бензин|бензин\s*[/-]\s*газ/.test(t)) out.fuel = 'Газ/бензин';
-  else if (/бензин/.test(t)) out.fuel = 'Бензин';
+  else if (/бенз/.test(t)) out.fuel = 'Бензин';
   return out;
 }
 function transmissionOf(text) {
   const t = lower(text);
   if (/вариатор|cvt/.test(t)) return 'Вариатор';
   if (/робот|dsg|amt|ркпп/.test(t)) return 'Робот';
-  if (/мкпп|механик|механ\.?(?![а-я])|(?<![a-z])mt(?![a-z])/.test(t)) return 'Механика';
+  if (/мкпп|механик|механ\.?(?![а-я])|(?<![а-я])мех(?![а-я])|на ручке|(?<![a-z])mt(?![a-z])/.test(t)) return 'Механика';
   if (/акпп|автомат|(?<![a-z])at(?![a-z])/.test(t)) return 'Автомат';
   return null;
 }
@@ -175,7 +198,9 @@ function ptsOf(text) {
 }
 
 const BULLET = /^\s*(?:[-–—•*+]|✅|✔️?|☑️?|🔧|▪️?)\s*/u;
-const SERVICE_WORDS = /замен|нов(?:ые|ый|ая)|диагност|ремонт|полировк|химчист|обслуж|то\s|масл/;
+const SERVICE_WORDS = /замен|нов(?:ые|ый|ая)|диагност|ремонт|полировк|химчист|обслуж|(?<![а-яё])то\s|масл/;
+// Строка — отдельное поле, а не всё объявление одной строкой («мерс ешка 17г … цена 2 млн 650»).
+const standalone = (line) => line.length < 40 && !findMake(line) && !detectCar(line).make;
 
 function parseListing(text) {
   const fields = {};
@@ -211,28 +236,47 @@ function parseListing(text) {
       const n = priceOf(t);
       if (n && n >= 10000) { fields.price = n; used.add(i); return; }
     }
-    if (fields.price == null && /цена|стоимость|₽|руб|(?<![а-я])р\.|млн/.test(t)) {
+    if (fields.price == null && /цена|стоимость|₽|руб|(?<![а-я])р\.|млн|отдам|прошу|лям|🍋|кк(?![а-я])/.test(t)) {
       // Со словом «цена» («цена 500 рублей») голое число — тысячи; без него берём только полные суммы,
-      // чтобы «налог 5000 руб» не стал ценой.
-      const said = /цена|стоимость|отдам|прошу|продам за|продаю за/.test(t);
-      const n = said ? priceOf(t.replace(/^[^\d]*/, '')) : parseAmount(t.replace(/^[^\d]*/, ''));
-      if (n && n >= 10000) { fields.price = n; used.add(i); return; }
+      // чтобы «налог 5000 руб» не стал ценой. Число ищем после слова, а не первое в строке («17г … цена 2 млн 650»).
+      const kw = /цена|стоимость|отдам за|отдам|прошу|продам за|продаю за|за(?=\s*(?:\d|лям|пол|полтор))/.exec(t);
+      const tail = kw ? t.slice(kw.index + kw[0].length) : t.replace(/^[^\d]*/, '');
+      const n = kw ? (priceOf(tail.replace(/^[^\dа-я🍋]*/, '')) || wordsPrice(tail)) : parseAmount(tail);
+      if (n && n >= 10000) {
+        fields.price = n;
+        if (standalone(line)) { used.add(i); return; }
+      }
     }
     if (fields.mileage == null && /пробег|км(?![а-я])/.test(t)) {
-      // Число после слова «пробег», иначе первое число в строке.
-      const after = t.indexOf('пробег');
-      const rel = after === -1 ? -1 : t.slice(after).search(/\d/);
-      const at = rel !== -1 ? after + rel : t.search(/\d/);
-      const raw = at === -1 ? null : parseAmount(t.slice(at).replace(/км.*$/, ''));
-      const n = after !== -1 ? normalizeMileage(raw) : raw;
+      // «98т.км», «120 тыс км», «74 000 км» — число перед «км»; иначе число после слова «пробег».
+      const unit = /(\d+(?:[.,]\d+)?(?:[ \u00a0]\d{3})*)\s*(т\.?\s?км|тыс\.?\s?км|к\s?км|км)(?![а-я])/.exec(t);
+      let n = null;
+      if (unit) {
+        const v = parseFloat(unit[1].replace(/[ \u00a0]/g, '').replace(',', '.'));
+        n = /^(т|тыс|к)/.test(unit[2]) ? Math.round(v * 1000) : normalizeMileage(Math.round(v));
+      } else {
+        const after = t.indexOf('пробег');
+        const rel = after === -1 ? -1 : t.slice(after).search(/\d/);
+        const at = rel !== -1 ? after + rel : t.search(/\d/);
+        const raw = at === -1 ? null : parseAmount(t.slice(at).replace(/км.*$/, ''));
+        n = after !== -1 ? normalizeMileage(raw) : raw;
+      }
       // Строка вида «Kia Rio 2019, пробег 74 000» — пробег берём, но марку и год из неё тоже разбираем ниже.
-      if (n != null) { fields.mileage = n; if (!findMake(line)) used.add(i); }
+      if (n != null) { fields.mileage = n; if (standalone(line)) used.add(i); }
     }
   });
 
   const free = lines.filter((_, i) => !used.has(i)).join('\n');
   const all = lower(free);
 
+  // Сначала словарь сленга: «мерс ешка» → Mercedes-Benz E-Класс, «каптюр» → Renault Kaptur.
+  if (!fields.year) { const y = YEAR_RE.exec(free); const y2 = y ? +y[1] : twoDigitYear(free); if (y2) fields.year = y2; }
+  const dict = detectCar(text, fields.year);
+  if (dict.model) {
+    if (!fields.make) fields.make = dict.make;
+    if (!fields.model && (!fields.make || fields.make === dict.make)) fields.model = dict.model;
+    if (dict.generation && !fields.generation && fields.model === dict.model) fields.generation = dict.generation;
+  } else if (dict.make && !fields.make) fields.make = dict.make;
   const make = findMake(free);
   if (make && !fields.make) {
     fields.make = make.name;
@@ -275,6 +319,14 @@ function parseListing(text) {
   if (tags.length) fields.tags = tags;
 
   if (service.length && !fields.serviceDone) fields.serviceDone = service;
+  // Слова продавца о кузове: «не бита не крашена», «по толщику вся в родне».
+  if (/не\s*бит/.test(all) && (!fields.history || fields.history.accidents == null)) hist(fields).accidents = 0;
+  if (!fields.paint && /не\s*крашен|в\s*родн|родная краска|родной окрас|без окрас/.test(all)) fields.paint = 'Без окрасов';
+  // Цена последним числом без единиц: «… не бита не крашена, 300» → 300 000 ₽ (кроме чисел, похожих на год).
+  if (fields.price == null) {
+    const last = /(?:^|[\s,;])(\d{3,4})\s*$/.exec(String(text).trim());
+    if (last && !(+last[1] >= 1950 && +last[1] <= new Date().getFullYear() + 1)) fields.price = normalizePrice(+last[1]);
+  }
   // Описание — строки, которые не разобрались в поля (кроме первой строки с маркой и моделью).
   const desc = lines.filter((line, i) => {
     if (used.has(i)) return false;

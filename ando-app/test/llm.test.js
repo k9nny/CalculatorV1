@@ -33,7 +33,7 @@ test('llm: сленговое объявление → поля; выдуман�
   assert.equal(sent[0].temperature, 0);
   assert.doesNotMatch(JSON.stringify(sent[0].messages), /89001234567/);
   assert.equal(f.make, 'Mercedes-Benz');
-  assert.equal(f.model, 'E-Class');
+  assert.equal(f.model, 'E-Класс');
   assert.equal(f.price, 2650000);
   assert.equal(f.mileage, 98000);
   assert.equal(f.fuel, 'Бензин');
@@ -96,17 +96,23 @@ test('llm: по фото только марка, модель, поколени
   assert.deepEqual(await novision.fillFromPhoto({ price: 1 }, img), { price: 1 });
 });
 
-test('шаблон объявления: одинаковые разделы, только данные из карточки', () => {
-  const a = listingText({ make: 'Kia', model: 'Rio', year: 2019, price: 1390000, mileage: 74000, transmission: 'Автомат', defects: [] });
-  const b = listingText({ make: 'Lada', model: 'Vesta', year: 2021, price: 980000, mileage: 45000, transmission: 'Механика', defects: ['Скол на капоте'] });
+test('шаблон объявления: одинаковые разделы, заголовок как на Авито, только данные из карточки', () => {
+  const a = listingText({ make: 'Kia', model: 'Rio', year: 2019, price: 1390000, mileage: 74000, transmission: 'Автомат', engine: { volume: 1.6 }, defects: [] });
+  const b = listingText({ make: 'Lada', model: 'Vesta', year: 2021, price: 980000, mileage: 45000, transmission: 'Механика', drive: 'Полный', defects: ['Скол на капоте'], tags: ['Торг'] });
+  assert.match(a, /^Kia Rio 1\.6 AT, 2019, 74 000 км\n\nЦена: 1 390 000 ₽\.\n\nОсновное\n• Год выпуска: 2019\n• Пробег: 74 000 км/);
+  assert.match(b, /^Lada Vesta MT 4WD, 2021, 45 000 км\n\nЦена: 980 000 ₽\. Торг при осмотре\./);
   for (const t of [a, b]) {
-    assert.match(t, /^[^\n]+, 20\d\d\n[\d ]+ ₽\n\n• Пробег: [\d ]+ км\n• Коробка: /);
-    assert.match(t, /Осмотр и тест-драйв в Москве по записи\. ANDO AUTO, \+7 \(928\) 333-95-70$/);
-    assert.doesNotMatch(t, /undefined|null|NaN/);
+    assert.match(t, /Продаёт компания ANDO AUTO, договор купли-продажи\./);
+    assert.match(t, /\+7 \(928\) 333-95-70/);
+    assert.doesNotMatch(t, /undefined|null|NaN|!|срочно|идеал/i);
   }
-  assert.match(a, /Существенных недостатков нет\./);
-  assert.match(b, /Недостатки: скол на капоте\./);
-  assert.doesNotMatch(a, /Двигатель|Владельцев|Проверка/, 'чего нет в карточке — того нет в тексте');
+  assert.doesNotMatch(a, /Известные недостатки/, 'нет недостатков — раздела нет');
+  assert.match(b, /Известные недостатки\n• Скол на капоте\./);
+  assert.doesNotMatch(a, /Документы и история|Владельцев|Комплектация/, 'чего нет в карточке — того нет в тексте');
+  // Для Авито: без цены и контактов в описании.
+  const m = listingText({ make: 'Kia', model: 'Rio', year: 2019, price: 1390000, mileage: 74000 }, { mode: 'market', link: 'https://x' });
+  assert.doesNotMatch(m, /1 390 000|\+7|https/);
+  assert.match(m, /Напишите в чат или позвоните/);
 });
 
 test('бот: объявление разбирает нейросеть, недостающее берётся с фото', async () => {
@@ -165,8 +171,10 @@ test('админка: разбор с фото и готовый текст об
     const { car } = await (await fetch(base + 'cars', { method: 'POST', headers: h, body: JSON.stringify({ text, photos: [up.name] }) })).json();
     assert.equal(car.model, 'Vesta');
     const t = await (await fetch(base + `cars/${car.id}/text`, { headers: h })).json();
-    assert.match(t.text, /^Lada Vesta, 2021\n980 000 ₽/);
+    assert.match(t.text, /^Lada Vesta, 2021, 45 000 км\n\nЦена: 980 000 ₽/);
     assert.match(t.text, /https:\/\/andoauto\.ru\/cars\/\d+\//);
+    const mk = await (await fetch(base + `cars/${car.id}/text?mode=market`, { headers: h })).json();
+    assert.doesNotMatch(mk.text, /980 000|andoauto\.ru/);
   } finally { server.close(); }
 });
 
@@ -212,7 +220,7 @@ test('админка: ключ Kimi вставляется в настройка
     assert.equal(fs.statSync(path.join(dir, 'private', 'llm.json')).mode & 0o777, 0o600);
     // Разбор сразу идёт через нейросеть, без перезапуска.
     const parsed = await (await fetch(base + 'parse', { method: 'POST', headers: h, body: JSON.stringify({ text: 'мерс ешка 17г 98т.км 2 млн 650 торг, полный, бенз' }) })).json();
-    assert.equal(parsed.car.model, 'E-Class');
+    assert.equal(parsed.car.model, 'E-Класс');
     await fetch(base + 'llm', { method: 'DELETE', headers: h });
     assert.equal((await (await fetch(base + 'llm', { headers: h })).json()).enabled, false);
   } finally { server.close(); }

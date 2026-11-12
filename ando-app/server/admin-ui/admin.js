@@ -229,7 +229,8 @@
           }).join('') + '</select>' +
           '<input data-price inputmode="numeric" aria-label="Цена, ₽" value="' + esc(UI.num(c.price || 0)) + '">' +
           '<button class="btn btn-ghost" type="button" data-delete>Удалить</button>' +
-          '<button class="btn btn-ghost row-text" type="button" data-text>Текст объявления</button>' +
+          '<button class="btn btn-ghost row-text" type="button" data-text="channel">Текст для канала</button>' +
+          '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '</div></div>';
       }).join('');
     }).catch(function (err) { $('cars').innerHTML = '<p class="empty">' + esc(err.message) + '</p>'; });
@@ -262,8 +263,9 @@
   $('cars').addEventListener('click', function (e) {
     if (e.target.matches('[data-text]')) {
       var id = e.target.closest('.row').dataset.id;
-      api('cars/' + encodeURIComponent(id) + '/text').then(function (data) {
-        var done = function () { toast('Текст объявления скопирован'); };
+      var mode = e.target.dataset.text;
+      api('cars/' + encodeURIComponent(id) + '/text?mode=' + mode).then(function (data) {
+        var done = function () { toast(mode === 'market' ? 'Текст для Авито скопирован. Цену укажите в поле цены' : 'Текст для канала скопирован'); };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(data.text).then(done, function () { prompt('Скопируйте текст:', data.text); });
         else prompt('Скопируйте текст:', data.text);
       }).catch(function (err) { toast(err.message, true); });

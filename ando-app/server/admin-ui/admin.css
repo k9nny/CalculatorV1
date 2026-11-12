@@ -60,7 +60,9 @@ h2 { font-size: 17px; }
   background: var(--surface); color: var(--text); font: 15px var(--f); min-width: 0;
 }
 .row-tools .btn { height: 40px; padding: 0 12px; font-size: 14px; }
-.row-tools .row-text { grid-column: 1 / -1; }
+.row-tools .row-text { grid-column: span 1; }
+.row-tools .row-text[data-text="channel"] { grid-column: 1 / 2; }
+.row-tools .row-text[data-text="market"] { grid-column: 2 / -1; }
 .row.is-sold { opacity: .6; }
 .tag { display: inline-block; padding: 1px 6px; border-radius: 4px; background: var(--surface-2); font-size: 11px; color: var(--text-2); }
 .tag.red { background: var(--accent-soft); color: var(--accent); }
