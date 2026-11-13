@@ -6,7 +6,7 @@ const TYPES = {
   dealer: 'Оптовая цена — перекуп',
   callback: 'Обратный звонок',
   sell: 'Выкуп — продать машину',
-  credit: 'Рассрочка или кредит — перезвонить'
+  credit: 'Покупка в кредит — анкета'
 };
 const CONDITIONS = ['На ходу, без ДТП', 'После ДТП', 'Требует ремонта', 'Не на ходу'];
 
@@ -30,6 +30,9 @@ function intIn(value, min, max) {
   const n = Number(value);
   return Number.isInteger(n) && n >= min && n <= max ? n : NaN;
 }
+
+const CREDIT_TERMS = [12, 24, 36, 48, 60, 72, 84];
+const EMPLOYMENT = { hired: 'работает по найму', business: 'ИП или свой бизнес', self: 'самозанятый', pension: 'пенсионер', other: 'другое' };
 
 // Возвращает { ok: true, lead } или { ok: false, error } — текст ошибки показывается пользователю.
 function validateLead(body, cars, { now = new Date() } = {}) {
@@ -55,11 +58,28 @@ function validateLead(body, cars, { now = new Date() } = {}) {
     lead.car = { id: String(car.id), title: `${car.make} ${car.model}, ${car.year}`, price: car.price };
   }
 
+  // Анкета на кредит: машина из каталога (или без машины — подобрать), ФИО, срок, доход, занятость.
   if (type === 'credit') {
-    if (!lead.car) return { ok: false, error: 'Выберите машину' };
-    const downPayment = intIn((body.credit || {}).downPayment, 0, lead.car.price);
+    const c = body.credit || {};
+    const downPayment = intIn(c.downPayment, 0, lead.car ? lead.car.price : 1e9);
     if (Number.isNaN(downPayment)) return { ok: false, error: 'Проверьте первоначальный взнос' };
-    lead.credit = { downPayment };
+    if (lead.name.split(/\s+/).filter(Boolean).length < 2) return { ok: false, error: 'Укажите фамилию и имя' };
+    const termMonths = CREDIT_TERMS.includes(Number(c.termMonths)) ? Number(c.termMonths) : null;
+    const income = intIn(c.income, 0, 100000000);
+    let birthDate = null;
+    if (c.birthDate) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(c.birthDate));
+      const age = m ? (now - new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`)) / (365.25 * 864e5) : NaN;
+      if (!(age >= 18 && age < 100)) return { ok: false, error: 'Проверьте дату рождения: кредит дают с 18 лет' };
+      birthDate = m[0];
+    }
+    lead.credit = {
+      downPayment,
+      termMonths,
+      income: Number.isNaN(income) ? null : income,
+      employment: Object.prototype.hasOwnProperty.call(EMPLOYMENT, c.employment) ? c.employment : null,
+      birthDate
+    };
   }
 
   if (type === 'sell') {
@@ -107,7 +127,15 @@ function formatLeadMessage(lead, source) {
         (c.desiredPrice ? `\nХочет: ${money(c.desiredPrice)}` : '')
     );
   }
-  if (lead.credit && lead.credit.downPayment) lines.push(`Первоначальный взнос: ${money(lead.credit.downPayment)}`);
+  if (lead.credit) {
+    const c = lead.credit;
+    if (!lead.car) lines.push('Машину ещё не выбрал — подобрать');
+    lines.push(`Первоначальный взнос: ${c.downPayment ? money(c.downPayment) : 'без взноса или не указан'}`);
+    if (c.termMonths) lines.push(`Срок: ${c.termMonths} мес.`);
+    if (c.income) lines.push(`Доход в месяц: ${money(c.income)}`);
+    if (c.employment) lines.push(`Занятость: ${EMPLOYMENT[c.employment]}`);
+    if (c.birthDate) lines.push(`Дата рождения: ${c.birthDate.split('-').reverse().join('.')}`);
+  }
   lines.push('');
   if (lead.name) lines.push(`Имя: ${escapeHtml(lead.name)}`);
   lines.push(`Телефон: ${escapeHtml(lead.phone)}`);
@@ -123,4 +151,4 @@ function formatLeadMessage(lead, source) {
   return lines.join('\n');
 }
 
-module.exports = { validateLead, formatLeadMessage, normalizePhone, TYPES };
+module.exports = { validateLead, formatLeadMessage, normalizePhone, TYPES, EMPLOYMENT };

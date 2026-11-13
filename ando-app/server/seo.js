@@ -155,6 +155,7 @@ ${specs(c).map(([k, v]) => `          <div><dt>${esc(k)}</dt><dd>${esc(v)}</dd><
           <span class="car-price">${rub(c.price)}</span>
           ${c.marketPrice && c.marketPrice > c.price ? `<span class="deal good">Ниже рыночной оценки на ${rub(c.marketPrice - c.price)}</span>` : ''}
           <a class="btn btn-primary btn-block" href="${esc(book)}">Записаться на осмотр</a>
+          <a class="btn btn-ghost btn-block" href="${esc(book + '&credit=1')}">Купить в кредит</a>
           <a class="btn btn-ghost btn-block" href="tel:${L.PHONE}">${L.ICON.phone}${L.PHONE_LABEL}</a>
           <p class="hint">Номер объявления: ${esc(c.id)}. Машина в Москве, осмотр и тест-драйв по записи.</p>
         </div>

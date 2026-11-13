@@ -6,7 +6,7 @@
   var STATUS = { available: 'В продаже', reserved: 'Бронь', sold: 'Продана' };
   var LEAD_TYPES = {
     buy: 'Осмотр машины', dealer: 'Оптовая цена', callback: 'Обратный звонок',
-    sell: 'Выкуп', credit: 'Рассрочка'
+    sell: 'Выкуп', credit: 'Анкета на кредит'
   };
 
   /* ---------- запросы ---------- */
@@ -399,7 +399,16 @@
       lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage != null ? ', ' + UI.num(c.mileage) + ' км' : '') +
         (c.condition ? '\nСостояние: ' + c.condition : '') + (c.desiredPrice ? '\nХочет: ' + UI.rub(c.desiredPrice) : ''));
     }
-    if (l.credit && l.credit.downPayment) lines.push('Первый взнос: ' + UI.rub(l.credit.downPayment));
+    if (l.credit) {
+      var c2 = l.credit;
+      var emp = { hired: 'работает по найму', business: 'ИП или свой бизнес', self: 'самозанятый', pension: 'пенсионер', other: 'другое' };
+      if (!l.car) lines.push('Машину ещё не выбрал — подобрать');
+      lines.push('Первый взнос: ' + (c2.downPayment ? UI.rub(c2.downPayment) : 'нет или не указан'));
+      if (c2.termMonths) lines.push('Срок: ' + c2.termMonths + ' мес.');
+      if (c2.income) lines.push('Доход в месяц: ' + UI.rub(c2.income));
+      if (c2.employment) lines.push('Занятость: ' + (emp[c2.employment] || c2.employment));
+      if (c2.birthDate) lines.push('Дата рождения: ' + c2.birthDate.split('-').reverse().join('.'));
+    }
     if (l.name) lines.push('Имя: ' + l.name);
     if (l.comment) lines.push('Комментарий: ' + l.comment);
     return lines.join('\n');

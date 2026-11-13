@@ -167,12 +167,30 @@ test('сервер: REQUIRE_INIT_DATA не пускает заявки без п
   });
 });
 
-test('заявка на рассрочку: машина из каталога, взнос необязателен', () => {
-  const ok = validateLead({ type: 'credit', carId: '102', phone: '89001234567', consent: true, credit: { downPayment: 500000 } }, CARS);
+test('анкета на кредит: ФИО, срок, доход, занятость, дата рождения; взнос и машина необязательны', () => {
+  const base = { type: 'credit', carId: '102', phone: '89001234567', consent: true, name: 'Иванов Олег' };
+  const ok = validateLead({ ...base, credit: { downPayment: 500000, termMonths: 36, income: 120000, employment: 'hired', birthDate: '1990-05-17' } }, CARS);
   assert.equal(ok.ok, true);
-  assert.deepEqual(ok.lead.credit, { downPayment: 500000 });
-  assert.match(formatLeadMessage(ok.lead, { platform: 'web' }), /Рассрочка или кредит[\s\S]*Первоначальный взнос: 500 000 ₽/);
-  assert.equal(validateLead({ type: 'credit', carId: '102', phone: '89001234567', consent: true }, CARS).ok, true);
-  assert.equal(validateLead({ type: 'credit', phone: '89001234567', consent: true }, CARS).ok, false);
-  assert.equal(validateLead({ type: 'credit', carId: '102', phone: '89001234567', consent: true, credit: { downPayment: 99e9 } }, CARS).ok, false);
+  assert.deepEqual(ok.lead.credit, { downPayment: 500000, termMonths: 36, income: 120000, employment: 'hired', birthDate: '1990-05-17' });
+  const text = formatLeadMessage(ok.lead, { platform: 'web' });
+  assert.match(text, /Покупка в кредит — анкета/);
+  assert.match(text, /Первоначальный взнос: 500 000 ₽/);
+  assert.match(text, /Срок: 36 мес\./);
+  assert.match(text, /Доход в месяц: 120 000 ₽/);
+  assert.match(text, /Занятость: работает по найму/);
+  assert.match(text, /Дата рождения: 17\.05\.1990/);
+  // Минимум — ФИО и телефон.
+  assert.equal(validateLead(base, CARS).ok, true);
+  // Без машины — подобрать.
+  const any = validateLead({ ...base, carId: undefined }, CARS);
+  assert.equal(any.ok, true);
+  assert.match(formatLeadMessage(any.lead, { platform: 'web' }), /подобрать/);
+  // Ошибки.
+  assert.equal(validateLead({ ...base, name: 'Олег' }, CARS).ok, false, 'нужны фамилия и имя');
+  assert.equal(validateLead({ ...base, credit: { downPayment: 99e9 } }, CARS).ok, false);
+  assert.equal(validateLead({ ...base, credit: { birthDate: '2015-01-01' } }, CARS).ok, false, 'младше 18');
+  assert.equal(validateLead({ ...base, credit: { birthDate: 'вчера' } }, CARS).ok, false);
+  // Неизвестный срок и занятость не сохраняются.
+  assert.deepEqual(validateLead({ ...base, credit: { termMonths: 999, employment: 'космонавт' } }, CARS).lead.credit,
+    { downPayment: null, termMonths: null, income: null, employment: null, birthDate: null });
 });

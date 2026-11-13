@@ -126,8 +126,9 @@
   function init() {
     if (client === 'web') {
       applySystemScheme();
-      var car = new URLSearchParams(location.search).get('car');
-      startParam = car ? 'car_' + car : null;
+      var q = new URLSearchParams(location.search);
+      var car = q.get('car');
+      startParam = car ? (q.get('credit') ? 'credit_' : 'car_') + car : null;
       return Promise.resolve(api);
     }
     return loadScript(SDK_URL[client], 5000).then(function () {
