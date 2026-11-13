@@ -42,6 +42,41 @@ function sniffImage(buf) {
   return null;
 }
 
+// Видео: MP4 и MOV (iPhone) — контейнер ISO с «ftyp» в начале, WebM — EBML. Хранится как .mp4 / .webm.
+const MAX_VIDEO = 300 * 1024 * 1024;
+const MAX_VIDEOS = 3;
+const VIDEO_RE = /^tmp-[0-9a-f]{16}\.(mp4|webm)$/;
+function sniffVideo(head) {
+  if (head.length >= 12 && head.slice(4, 8).toString('latin1') === 'ftyp') return '.mp4';
+  if (head.length >= 4 && head.readUInt32BE(0) === 0x1A45DFA3) return '.webm';
+  return null;
+}
+// Большой файл пишется на диск по частям, а не в память.
+function saveStream(req, file, limit) {
+  return new Promise((resolve, reject) => {
+    const out = fs.createWriteStream(file, { mode: 0o644 });
+    let size = 0;
+    let head = Buffer.alloc(0);
+    let failed = false;
+    const fail = (err) => {
+      if (failed) return;
+      failed = true;
+      req.unpipe(out); out.destroy(); req.resume();
+      fs.unlink(file, () => {});
+      reject(err);
+    };
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (head.length < 16) head = Buffer.concat([head, chunk.slice(0, 16 - head.length)]);
+      if (size > limit) fail(Object.assign(new Error('too large'), { status: 413 }));
+    });
+    req.on('error', fail);
+    out.on('error', fail);
+    out.on('finish', () => { if (!failed) resolve({ size, head }); });
+    req.pipe(out);
+  });
+}
+
 function readRaw(req, limit) {
   return new Promise((resolve, reject) => {
     let size = 0;
@@ -306,6 +341,21 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { name });
     }
 
+    // Видео загружается до публикации, как фото: временное имя, при публикации — «номер-v1.mp4».
+    if (pathname === '/api/admin/video' && m === 'POST') {
+      if (!/^video\//.test(String(req.headers['content-type'] || ''))) return json(res, 415, { error: 'Нужно видео MP4, MOV или WebM' });
+      fs.mkdirSync(config.photosDir, { recursive: true });
+      cleanTmp();
+      const id = crypto.randomBytes(8).toString('hex');
+      const part = photoPath(`tmp-${id}.part`);
+      const { head, size } = await saveStream(req, part, MAX_VIDEO);
+      const ext = sniffVideo(head);
+      if (!ext || !size) { fs.unlink(part, () => {}); return json(res, 415, { error: 'Это не видео MP4, MOV или WebM' }); }
+      const name = `tmp-${id}${ext}`;
+      fs.renameSync(part, photoPath(name));
+      return json(res, 200, { name, size });
+    }
+
     if (pathname === '/api/admin/cars' && m === 'GET') {
       return json(res, 200, { cars: readCatalog(config.carsFile).cars });
     }
@@ -325,7 +375,16 @@ function createAdmin(config, opts = {}) {
         fs.renameSync(photoPath(base), photoPath(name));
         photos.push(PREFIX + name);
       });
+      const videos = [];
+      (Array.isArray(body.videos) ? body.videos : []).slice(0, MAX_VIDEOS).forEach((tmp) => {
+        const base = path.basename(String(tmp));
+        if (!VIDEO_RE.test(base) || !fs.existsSync(photoPath(base))) return;
+        const name = `${id}-v${videos.length + 1}${path.extname(base)}`;
+        fs.renameSync(photoPath(base), photoPath(name));
+        videos.push(PREFIX + name);
+      });
       const car = { id, status: 'available', publishedAt: now().toISOString().slice(0, 10), ...toCar(fields), photos };
+      if (videos.length) car.videos = videos;
       if (!STATUSES.includes(car.status)) car.status = 'available';
       catalog.cars.unshift(car);
       writeCatalog(config.carsFile, catalog, now());
@@ -342,6 +401,31 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    // Видео к уже опубликованной машине: добавить (POST { name }) или убрать все (DELETE).
+    const vids = /^\/api\/admin\/cars\/([^/]+)\/videos$/.exec(pathname);
+    if (vids && (m === 'POST' || m === 'DELETE')) {
+      const catalog = readCatalog(config.carsFile);
+      const car = catalog.cars.find((c) => String(c.id) === decodeURIComponent(vids[1]));
+      if (!car) return json(res, 404, { error: 'Такой машины уже нет' });
+      if (m === 'DELETE') {
+        for (const src of car.videos || []) if (src.startsWith(PREFIX)) { try { fs.unlinkSync(photoPath(src)); } catch { /* уже нет */ } }
+        delete car.videos;
+      } else {
+        const body = await readJson(req);
+        const base = path.basename(String(body.name || ''));
+        if (!VIDEO_RE.test(base) || !fs.existsSync(photoPath(base))) return json(res, 400, { error: 'Видео не загрузилось, попробуйте ещё раз' });
+        const list = car.videos || [];
+        if (list.length >= MAX_VIDEOS) return json(res, 400, { error: `Не больше ${MAX_VIDEOS} видео на машину` });
+        let n = list.length + 1;
+        while (list.some((v) => path.basename(v).startsWith(`${car.id}-v${n}.`))) n++;
+        const name = `${car.id}-v${n}${path.extname(base)}`;
+        fs.renameSync(photoPath(base), photoPath(name));
+        car.videos = [...list, PREFIX + name];
+      }
+      writeCatalog(config.carsFile, catalog, now());
+      return json(res, 200, { car });
+    }
+
     const one = /^\/api\/admin\/cars\/([^/]+)$/.exec(pathname);
     if (one && (m === 'PATCH' || m === 'DELETE')) {
       const id = decodeURIComponent(one[1]);
@@ -351,7 +435,7 @@ function createAdmin(config, opts = {}) {
       if (m === 'DELETE') {
         catalog.cars = catalog.cars.filter((c) => c !== car);
         writeCatalog(config.carsFile, catalog, now());
-        for (const src of car.photos || []) {
+        for (const src of [...(car.photos || []), ...(car.videos || [])]) {
           if (src.startsWith(PREFIX)) { try { fs.unlinkSync(photoPath(src)); } catch { /* уже нет */ } }
         }
         return json(res, 200, { ok: true });
@@ -365,6 +449,13 @@ function createAdmin(config, opts = {}) {
         const price = Math.round(Number(String(body.price).replace(/\s/g, '')));
         if (!(price > 0 && price < 1e9)) return json(res, 400, { error: 'Проверьте цену' });
         car.price = price;
+      }
+      // Рыночная цена: по ней на сайте и в приложении стоит отметка «Отличная / Хорошая цена». 0 — убрать.
+      if (body.marketPrice !== undefined) {
+        const mp = Math.round(Number(String(body.marketPrice).replace(/\s/g, '')));
+        if (!mp) delete car.marketPrice;
+        else if (mp > 0 && mp < 1e9) car.marketPrice = mp;
+        else return json(res, 400, { error: 'Проверьте рыночную цену' });
       }
       writeCatalog(config.carsFile, catalog, now());
       return json(res, 200, { car });

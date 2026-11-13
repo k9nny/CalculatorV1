@@ -59,3 +59,4 @@
 .empty-note { padding: 24px; border-radius: var(--radius); border: 1px dashed var(--line-strong); color: var(--text-2); }
 .hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-3); }
 .car-block > h2 { margin-top: 8px; }
+.car-video { display: block; width: 100%; max-height: 70vh; border-radius: var(--radius-sm); background: #0B0B0C; }

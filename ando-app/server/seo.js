@@ -139,11 +139,11 @@ function carPage(site, c) {
 ${photos.length ? photos.map((src, i) => `          <a href="${esc(book)}"><img src="${esc(src)}" alt="${esc(h)}${i ? ', фото ' + (i + 1) : ''}" loading="${i ? 'lazy' : 'eager'}" decoding="async"></a>`).join('\n')
     : '          <p class="empty-note">Фото скоро добавим. Позвоните — пришлём в мессенджер.</p>'}
         </div>
+        ${list(c.videos).length ? `<h2>Видео</h2>\n${list(c.videos).map((v) => `        <video class="car-video" src="${esc(root + 'app/' + String(v).replace(/^\/+/, ''))}" controls playsinline preload="metadata"></video>`).join('\n')}` : ''}
         ${c.description ? `<h2>Описание</h2><p>${esc(c.description)}</p>` : ''}
         ${list(c.features).length ? `<h2>Комплектация и опции</h2><div class="chips">${list(c.features).map((f) => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
         ${list(c.serviceDone).length ? `<h2>Что сделали перед продажей</h2><div class="chips">${list(c.serviceDone).map((f) => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
-        <h2>Недостатки</h2>
-        <p>${defects.length ? esc(defects.join('\n')) : 'Существенных недостатков при осмотре не нашли. Покажем машину и ответим на вопросы до покупки.'}</p>
+        ${defects.length ? `<h2>Известные недостатки</h2>\n        <p>${esc(defects.join('\n'))}</p>` : ''}
         <h2>Характеристики</h2>
         <dl class="specs">
 ${specs(c).map(([k, v]) => `          <div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('\n')}

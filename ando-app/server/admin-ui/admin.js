@@ -141,6 +141,59 @@
     if (i > 0) { photos.unshift(photos.splice(i, 1)[0]); renderPhotos(); }
   });
 
+  /* ---------- видео ---------- */
+  // Загрузка с полосой прогресса: видео большие, а интернет на телефоне бывает медленным.
+  var videos = []; // { key, file, name, state: 'loading' | 'ok' | 'failed', pct }
+  var MAX_VIDEOS = 3;
+  function uploadVideo(file, onProgress) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', 'api/video');
+      xhr.setRequestHeader('Content-Type', /^video\//.test(file.type) ? file.type : 'video/mp4');
+      xhr.upload.onprogress = function (e) { if (e.lengthComputable && onProgress) onProgress(Math.round(e.loaded / e.total * 100)); };
+      xhr.onload = function () {
+        var data = {};
+        try { data = JSON.parse(xhr.responseText); } catch (e) { /* не JSON */ }
+        if (xhr.status === 401) { showLogin(); reject(new Error('Войдите заново')); return; }
+        if (xhr.status >= 400) { reject(new Error(data.error || (xhr.status === 413 ? 'Видео больше 300 МБ' : 'Ошибка ' + xhr.status))); return; }
+        resolve(data);
+      };
+      xhr.onerror = function () { reject(new Error('Нет связи с сервером')); };
+      xhr.send(file);
+    });
+  }
+  function renderVideos() {
+    $('videos').innerHTML = videos.map(function (v) {
+      var status = v.state === 'ok' ? 'загружено' : v.state === 'failed' ? 'не загрузилось' : (v.pct || 0) + '%';
+      return '<div class="vitem ' + v.state + '"><span class="vname">' + esc(v.file.name) + ' · ' + (v.file.size < 1048576 ? 'меньше 1' : Math.round(v.file.size / 1048576)) + ' МБ</span>' +
+        '<span class="vstat">' + status + '</span>' +
+        '<span class="vbar"><i style="width:' + (v.state === 'ok' ? 100 : v.pct || 0) + '%"></i></span>' +
+        '<button type="button" data-vremove="' + v.key + '" aria-label="Убрать видео">✕</button></div>';
+    }).join('');
+    refreshPublish();
+  }
+  $('video-input').addEventListener('change', function (e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = '';
+    var room = MAX_VIDEOS - videos.length;
+    if (files.length > room) toast('Можно не больше ' + MAX_VIDEOS + ' видео', true);
+    files.slice(0, Math.max(room, 0)).forEach(function (file) {
+      var v = { key: Math.random().toString(36).slice(2), file: file, name: '', state: 'loading', pct: 0 };
+      videos.push(v);
+      uploadVideo(file, function (pct) { v.pct = pct; renderVideos(); })
+        .then(function (data) { v.name = data.name; v.state = 'ok'; })
+        .catch(function (err) { v.state = 'failed'; toast('Видео не загрузилось: ' + err.message, true); })
+        .then(renderVideos);
+    });
+    renderVideos();
+  });
+  $('videos').addEventListener('click', function (e) {
+    var rm = e.target.closest('[data-vremove]');
+    if (!rm) return;
+    videos = videos.filter(function (v) { return v.key !== rm.dataset.vremove; });
+    renderVideos();
+  });
+
   /* ---------- текст и превью ---------- */
   var parsed = null;
   var parseTimer;
@@ -184,9 +237,9 @@
   }
 
   function refreshPublish() {
-    var busy = photos.some(function (p) { return p.state === 'loading'; });
+    var busy = photos.some(function (p) { return p.state === 'loading'; }) || videos.some(function (v) { return v.state === 'loading'; });
     $('publish').disabled = busy || !parsed || parsed.missing.length > 0;
-    $('publish').textContent = busy ? 'Загружаю фото…' : 'Опубликовать';
+    $('publish').textContent = busy ? 'Загружаю фото и видео…' : 'Опубликовать';
   }
 
   $('publish').addEventListener('click', function () {
@@ -195,10 +248,13 @@
     btn.disabled = true;
     $('add-err').textContent = '';
     var names = photos.filter(function (p) { return p.state === 'ok'; }).map(function (p) { return p.name; });
-    api('cars', { method: 'POST', json: { text: $('text').value, photos: names } })
+    var vnames = videos.filter(function (v) { return v.state === 'ok'; }).map(function (v) { return v.name; });
+    api('cars', { method: 'POST', json: { text: $('text').value, photos: names, videos: vnames } })
       .then(function (data) {
         photos.forEach(function (p) { URL.revokeObjectURL(p.url); });
         photos = [];
+        videos = [];
+        renderVideos();
         parsed = null;
         $('text').value = '';
         $('lack').textContent = '';
@@ -222,18 +278,34 @@
           '<img src="' + esc(src) + '" alt="" loading="lazy">' +
           '<div class="row-main"><span class="row-title">' + esc(UI.title(c)) + '</span>' +
           '<span class="row-sub">№ ' + esc(c.id) + ' · ' + UI.num(c.mileage || 0) + ' км' +
-          (c.demo ? ' · <span class="tag red">демо</span>' : '') + '</span></div>' +
+          (c.videos && c.videos.length ? ' · видео: ' + c.videos.length : '') +
+          (c.demo ? ' · <span class="tag red">демо</span>' : '') + '</span>' + ratingTag(c) + '</div>' +
           '<div class="row-tools">' +
           '<select data-status aria-label="Статус">' + Object.keys(STATUS).map(function (k) {
             return '<option value="' + k + '"' + (c.status === k ? ' selected' : '') + '>' + STATUS[k] + '</option>';
           }).join('') + '</select>' +
           '<input data-price inputmode="numeric" aria-label="Цена, ₽" value="' + esc(UI.num(c.price || 0)) + '">' +
           '<button class="btn btn-ghost" type="button" data-delete>Удалить</button>' +
+          '<label class="row-market">Рынок, ₽<input data-market inputmode="numeric" placeholder="не указана" value="' + (c.marketPrice ? esc(UI.num(c.marketPrice)) : '') + '"></label>' +
+          '<a class="btn btn-ghost row-compare" target="_blank" rel="noopener noreferrer" href="' + esc(compareUrl(c)) + '">Сравнить цены</a>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="channel">Текст для канала</button>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
+          '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
+          (c.videos && c.videos.length ? '<button class="btn btn-ghost row-video-off" type="button" data-delvideos>Убрать видео</button>' : '') +
           '</div></div>';
       }).join('');
     }).catch(function (err) { $('cars').innerHTML = '<p class="empty">' + esc(err.message) + '</p>'; });
+  }
+
+  // Отметка как в карточке на сайте: «Отличная цена», «Хорошая цена», «Цена по рынку».
+  function ratingTag(c) {
+    var r = UI.rating(c);
+    if (r) return '<span class="tag ' + (r.cls === 'fair' ? '' : 'ok') + '">' + esc(r.label) + ' · ' + esc(r.vs) + '</span>';
+    return c.marketPrice ? '<span class="tag">Цена выше рынка</span>' : '<span class="tag">Без отметки о цене — укажите рынок</span>';
+  }
+  // Похожие объявления в поиске — чтобы быстро прикинуть рыночную цену.
+  function compareUrl(c) {
+    return 'https://yandex.ru/search/?text=' + encodeURIComponent([c.make, c.model, c.year, 'с пробегом купить Москва цена'].filter(Boolean).join(' '));
   }
 
   function patchCar(id, body, okText) {
@@ -254,13 +326,39 @@
       var price = Number(e.target.value.replace(/\D/g, ''));
       if (!price) { toast('Проверьте цену', true); return; }
       e.target.value = UI.num(price);
-      patchCar(id, { price: price }, 'Цена: ' + UI.rub(price));
+      patchCar(id, { price: price }, 'Цена: ' + UI.rub(price)).then(loadCars);
+    }
+    if (e.target.matches('[data-market]')) {
+      var mp = Number(e.target.value.replace(/\D/g, ''));
+      // «1480» — это 1 480 000, как и в тексте объявления.
+      if (mp > 0 && mp < 20) mp = mp * 1e6; else if (mp >= 20 && mp < 10000) mp = mp * 1000;
+      patchCar(id, { marketPrice: mp }, mp ? 'Рыночная цена: ' + UI.rub(mp) : 'Рыночная цена убрана').then(loadCars);
     }
   });
   $('cars').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && e.target.matches('[data-price]')) e.target.blur();
+    if (e.key === 'Enter' && e.target.matches('[data-price], [data-market]')) e.target.blur();
+  });
+  // Видео к уже опубликованной машине.
+  var videoFor = null;
+  $('row-video-input').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    e.target.value = '';
+    if (!file || !videoFor) return;
+    var row = videoFor, id = row.dataset.id, btn = row.querySelector('[data-addvideo]');
+    btn.disabled = true;
+    uploadVideo(file, function (pct) { btn.textContent = 'Загрузка ' + pct + '%'; })
+      .then(function (data) { return api('cars/' + encodeURIComponent(id) + '/videos', { method: 'POST', json: { name: data.name } }); })
+      .then(function () { toast('Видео добавлено'); loadCars(); })
+      .catch(function (err) { toast(err.message, true); btn.disabled = false; btn.textContent = 'Добавить видео'; });
   });
   $('cars').addEventListener('click', function (e) {
+    if (e.target.matches('[data-addvideo]')) { videoFor = e.target.closest('.row'); $('row-video-input').click(); return; }
+    if (e.target.matches('[data-delvideos]')) {
+      if (!confirm('Убрать все видео у этой машины?')) return;
+      api('cars/' + encodeURIComponent(e.target.closest('.row').dataset.id) + '/videos', { method: 'DELETE' })
+        .then(function () { toast('Видео убраны'); loadCars(); }).catch(function (err) { toast(err.message, true); });
+      return;
+    }
     if (e.target.matches('[data-text]')) {
       var id = e.target.closest('.row').dataset.id;
       var mode = e.target.dataset.text;

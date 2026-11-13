@@ -24,6 +24,8 @@ const MIME = {
   '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
   '.woff2': 'font/woff2',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
   '.ico': 'image/x-icon',
   '.txt': 'text/plain; charset=utf-8'
 };
@@ -269,12 +271,29 @@ function createApp(config = readConfig(), deps = {}) {
       }
       const ext = path.extname(file).toLowerCase();
       const fresh = ext === '.html' || ext === '.json' || ext === '.js' || ext === '.css';
-      res.writeHead(200, {
+      const headers = {
         'Content-Type': MIME[ext] || 'application/octet-stream',
-        'Content-Length': stat.size,
         'Cache-Control': fresh ? 'no-cache' : 'public, max-age=86400',
+        'Accept-Ranges': 'bytes',
         ...SECURITY_HEADERS
-      });
+      };
+      // Видео отдаётся кусками (Range): без этого Safari на iPhone не играет и не перематывает.
+      const range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ''));
+      if (range && stat.size > 0) {
+        let start = range[1] === '' ? Math.max(0, stat.size - Number(range[2])) : Number(range[1]);
+        let end = range[1] !== '' && range[2] !== '' ? Number(range[2]) : stat.size - 1;
+        end = Math.min(end, stat.size - 1);
+        if (!(start <= end) || start >= stat.size) {
+          res.writeHead(416, { 'Content-Range': `bytes */${stat.size}`, ...SECURITY_HEADERS });
+          res.end();
+          return;
+        }
+        res.writeHead(206, { ...headers, 'Content-Range': `bytes ${start}-${end}/${stat.size}`, 'Content-Length': end - start + 1 });
+        if (req.method === 'HEAD') return res.end();
+        fs.createReadStream(file, { start, end }).pipe(res);
+        return;
+      }
+      res.writeHead(200, { ...headers, 'Content-Length': stat.size });
       if (req.method === 'HEAD') return res.end();
       fs.createReadStream(file).pipe(res);
     });

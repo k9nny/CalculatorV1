@@ -322,3 +322,7 @@ html.detail-open .card { view-transition-name: none !important; }
   .page-col > .block:first-child { margin-top: 0; }
   .block, .seller { margin-inline: 0; }
 }
+
+/* Видео машины */
+.videos { display: grid; gap: 8px; }
+.car-video { display: block; width: 100%; max-height: 70vh; border-radius: var(--radius-sm); background: #0B0B0C; }

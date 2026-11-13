@@ -10,6 +10,9 @@ const { readCatalog, writeCatalog, nextId } = require('./catalog');
 const { telegramVideo } = require('./video/publish');
 
 const MAX_PHOTOS = 15;
+const MAX_VIDEOS = 3;
+// Бот через Bot API может скачать файл не больше 20 МБ — видео крупнее добавляются через админку.
+const BOT_FILE_LIMIT = 20 * 1024 * 1024;
 const STATUS_NAMES = { available: 'в продаже', reserved: 'забронирована', sold: 'продана' };
 
 // Адрес Telegram Bot API. Если сервер не видит api.telegram.org, укажите посредника за границей:
@@ -73,7 +76,7 @@ function carSummary(car) {
     extra ? esc(extra) : '',
     car.vin ? `VIN ${esc(car.vin)}` : '',
     car.serviceDone && car.serviceDone.length ? 'Сделали в сервисе:\n' + car.serviceDone.map((s) => '• ' + esc(s)).join('\n') : '',
-    car.defects ? (car.defects.length ? 'Недостатки: ' + esc(car.defects.join(', ')) : 'Недостатков нет') : 'Недостатки не указаны — допишите «недостатки …» или «недостатки нет»',
+    car.defects && car.defects.length ? 'Недостатки: ' + esc(car.defects.join(', ')) : '',
     car.history ? 'Проверка: ' + esc(historyLine(car.history)) : '',
     car.features && car.features.length ? 'Опции: ' + esc(car.features.join(', ')) : '',
     [car.paint && `окрасы: ${car.paint}`, car.customs === false && 'не растаможен', car.keys && `ключей: ${car.keys}`, car.tires && `резина: ${car.tires}`,
@@ -102,7 +105,7 @@ const HELP = [
   'Пример текста:',
   '<code>Kia Rio 2019, 1.6 АКПП 123 л.с.\nПробег 74 000 км\nЦена 1 390 000\nРынок 1 480 000\n2 владельца, ПТС оригинал, белый седан\n- Замена масла и фильтров\n- Новые колодки\nОпции: подогрев сидений, камера, круиз\nНедостатки: скол на капоте\nОкрасы: заднее крыло\nДТП: нет\nЗалог: нет\nОграничения: нет\nТакси: нет\nКлючи: 2\nРезина: зима на дисках</code>',
   '',
-  'Недостатки пишите всегда, даже «недостатки нет»: о них продавец обязан сообщить покупателю.',
+  'Если есть недостатки — напишите их («недостатки: скол на капоте»): о них продавец обязан сообщить покупателю. Нет недостатков — ничего писать не нужно.',
   '',
   'Исправить превью — отправьте строку «поле значение»: <code>цена 1 350 000</code>, <code>пробег 80 тыс</code>, <code>модель Rio X</code>, <code>рынок 1 480 000</code>, <code>описание …</code>. Ещё фото — просто пришлите.',
   '',
@@ -162,7 +165,9 @@ function createBot(options) {
     const lines = [
       '<b>Черновик объявления</b>', '',
       carSummary(car), '',
-      `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}`,
+      `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}` +
+        ((draft.videos || []).length ? ` · видео: ${draft.videos.length}` : ''),
+      ...(draft.bigVideos ? [`Видео больше 20 МБ бот скачать не может (ограничение Telegram) — добавьте его в админке на сайте после публикации.`] : []),
       ...(parser.enabled && draft.parsedBy ? [draft.parsedBy.via === 'llm' ? 'Разобрала нейросеть.'
         : `Нейросеть не ответила${draft.parsedBy.error ? ` (${esc(draft.parsedBy.error)})` : ''} — разобрано обычным способом, проверьте марку и модель.`] : []),
       ...(draft.fields.unclear && draft.fields.unclear.length ? ['Уточните: ' + esc(draft.fields.unclear.join(' '))] : []),
@@ -202,7 +207,24 @@ function createBot(options) {
         // фото не скачалось — публикуем без него, сообщим ниже
       }
     }
+    const videos = [];
+    for (const v of draft.videos || []) {
+      try {
+        const file = await api.request('getFile', { file_id: v.id });
+        const buf = await api.download(file.file_path);
+        // MP4 и MOV — контейнер с «ftyp», WebM — EBML; другое не сохраняем.
+        const ext = buf.length > 12 && buf.slice(4, 8).toString('latin1') === 'ftyp' ? '.mp4'
+          : buf.length > 4 && buf.readUInt32BE(0) === 0x1A45DFA3 ? '.webm' : null;
+        if (!ext) continue;
+        const name = `${id}-v${videos.length + 1}${ext}`;
+        fs.writeFileSync(path.join(photosDir, name), buf);
+        videos.push(photosUrlPrefix + name);
+      } catch {
+        // видео не скачалось — публикуем без него
+      }
+    }
     const car = { id, status: 'available', publishedAt: now().toISOString().slice(0, 10), ...draftCar(draft), photos };
+    if (videos.length) car.videos = videos;
     if (!car.status || !STATUS_NAMES[car.status]) car.status = 'available';
     catalog.cars.unshift(car);
     writeCatalog(carsFile, catalog, now());
@@ -211,6 +233,9 @@ function createBot(options) {
     const lostPhotos = draft.photos.length - photos.length;
     let report = `Опубликовано: объявление № ${id}. Машина уже в приложении и на сайте.`;
     if (lostPhotos) report += `\nНе удалось сохранить фото: ${lostPhotos}.`;
+    const lostVideos = (draft.videos || []).length - videos.length;
+    if (videos.length) report += `\nВидео: ${videos.length}.`;
+    if (lostVideos) report += `\nНе удалось сохранить видео: ${lostVideos}.`;
     if (link) report += `\nСсылка на машину: ${link}`;
     // Публикация — только в каталог. Текст для канала и ролики — отдельно, по кнопке, если нужны.
     const buttons = [{ text: 'Текст для канала', callback_data: `post:${id}` }];
@@ -305,7 +330,7 @@ function createBot(options) {
       catalog.cars = catalog.cars.filter((c) => c !== car);
       writeCatalog(carsFile, catalog, now());
       // Фото, которые загрузил бот, лежат в photosDir под именами «номер-n.jpg».
-      for (const src of car.photos || []) {
+      for (const src of [...(car.photos || []), ...(car.videos || [])]) {
         if (!src.startsWith(photosUrlPrefix)) continue;
         try { fs.unlinkSync(path.join(photosDir, path.basename(src))); } catch { /* файла уже нет */ }
       }
@@ -361,7 +386,16 @@ function createBot(options) {
     if (msg.text && text.startsWith('/')) return command(chatId, text);
 
     let draft = drafts.get(chatId);
-    if (!draft) { draft = { fields: {}, photos: [], timer: null }; drafts.set(chatId, draft); }
+    if (!draft) { draft = { fields: {}, photos: [], videos: [], timer: null }; drafts.set(chatId, draft); }
+    draft.videos = draft.videos || [];
+    const video = msg.video || msg.animation || (msg.document && /^video\//.test(msg.document.mime_type || '') ? msg.document : null);
+    if (video && video.file_id && !draft.videos.some((v) => v.id === video.file_id)) {
+      if (video.file_size && video.file_size > BOT_FILE_LIMIT) {
+        draft.bigVideos = (draft.bigVideos || 0) + 1;
+      } else if (draft.videos.length < MAX_VIDEOS) {
+        draft.videos.push({ id: video.file_id });
+      }
+    }
     const photo = msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1].file_id
       : msg.document && /^image\//.test(msg.document.mime_type || '') ? msg.document.file_id : null;
     if (photo && draft.photos.length < MAX_PHOTOS && !draft.photos.includes(photo)) draft.photos.push(photo);

@@ -49,8 +49,18 @@
       </div>
 
       <div class="block">
+        <h2>Видео</h2>
+        <p class="hint">До 3 видео, до 300 МБ каждое. Видео с телефона подойдёт как есть — обрезать и сжимать не нужно.</p>
+        <div class="vlist" id="videos"></div>
+        <label class="btn btn-ghost btn-block pick">
+          <input type="file" id="video-input" accept="video/mp4,video/quicktime,video/webm,video/*" multiple hidden>
+          Выбрать видео
+        </label>
+      </div>
+
+      <div class="block">
         <h2>Текст объявления</h2>
-        <p class="hint">Как в обычном объявлении. Обязательно: марка, модель, год, цена, пробег. Недостатки пишите всегда, даже «недостатки нет».</p>
+        <p class="hint">Как в обычном объявлении. Обязательно: марка, модель, год, цена, пробег. Если есть недостатки — напишите их: о них продавец обязан сообщить.</p>
         <label class="field">
           <textarea id="text" rows="12" placeholder="Kia Rio 2019, 1.6 АКПП 123 л.с.
 Пробег 74 000 км
@@ -131,6 +141,7 @@
   </main>
 </div>
 
+<input type="file" id="row-video-input" accept="video/mp4,video/quicktime,video/webm,video/*" hidden>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="../card.js"></script>
