@@ -94,6 +94,32 @@
     </section>
 
     <section data-pane="settings" hidden>
+      <div class="block" id="vk-block">
+        <h2>ВКонтакте</h2>
+        <p class="hint">Новые машины сами публикуются в группе: текст объявления и до 10 фото. Публиковать пост с фото ВК разрешает только от имени администратора группы, поэтому нужен вход через VK ID.</p>
+        <p class="lack off" id="vk-status"></p>
+        <label class="consent" id="vk-auto-row" hidden><input type="checkbox" id="vk-auto"> <span>Публиковать новые машины в ВК автоматически</span></label>
+        <form id="vk-form" class="llm-form" autocomplete="off">
+          <label class="field">Группа
+            <input id="vk-group" type="url" inputmode="url" autocapitalize="off" spellcheck="false" value="https://vk.ru/andoauto">
+          </label>
+          <label class="field">ID приложения из кабинета id.vk.com
+            <input id="vk-client" type="text" inputmode="numeric" placeholder="например, 52345678">
+          </label>
+          <p class="hint">В настройках приложения на id.vk.com включите доступы «Стена» и «Фотографии», а в «Доверенный redirect URL» вставьте: <code id="vk-redirect"></code></p>
+          <p class="err" id="vk-err" role="alert"></p>
+          <button class="btn btn-primary btn-block" type="submit">Подключить ВК</button>
+          <details class="llm-more">
+            <summary>Уже есть ключ доступа ВК?</summary>
+            <label class="field">Ключ доступа администратора группы (права wall и photos)
+              <input id="vk-token" type="text" autocapitalize="off" spellcheck="false" placeholder="vk1.a.…">
+            </label>
+            <button class="btn btn-ghost btn-block" type="button" id="vk-token-save">Сохранить ключ</button>
+          </details>
+        </form>
+        <button class="btn btn-ghost btn-block" type="button" id="vk-off" hidden>Отключить ВК</button>
+      </div>
+
       <div class="block">
         <h2>Telegram-бот</h2>
         <p class="hint">Сервер в России не видит Telegram напрямую, поэтому бот работает через посредника на Cloudflare. Вставьте его адрес, токен бота и свой Telegram id — сервер проверит связь и запустит бота.</p>

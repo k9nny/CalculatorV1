@@ -86,6 +86,17 @@ function listingText(car, opts = {}) {
     list(car.features).length && sentence(list(car.features).map(lowRu).join(', '))
   ]);
 
+  // Справка о модели (из открытых источников): главное, что смотрят покупатели.
+  const ms = car.modelSpecs || {};
+  const fmt = (n) => Number(n).toLocaleString('ru-RU').replace(/[\u00a0\u202f]/g, ' ');
+  const model = section('О модели', [
+    ms.engine && `Двигатель: ${ms.engine}`,
+    ms.gearbox && `Коробка: ${lowRu(ms.gearbox)}`,
+    ms.acceleration && `Разгон 0–100 км/ч: ${fmt(ms.acceleration)} с`,
+    ms.consumption && `Расход в смешанном цикле: ${fmt(ms.consumption)} л/100 км`,
+    ms.clearance && `Клиренс: ${fmt(ms.clearance)} мм`,
+    ms.trunk && `Багажник: ${fmt(ms.trunk)} л`
+  ]);
   const service = section('Обслуживание', list(car.serviceDone).map(sentence));
   const defects = list(car.defects).length ? section('Известные недостатки', [sentence(list(car.defects).map(lowRu).join(', '))]) : '';
   const kit = section('В комплекте', [
@@ -98,7 +109,7 @@ function listingText(car, opts = {}) {
       PHONE_LABEL, link && `Фото и запись на осмотр: ${link}`].filter(Boolean).join('\n')
     : 'Продаёт компания, договор купли-продажи. Осмотр в Москве по предварительной записи, возможна проверка в сервисе по выбору покупателя. Напишите в чат или позвоните — пришлём дополнительные фото и видео.';
 
-  return [title(car), price, main, docs, state, equip, service, defects, kit, terms].filter(Boolean).join('\n\n');
+  return [title(car), price, main, model, docs, state, equip, service, defects, kit, terms].filter(Boolean).join('\n\n');
 }
 
 module.exports = { listingText, title };

@@ -225,9 +225,11 @@ function createBot(options) {
     }
     const car = { id, status: 'available', publishedAt: now().toISOString().slice(0, 10), ...draftCar(draft), photos };
     if (videos.length) car.videos = videos;
+    const announce = () => { if (options.onPublished) options.onPublished(car); };
     if (!car.status || !STATUS_NAMES[car.status]) car.status = 'available';
     catalog.cars.unshift(car);
     writeCatalog(carsFile, catalog, now());
+    announce(); // справка о модели и пост в ВК — в фоне
     drafts.delete(chatId);
     const link = appLink ? `${appLink}${appLink.includes('?') ? '&' : '?'}startapp=car_${id}` : '';
     const lostPhotos = draft.photos.length - photos.length;

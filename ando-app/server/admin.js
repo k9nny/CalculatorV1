@@ -107,6 +107,14 @@ function createAdmin(config, opts = {}) {
   const discover = opts.discover || llm.discover;
   const makeParser = opts.makeParser || ((c) => llm.createSmartParser(c, { log: () => {} }));
   const telegram = opts.telegram || telegramSettings;
+  const vk = opts.vk || null;
+  const afterPublish = opts.afterPublish || null;
+  const specs = opts.specs || null;
+  const siteBase = (req) => {
+    if (config.siteUrl) return String(config.siteUrl).replace(/\/?$/, '/');
+    const host = String(req.headers['x-forwarded-host'] || req.headers.host || '').split(',')[0].trim().replace(/^(app|www)\./, '');
+    return `${req.headers['x-forwarded-proto'] === 'https' || config.trustProxy ? 'https' : 'http'}://${host}/`;
+  };
   // После сохранения настроек Telegram сервер перезапускается (systemd поднимает его за 3 секунды) — бот стартует с ними.
   const restart = opts.restart || (() => setTimeout(() => process.exit(0), 800));
   const smart = parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
@@ -388,6 +396,8 @@ function createAdmin(config, opts = {}) {
       if (!STATUSES.includes(car.status)) car.status = 'available';
       catalog.cars.unshift(car);
       writeCatalog(config.carsFile, catalog, now());
+      // Справка о модели и пост в ВК — в фоне, публикация в каталоге уже прошла.
+      if (afterPublish) afterPublish.publish(car);
       return json(res, 200, { car });
     }
 
@@ -399,6 +409,52 @@ function createAdmin(config, opts = {}) {
       const link = config.siteUrl ? `${config.siteUrl.replace(/\/?$/, '/')}cars/${encodeURIComponent(car.id)}/` : '';
       const mode = new URL(req.url, 'http://x').searchParams.get('mode') === 'market' ? 'market' : 'channel';
       return json(res, 200, { text: listingText(car, { link, mode }) });
+    }
+
+    // ВКонтакте: подключение через VK ID, ключ вручную, автопостинг вкл/выкл, отключение.
+    if (pathname === '/api/admin/vk' && m === 'GET') {
+      if (!vk) return json(res, 200, { available: false });
+      return json(res, 200, { available: true, ...vk.status(), redirectUri: siteBase(req) + 'api/vk/callback' });
+    }
+    if (pathname === '/api/admin/vk/connect' && m === 'POST') {
+      const body = await readJson(req);
+      const clientId = String(body.clientId || '').trim();
+      if (!/^\d{5,12}$/.test(clientId)) return json(res, 400, { error: 'ID приложения — число из кабинета id.vk.com' });
+      if (!String(body.group || '').trim()) return json(res, 400, { error: 'Укажите группу: ссылку вида https://vk.ru/andoauto' });
+      return json(res, 200, { url: vk.authorizeUrl({ clientId, group: body.group, redirectUri: siteBase(req) + 'api/vk/callback' }) });
+    }
+    if (pathname === '/api/admin/vk/token' && m === 'POST') {
+      const body = await readJson(req);
+      const token = String(body.token || '').replace(/\s+/g, '');
+      if (!/^[\w.-]{20,400}$/.test(token)) return json(res, 400, { error: 'Это не похоже на ключ доступа ВК' });
+      try { return json(res, 200, await vk.setToken({ token, group: body.group }).then(() => vk.status())); } catch (e) {
+        return json(res, 400, { error: 'ВК не принял ключ: ' + String(e.message).slice(0, 140) + '. Нужен ключ администратора группы с правами wall и photos.' });
+      }
+    }
+    if (pathname === '/api/admin/vk/auto' && m === 'POST') { const body = await readJson(req); return json(res, 200, vk.setAuto(!!body.on)); }
+    if (pathname === '/api/admin/vk' && m === 'DELETE') return json(res, 200, vk.disconnect());
+
+    // Опубликовать машину в ВК сейчас или обновить справку о модели.
+    const carAct = /^\/api\/admin\/cars\/([^/]+)\/(vk|specs)$/.exec(pathname);
+    if (carAct && m === 'POST') {
+      const id = decodeURIComponent(carAct[1]);
+      const car = readCatalog(config.carsFile).cars.find((c) => String(c.id) === id);
+      if (!car) return json(res, 404, { error: 'Такой машины уже нет' });
+      let patch;
+      if (carAct[2] === 'vk') {
+        if (!vk || !vk.status().connected) return json(res, 400, { error: 'Сначала подключите ВК в настройках' });
+        try { patch = { vk: await vk.postCar(car, `${siteBase(req)}cars/${encodeURIComponent(car.id)}/`) }; } catch (e) {
+          return json(res, 400, { error: 'ВК: ' + String(e.message).slice(0, 160) });
+        }
+      } else {
+        if (!specs) return json(res, 400, { error: 'Справка недоступна' });
+        try { patch = await specs.lookup(car); } catch (e) { return json(res, 400, { error: 'Нейросеть не ответила: ' + String(e.message).slice(0, 140) }); }
+        if (!patch) return json(res, 400, { error: 'Нейросеть не нашла надёжных данных по этой модели. Проверьте марку, модель и год.' });
+      }
+      const catalog = readCatalog(config.carsFile);
+      const target = catalog.cars.find((c) => String(c.id) === id);
+      if (target) { Object.assign(target, patch); writeCatalog(config.carsFile, catalog, now()); }
+      return json(res, 200, { car: target || car });
     }
 
     // Видео к уже опубликованной машине: добавить (POST { name }) или убрать все (DELETE).

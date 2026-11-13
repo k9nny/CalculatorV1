@@ -283,6 +283,7 @@
     var sl = CFG.seller || {};
     var parts = [sl.name, sl.inn ? 'ИНН ' + sl.inn : '', sl.ogrnip ? 'ОГРНИП ' + sl.ogrnip : '', sl.registered].filter(Boolean);
     return '<footer class="foot">' + (parts.length ? '<p>' + esc(parts.join(', ')) + '</p>' : '') +
+      (CFG.vkUrl ? '<a href="' + esc(CFG.vkUrl) + '" target="_blank" rel="noopener">Мы ВКонтакте</a> · ' : '') +
       '<a href="' + esc(CFG.privacyUrl || 'privacy.html') + '" data-action="privacy">Политика обработки персональных данных</a></footer>';
   }
 
@@ -455,6 +456,8 @@
 
       videosHtml(car) +
 
+      modelSpecsHtml(car) +
+
       '<section class="block"><h2>История автомобиля</h2>' +
       (hist.length
         ? '<ul class="history">' + hist.map(function (row) {
@@ -589,6 +592,25 @@
       '<span class="pa-mark ours" style="left:' + pos(p) + '%"><em>Наша цена<br>' + rub(p) + '</em></span></div>' +
       '<div class="pa-legend"><span class="z-great">Отличная</span><span class="z-good">Хорошая</span><span class="z-fair">По рынку</span><span class="z-high">Выше рынка</span></div>' +
       '<p class="fine">Рыночная цена — оценка ANDO AUTO по похожим объявлениям (год, пробег, комплектация) на дату публикации.</p></section>';
+  }
+
+  // Справка о модели из открытых источников — отдельно от сведений о конкретной машине.
+  var SPEC_ROWS = [
+    ['engine', 'Двигатель', ''], ['gearbox', 'Коробка передач', ''], ['fuelClass', 'Топливо', ''],
+    ['power', 'Мощность', 'л.с.'], ['torque', 'Крутящий момент', 'Н·м'], ['acceleration', 'Разгон 0–100 км/ч', 'с'],
+    ['maxSpeed', 'Максимальная скорость', 'км/ч'], ['consumption', 'Расход, смешанный цикл', 'л/100 км'], ['fuelTank', 'Объём бака', 'л'],
+    ['clearance', 'Клиренс', 'мм'], ['trunk', 'Багажник', 'л'], ['length', 'Длина', 'мм'], ['width', 'Ширина', 'мм'],
+    ['height', 'Высота', 'мм'], ['wheelbase', 'Колёсная база', 'мм'], ['curbWeight', 'Снаряжённая масса', 'кг'], ['seats', 'Мест', '']
+  ];
+  function modelSpecsHtml(car) {
+    var s = car.modelSpecs;
+    if (!s) return '';
+    var rows = SPEC_ROWS.filter(function (r) { return s[r[0]] != null && s[r[0]] !== ''; });
+    if (!rows.length) return '';
+    return '<section class="block"><h2>Характеристики модели</h2><dl class="spec-table">' + rows.map(function (r) {
+      var v = typeof s[r[0]] === 'number' ? num(s[r[0]]) + (r[2] ? ' ' + r[2] : '') : s[r[0]];
+      return '<dt>' + r[1] + '</dt><dd>' + esc(v) + '</dd>';
+    }).join('') + '</dl><p class="fine">Справочные данные о модели и модификации из открытых источников. У конкретной машины могут отличаться — уточните на осмотре.</p></section>';
   }
 
   // Видео машины: обычный плеер, грузится только при нажатии (preload="metadata").

@@ -292,7 +292,45 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
   }
   async function parse(text) { return (await parseDetailed(text)).fields; }
 
-  return { parse, parseDetailed, photo, fillFromPhoto, ask, get enabled() { return conf().enabled; }, get model() { return conf().model; }, get lastPhotoError() { return lastPhotoError; } };
+  // Произвольный запрос к модели. webSearch — встроенный поиск Kimi ($web_search): модель сама ищет в интернете.
+  // Посредник или модель без поиска — повторяем без него (тогда модель отвечает по своим знаниям).
+  let noWebSearch = false;
+  async function complete(messages, { webSearch = false, maxTokens = 3000 } = {}) {
+    const { baseUrl, apiKey, model, timeoutMs, enabled } = conf();
+    if (!enabled) throw new Error('нейросеть не подключена');
+    const url = baseUrl.replace(/\/+$/, '') + '/chat/completions';
+    const auth = { Authorization: 'Bearer ' + apiKey };
+    const useSearch = webSearch && !noWebSearch;
+    const msgs = messages.slice();
+    let searched = 0;
+    for (let round = 0; round < 6; round++) {
+      const body = { model, messages: msgs, max_tokens: maxTokens };
+      if (compat < 1) body.temperature = 0;
+      if (useSearch) body.tools = [{ type: 'builtin_function', function: { name: '$web_search' } }];
+      let res;
+      try {
+        res = await post(url, body, auth, Math.max(timeoutMs, 120000));
+      } catch (e) {
+        if (useSearch && round === 0 && /HTTP (400|404|422)/.test(e.message)) { noWebSearch = true; return complete(messages, { webSearch: false, maxTokens }); }
+        if (compat < 1 && /temperature/i.test(e.message)) { compat = 1; return complete(messages, { webSearch, maxTokens }); }
+        throw e;
+      }
+      const choice = res && res.choices && res.choices[0];
+      const msg = choice && choice.message;
+      if (!msg) throw new Error('пустой ответ модели');
+      if (useSearch && choice.finish_reason === 'tool_calls' && Array.isArray(msg.tool_calls) && msg.tool_calls.length) {
+        // Kimi ищет сам: возвращаем ему аргументы поиска как результат вызова — так требует протокол $web_search.
+        msgs.push(msg);
+        for (const tc of msg.tool_calls) msgs.push({ role: 'tool', tool_call_id: tc.id, name: tc.function && tc.function.name, content: (tc.function && tc.function.arguments) || '{}' });
+        searched++;
+        continue;
+      }
+      return { content: String(msg.content || ''), searched: searched > 0 };
+    }
+    throw new Error('слишком много поисковых запросов');
+  }
+
+  return { parse, parseDetailed, photo, fillFromPhoto, ask, complete, get webSearch() { return !noWebSearch; }, get enabled() { return conf().enabled; }, get model() { return conf().model; }, get lastPhotoError() { return lastPhotoError; } };
 }
 
 function getJson(url, headers, timeoutMs = 20000) {

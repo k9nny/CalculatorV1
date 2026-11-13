@@ -14,7 +14,8 @@ const SELLER = {
   ogrnip: '323237500354611',
   registered: 'от 30.08.2023, МИФНС России № 16 по Краснодарскому краю'
 };
-const SAME_AS = ['https://t.me/andoavtobot', 'https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E'];
+const VK_URL = 'https://vk.ru/andoauto';
+const SAME_AS = ['https://t.me/andoavtobot', 'https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E', VK_URL];
 
 // Страницы услуг: адрес, заголовок для меню. Тексты — в internal/build-pages.js.
 const PAGES = [
@@ -175,6 +176,7 @@ function footer(root, { scripts = true } = {}) {
         <a href="${home}#process">Выкуп авто</a>
 ${PAGES.map((p) => `        <a href="${root}${p.slug}/">${esc(p.nav)}</a>`).join('\n')}
         <a href="${root}cars/">Машины в продаже</a>
+        <a href="${VK_URL}" target="_blank" rel="noopener">ВКонтакте</a>
         <a href="tel:${PHONE}">${PHONE_LABEL}</a>
       </nav>
     </div>

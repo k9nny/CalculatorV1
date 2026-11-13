@@ -119,3 +119,7 @@ h2 { font-size: 17px; }
 .row-tools .row-video { order: 7; }
 .row-tools .row-video-off { order: 8; }
 .row-tools .btn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.row-tools .row-vk { order: 9; }
+.row-tools .row-specs { order: 10; }
+#vk-block code { font-size: 12px; word-break: break-all; background: var(--surface-2); padding: 1px 4px; border-radius: 4px; }

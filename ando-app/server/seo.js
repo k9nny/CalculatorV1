@@ -10,6 +10,7 @@ const https = require('node:https');
 const crypto = require('node:crypto');
 const L = require('./site-layout');
 const { readCatalog } = require('./catalog');
+const { specRows } = require('./car-specs');
 
 const esc = L.esc;
 const num = (n) => Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/[   ]/g, ' ');
@@ -144,6 +145,11 @@ ${photos.length ? photos.map((src, i) => `          <a href="${esc(book)}"><img 
         ${list(c.features).length ? `<h2>Комплектация и опции</h2><div class="chips">${list(c.features).map((f) => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
         ${list(c.serviceDone).length ? `<h2>Что сделали перед продажей</h2><div class="chips">${list(c.serviceDone).map((f) => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
         ${defects.length ? `<h2>Известные недостатки</h2>\n        <p>${esc(defects.join('\n'))}</p>` : ''}
+        ${specRows(c.modelSpecs).length ? `<h2>Характеристики модели</h2>
+        <dl class="specs">
+${specRows(c.modelSpecs).map(([k, v]) => `          <div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('\n')}
+        </dl>
+        <p class="hint">Справочные данные о модели из открытых источников; у конкретной машины могут отличаться.</p>` : ''}
         <h2>Характеристики</h2>
         <dl class="specs">
 ${specs(c).map(([k, v]) => `          <div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('\n')}

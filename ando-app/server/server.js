@@ -12,6 +12,9 @@ const { createAdmin } = require('./admin');
 const { createSeo } = require('./seo');
 const { createSmartParser, createLlmStore } = require('./llm');
 const telegramSettings = require('./telegram-settings');
+const { createVk } = require('./vk');
+const { createCarSpecs } = require('./car-specs');
+const { createAfterPublish } = require('./after-publish');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -139,6 +142,18 @@ function smartParser(config) {
   return shared.get(key).parser;
 }
 function llmStore(config) { smartParser(config); return shared.get(config.leadsLog).store; }
+// ВКонтакте и «после публикации» (справка о модели, пост в ВК) — тоже по одному на процесс.
+const services = new Map();
+function servicesFor(config, deps = {}) {
+  if (!services.has(config.leadsLog) || deps.vk || deps.afterPublish) {
+    const vk = deps.vk || createVk(config);
+    const specs = deps.specs !== undefined ? deps.specs : createCarSpecs(smartParser(config));
+    const afterPublish = deps.afterPublish || createAfterPublish({ config, vk, specs });
+    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs };
+    services.set(config.leadsLog, { vk, afterPublish, specs });
+  }
+  return services.get(config.leadsLog);
+}
 
 function createApp(config = readConfig(), deps = {}) {
   const send = deps.sendTelegramMessage || sendTelegramMessage;
@@ -301,7 +316,8 @@ function createApp(config = readConfig(), deps = {}) {
 
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
   const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser,
-    telegram: deps.telegram, restart: deps.restart });
+    telegram: deps.telegram, restart: deps.restart, ...servicesFor(config, deps) });
+  const { vk } = servicesFor(config, deps);
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 
@@ -314,6 +330,20 @@ function createApp(config = readConfig(), deps = {}) {
       return;
     }
     if (pathname === '/healthz') return json(res, 200, { ok: true });
+    // Возврат из VK ID после «Подключить ВК» в админке: без state, выданного админкой, ничего не делает.
+    if (pathname === '/api/vk/callback' && req.method === 'GET') {
+      const q = new URL(req.url, 'http://x').searchParams;
+      const page = (title, text) => {
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex', ...SECURITY_HEADERS });
+        res.end(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>` +
+          `<body style="font:16px/1.5 system-ui,sans-serif;max-width:480px;margin:48px auto;padding:0 16px"><h1 style="font-size:22px">${title}</h1><p>${text}</p></body>`);
+      };
+      if (q.get('error')) { page('ВКонтакте не подключён', 'ВК отказал во входе. Вернитесь в админку и попробуйте ещё раз.'); return; }
+      vk.finish({ code: q.get('code') || '', state: q.get('state') || '', deviceId: q.get('device_id') || '' })
+        .then((d) => page('ВКонтакте подключён', `Группа: ${String(d.groupName || d.groupId).replace(/[<>&"]/g, '')}. Вернитесь в админку — новые машины будут публиковаться в группе.`))
+        .catch((e) => page('ВКонтакте не подключён', String(e.message).replace(/[<>&"]/g, '') + ' Вернитесь в админку и попробуйте ещё раз.'));
+      return;
+    }
     serveStatic(req, res);
   });
 }
@@ -365,6 +395,7 @@ if (require.main === module) {
       photosDir: config.photosDir,
       appLink: config.appLink,
       parser: smartParser(config),
+      onPublished: (car) => servicesFor(config).afterPublish.publish(car),
       clips
     }).start();
     console.log(`Бот объявлений запущен, администраторов: ${config.adminIds.length}`);

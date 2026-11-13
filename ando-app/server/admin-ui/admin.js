@@ -66,7 +66,7 @@
     document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== name; });
     if (name === 'cars') loadCars();
     if (name === 'leads') loadLeads();
-    if (name === 'settings') { loadLlm(); loadTg(); }
+    if (name === 'settings') { loadLlm(); loadTg(); loadVk(); }
     window.scrollTo(0, 0);
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { openTab(b.dataset.tab); }); });
@@ -291,6 +291,9 @@
           '<button class="btn btn-ghost row-text" type="button" data-text="channel">Текст для канала</button>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
+          (c.vk && c.vk.url ? '<a class="btn btn-ghost row-vk" href="' + esc(c.vk.url) + '" target="_blank" rel="noopener noreferrer">Пост в ВК ✓</a>'
+            : '<button class="btn btn-ghost row-vk" type="button" data-act="vk">Опубликовать в ВК</button>') +
+          '<button class="btn btn-ghost row-specs" type="button" data-act="specs">' + (c.modelSpecs ? 'Справка о модели ✓' : 'Справка о модели') + '</button>' +
           (c.videos && c.videos.length ? '<button class="btn btn-ghost row-video-off" type="button" data-delvideos>Убрать видео</button>' : '') +
           '</div></div>';
       }).join('');
@@ -352,6 +355,16 @@
       .catch(function (err) { toast(err.message, true); btn.disabled = false; btn.textContent = 'Добавить видео'; });
   });
   $('cars').addEventListener('click', function (e) {
+    var act = e.target.closest('[data-act]');
+    if (act) {
+      var rowEl = act.closest('.row'), what = act.dataset.act;
+      act.disabled = true;
+      act.textContent = what === 'vk' ? 'Публикую…' : 'Ищу данные…';
+      api('cars/' + encodeURIComponent(rowEl.dataset.id) + '/' + what, { method: 'POST', json: {} })
+        .then(function () { toast(what === 'vk' ? 'Опубликовано в ВК' : 'Справка о модели добавлена'); loadCars(); })
+        .catch(function (err) { toast(err.message, true); loadCars(); });
+      return;
+    }
     if (e.target.matches('[data-addvideo]')) { videoFor = e.target.closest('.row'); $('row-video-input').click(); return; }
     if (e.target.matches('[data-delvideos]')) {
       if (!confirm('Убрать все видео у этой машины?')) return;
@@ -451,6 +464,44 @@
   setInterval(function () {
     if (!$('app').hidden && document.visibilityState === 'visible') loadLeads();
   }, 60000);
+
+  /* ---------- ВКонтакте ---------- */
+  function showVk(d) {
+    if (!d.available) { $('vk-block').hidden = true; return; }
+    $('vk-status').classList.toggle('ok', !!d.connected);
+    $('vk-status').classList.toggle('off', !d.connected);
+    $('vk-status').textContent = d.connected
+      ? 'Подключено: ' + (d.groupName || 'группа ' + d.groupId) + (d.renewable ? ' · ключ обновляется сам' : '')
+      : 'Не подключено.';
+    $('vk-auto-row').hidden = !d.connected;
+    $('vk-auto').checked = !!d.auto;
+    $('vk-off').hidden = !d.connected;
+    if (d.redirectUri) $('vk-redirect').textContent = d.redirectUri;
+    if (d.clientId && !$('vk-client').value) $('vk-client').value = d.clientId;
+  }
+  function loadVk() { api('vk').then(showVk).catch(function (err) { $('vk-status').textContent = err.message; }); }
+  $('vk-form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    $('vk-err').textContent = '';
+    api('vk/connect', { method: 'POST', json: { clientId: $('vk-client').value, group: $('vk-group').value } })
+      .then(function (d) { location.href = d.url; })
+      .catch(function (err) { $('vk-err').textContent = err.message; });
+  });
+  $('vk-token-save').addEventListener('click', function () {
+    $('vk-err').textContent = '';
+    api('vk/token', { method: 'POST', json: { token: $('vk-token').value, group: $('vk-group').value } })
+      .then(function (d) { $('vk-token').value = ''; showVk(Object.assign({ available: true }, d)); toast('ВКонтакте подключён'); })
+      .catch(function (err) { $('vk-err').textContent = err.message; });
+  });
+  $('vk-auto').addEventListener('change', function () {
+    api('vk/auto', { method: 'POST', json: { on: $('vk-auto').checked } })
+      .then(function () { toast($('vk-auto').checked ? 'Новые машины будут публиковаться в ВК' : 'Автопостинг в ВК выключен'); })
+      .catch(function (err) { toast(err.message, true); });
+  });
+  $('vk-off').addEventListener('click', function () {
+    if (!confirm('Отключить ВКонтакте? Ключ доступа будет удалён с сервера.')) return;
+    api('vk', { method: 'DELETE' }).then(function (d) { showVk(Object.assign({ available: true }, d)); }).catch(function (err) { toast(err.message, true); });
+  });
 
   /* ---------- Telegram ---------- */
   function loadTg() {
