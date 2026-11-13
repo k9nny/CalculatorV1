@@ -49,7 +49,7 @@
     dealer: 'Оптовая цена для перекупов',
     callback: 'Заказать звонок',
     sell: 'Продать машину',
-    credit: 'Купить в рассрочку'
+    credit: 'Покупка в кредит — анкета'
   };
   // Рассрочка: кнопка открывает анкету, заявка уходит менеджеру, он перезванивает.
   var CREDIT = Object.assign({ enabled: true, partners: '' }, CFG.credit || {});
@@ -375,7 +375,7 @@
     return UI.cardHtml(car, {
       fav: favButton(car.id),
       actions: '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
-        (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В рассрочку</button>' : '')
+        (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В кредит</button>' : '')
     });
   }
 
@@ -485,8 +485,8 @@
       }).join('') + '</dl></section>' +
 
       (CREDIT.enabled
-        ? '<section class="block credit-block"><h2>Рассрочка и кредит</h2>' +
-          '<p>Заполните анкету — менеджер перезвонит и подберёт рассрочку или кредит.</p>' +
+        ? '<section class="block credit-block"><h2>Покупка в кредит</h2>' +
+          '<p>Заполните анкету за пару минут — менеджер перезвонит, расскажет условия банков и поможет подать заявку.</p>' +
           (CREDIT.partners ? '<p class="fine" style="margin:-6px 0 14px">Рассрочку и кредит предоставляют: ' + esc(CREDIT.partners) + '.</p>' : '') +
           '<button class="btn btn-primary btn-block" data-action="credit" data-id="' + esc(car.id) + '">Заполнить анкету</button></section>'
         : '') +
@@ -505,7 +505,7 @@
 
       '<div class="action-bar"><div class="action-bar-in">' +
       (CFG.phone ? '<a class="btn btn-ghost btn-icon" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
-      (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В рассрочку</button>' : '') +
+      (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В кредит</button>' : '') +
       '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
       '</div></div>';
 
@@ -644,18 +644,27 @@
   function openCredit(carId) {
     var car = byId(carId);
     if (!car) return;
-    openSheet(sheetHead('Купить в рассрочку') +
+    var seg = function (id, values) {
+      return '<div class="seg seg-wrap" id="' + id + '">' + values.map(function (v) {
+        return '<button type="button" data-action="condition" data-value="' + esc(v[0]) + '" aria-pressed="false">' + esc(v[1]) + '</button>';
+      }).join('') + '</div>';
+    };
+    openSheet(sheetHead('Покупка в кредит') +
       '<div class="sheet-car"><img src="' + esc(photos(car)[0]) + '" alt=""><div><b>' + esc(title(car)) + '</b><span>' + rub(car.price) + '</span></div></div>' +
-      '<p class="d-note sheet-note">Заполните анкету — менеджер перезвонит и подберёт рассрочку или кредит.</p>' +
+      '<p class="d-note sheet-note">Анкета для предварительного решения банка. Менеджер перезвонит, расскажет условия и поможет подать заявку. Паспорт сейчас не нужен.</p>' +
       '<form class="form" id="lead-form" data-type="credit" data-car="' + esc(car.id) + '" novalidate>' +
-      '<label class="field"><span>Имя</span><input name="name" autocomplete="given-name" maxlength="80" value="' + esc(P.user && P.user.first_name || '') + '"></label>' +
+      '<label class="field"><span>ФИО</span><input name="name" autocomplete="name" maxlength="80" placeholder="Как в паспорте" value="' + esc(P.user ? [P.user.first_name, P.user.last_name].filter(Boolean).join(' ') : '') + '"></label>' +
       phoneField() +
-      '<label class="field"><span>Первоначальный взнос, ₽</span><input name="downPayment" inputmode="numeric" maxlength="11" placeholder="Необязательно"></label>' +
+      '<label class="field"><span>Дата рождения</span><input name="birthDate" type="date" min="1940-01-01" max="' + (new Date().getFullYear() - 18) + '-12-31"></label>' +
+      '<label class="field"><span>Первоначальный взнос, ₽</span><input name="downPayment" inputmode="numeric" maxlength="11" placeholder="Можно без взноса"></label>' +
+      '<div class="field"><p class="legend">Срок кредита</p>' + seg('term', [['12', '1 год'], ['24', '2 года'], ['36', '3 года'], ['60', '5 лет'], ['84', '7 лет']]) + '</div>' +
+      '<label class="field"><span>Доход в месяц, ₽</span><input name="income" inputmode="numeric" maxlength="9" placeholder="Необязательно"></label>' +
+      '<div class="field"><p class="legend">Занятость</p>' + seg('employment', [['hired', 'Работаю по найму'], ['business', 'ИП или свой бизнес'], ['self', 'Самозанятый'], ['pension', 'Пенсионер'], ['other', 'Другое']]) + '</div>' +
       '<label class="field"><span>Комментарий</span><textarea name="comment" rows="2" maxlength="500" placeholder="Удобное время для звонка"></textarea></label>' +
       consentField() +
       '<p class="form-error" role="alert"></p>' +
       '<button class="btn btn-primary btn-block" type="submit">Отправить анкету</button>' +
-      (CREDIT.partners ? '<p class="fine">Рассрочку и кредит предоставляют: ' + esc(CREDIT.partners) + '.</p>' : '') +
+      '<p class="fine">' + (CREDIT.partners ? 'Кредит предоставляют: ' + esc(CREDIT.partners) + '. ' : '') + 'Решение о кредите и его условия принимает банк.</p>' +
       '</form>');
   }
 
@@ -813,7 +822,16 @@
     var lead = { type: type, name: get('name'), phone: normalizePhone(get('phone')), comment: get('comment'), consent: form.elements.consent.checked };
     var carId = form.getAttribute('data-car');
     if (carId) lead.carId = carId;
-    if (type === 'credit') lead.credit = { downPayment: get('downPayment') ? +digits(get('downPayment')) : null };
+    if (type === 'credit') {
+      var pick = function (id) { var b = form.querySelector('#' + id + ' [aria-pressed="true"]'); return b ? b.getAttribute('data-value') : null; };
+      lead.credit = {
+        downPayment: get('downPayment') ? +digits(get('downPayment')) : null,
+        termMonths: pick('term') ? +pick('term') : null,
+        income: get('income') ? +digits(get('income')) : null,
+        employment: pick('employment'),
+        birthDate: get('birthDate') || null
+      };
+    }
     if (type === 'sell') {
       var pressed = form.querySelector('#condition [aria-pressed="true"]');
       lead.car = {
@@ -834,6 +852,7 @@
       if (!lead.car.model) return ['model', 'Укажите модель'];
       if (!lead.car.year || lead.car.year < 1960 || lead.car.year > thisYear + 1) return ['year', 'Укажите год выпуска'];
     }
+    if (lead.type === 'credit' && lead.name.split(/\s+/).filter(Boolean).length < 2) return ['name', 'Укажите фамилию и имя'];
     if (!lead.phone) return ['phone', 'Проверьте номер телефона: нужен российский номер из 11 цифр'];
     if (!lead.consent) return ['consent', 'Нужно согласие на обработку персональных данных'];
     return null;
@@ -849,6 +868,7 @@
         (c.desiredPrice ? ', хочу ' + rub(c.desiredPrice) : ''));
     }
     if (lead.credit && lead.credit.downPayment) lines.push('Первоначальный взнос: ' + rub(lead.credit.downPayment));
+    if (lead.credit && lead.credit.termMonths) lines.push('Срок: ' + lead.credit.termMonths + ' мес.');
     if (lead.name) lines.push('Имя: ' + lead.name);
     lines.push('Телефон: ' + lead.phone);
     if (lead.comment) lines.push('Комментарий: ' + lead.comment);
@@ -1048,7 +1068,10 @@
   function handleStart(param) {
     if (!param) return;
     var m = /^car_(.+)$/.exec(param);
+    var c = /^credit_(.+)$/.exec(param);
     if (m) openDetail(m[1]);
+    // «В кредит» с сайта: открыть машину и сразу анкету.
+    else if (c) { openDetail(c[1]); setTimeout(function () { openCredit(c[1]); }, 350); }
     else if (param === 'sell') { S.tab = 'sell'; renderTab(); }
   }
 

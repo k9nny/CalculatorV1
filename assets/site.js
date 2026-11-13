@@ -236,7 +236,7 @@
           return UI.cardHtml(car, {
             base: APP, href: href,
             actions: '<a class="btn btn-primary" href="' + UI.esc(href) + '">Подробнее</a>' +
-              '<a class="btn btn-ghost" href="tel:+79283339570">Позвонить</a>'
+              '<a class="btn btn-ghost" href="' + APP + '?car=' + encodeURIComponent(car.id) + '&amp;credit=1">В кредит</a>'
           });
         }).join('');
         Array.prototype.forEach.call(list.children, function (el, i) {
