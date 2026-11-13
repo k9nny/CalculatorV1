@@ -453,6 +453,8 @@
 
       (car.marketPrice ? priceAnalysisHtml(car) : '') +
 
+      videosHtml(car) +
+
       '<section class="block"><h2>История автомобиля</h2>' +
       (hist.length
         ? '<ul class="history">' + hist.map(function (row) {
@@ -589,6 +591,15 @@
       '<p class="fine">Рыночная цена — оценка ANDO AUTO по похожим объявлениям (год, пробег, комплектация) на дату публикации.</p></section>';
   }
 
+  // Видео машины: обычный плеер, грузится только при нажатии (preload="metadata").
+  function videosHtml(car) {
+    var list = (car.videos || []).filter(Boolean);
+    if (!list.length) return '';
+    return '<section class="block"><h2>Видео</h2><div class="videos">' + list.map(function (src) {
+      return '<video class="car-video" src="' + esc(src) + '" controls playsinline preload="metadata"></video>';
+    }).join('') + '</div></section>';
+  }
+
   // Состояние б/у машины и известные недостатки: о них продавец обязан сообщить (ЗоЗПП, ст. 10).
   function conditionHtml(car) {
     var rows = [
@@ -603,7 +614,7 @@
       '<p class="cond-lead">Автомобиль с пробегом, был в употреблении.</p>' +
       (defects.length
         ? '<p class="cond-sub">Известные недостатки:</p><ul class="defects">' + defects.map(function (d) { return '<li>' + icon('warn') + '<span>' + esc(d) + '</span></li>'; }).join('') + '</ul>'
-        : car.defects ? '<p class="cond-sub">Недостатков, о которых мы знаем, нет.</p>' : '') +
+        : '') +
       (rows.length ? '<dl class="spec-table stacked">' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>' : '') +
       '<p class="fine">Всё, что мы знаем о машине, перечислено здесь. Перед покупкой проверьте её на осмотре — можно со своим мастером.</p></section>';
   }
