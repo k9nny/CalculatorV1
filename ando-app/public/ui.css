@@ -51,6 +51,8 @@ h1, h2, h3, p { margin: 0; }
 .brand { display: inline-flex; align-items: center; gap: 12px; min-width: 0; color: var(--text); text-decoration: none; }
 .wordmark { height: 16px; width: auto; overflow: visible; }
 .brand-sub { padding-left: 12px; border-left: 1px solid var(--line-strong); font: 600 11px/1 var(--f); letter-spacing: .32em; color: var(--text-2); }
+/* Под «AUTO» — чем занимаемся: чтобы с первого взгляда было ясно, что это машины */
+.brand-sub small { display: block; margin-top: 5px; font: 500 10px/1 var(--f); letter-spacing: .02em; color: var(--text-3); white-space: nowrap; }
 .logo-wheel { transform-box: fill-box; transform-origin: center; animation: logo-spin-in 1.6s var(--ease) .2s both; }
 @keyframes logo-spin-in { from { rotate: -540deg; } to { rotate: 0deg; } }
 

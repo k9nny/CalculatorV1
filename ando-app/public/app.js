@@ -270,7 +270,7 @@
   function headerHtml() {
     // В браузере логотип ведёт на сайт; в мессенджере сайт не нужен.
     var site = P.client === 'web' ? (/\/app\/$/.test(location.pathname) ? '../' : CFG.siteUrl) : '';
-    var brand = WORDMARK + '<span class="brand-sub">AUTO</span>';
+    var brand = WORDMARK + '<span class="brand-sub">AUTO<small>выкуп и продажа</small></span>';
     return '<header class="top"><div class="top-in">' +
       (site ? '<a class="brand" href="' + esc(site) + '" aria-label="ANDO AUTO, на сайт">' + brand + '</a>' : '<div class="brand" aria-label="ANDO AUTO">' + brand + '</div>') +
       (CFG.phone ? '<a class="top-phone" href="tel:' + esc(CFG.phone) + '">' + esc(CFG.phoneLabel || CFG.phone) + '</a>' +
