@@ -77,7 +77,7 @@ function header(root) {
   <div class="wrap">
     <a class="brand" href="${home}" aria-label="${BRAND}, на главную">
       ${WORDMARK}
-      <span class="brand-sub">AUTO<small>выкуп и продажа</small></span>
+      <span class="brand-sub">АВТО<small>выкуп и продажа</small></span>
     </a>
     <nav class="nav" aria-label="Разделы">
       <a href="${home}#process">Выкуп</a>
@@ -170,7 +170,7 @@ function footer(root, { scripts = true } = {}) {
     <div class="footer-top">
       <a class="brand" href="${home}" aria-label="${BRAND}, на главную">
       ${WORDMARK}
-      <span class="brand-sub">AUTO<small>выкуп и продажа</small></span>
+      <span class="brand-sub">АВТО<small>выкуп и продажа</small></span>
       </a>
       <nav class="footer-nav" aria-label="Разделы в подвале">
         <a href="${home}#process">Выкуп авто</a>
