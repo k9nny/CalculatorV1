@@ -15,6 +15,7 @@ const telegramSettings = require('./telegram-settings');
 const { createVk } = require('./vk');
 const { createCarSpecs } = require('./car-specs');
 const { createAfterPublish } = require('./after-publish');
+const { createMarketPrice } = require('./market-price');
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -148,7 +149,8 @@ function servicesFor(config, deps = {}) {
   if (!services.has(config.leadsLog) || deps.vk || deps.afterPublish) {
     const vk = deps.vk || createVk(config);
     const specs = deps.specs !== undefined ? deps.specs : createCarSpecs(smartParser(config));
-    const afterPublish = deps.afterPublish || createAfterPublish({ config, vk, specs });
+    const market = deps.market !== undefined ? deps.market : createMarketPrice(smartParser(config));
+    const afterPublish = deps.afterPublish || createAfterPublish({ config, vk, specs, market });
     if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs };
     services.set(config.leadsLog, { vk, afterPublish, specs });
   }
@@ -355,6 +357,19 @@ if (require.main === module) {
     const notify = config.telegramToken && config.managerChatIds.length ? `в Telegram (${config.managerChatIds.length} чат.)` : 'только в журнал';
     console.log(`ANDO AUTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);
   });
+  // Оценка рынка: машинам без оценки (в том числе опубликованным до неё) и с оценкой старше 30 дней —
+  // через 2 минуты после запуска и потом раз в сутки. Работает, когда подключена нейросеть.
+  {
+    const refreshMarket = () => {
+      const svc = servicesFor(config);
+      if (!smartParser(config).enabled || !svc.afterPublish.estimateAll) return;
+      const stale = (c) => !c.marketEstimate || Date.now() - new Date(c.marketEstimate.at).getTime() > 30 * 864e5;
+      const cars = require('./catalog').readCatalog(config.carsFile).cars.filter((c) => c.status !== 'sold' && !c.demo && stale(c));
+      if (cars.length) { console.log(`Оценка рынка: ${cars.length} машин в очереди`); svc.afterPublish.estimateAll(cars); }
+    };
+    setTimeout(refreshMarket, 120000);
+    setInterval(refreshMarket, 864e5);
+  }
   // IndexNow: каталог изменился (бот или админка) — через минуту сообщаем Яндексу адреса изменённых машин.
   if (config.siteUrl && process.env.INDEXNOW !== '0') {
     const indexNow = require('./seo').createIndexNow(config);

@@ -59,17 +59,15 @@
   }
   function title(car) { return car.make + ' ' + car.model + ', ' + car.year; }
 
-  // Оценка цены относительно рыночной: рыночную цену вносит менеджер.
+  // Отметка о цене: рыночную цену оценивает нейросеть по похожим объявлениям (server/market-price.js).
+  // Показывается, только если наша цена ниже оценки.
   function rating(car) {
-    if (!car.marketPrice || !car.price) return null;
+    if (!car.marketPrice || !car.price || car.price >= car.marketPrice) return null;
     var r = car.price / car.marketPrice;
-    var diff = Math.round((1 - r) * 100);
-    var below = car.marketPrice - car.price;
-    var vs = below > 0 ? rub(below) + ' ниже рынка' : below < 0 ? rub(-below) + ' выше рынка' : 'по рынку';
-    if (r <= 0.93) return { cls: 'great', label: 'Отличная цена', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
-    if (r <= 1) return { cls: 'good', label: 'Хорошая цена', vs: vs, note: diff >= 1 ? 'На ' + diff + '% ниже рыночной оценки' : 'На уровне рыночной оценки' };
-    if (r <= 1.05) return { cls: 'fair', label: 'Цена по рынку', vs: vs, note: 'Немного выше средней рыночной оценки' };
-    return null;
+    var diff = Math.max(1, Math.round((1 - r) * 100));
+    var vs = rub(car.marketPrice - car.price) + ' ниже рынка';
+    if (r <= 0.92) return { cls: 'great', label: 'Сильно ниже рынка', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
+    return { cls: 'good', label: 'Ниже рынка', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
   }
 
   function historyShort(car) {

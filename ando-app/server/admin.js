@@ -435,6 +435,25 @@ function createAdmin(config, opts = {}) {
     if (pathname === '/api/admin/vk' && m === 'DELETE') return json(res, 200, vk.disconnect());
 
     // Опубликовать машину в ВК сейчас или обновить справку о модели.
+    // Оценка рынка: для всех машин (в фоне) или для одной (сразу).
+    if (pathname === '/api/admin/market/all' && m === 'POST') {
+      if (!afterPublish || !afterPublish.estimateAll) return json(res, 400, { error: 'Оценка рынка недоступна' });
+      if (!smart.enabled) return json(res, 400, { error: 'Сначала подключите нейросеть в настройках' });
+      const cars = readCatalog(config.carsFile).cars.filter((c) => c.status !== 'sold' && !c.demo);
+      afterPublish.estimateAll(cars);
+      return json(res, 200, { queued: cars.length });
+    }
+    const mk = /^\/api\/admin\/cars\/([^/]+)\/market$/.exec(pathname);
+    if (mk && m === 'POST') {
+      if (!smart.enabled) return json(res, 400, { error: 'Сначала подключите нейросеть в настройках' });
+      const car = readCatalog(config.carsFile).cars.find((c) => String(c.id) === decodeURIComponent(mk[1]));
+      if (!car) return json(res, 404, { error: 'Такой машины уже нет' });
+      let updated;
+      try { updated = await afterPublish.estimate(car); } catch (e) { return json(res, 400, { error: 'Нейросеть не ответила: ' + String(e.message).slice(0, 140) }); }
+      if (!updated) return json(res, 400, { error: 'Не получилось надёжно оценить рынок по этой машине. Проверьте марку, модель, год и пробег.' });
+      return json(res, 200, { car: updated });
+    }
+
     const carAct = /^\/api\/admin\/cars\/([^/]+)\/(vk|specs)$/.exec(pathname);
     if (carAct && m === 'POST') {
       const id = decodeURIComponent(carAct[1]);
@@ -505,6 +524,10 @@ function createAdmin(config, opts = {}) {
         const price = Math.round(Number(String(body.price).replace(/\s/g, '')));
         if (!(price > 0 && price < 1e9)) return json(res, 400, { error: 'Проверьте цену' });
         car.price = price;
+        // Цена поменялась — отметка «ниже рынка» пересчитывается по уже сделанной оценке.
+        if (car.marketEstimate && car.marketEstimate.price) {
+          if (price < car.marketEstimate.price) car.marketPrice = car.marketEstimate.price; else delete car.marketPrice;
+        }
       }
       // Рыночная цена: по ней на сайте и в приложении стоит отметка «Отличная / Хорошая цена». 0 — убрать.
       if (body.marketPrice !== undefined) {

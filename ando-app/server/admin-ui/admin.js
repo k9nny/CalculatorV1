@@ -286,8 +286,8 @@
           }).join('') + '</select>' +
           '<input data-price inputmode="numeric" aria-label="Цена, ₽" value="' + esc(UI.num(c.price || 0)) + '">' +
           '<button class="btn btn-ghost" type="button" data-delete>Удалить</button>' +
-          '<label class="row-market">Рынок, ₽<input data-market inputmode="numeric" placeholder="не указана" value="' + (c.marketPrice ? esc(UI.num(c.marketPrice)) : '') + '"></label>' +
-          '<a class="btn btn-ghost row-compare" target="_blank" rel="noopener noreferrer" href="' + esc(compareUrl(c)) + '">Сравнить цены</a>' +
+          '<button class="btn btn-ghost row-market-btn" type="button" data-act="market">' + (c.marketEstimate ? 'Оценить рынок заново' : 'Оценить рынок') + '</button>' +
+          '<a class="btn btn-ghost row-compare" target="_blank" rel="noopener noreferrer" href="' + esc(compareUrl(c)) + '">Похожие объявления</a>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="channel">Текст для канала</button>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
@@ -303,8 +303,10 @@
   // Отметка как в карточке на сайте: «Отличная цена», «Хорошая цена», «Цена по рынку».
   function ratingTag(c) {
     var r = UI.rating(c);
-    if (r) return '<span class="tag ' + (r.cls === 'fair' ? '' : 'ok') + '">' + esc(r.label) + ' · ' + esc(r.vs) + '</span>';
-    return c.marketPrice ? '<span class="tag">Цена выше рынка</span>' : '<span class="tag">Без отметки о цене — укажите рынок</span>';
+    if (r) return '<span class="tag ok">' + esc(r.label) + ' · ' + esc(r.vs) + '</span>';
+    var est = c.marketEstimate;
+    if (est) return '<span class="tag">Рынок ≈ ' + esc(UI.rub(est.price)) + ' — цена не ниже, отметки нет</span>';
+    return c.demo ? '' : '<span class="tag">Рынок ещё не оценён</span>';
   }
   // Похожие объявления в поиске — чтобы быстро прикинуть рыночную цену.
   function compareUrl(c) {
@@ -331,15 +333,9 @@
       e.target.value = UI.num(price);
       patchCar(id, { price: price }, 'Цена: ' + UI.rub(price)).then(loadCars);
     }
-    if (e.target.matches('[data-market]')) {
-      var mp = Number(e.target.value.replace(/\D/g, ''));
-      // «1480» — это 1 480 000, как и в тексте объявления.
-      if (mp > 0 && mp < 20) mp = mp * 1e6; else if (mp >= 20 && mp < 10000) mp = mp * 1000;
-      patchCar(id, { marketPrice: mp }, mp ? 'Рыночная цена: ' + UI.rub(mp) : 'Рыночная цена убрана').then(loadCars);
-    }
   });
   $('cars').addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' && e.target.matches('[data-price], [data-market]')) e.target.blur();
+    if (e.key === 'Enter' && e.target.matches('[data-price]')) e.target.blur();
   });
   // Видео к уже опубликованной машине.
   var videoFor = null;
@@ -359,9 +355,13 @@
     if (act) {
       var rowEl = act.closest('.row'), what = act.dataset.act;
       act.disabled = true;
-      act.textContent = what === 'vk' ? 'Публикую…' : 'Ищу данные…';
+      act.textContent = what === 'vk' ? 'Публикую…' : what === 'market' ? 'Смотрю рынок…' : 'Ищу данные…';
       api('cars/' + encodeURIComponent(rowEl.dataset.id) + '/' + what, { method: 'POST', json: {} })
-        .then(function () { toast(what === 'vk' ? 'Опубликовано в ВК' : 'Справка о модели добавлена'); loadCars(); })
+        .then(function (d) {
+          var r = d && d.car ? UI.rating(d.car) : null;
+          toast(what === 'vk' ? 'Опубликовано в ВК' : what === 'market' ? (r ? r.label + ': ' + r.vs : 'Рынок оценён, цена не ниже — отметки нет') : 'Справка о модели добавлена');
+          loadCars();
+        })
         .catch(function (err) { toast(err.message, true); loadCars(); });
       return;
     }
@@ -389,6 +389,14 @@
     api('cars/' + encodeURIComponent(row.dataset.id), { method: 'DELETE' })
       .then(function () { row.remove(); toast('Удалено'); })
       .catch(function (err) { toast(err.message, true); });
+  });
+  $('market-all').addEventListener('click', function () {
+    var btn = $('market-all');
+    btn.disabled = true;
+    api('market/all', { method: 'POST', json: {} })
+      .then(function (d) { toast('Оцениваю рынок для ' + d.queued + ' ' + UI.plural(d.queued, 'машины', 'машин', 'машин') + ' — по минуте на машину. Обновите список позже.'); })
+      .catch(function (err) { toast(err.message, true); })
+      .then(function () { btn.disabled = false; });
   });
   $('cleardemo').addEventListener('click', function () {
     if (!confirm('Убрать все демо-объявления? Настоящие машины останутся.')) return;

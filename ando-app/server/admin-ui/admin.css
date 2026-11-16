@@ -112,7 +112,7 @@ h2 { font-size: 17px; }
 .row-tools > * { min-width: 0; }
 .row-tools select { order: 1; }
 .row-tools [data-price] { order: 2; }
-.row-market { order: 3; grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+.row-market-btn { order: 3; }
 .row-compare { order: 4; }
 .row-tools [data-delete] { order: 5; }
 .row-tools .row-text { order: 6; }
