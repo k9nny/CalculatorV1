@@ -145,7 +145,7 @@
     if (f.fuel.length && f.fuel.indexOf((car.engine || {}).fuel) === -1) return false;
     if (f.body.length && f.body.indexOf(car.body) === -1) return false;
     switch (S.quick) {
-      case 'great': return !!car.marketPrice && car.price < car.marketPrice;
+      case 'great': return !!rating(car);
       case 'under15': return car.price <= 1500000;
       case 'auto': return car.transmission && car.transmission !== 'Механика';
       case 'suv': return car.body === 'Кроссовер' || car.body === 'Внедорожник';
@@ -452,7 +452,7 @@
       }).join('') + '</div>' +
       '</section>' +
 
-      (car.marketPrice ? priceAnalysisHtml(car) : '') +
+      (rating(car) ? priceAnalysisHtml(car) : '') +
 
       videosHtml(car) +
 
@@ -577,7 +577,7 @@
     var m = car.marketPrice, p = car.price;
     var lo = Math.min(p, m) * 0.9, hi = Math.max(p, m) * 1.08;
     var pos = function (v) { return Math.max(2, Math.min(98, (v - lo) / (hi - lo) * 100)).toFixed(1); };
-    var zones = [[lo, m * 0.93, 'great'], [m * 0.93, m, 'good'], [m, m * 1.05, 'fair'], [m * 1.05, hi, 'high']];
+    var zones = [[lo, m * 0.92, 'great'], [m * 0.92, m, 'good'], [m, m * 1.05, 'fair'], [m * 1.05, hi, 'high']];
     var r = rating(car);
     return '<section class="block"><h2>Анализ цены</h2>' +
       '<p class="pa-lead">' + (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span>' : '') + '</p>' +
@@ -590,8 +590,9 @@
       }).join('') +
       '<span class="pa-mark market" style="left:' + pos(m) + '%"><em>Рынок<br>' + rub(m) + '</em></span>' +
       '<span class="pa-mark ours" style="left:' + pos(p) + '%"><em>Наша цена<br>' + rub(p) + '</em></span></div>' +
-      '<div class="pa-legend"><span class="z-great">Отличная</span><span class="z-good">Хорошая</span><span class="z-fair">По рынку</span><span class="z-high">Выше рынка</span></div>' +
-      '<p class="fine">Рыночная цена — оценка ANDO AUTO по похожим объявлениям (год, пробег, комплектация) на дату публикации.</p></section>';
+      '<div class="pa-legend"><span class="z-great">Сильно ниже рынка</span><span class="z-good">Ниже рынка</span><span class="z-fair">По рынку</span><span class="z-high">Выше рынка</span></div>' +
+      '<p class="fine">Рыночная цена — оценка по похожим объявлениям на Авито, Авто.ру и Дроме (тот же год, пробег, мотор и коробка)' +
+      (car.marketEstimate && car.marketEstimate.at ? ' на ' + esc(formatDate(car.marketEstimate.at)) : '') + '.</p></section>';
   }
 
   // Справка о модели из открытых источников — отдельно от сведений о конкретной машине.
