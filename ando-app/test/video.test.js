@@ -91,28 +91,102 @@ test('очередь: если соцсеть не приняла ролик, о
   assert.equal(q.read().items[0].status, 'approved');
 });
 
-test('бот: ролики только по кнопке «Сделать ролики», не сами после публикации', async () => {
+test('очередь: частичный успех сохраняется сразу, после перезапуска повторяется только ошибка', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-q-'));
+  const file = path.join(dir, 'queue.json');
+  const q = createQueue(file);
+  const [item] = q.add([{ carId: '1', name: 'Обзор' }]);
+  q.setStatus(item.id, 'approved');
+  const calls = [];
+  let failVk = true;
+  const publishers = [
+    { name: 'Telegram', post: async () => calls.push('Telegram') },
+    { name: 'VK', post: async () => {
+      assert.equal(createQueue(file).read().items[0].results.Telegram, 'ok');
+      calls.push('VK');
+      if (failVk) throw new Error('сеть недоступна');
+    } },
+  ];
+  const scheduler = startScheduler({ queue: q, times: ['10:40', '15:20'], publishers, intervalMs: 1e9, log: { error() {} } });
+  scheduler.stop();
+  await scheduler.tick(new Date('2026-10-30T07:41:00Z'));
+  const partial = q.read().items[0];
+  assert.equal(partial.status, 'approved');
+  assert.equal(partial.postedAt, undefined);
+  assert.deepEqual(partial.results, { Telegram: 'ok', VK: 'сеть недоступна' });
+  assert.equal(await scheduler.tick(new Date('2026-10-30T07:50:00Z')), null);
+  failVk = false;
+  const restarted = startScheduler({ queue: createQueue(file), times: ['10:40', '15:20'], publishers, intervalMs: 1e9 });
+  restarted.stop();
+  const result = await restarted.tick(new Date('2026-10-30T12:21:00Z'));
+  assert.deepEqual(calls, ['Telegram', 'VK', 'VK']);
+  assert.deepEqual(result.results, { Telegram: 'ok', VK: 'ok' });
+  assert.equal(q.read().items[0].status, 'posted');
+  assert.equal(q.read().items[0].postedAt, '2026-10-30T12:21:00.000Z');
+});
+
+test('очередь: исправляет прежний статус posted при частичной ошибке', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-q-'));
+  const q = createQueue(path.join(dir, 'queue.json'));
+  const [item] = q.add([{ carId: '1', name: 'Обзор' }]);
+  q.setStatus(item.id, 'posted', { postedAt: '2026-10-29T07:41:00Z', results: { Telegram: 'ok', VK: 'ошибка' } });
+  const calls = [];
+  const scheduler = startScheduler({ queue: q, times: ['10:40'], publishers: [
+    { name: 'Telegram', post: async () => calls.push('Telegram') },
+    { name: 'VK', post: async () => calls.push('VK') },
+  ], intervalMs: 1e9 });
+  scheduler.stop();
+  await scheduler.tick(new Date('2026-10-30T07:41:00Z'));
+  assert.deepEqual(calls, ['VK']);
+  assert.equal(q.read().items[0].status, 'posted');
+  assert.deepEqual(q.read().items[0].results, { Telegram: 'ok', VK: 'ok' });
+});
+
+test('очередь: отключённая площадка ждёт восстановления, новая не добавляется в отправку', async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-q-'));
+  const q = createQueue(path.join(dir, 'queue.json'));
+  const [item] = q.add([{ carId: '1', name: 'Обзор' }]);
+  q.setStatus(item.id, 'approved', { targets: ['Telegram', 'VK'], results: { Telegram: 'ok', VK: 'ошибка' } });
+  const calls = [];
+  const scheduler = startScheduler({ queue: q, times: ['10:40'], publishers: [
+    { name: 'Telegram', post: async () => calls.push('Telegram') },
+    { name: 'YouTube', post: async () => calls.push('YouTube') },
+  ], intervalMs: 1e9 });
+  scheduler.stop();
+  await scheduler.tick(new Date('2026-10-30T07:41:00Z'));
+  assert.deepEqual(calls, []);
+  assert.equal(q.read().items[0].status, 'approved');
+  assert.deepEqual(q.read().items[0].results, { Telegram: 'ok', VK: 'ошибка' });
+});
+
+test('бот: после сохранения машины с фото собирает ролики и ждёт одобрения', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-bot-clips-'));
   const carsFile = path.join(dir, 'cars.json');
   fs.writeFileSync(carsFile, JSON.stringify({ cars: [] }));
   const sent = [], videos = [];
   const api = {
-    request: async (method, p) => { if (method === 'sendMessage') sent.push(p.text); return { message_id: 1 }; },
+    request: async (method, p) => {
+      if (method === 'sendMessage') sent.push(p.text);
+      if (method === 'getFile') return { file_path: 'photos/test.jpg' };
+      return { message_id: 1 };
+    },
     download: async () => Buffer.from('x'),
     sendVideo: async (chatId, file, cap, extra) => { videos.push({ file, cap, extra }); return {}; },
   };
   const queue = createQueue(path.join(dir, 'queue.json'));
-  const render = async (car) => ['obzor', 'cena', 'servis'].map((key) => ({ key, name: key, file: `/x/${car.id}-${key}.mp4`, caption: 'c' }));
-  const bot = createBot({ api, adminIds: ['7'], carsFile, photosDir: path.join(dir, 'img'), debounceMs: 0, clips: { render, queue, times: [], targets: [] } });
-  const msg = (text) => ({ message: { chat: { id: 7, type: 'private' }, from: { id: 7 }, text } });
-  await bot.handleUpdate(msg('Kia Rio 2019\nЦена 1 390 000\nПробег 74 000'));
-  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 7 }, data: 'pub', message: { chat: { id: 7 }, message_id: 5 } } });
+  const appLink = 'https://t.me/ando_bot/catalog';
+  const render = async (car, link) => ['obzor', 'cena', 'servis'].map((key) => ({ key, name: key, file: `/x/${car.id}-${key}.mp4`, caption: link }));
+  const bot = createBot({ api, adminIds: ['7'], carsFile, photosDir: path.join(dir, 'img'), appLink, debounceMs: 0, clips: { render, queue, times: [], targets: [] } });
+  const msg = (fields) => ({ message: { chat: { id: 7, type: 'private' }, from: { id: 7 }, ...fields } });
+  await bot.handleUpdate(msg({ photo: [{ file_id: 'test' }], caption: 'Kia Rio 2019\nЦена 1 390 000\nПробег 74 000' }));
   await bot.clipsIdle();
   assert.equal(videos.length, 0);
-  const id = JSON.parse(fs.readFileSync(carsFile, 'utf8')).cars[0].id;
-  await bot.handleUpdate({ callback_query: { id: 'q1', from: { id: 7 }, data: `clips:${id}`, message: { chat: { id: 7 }, message_id: 5 } } });
+  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 7 }, data: 'pub', message: { chat: { id: 7 }, message_id: 5 } } });
   await bot.clipsIdle();
   assert.equal(videos.length, 3);
+  const car = JSON.parse(fs.readFileSync(carsFile, 'utf8')).cars[0];
+  assert.deepEqual(car.photos, [`img/cars/${car.id}-1.jpg`]);
+  assert.ok(videos.every(({ cap }) => cap.includes(`${appLink}?startapp=car_${car.id}`)));
   const okData = videos[0].extra.reply_markup.inline_keyboard[0][0].callback_data;
   assert.match(okData, /^clip_ok:\d+$/);
   assert.equal(queue.read().items.filter((i) => i.status === 'pending').length, 3);
@@ -121,6 +195,6 @@ test('бот: ролики только по кнопке «Сделать ро�
   // чужой человек не может одобрить
   await bot.handleUpdate({ callback_query: { id: 'q3', from: { id: 99 }, data: 'clip_ok:2', message: { chat: { id: 99 }, message_id: 7 } } });
   assert.equal(queue.read().items.filter((i) => i.status === 'approved').length, 1);
-  await bot.handleUpdate(msg('/queue'));
+  await bot.handleUpdate(msg({ text: '/queue' }));
   assert.match(sent[sent.length - 1], /Ждут публикации: 1/);
 });

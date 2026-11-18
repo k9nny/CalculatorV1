@@ -194,3 +194,11 @@ test('анкета на кредит: ФИО, срок, доход, занято
   assert.deepEqual(validateLead({ ...base, credit: { termMonths: 999, employment: 'космонавт' } }, CARS).lead.credit,
     { downPayment: null, termMonths: null, income: null, employment: null, birthDate: null });
 });
+
+
+test('Telegram posts default to the ANDO AUTO channel on the production domain only', () => {
+  assert.equal(readConfig({ ALLOWED_ORIGINS: 'https://andoauto.ru,https://www.andoauto.ru' }).postTelegramChannel, '@andoavtomsk');
+  assert.equal(readConfig({ SITE_URL: 'https://example.org' }).postTelegramChannel, '');
+  assert.equal(readConfig({ SITE_URL: 'https://andoauto.ru', POST_TG_CHANNEL: '' }).postTelegramChannel, '');
+  assert.equal(readConfig({ SITE_URL: 'https://andoauto.ru', POST_TG_CHANNEL: '@testchannel' }).postTelegramChannel, '@testchannel');
+});

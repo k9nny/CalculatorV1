@@ -23,7 +23,7 @@ function postMultipart(url, fields, file) {
     const size = file ? fs.statSync(file.path).size : 0;
     const u = new URL(url);
     const req = https.request({
-      hostname: u.hostname, path: u.pathname + u.search, method: 'POST', timeout: 180000,
+      hostname: u.hostname, port: u.port || 443, path: u.pathname + u.search, method: 'POST', timeout: 180000,
       headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': pre.length + size + post.length },
     }, (res) => {
       const chunks = [];
@@ -66,7 +66,10 @@ function vkCall(method, params, token) {
       res.on('end', () => {
         try {
           const json = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (json.error) reject(new Error(`VK ${method}: ${json.error.error_msg}`)); else resolve(json.response);
+          if (json.error) reject(Object.assign(new Error(`VK ${method}: ${json.error.error_msg}`), {
+            retryable: [6, 9, 29].includes(json.error.error_code),
+            retryAfter: json.error.error_code === 29 ? 3600 : 60
+          })); else resolve(json.response);
         } catch (e) { reject(e); }
       });
     });

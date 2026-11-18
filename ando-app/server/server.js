@@ -15,6 +15,8 @@ const telegramSettings = require('./telegram-settings');
 const { createVk } = require('./vk');
 const { createCarSpecs } = require('./car-specs');
 const { createAfterPublish } = require('./after-publish');
+const { createSocial } = require('./social');
+const { createPostPublishers } = require('./social-publishers');
 const { createMarketPrice } = require('./market-price');
 
 const MIME = {
@@ -45,6 +47,8 @@ const SECURITY_HEADERS = {
 
 function readConfig(env = process.env) {
   const root = path.resolve(__dirname, '..');
+  const siteUrl = (env.SITE_URL || String(env.ALLOWED_ORIGINS || '').split(',')[0] || '').trim();
+  const defaultPostChannel = /^https:\/\/(?:www\.)?andoauto\.ru\/?$/i.test(siteUrl) ? '@andoavtomsk' : '';
   return {
     port: Number(env.PORT) || 8080,
     host: env.HOST || '0.0.0.0',
@@ -62,11 +66,13 @@ function readConfig(env = process.env) {
     trustProxy: env.TRUST_PROXY === '1',
     allowedOrigins: String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
     // Адрес сайта для ссылок в карте сайта и IndexNow. По умолчанию — первый из ALLOWED_ORIGINS (основной домен).
-    siteUrl: (env.SITE_URL || String(env.ALLOWED_ORIGINS || '').split(',')[0] || '').trim(),
+    siteUrl,
     clipsEnabled: env.CLIPS !== '0',
     clipsDir: path.resolve(env.CLIPS_DIR || path.join(root, 'data-private', 'clips')),
     clipTimes: env.CLIP_TIMES || '10:40,15:20,19:40',
     clipTelegramChannel: env.CLIP_TG_CHANNEL || '',
+    postTelegramChannel: env.POST_TG_CHANNEL ?? defaultPostChannel,
+    socialPreview: true,
     vkToken: env.VK_TOKEN || '',
     vkGroupId: env.VK_GROUP_ID || '',
     // Нейросеть для разбора объявлений и фото (Kimi или другая с API как у OpenAI). Пусто — обычный разбор.
@@ -150,9 +156,27 @@ function servicesFor(config, deps = {}) {
     const vk = deps.vk || createVk(config);
     const specs = deps.specs !== undefined ? deps.specs : createCarSpecs(smartParser(config));
     const market = deps.market !== undefined ? deps.market : createMarketPrice(smartParser(config));
-    const afterPublish = deps.afterPublish || createAfterPublish({ config, vk, specs, market });
-    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs };
-    services.set(config.leadsLog, { vk, afterPublish, specs });
+    const social = createSocial({ config, publishers: () => createPostPublishers(config, vk),
+      notify: async (batch) => {
+        if (!config.telegramToken) return;
+        const lines = batch.jobs.map((j) => `${j.name}: ${j.status}${j.error ? ' — ' + j.error : ''}${j.receipt?.url ? '\n' + j.receipt.url : ''}`);
+        const api = telegramApi(config.telegramToken);
+        for (const id of config.adminIds) await api.request('sendMessage', { chat_id: id,
+          text: `Публикация машины №${batch.carId}\n${lines.join('\n')}\n/social ${batch.carId} — предпросмотр и статусы` }).catch(() => {});
+      }
+    });
+    const afterPublish = deps.afterPublish || createAfterPublish({ config, vk, specs, market,
+      onPrepared: async (car) => {
+        if (!config.socialPreview || !config.telegramToken) return;
+        const api = telegramApi(config.telegramToken);
+        for (const id of config.adminIds) await api.request('sendMessage', { chat_id: id,
+          text: `Машина №${car.id} сохранена. Соцсети ждут подтверждения.\n/social ${car.id} — посмотреть материалы`,
+          reply_markup: { inline_keyboard: [[{ text: 'Предпросмотр соцсетей', callback_data: `social:${car.id}` }]] }
+        }).catch(() => {});
+      }
+    });
+    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social };
+    services.set(config.leadsLog, { vk, afterPublish, specs, social });
   }
   return services.get(config.leadsLog);
 }
@@ -357,6 +381,7 @@ if (require.main === module) {
     const notify = config.telegramToken && config.managerChatIds.length ? `в Telegram (${config.managerChatIds.length} чат.)` : 'только в журнал';
     console.log(`ANDO AUTO: http://${config.host}:${config.port} — заявки ${notify}, журнал ${config.leadsLog}`);
   });
+  servicesFor(config).social.start();
   // Оценка рынка: машинам без оценки (в том числе опубликованным до неё) и с оценкой старше 30 дней —
   // через 2 минуты после запуска и потом раз в сутки. Работает, когда подключена нейросеть.
   {
@@ -409,6 +434,7 @@ if (require.main === module) {
       carsFile: config.carsFile,
       photosDir: config.photosDir,
       appLink: config.appLink,
+      social: servicesFor(config).social,
       parser: smartParser(config),
       onPublished: (car) => servicesFor(config).afterPublish.publish(car),
       clips

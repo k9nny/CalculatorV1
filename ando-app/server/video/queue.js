@@ -61,7 +61,10 @@ function createQueue(file) {
   // Следующий ролик: самый ранний одобренный, но не той же машины, что выходила последней,
   // чтобы три ролика одной машины не шли подряд.
   function next(st = read()) {
-    const ready = st.items.filter((i) => i.status === 'approved');
+    // Старые версии считали весь ролик опубликованным после успеха хотя бы одной
+    // площадки. Возвращаем такие частичные отправки в обработку без дублирования успехов.
+    const ready = st.items.filter((i) => i.status === 'approved' ||
+      (i.status === 'posted' && Object.values(i.results || {}).some((r) => r !== 'ok')));
     if (!ready.length) return null;
     const posted = st.items.filter((i) => i.status === 'posted').sort((a, b) => String(a.postedAt).localeCompare(String(b.postedAt)));
     const lastCar = posted.length ? posted[posted.length - 1].carId : null;
@@ -92,11 +95,25 @@ function startScheduler({ queue, times, publishers, notify = async () => {}, log
     if (!item) return null;
     busy = true;
     try {
-      const results = {};
+      const results = { ...item.results };
+      // Фиксируем получателей при первой отправке: новые подключения не должны
+      // внезапно получать уже одобренный материал для другого набора площадок.
+      const targets = item.targets || [...new Set([...Object.keys(results), ...publishers.map((p) => p.name)])];
+      queue.setStatus(item.id, 'approved', { targets, results, postedAt: undefined });
       for (const p of publishers) {
-        try { await p.post(item); results[p.name] = 'ok'; } catch (e) { results[p.name] = e.message; log.error(`clip ${item.id} → ${p.name}:`, e.message); }
+        if (!targets.includes(p.name) || results[p.name] === 'ok') continue;
+        try {
+          await p.post(item);
+          results[p.name] = 'ok';
+        } catch (e) {
+          results[p.name] = String(e && e.message || e || 'Ошибка публикации');
+          log.error(`clip ${item.id} → ${p.name}:`, results[p.name]);
+        }
+        // Сохраняем каждый ответ до следующего сетевого вызова. После перезапуска
+        // уже принятые площадками ролики пропускаются.
+        queue.setStatus(item.id, 'approved', { results });
       }
-      const ok = Object.values(results).some((r) => r === 'ok');
+      const ok = targets.every((name) => results[name] === 'ok');
       queue.setStatus(item.id, ok ? 'posted' : 'approved', { postedAt: ok ? now.toISOString() : undefined, results });
       await notify(item, results).catch(() => {});
       return { item, results };

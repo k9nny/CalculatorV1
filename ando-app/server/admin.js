@@ -31,7 +31,7 @@ const PRIVATE = {
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Cache-Control': 'no-store',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 };
 
 // Картинка ли это на самом деле — по первым байтам, а не по заявленному типу.
@@ -109,6 +109,7 @@ function createAdmin(config, opts = {}) {
   const telegram = opts.telegram || telegramSettings;
   const vk = opts.vk || null;
   const afterPublish = opts.afterPublish || null;
+  const social = opts.social || null;
   const specs = opts.specs || null;
   const siteBase = (req) => {
     if (config.siteUrl) return String(config.siteUrl).replace(/\/?$/, '/');
@@ -309,6 +310,7 @@ function createAdmin(config, opts = {}) {
         ids: (t.adminIds && t.adminIds.length ? t.adminIds : config.adminIds || []).join(', '),
         tokenEnd: token ? '…' + token.slice(-4) : '',
         bot: t.bot || '',
+        postTelegramChannel: t.postTelegramChannel === undefined ? config.postTelegramChannel || '' : t.postTelegramChannel,
         saved: !!t.token
       });
     }
@@ -321,9 +323,11 @@ function createAdmin(config, opts = {}) {
       if (!/^\d{5,15}:[A-Za-z0-9_-]{30,}$/.test(token)) return json(res, 400, { error: 'Нужен токен бота из @BotFather → /mybots → бот → API Token.' });
       const ids = String(body.ids || '').split(/[\s,;]+/).filter(Boolean);
       if (!ids.length || !ids.every((x) => /^\d{5,15}$/.test(x))) return json(res, 400, { error: 'Telegram id — число из @userinfobot. Несколько — через запятую.' });
+      const postTelegramChannel = String(body.postTelegramChannel === undefined ? t.postTelegramChannel || config.postTelegramChannel || '' : body.postTelegramChannel).trim();
+      if (postTelegramChannel && !/^(@[a-z][a-z0-9_]{4,31}|-100\d{5,15})$/i.test(postTelegramChannel)) return json(res, 400, { error: 'Канал — @имя_канала или числовой ID -100…' });
       const me = await telegram.getMe(apiBase, token);
       if (!me.ok) return json(res, 400, { error: me.error });
-      telegram.save(config, { apiBase, token, adminIds: ids, managerChatIds: ids, bot: me.username,
+      telegram.save(config, { apiBase, token, adminIds: ids, managerChatIds: ids, bot: me.username, postTelegramChannel,
         appLink: config.appLink || (me.username ? `https://t.me/${me.username}/cars` : '') });
       json(res, 200, { ok: true, bot: me.username, tokenEnd: '…' + token.slice(-4) });
       restart();
@@ -411,6 +415,21 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    const socialPreview = /^\/api\/admin\/cars\/([^/]+)\/social$/.exec(pathname);
+    const socialAction = /^\/api\/admin\/social\/([a-f0-9]{16})(?:\/(approve|retry))?$/.exec(pathname);
+    if ((socialPreview && m === 'POST') || (socialAction && ['GET', 'POST'].includes(m))) {
+      if (!social) return json(res, 503, { error: 'Автопостинг не настроен' });
+      try {
+        let batch;
+        if (socialPreview) batch = social.preview(decodeURIComponent(socialPreview[1]));
+        else if (m === 'POST' && socialAction[2] === 'approve') batch = social.approve(socialAction[1]);
+        else if (m === 'POST' && socialAction[2] === 'retry') batch = social.retry(socialAction[1]);
+        else if (m === 'GET' && !socialAction[2]) batch = social.get(socialAction[1]);
+        if (!batch) return json(res, 404, { error: 'Предпросмотр не найден' });
+        return json(res, 200, { batch });
+      } catch (error) { return json(res, 409, { error: error.message }); }
+    }
+
     // ВКонтакте: подключение через VK ID, ключ вручную, автопостинг вкл/выкл, отключение.
     if (pathname === '/api/admin/vk' && m === 'GET') {
       if (!vk) return json(res, 200, { available: false });
@@ -461,6 +480,7 @@ function createAdmin(config, opts = {}) {
       if (!car) return json(res, 404, { error: 'Такой машины уже нет' });
       let patch;
       if (carAct[2] === 'vk') {
+        if (config.socialPreview) return json(res, 409, { error: `Публикации ждут предпросмотра. Откройте бота и отправьте /social ${car.id}, затем подтвердите отправку.` });
         if (!vk || !vk.status().connected) return json(res, 400, { error: 'Сначала подключите ВК в настройках' });
         try { patch = { vk: await vk.postCar(car, `${siteBase(req)}cars/${encodeURIComponent(car.id)}/`) }; } catch (e) {
           return json(res, 400, { error: 'ВК: ' + String(e.message).slice(0, 160) });

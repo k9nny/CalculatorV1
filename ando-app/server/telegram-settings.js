@@ -27,6 +27,7 @@ function apply(config, env = process.env) {
   if (t.adminIds && t.adminIds.length) config.adminIds = t.adminIds.map(String);
   if (t.managerChatIds && t.managerChatIds.length) config.managerChatIds = t.managerChatIds.map(String);
   if (t.appLink && !config.appLink) config.appLink = t.appLink;
+  if (t.postTelegramChannel !== undefined) config.postTelegramChannel = t.postTelegramChannel;
   return config;
 }
 

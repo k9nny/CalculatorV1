@@ -117,8 +117,11 @@ test('бот: фото + текст → превью → «Опубликова�
   assert.equal(postBtn.callback_data, 'post:102');
   assert.equal(bot.drafts.size, 0);
   await bot.handleUpdate({ callback_query: { id: 'q2', from: { id: 1 }, data: 'post:102', message: { chat: { id: 1 } } } });
-  assert.match(messages().at(-1), /Hyundai Solaris/);
-  assert.doesNotMatch(messages().at(-1), /Пробег|NaN|0 км/);
+  const post = messages().at(-1);
+  assert.match(post, /Hyundai Solaris/);
+  assert.match(post, /1 050 000 ₽/);
+  assert.doesNotMatch(post, /Пробег|NaN|0 км/);
+  assert.match(post, /https:\/\/t\.me\/ando_bot\/catalog\?startapp=car_102/);
 });
 
 test('бот: без обязательных полей не публикует', async () => {

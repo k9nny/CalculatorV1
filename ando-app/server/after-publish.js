@@ -6,7 +6,7 @@
 const { readCatalog, writeCatalog } = require('./catalog');
 const { applyEstimate } = require('./market-price');
 
-function createAfterPublish({ config, vk = null, specs = null, market = null, log = console.log, now = () => new Date() }) {
+function createAfterPublish({ config, vk = null, specs = null, market = null, onPrepared = null, log = console.log, now = () => new Date() }) {
   let chain = Promise.resolve(); // по одной машине за раз — не спорить за cars.json
 
   function update(id, patch) {
@@ -47,7 +47,7 @@ function createAfterPublish({ config, vk = null, specs = null, market = null, lo
         if (s) current = update(car.id, s) || current;
       } catch (e) { log('Справка о модели не получена: ' + e.message); }
     }
-    if (vk && !car.demo) {
+    if (vk && !car.demo && !config.socialPreview) {
       const st = vk.status();
       if (st.connected && st.auto && !(current.vk && current.vk.postId)) {
         try {
@@ -57,6 +57,7 @@ function createAfterPublish({ config, vk = null, specs = null, market = null, lo
         } catch (e) { log('ВКонтакте: не опубликовано № ' + car.id + ': ' + e.message); }
       }
     }
+    if (onPrepared && !car.demo) await onPrepared(current);
   }
 
   return {
