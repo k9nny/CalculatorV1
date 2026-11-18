@@ -11,7 +11,30 @@ const PASSWORD = 'correct-horse-42';
 const JPEG = Buffer.concat([Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]), Buffer.alloc(64, 1)]);
 const LISTING = 'Kia Rio 2019, 1.6 АКПП 123 л.с.\nПробег 74 000 км\nЦена 1 390 000\nНедостатки: скол на капоте';
 
-async function withAdmin(fn, { configure = true } = {}) {
+test('админка: снимок соцсетей защищён входом, подтверждение отдельное и повтор безопасен', async () => {
+  let posts = 0;
+  const vk = { status: () => ({ connected: true, groupId: 123, groupName: 'Тестовая группа' }), postCar: async () => { posts++; return { postId: 1 }; } };
+  await withAdmin(async ({ call, login, config }) => {
+    fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [{ id: '456', status: 'available', make: 'Kia', model: 'Rio', year: 2019, mileage: 74000, price: 1390000, photos: [] }] }));
+    assert.equal((await call('/api/cars/456/social', { method: 'POST', json: {} })).status, 401);
+    await login();
+    const res = await call('/api/cars/456/social', { method: 'POST', json: {} });
+    assert.equal(res.status, 200);
+    const { batch } = await res.json();
+    assert.equal(batch.approved, false);
+    assert.match(batch.jobs[0].payload.text, /cars\/456\//);
+    assert.equal(posts, 0);
+    const approved = await call(`/api/social/${batch.id}/approve`, { method: 'POST', json: {} });
+    assert.equal(approved.status, 200);
+    assert.equal((await approved.json()).batch.jobs[0].status, 'queued');
+    const duplicate = await call(`/api/social/${batch.id}/approve`, { method: 'POST', json: {} });
+    assert.equal(duplicate.status, 200);
+    assert.equal(posts, 0, 'HTTP-подтверждение только ставит задание в очередь');
+    assert.equal((await call('/api/cars/456/vk', { method: 'POST', json: {} })).status, 409);
+  }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { vk } });
+});
+
+async function withAdmin(fn, { configure = true, overrides = {}, deps = {} } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-admin-'));
   fs.mkdirSync(path.join(dir, 'photos'));
   fs.mkdirSync(path.join(dir, 'private'));
@@ -20,10 +43,11 @@ async function withAdmin(fn, { configure = true } = {}) {
     ...readConfig({}),
     carsFile: path.join(dir, 'cars.json'),
     photosDir: path.join(dir, 'photos'),
-    leadsLog: path.join(dir, 'private', 'leads.jsonl')
+    leadsLog: path.join(dir, 'private', 'leads.jsonl'),
+    ...overrides
   };
   const slug = configure ? setPassword(stateFile({ LEADS_LOG: config.leadsLog }), PASSWORD) : '';
-  const server = createApp(config, { sendTelegramMessage: async () => true });
+  const server = createApp(config, { sendTelegramMessage: async () => true, ...deps });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const origin = `http://127.0.0.1:${server.address().port}`;
   const base = `${origin}/${slug}`;

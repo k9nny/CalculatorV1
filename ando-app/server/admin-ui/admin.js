@@ -291,8 +291,7 @@
           '<button class="btn btn-ghost row-text" type="button" data-text="channel">Текст для канала</button>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
-          (c.vk && c.vk.url ? '<a class="btn btn-ghost row-vk" href="' + esc(c.vk.url) + '" target="_blank" rel="noopener noreferrer">Пост в ВК ✓</a>'
-            : '<button class="btn btn-ghost row-vk" type="button" data-act="vk">Опубликовать в ВК</button>') +
+          '<button class="btn btn-ghost" type="button" data-social>Посты в соцсети</button>' +
           '<button class="btn btn-ghost row-specs" type="button" data-act="specs">' + (c.modelSpecs ? 'Справка о модели ✓' : 'Справка о модели') + '</button>' +
           (c.videos && c.videos.length ? '<button class="btn btn-ghost row-video-off" type="button" data-delvideos>Убрать видео</button>' : '') +
           '</div></div>';
@@ -351,6 +350,13 @@
       .catch(function (err) { toast(err.message, true); btn.disabled = false; btn.textContent = 'Добавить видео'; });
   });
   $('cars').addEventListener('click', function (e) {
+    var socialButton = e.target.closest('[data-social]');
+    if (socialButton) {
+      api('cars/' + encodeURIComponent(socialButton.closest('.row').dataset.id) + '/social', { method: 'POST', json: {} })
+        .then(function (d) { showSocial(d.batch); $('social-dialog').showModal(); })
+        .catch(function (err) { toast(err.message, true); });
+      return;
+    }
     var act = e.target.closest('[data-act]');
     if (act) {
       var rowEl = act.closest('.row'), what = act.dataset.act;
@@ -473,6 +479,39 @@
     if (!$('app').hidden && document.visibilityState === 'visible') loadLeads();
   }, 60000);
 
+  var socialBatch = null;
+  function showSocial(batch) {
+    socialBatch = batch;
+    $('social-error').textContent = '';
+    var labels = { draft: 'Предпросмотр', queued: 'В очереди', sending: 'Отправляется', posted: 'Опубликовано', retry: 'Повтор запланирован', failed: 'Ошибка', blocked: 'Нужна проверка', review: 'Проверьте канал перед повтором' };
+    $('social-preview').innerHTML = batch.jobs.map(function (job) {
+      var photos = job.payload.photos || (job.payload.photo ? [job.payload.photo] : []);
+      return '<section><h3>' + esc(job.name) + '</h3><p>' + esc(labels[job.status] || job.status) + '</p>' +
+        '<p class="social-text">' + esc(job.payload.text) + '</p>' +
+        '<div class="social-photos">' + photos.map(function (src) {
+          var url = /^https:\/\//.test(src) ? src : '../' + src;
+          return '<img src="' + esc(url) + '" alt="Фото машины">';
+        }).join('') + '</div>' +
+        (job.error ? '<p class="err">' + esc(job.error) + '</p>' : '') +
+        (job.receipt && /^https:\/\//.test(job.receipt.url || '') ? '<a href="' + esc(job.receipt.url) + '" target="_blank" rel="noopener noreferrer">Открыть публикацию</a>' : '') + '</section>';
+    }).join('');
+    $('social-approve').hidden = batch.approved;
+    $('social-retry').hidden = !batch.jobs.some(function (j) { return ['retry', 'failed', 'blocked'].includes(j.status); });
+  }
+  function socialRequest(action) {
+    if (!socialBatch) return;
+    $('social-approve').disabled = true;
+    $('social-retry').disabled = true;
+    api('social/' + socialBatch.id + (action ? '/' + action : ''), action ? { method: 'POST', json: {} } : {})
+      .then(function (d) { showSocial(d.batch); })
+      .catch(function (err) { $('social-error').textContent = err.message; })
+      .then(function () { $('social-approve').disabled = false; $('social-retry').disabled = false; });
+  }
+  $('social-approve').addEventListener('click', function () { socialRequest('approve'); });
+  $('social-retry').addEventListener('click', function () { socialRequest('retry'); });
+  $('social-refresh').addEventListener('click', function () { socialRequest(''); });
+  $('social-close').addEventListener('click', function () { $('social-dialog').close(); });
+
   /* ---------- ВКонтакте ---------- */
   function showVk(d) {
     if (!d.available) { $('vk-block').hidden = true; return; }
@@ -481,7 +520,7 @@
     $('vk-status').textContent = d.connected
       ? 'Подключено: ' + (d.groupName || 'группа ' + d.groupId) + (d.renewable ? ' · ключ обновляется сам' : '')
       : 'Не подключено.';
-    $('vk-auto-row').hidden = !d.connected;
+    $('vk-auto-row').hidden = true;
     $('vk-auto').checked = !!d.auto;
     $('vk-off').hidden = !d.connected;
     if (d.redirectUri) $('vk-redirect').textContent = d.redirectUri;
@@ -519,6 +558,7 @@
       $('tg-status').textContent = d.bot ? 'Подключён: @' + d.bot + ' · токен ' + d.tokenEnd : 'Бот ещё не подключён через админку.';
       if (!$('tg-base').value) $('tg-base').value = d.apiBase || '';
       if (!$('tg-ids').value) $('tg-ids').value = d.ids || '';
+      $('tg-channel').value = d.postTelegramChannel || '';
       $('tg-token').placeholder = d.tokenEnd ? 'Токен уже есть (' + d.tokenEnd + ') — можно не вставлять' : '123456789:AA…';
     }).catch(function (err) { $('tg-status').textContent = err.message; });
   }
@@ -528,7 +568,7 @@
     btn.disabled = true;
     btn.textContent = 'Проверяю связь с Telegram…';
     $('tg-err').textContent = '';
-    api('telegram', { method: 'POST', json: { apiBase: $('tg-base').value, token: $('tg-token').value, ids: $('tg-ids').value } })
+    api('telegram', { method: 'POST', json: { apiBase: $('tg-base').value, token: $('tg-token').value, ids: $('tg-ids').value, postTelegramChannel: $('tg-channel').value } })
       .then(function (d) {
         $('tg-token').value = '';
         toast('Бот @' + d.bot + ' подключён. Сервер перезапускается — 10 секунд.');

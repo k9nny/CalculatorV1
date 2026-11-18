@@ -123,3 +123,9 @@ h2 { font-size: 17px; }
 .row-tools .row-vk { order: 9; }
 .row-tools .row-specs { order: 10; }
 #vk-block code { font-size: 12px; word-break: break-all; background: var(--surface-2); padding: 1px 4px; border-radius: 4px; }
+/* Предпросмотр содержит тот же снимок текста и медиа, который отправляет очередь. */
+#social-dialog { width: min(720px, calc(100% - 32px)); max-height: 85vh; overflow: auto; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); }
+#social-dialog section { margin-block: 20px; }
+#social-dialog .social-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+#social-dialog .social-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+#social-dialog .social-photos img { width: 120px; height: 90px; object-fit: cover; }

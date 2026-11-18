@@ -118,25 +118,32 @@ function createVk(config, deps = {}) {
   }
 
   // Пост о машине: текст по общему шаблону + до 10 фото. Возвращает { postId, url }.
-  async function postCar(car, link) {
+  async function postCar(car, link, options = {}) {
     const d = read();
     if (!d.groupId) throw new Error('Не выбрана группа ВК');
     const tk = await token();
     const attachments = [];
     for (const src of (car.photos || []).slice(0, MAX_PHOTOS)) {
       const local = path.join(config.photosDir, path.basename(String(src)));
-      if (!/^img\/cars\//.test(src) || !fs.existsSync(local)) continue;
+      if (!/^img\/cars\//.test(src) || !fs.existsSync(local)) {
+        if (options.strictPhotos) throw new Error('Фото для VK недоступно на сервере. Пост не отправлен.');
+        continue;
+      }
       const srv = await call('photos.getWallUploadServer', { group_id: d.groupId }, tk);
       const up = await upload(srv.upload_url, {}, { field: 'photo', path: local, type: /\.png$/i.test(local) ? 'image/png' : 'image/jpeg' });
-      if (!up || !up.photo || up.photo === '[]') continue;
+      if (!up || !up.photo || up.photo === '[]') {
+        if (options.strictPhotos) throw new Error('ВК не загрузил фото. Пост не отправлен.');
+        continue;
+      }
       const saved = await call('photos.saveWallPhoto', { group_id: d.groupId, photo: up.photo, server: up.server, hash: up.hash }, tk);
       const ph = Array.isArray(saved) ? saved[0] : null;
+      if (!ph && options.strictPhotos) throw new Error('ВК не сохранил фото. Пост не отправлен.');
       if (ph) attachments.push(`photo${ph.owner_id}_${ph.id}`);
     }
-    const message = listingText(car, { link, mode: 'channel' });
+    const message = options.text === undefined ? listingText(car, { link, mode: 'channel' }) : options.text;
     const r = await call('wall.post', { owner_id: -d.groupId, from_group: 1, message, attachments: attachments.join(',') }, tk);
     const postId = r && r.post_id;
-    if (!postId) throw new Error('ВК не принял пост');
+    if (!postId) throw Object.assign(new Error('ВК не вернул ID поста. Проверьте стену группы.'), { uncertain: true });
     return { postId, url: `https://vk.ru/wall-${d.groupId}_${postId}` };
   }
 

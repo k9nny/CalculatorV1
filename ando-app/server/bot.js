@@ -116,13 +116,14 @@ const HELP = [
   '/delete 101 — удалить объявление совсем, вместе с фото',
   '/cleardemo — убрать демо-объявления',
   '/post 101 — текст для канала',
-  '/video 101 — сделать ролики по машине (сами не делаются) · /queue — очередь роликов',
+  '/social 101 — предпросмотр и публикация в соцсетях · /social — подключённые каналы',
+  '/video 101 — повторить сборку роликов по машине · /queue — очередь роликов',
   '/cancel — удалить черновик'
 ].join('\n');
 
 // clips (необязательно): { render(car) → [{ key, name, file, caption }], queue } — ролики по машине.
 function createBot(options) {
-  const { api, adminIds, carsFile, photosDir, photosUrlPrefix = 'img/cars/', appLink = '', debounceMs = 2500, now = () => new Date(), clips = null } = options;
+  const { api, adminIds, carsFile, photosDir, photosUrlPrefix = 'img/cars/', appLink = '', debounceMs = 2500, now = () => new Date(), clips = null, social = null } = options;
   // Разбор текста: нейросеть (server/llm.js), если подключена, иначе обычный.
   const parser = options.parser || { parse: async (t) => parseListing(t), fillFromPhoto: null, enabled: false };
   const parseDetailed = parser.parseDetailed || (async (t) => ({ fields: await parser.parse(t), via: 'rules', error: '' }));
@@ -239,10 +240,14 @@ function createBot(options) {
     if (videos.length) report += `\nВидео: ${videos.length}.`;
     if (lostVideos) report += `\nНе удалось сохранить видео: ${lostVideos}.`;
     if (link) report += `\nСсылка на машину: ${link}`;
-    // Публикация — только в каталог. Текст для канала и ролики — отдельно, по кнопке, если нужны.
     const buttons = [{ text: 'Текст для канала', callback_data: `post:${id}` }];
-    if (clips) buttons.push({ text: 'Сделать ролики', callback_data: `clips:${id}` });
-    await send(chatId, report, { reply_markup: { inline_keyboard: [buttons] } });
+    if (social) buttons.push({ text: 'Посты в соцсети', callback_data: `social:${id}` });
+    if (clips && !photos.length) report += '\nДля автоматической сборки роликов нужно хотя бы одно сохранённое фото.';
+    try {
+      await send(chatId, report, { reply_markup: { inline_keyboard: [buttons] } });
+    } finally {
+      if (clips && photos.length) makeClips(chatId, car);
+    }
     return car;
   }
 
@@ -300,6 +305,40 @@ function createBot(options) {
   // Текст для канала и площадок — по общему шаблону (server/listing-text.js), одинаковый для всех машин.
   function channelPost(car, link) { return esc(listingText(car, link)); }
 
+  async function socialPreview(chatId, carId) {
+    if (!social) return send(chatId, 'Автопостинг не настроен на сервере.');
+    try {
+      const batch = social.preview(carId);
+      for (const job of batch.jobs) {
+        const firstPhoto = job.payload.photoUrl || job.payload.photos?.[0];
+        if (firstPhoto) await api.request('sendPhoto', { chat_id: chatId, photo: firstPhoto }).catch(() => {});
+        const text = `${job.name}\n\n${job.payload.text}`;
+        for (let i = 0; i < text.length; i += 3000) await send(chatId, esc(text.slice(i, i + 3000)));
+        const photos = job.payload.photos || (job.payload.photo ? [job.payload.photo] : []);
+        if (photos.length) await send(chatId, 'Фото в публикации:\n' + photos.map((p) => esc(p)).join('\n'));
+      }
+      return send(chatId, 'Пакет №' + esc(batch.id) + '\n' + batch.jobs.map((j) => `${esc(j.name)} — ${esc(j.status)}`).join('\n'), {
+        reply_markup: { inline_keyboard: [[{
+          text: batch.approved ? 'Статус публикаций' : 'Опубликовать во всех каналах',
+          callback_data: `social_${batch.approved ? 'status' : 'ok'}:${batch.id}`
+        }]] }
+      });
+    } catch (error) { return send(chatId, esc(error.message)); }
+  }
+
+  async function socialAction(chatId, action, id) {
+    if (!social) return send(chatId, 'Автопостинг не настроен.');
+    try {
+      const batch = action === 'ok' ? social.approve(id) : action === 'retry' ? social.retry(id) : social.get(id);
+      if (!batch) throw new Error('Пакет не найден');
+      const labels = { draft: 'предпросмотр', queued: 'в очереди', sending: 'отправляется', posted: 'опубликовано', retry: 'повтор запланирован', blocked: 'нужна проверка', failed: 'ошибка', review: 'проверьте канал перед повтором' };
+      return send(chatId, batch.jobs.map((j) => `${esc(j.name)} — ${labels[j.status] || esc(j.status)}${j.error ? '\n' + esc(j.error) : ''}${j.receipt?.url ? '\n' + esc(j.receipt.url) : ''}`).join('\n\n'), {
+        reply_markup: { inline_keyboard: [[{ text: 'Обновить статус', callback_data: `social_status:${id}` }],
+          ...(batch.jobs.some((j) => ['retry', 'blocked', 'failed'].includes(j.status)) ? [[{ text: 'Повторить ошибки', callback_data: `social_retry:${id}` }]] : [])] }
+      });
+    } catch (error) { return send(chatId, esc(error.message)); }
+  }
+
   async function setStatus(chatId, id, status) {
     const catalog = readCatalog(carsFile);
     const car = catalog.cars.find((c) => String(c.id) === String(id));
@@ -313,6 +352,11 @@ function createBot(options) {
     const [cmd, ...args] = text.trim().split(/\s+/);
     const name = cmd.split('@')[0].toLowerCase();
     if (name === '/start' || name === '/help') return send(chatId, HELP);
+    if (name === '/social') {
+      if (args[0]) return socialPreview(chatId, args[0]);
+      const channels = social?.channels() || [];
+      return send(chatId, channels.length ? 'Подключены:\n' + channels.map((c) => esc(c.name)).join('\n') + '\n\n/social 101 — предпросмотр машины.' : 'Каналы не подключены. Telegram: POST_TG_CHANNEL и токен бота. VK: подключение в админке. После настройки перезапустите сервер.');
+    }
     if (name === '/cancel') { drafts.delete(chatId); return send(chatId, 'Черновик удалён.'); }
     if (name === '/list') {
       const cars = readCatalog(carsFile).cars.filter((c) => c.status !== 'sold');
@@ -413,6 +457,10 @@ function createBot(options) {
     const chatId = q.message && q.message.chat.id;
     await api.request('answerCallbackQuery', { callback_query_id: q.id }).catch(() => {});
     if (!admins.has(String(q.from.id)) || chatId == null) return null;
+    const socialCallback = /^social_(ok|status|retry):([a-f0-9]{16})$/.exec(q.data || '');
+    if (socialCallback) return socialAction(chatId, socialCallback[1], socialCallback[2]);
+    const socialCar = /^social:(\d+)$/.exec(q.data || '');
+    if (socialCar) return socialPreview(chatId, socialCar[1]);
     if (q.data === 'pub') return publish(chatId);
     if (q.data === 'cancel') { drafts.delete(chatId); return send(chatId, 'Черновик удалён.'); }
     if (/^clip_(ok|no):\d+$/.test(q.data || '')) return clipDecision(q, q.data.startsWith('clip_ok'));
@@ -442,6 +490,7 @@ function createBot(options) {
         { command: 'list', description: 'Машины в каталоге' }, { command: 'help', description: 'Как добавить машину' },
         { command: 'cancel', description: 'Удалить черновик' },
         { command: 'post', description: 'Текст для канала: /post 101' },
+        ...(social ? [{ command: 'social', description: 'Предпросмотр и автопостинг: /social 101' }] : []),
         ...(clips ? [{ command: 'video', description: 'Сделать ролики: /video 101' }, { command: 'queue', description: 'Очередь роликов' }] : [])
       ],
       scope: { type: 'all_private_chats' }
