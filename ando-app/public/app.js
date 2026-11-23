@@ -139,7 +139,7 @@
     if (f.priceTo && car.price > +f.priceTo) return false;
     if (f.yearFrom && car.year < +f.yearFrom) return false;
     if (f.yearTo && car.year > +f.yearTo) return false;
-    if (f.mileageTo && car.mileage > +f.mileageTo) return false;
+    if (f.mileageTo && (car.mileage == null || car.mileage > +f.mileageTo)) return false;
     if (f.transmission.length && f.transmission.indexOf(car.transmission) === -1) return false;
     if (f.drive.length && f.drive.indexOf(car.drive) === -1) return false;
     if (f.fuel.length && f.fuel.indexOf((car.engine || {}).fuel) === -1) return false;
@@ -161,7 +161,7 @@
       cheap: function (a, b) { return a.price - b.price; },
       expensive: function (a, b) { return b.price - a.price; },
       year: function (a, b) { return b.year - a.year; },
-      mileage: function (a, b) { return a.mileage - b.mileage; }
+      mileage: function (a, b) { return (a.mileage ?? Number.MAX_SAFE_INTEGER) - (b.mileage ?? Number.MAX_SAFE_INTEGER); }
     }[S.sort];
     // Забронированные — в конце списка.
     return list.slice().sort(function (a, b) {
@@ -399,7 +399,7 @@
       : [e.volume ? Number(e.volume).toFixed(1) + ' л' : '', e.power ? e.power + ' л.с.' : '', (e.fuel || '').toLowerCase()].filter(Boolean).join(', ');
     var rows = [
       ['Год выпуска', car.year],
-      ['Пробег', num(car.mileage) + '\u00a0км'],
+      ['Пробег', car.mileage != null ? num(car.mileage) + '\u00a0км' : ''],
       ['Двигатель', engine],
       ['Коробка', car.transmission],
       ['Привод', car.drive],
@@ -418,7 +418,7 @@
     var hist = historyRows(car);
     var feats = car.features || [];
     var summary = [
-      ['gauge', 'Пробег', num(car.mileage) + ' км'],
+      ['gauge', 'Пробег', car.mileage != null ? num(car.mileage) + ' км' : ''],
       ['gear', 'Двигатель', engine],
       ['car', 'Коробка и привод', [car.transmission, car.drive ? car.drive.toLowerCase() : ''].filter(Boolean).join(', ')],
       ['shield', 'Владельцев', car.owners ? String(car.owners) : '']
@@ -659,7 +659,7 @@
       var r = rating(c);
       return '<button class="sim" data-action="open" data-id="' + esc(c.id) + '"><img src="' + esc(photos(c)[0]) + '" alt="" loading="lazy">' +
         '<b>' + c.year + ' ' + esc(c.make + ' ' + c.model) + '</b><span class="sim-price">' + rub(c.price) + '</span>' +
-        '<span class="sim-meta">' + num(c.mileage) + ' км' + (r ? ' · ' + r.label.toLowerCase() : '') + '</span></button>';
+        '<span class="sim-meta">' + [c.mileage != null ? num(c.mileage) + ' км' : '', r ? r.label.toLowerCase() : ''].filter(Boolean).join(' · ') + '</span></button>';
     }).join('') + '</div></section>';
   }
 
@@ -887,7 +887,7 @@
     if (car) lines.push(title(car) + ' — ' + rub(car.price) + ' (№ ' + car.id + ')');
     if (lead.car) {
       var c = lead.car;
-      lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage ? ', ' + num(c.mileage) + ' км' : '') + ', ' + c.condition +
+      lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage != null ? ', ' + num(c.mileage) + ' км' : '') + ', ' + c.condition +
         (c.desiredPrice ? ', хочу ' + rub(c.desiredPrice) : ''));
     }
     if (lead.credit && lead.credit.downPayment) lines.push('Первоначальный взнос: ' + rub(lead.credit.downPayment));

@@ -65,7 +65,7 @@ function specs(c) {
 function description(c) {
   const e = c.engine || {};
   const parts = [
-    `${title(c)} с пробегом ${num(c.mileage)} км`,
+    `${title(c)}${c.mileage != null ? ` с пробегом ${num(c.mileage)} км` : ''}`,
     [e.volume ? Number(e.volume).toFixed(1) + ' л' : '', c.transmission ? String(c.transmission).toLowerCase() : ''].filter(Boolean).join(', '),
     `цена ${rub(c.price)}`
   ].filter(Boolean);
@@ -83,7 +83,7 @@ function vehicleJsonLd(site, c, url) {
     vehicleModelDate: String(c.year),
     url,
     image: (c.photos || []).map((p) => photoUrl(site, p)),
-    mileageFromOdometer: { '@type': 'QuantitativeValue', value: c.mileage, unitCode: 'KMT' },
+    ...(c.mileage != null && { mileageFromOdometer: { '@type': 'QuantitativeValue', value: c.mileage, unitCode: 'KMT' } }),
     itemCondition: 'https://schema.org/UsedCondition',
     offers: {
       '@type': 'Offer',
@@ -184,7 +184,7 @@ function listPage(site, cars) {
           <div class="card-head"><div><h2 class="card-title"><a href="${encodeURIComponent(c.id)}/">${esc(c.year + ' ' + c.make + ' ' + c.model)}</a></h2>
           <p class="card-trim">${esc([c.generation, c.trim, c.body].filter(Boolean).join(' · '))}</p></div>
           <div class="card-price"><span class="price">${rub(c.price)}</span></div></div>
-          <ul class="facts"><li><span>${num(c.mileage)} км</span></li><li><span>${esc([e.volume ? Number(e.volume).toFixed(1) + ' л' : '', c.transmission].filter(Boolean).join(' · '))}</span></li></ul>
+          <ul class="facts">${c.mileage != null ? `<li><span>${num(c.mileage)} км</span></li>` : ''}<li><span>${esc([e.volume ? Number(e.volume).toFixed(1) + ' л' : '', c.transmission].filter(Boolean).join(' · '))}</span></li></ul>
         </div>
       </article>`;
   }).join('\n');

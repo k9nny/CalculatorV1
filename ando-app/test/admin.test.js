@@ -136,7 +136,7 @@ test('админка: фото, публикация, статус, цена, у
 
     const bad = await call('/api/cars', { method: 'POST', json: { text: 'Kia', photos: [] } });
     assert.equal(bad.status, 400);
-    const res = await call('/api/cars', { method: 'POST', json: { text: LISTING, photos: [up.name, '../../etc/passwd', 'tmp-0000000000000000.jpg'] } });
+    const res = await call('/api/cars', { method: 'POST', json: { text: LISTING.replace('Пробег 74 000 км\n', ''), photos: [up.name, '../../etc/passwd', 'tmp-0000000000000000.jpg'] } });
     assert.equal(res.status, 200);
     const { car } = await res.json();
     assert.equal(car.id, '102');
@@ -146,6 +146,7 @@ test('админка: фото, публикация, статус, цена, у
     // Тот же каталог видят сайт, Telegram и MAX.
     const pub = await (await fetch(origin + '/data/cars.json')).json();
     assert.equal(pub.cars[0].id, '102');
+    assert.equal(pub.cars[0].mileage, undefined);
     assert.equal((await fetch(origin + '/img/cars/102-1.jpg')).status, 200);
 
     assert.equal((await call('/api/cars/102', { method: 'PATCH', json: { status: 'hacked' } })).status, 400);

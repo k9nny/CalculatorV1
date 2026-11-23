@@ -41,6 +41,8 @@ test('разбор: типичное объявление', () => {
   assert.deepEqual(car.serviceDone, ['Замена масла и фильтров', 'Новые колодки']);
   assert.deepEqual(car.tags, ['Торг']);
   assert.deepEqual(missing(f), []);
+  assert.equal(parseListing('Kia Rio 2019, пробег неизвестен, цена 1 390 000').mileage, undefined);
+  assert.equal(parseListing('Kia Rio 2019, пробег 0, цена 1 390 000').mileage, 0);
 });
 
 test('разбор: по-русски, цена в миллионах, пробег в тысячах, VIN скрывается', () => {
@@ -93,7 +95,7 @@ const msg = (extra) => ({ message: { chat: { id: 1, type: 'private' }, from: { i
 
 test('бот: фото + текст → превью → «Опубликовать» → машина в каталоге с фото', async () => {
   const { bot, sent, messages, read, dir } = harness();
-  await bot.handleUpdate(msg({ photo: [{ file_id: 'small' }, { file_id: 'A' }], caption: 'Hyundai Solaris 2017 1.6 АКПП\nпробег 112 тыс\nцена 1 090 000' }));
+  await bot.handleUpdate(msg({ photo: [{ file_id: 'small' }, { file_id: 'A' }], caption: 'Hyundai Solaris 2017 1.6 АКПП\nцена 1 090 000' }));
   await bot.handleUpdate(msg({ photo: [{ file_id: 'B' }] }));
   assert.match(messages().at(-1), /Hyundai Solaris, 2017/);
   assert.match(messages().at(-1), /Фото: 2/);
@@ -103,6 +105,7 @@ test('бот: фото + текст → превью → «Опубликова�
   await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 1 }, data: 'pub', message: { chat: { id: 1 } } } });
   const car = read()[0];
   assert.equal(car.id, '102');
+  assert.equal(car.mileage, undefined);
   assert.equal(car.price, 1050000);
   assert.equal(car.publishedAt, '2026-11-02');
   assert.deepEqual(car.photos, ['img/cars/102-1.jpg', 'img/cars/102-2.jpg']);
@@ -115,12 +118,13 @@ test('бот: фото + текст → превью → «Опубликова�
   assert.equal(bot.drafts.size, 0);
   await bot.handleUpdate({ callback_query: { id: 'q2', from: { id: 1 }, data: 'post:102', message: { chat: { id: 1 } } } });
   assert.match(messages().at(-1), /Hyundai Solaris/);
+  assert.doesNotMatch(messages().at(-1), /Пробег|NaN|0 км/);
 });
 
 test('бот: без обязательных полей не публикует', async () => {
   const { bot, messages, read } = harness();
   await bot.handleUpdate(msg({ text: 'Kia Rio 2019' }));
-  assert.match(messages().at(-1), /Не хватает: цена, пробег/);
+  assert.match(messages().at(-1), /Не хватает: цена/);
   await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 1 }, data: 'pub', message: { chat: { id: 1 } } } });
   assert.match(messages().at(-1), /Не могу опубликовать/);
   assert.equal(read().length, 1);

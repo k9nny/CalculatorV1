@@ -227,7 +227,7 @@
   function renderPreview() {
     var box = $('preview');
     if (!parsed || parsed.missing.length) {
-      box.innerHTML = '<p class="hint">' + (parsed ? 'Карточка появится, когда в тексте будут марка, модель, год, цена и пробег.' : 'Начните писать текст — здесь появится карточка.') + '</p>';
+      box.innerHTML = '<p class="hint">' + (parsed ? 'Карточка появится, когда в тексте будут марка, модель, год и цена.' : 'Начните писать текст — здесь появится карточка.') + '</p>';
       return;
     }
     var car = Object.assign({ id: 'new', status: 'available', publishedAt: new Date().toISOString().slice(0, 10) }, parsed.car);
@@ -277,7 +277,7 @@
         return '<div class="row' + (c.status === 'sold' ? ' is-sold' : '') + '" data-id="' + esc(c.id) + '">' +
           '<img src="' + esc(src) + '" alt="" loading="lazy">' +
           '<div class="row-main"><span class="row-title">' + esc(UI.title(c)) + '</span>' +
-          '<span class="row-sub">№ ' + esc(c.id) + ' · ' + UI.num(c.mileage || 0) + ' км' +
+          '<span class="row-sub">№ ' + esc(c.id) + (c.mileage != null ? ' · ' + UI.num(c.mileage) + ' км' : '') +
           (c.videos && c.videos.length ? ' · видео: ' + c.videos.length : '') +
           (c.demo ? ' · <span class="tag red">демо</span>' : '') + '</span>' + ratingTag(c) + '</div>' +
           '<div class="row-tools">' +

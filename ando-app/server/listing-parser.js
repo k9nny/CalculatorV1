@@ -256,10 +256,11 @@ function parseListing(text) {
         n = /^(т|тыс|к)/.test(unit[2]) ? Math.round(v * 1000) : normalizeMileage(Math.round(v));
       } else {
         const after = t.indexOf('пробег');
-        const rel = after === -1 ? -1 : t.slice(after).search(/\d/);
-        const at = rel !== -1 ? after + rel : t.search(/\d/);
-        const raw = at === -1 ? null : parseAmount(t.slice(at).replace(/км.*$/, ''));
-        n = after !== -1 ? normalizeMileage(raw) : raw;
+        const value = after === -1 ? '' : t.slice(after + 'пробег'.length);
+        const amount = /^\s*[:=—–-]?\s*(\d+(?:[.,]\d+)?(?:[ .]\d{3})*(?:\s*(?:тыс|к(?![а-яa-z])|k(?![a-z])))?)/.exec(value);
+        const leading = /(?:^|[,;])\s*(\d+(?:[ .]\d{3})*)(?:\s*(тыс\.?|тыщ))?\s+пробега?(?=\s*(?:[,;]|$))/.exec(t);
+        if (amount) n = normalizeMileage(parseAmount(amount[1]));
+        else if (leading) n = leading[2] ? parseAmount(leading[1]) * 1000 : normalizeMileage(parseAmount(leading[1]));
       }
       // Строка вида «Kia Rio 2019, пробег 74 000» — пробег берём, но марку и год из неё тоже разбираем ниже.
       if (n != null) { fields.mileage = n; if (standalone(line)) used.add(i); }
@@ -355,7 +356,7 @@ function toCar(f) {
   return car;
 }
 
-const REQUIRED = { make: 'марка', model: 'модель', year: 'год', price: 'цена', mileage: 'пробег' };
+const REQUIRED = { make: 'марка', model: 'модель', year: 'год', price: 'цена' };
 function missing(f) { return Object.keys(REQUIRED).filter((k) => f[k] == null || f[k] === '').map((k) => REQUIRED[k]); }
 
 module.exports = { parseListing, toCar, missing, parseAmount, priceOf, normalizePrice, normalizeMileage, maskVin };

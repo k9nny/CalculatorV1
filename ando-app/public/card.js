@@ -116,7 +116,7 @@
     var reserved = car.status === 'reserved';
     var e = car.engine || {};
     var facts = [
-      ['gauge', num(car.mileage) + ' км'],
+      ['gauge', car.mileage != null ? num(car.mileage) + ' км' : ''],
       ['gear', [e.volume ? Number(e.volume).toFixed(1) + ' л' : '', e.power ? e.power + ' л.с.' : '', car.transmission, car.drive ? car.drive.toLowerCase() + ' привод' : '']
         .filter(Boolean).join(' · ')],
       ['shield', historyShort(car)],
