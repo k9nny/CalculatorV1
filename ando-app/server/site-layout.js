@@ -61,7 +61,7 @@ ${robots ? `<meta name="robots" content="${esc(robots)}">\n` : ''}<link rel="can
 <link rel="icon" href="${root}app/favicon.svg" type="image/svg+xml">
 <script>(function(){var d=document.documentElement;if('IntersectionObserver' in window&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('js')})()</script>
 <link rel="stylesheet" href="${root}assets/fonts.css">
-<link rel="stylesheet" href="${root}assets/ui.css">
+<link rel="stylesheet" href="${root}assets/ui.css?v=covers-43">
 <link rel="stylesheet" href="${root}assets/site.css">
 <link rel="stylesheet" href="${root}assets/pages.css">
 ${extraCss.map((c) => `<link rel="stylesheet" href="${root}${c}">`).join('\n')}
@@ -194,7 +194,7 @@ ${PAGES.map((p) => `        <a href="${root}${p.slug}/">${esc(p.nav)}</a>`).join
   </div>
 </footer>
 ${scripts ? `<script src="${root}assets/vendor/lenis.min.js"></script>
-<script src="${root}app/card.js"></script>
+<script src="${root}app/card.js?v=covers-43"></script>
 <script src="${root}assets/site.js"></script>` : ''}
 </body>
 </html>

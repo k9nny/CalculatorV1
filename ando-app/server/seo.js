@@ -184,7 +184,7 @@ function listPage(site, cars) {
     const ph = c.photos && c.photos[0] ? root + 'app/' + String(c.photos[0]).replace(/^\/+/, '') : '';
     const e = c.engine || {};
     return `      <article class="card${c.status === 'reserved' ? ' is-reserved' : ''}">
-        <a class="card-media" href="${encodeURIComponent(c.id)}/">${ph ? `<div class="card-track"><div class="photo-frame">${photoFrame(ph, title(c))}</div></div>` : ''}${c.status === 'reserved' ? '<span class="status reserved">Забронирована</span>' : ''}</a>
+        <a class="card-media" href="${encodeURIComponent(c.id)}/">${ph ? `<div class="card-track"><img class="card-cover" src="${esc(ph)}" alt="${esc(title(c))}" loading="lazy" decoding="async"></div>` : ''}${c.status === 'reserved' ? '<span class="status reserved">Забронирована</span>' : ''}</a>
         <div class="card-body">
           <div class="card-head"><div><h2 class="card-title"><a href="${encodeURIComponent(c.id)}/">${esc(c.year + ' ' + c.make + ' ' + c.model)}</a></h2>
           <p class="card-trim">${esc([c.generation, c.trim, c.body].filter(Boolean).join(' · '))}</p></div>

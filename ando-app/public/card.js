@@ -133,7 +133,8 @@
     return '<article class="card' + (reserved ? ' is-reserved' : '') + '" style="view-transition-name:' + vtName(car.id) + '">' +
       '<div class="card-media"' + open + '>' +
       '<div class="card-track">' + ph.map(function (src, i) {
-        return photoFrame(src, title(car) + (i ? ', фото ' + (i + 1) : ''), 'lazy');
+        return '<img' + (i ? '' : ' class="card-cover"') + ' src="' + esc(src) + '" alt="' + esc(title(car)) +
+          (i ? ', фото ' + (i + 1) : '') + '" loading="lazy" decoding="async">';
       }).join('') + '</div>' +
       (ph.length > 1
         ? '<button class="media-arrow prev" type="button" data-action="slide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +
