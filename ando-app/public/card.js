@@ -107,6 +107,12 @@
   }
   function vtName(id) { return 'car-' + String(id).replace(/[^a-zA-Z0-9_-]/g, '_'); }
 
+  function photoFrame(src, alt, loading, attributes) {
+    var image = ' src="' + esc(src) + '" loading="' + loading + '" decoding="async"';
+    return '<div class="photo-frame"><img class="photo-backdrop"' + image + ' alt="" aria-hidden="true">' +
+      '<img class="photo-image"' + image + ' alt="' + esc(alt) + '"' + (attributes || '') + '></div>';
+  }
+
   /* Карточка: листаемые фото; слева название, справа цена и оценка рынка; факты; опции; кнопки.
      o.base — префикс путей к фото, o.href — адрес страницы машины, o.fav и o.actions — готовая разметка. */
   function cardHtml(car, o) {
@@ -127,7 +133,7 @@
     return '<article class="card' + (reserved ? ' is-reserved' : '') + '" style="view-transition-name:' + vtName(car.id) + '">' +
       '<div class="card-media"' + open + '>' +
       '<div class="card-track">' + ph.map(function (src, i) {
-        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + (i ? ', фото ' + (i + 1) : '') + '" loading="lazy" decoding="async">';
+        return photoFrame(src, title(car) + (i ? ', фото ' + (i + 1) : ''), 'lazy');
       }).join('') + '</div>' +
       (ph.length > 1
         ? '<button class="media-arrow prev" type="button" data-action="slide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +
@@ -171,6 +177,6 @@
 
   window.AndoCard = {
     icon: icon, esc: esc, num: num, rub: rub, plural: plural, title: title, rating: rating,
-    historyShort: historyShort, isNew: isNew, photos: photos, vtName: vtName, cardHtml: cardHtml, bindSlides: bindSlides
+    historyShort: historyShort, isNew: isNew, photos: photos, photoFrame: photoFrame, vtName: vtName, cardHtml: cardHtml, bindSlides: bindSlides
   };
 })();

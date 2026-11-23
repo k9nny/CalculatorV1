@@ -109,6 +109,11 @@ function vehicleJsonLd(site, c, url) {
   return ld;
 }
 
+function photoFrame(src, alt, loading = 'lazy') {
+  const image = ` src="${esc(src)}" loading="${loading}" decoding="async"`;
+  return `<img class="photo-backdrop"${image} alt="" aria-hidden="true"><img class="photo-image"${image} alt="${esc(alt)}">`;
+}
+
 function carPage(site, c) {
   const root = '../../';
   const url = `${site}cars/${encodeURIComponent(c.id)}/`;
@@ -137,7 +142,7 @@ function carPage(site, c) {
     <div class="wrap car-layout">
       <div class="car-block">
         <div class="gallery">
-${photos.length ? photos.map((src, i) => `          <a href="${esc(book)}"><img src="${esc(src)}" alt="${esc(h)}${i ? ', фото ' + (i + 1) : ''}" loading="${i ? 'lazy' : 'eager'}" decoding="async"></a>`).join('\n')
+${photos.length ? photos.map((src, i) => `          <a class="photo-frame" href="${esc(book)}">${photoFrame(src, h + (i ? ', фото ' + (i + 1) : ''), i ? 'lazy' : 'eager')}</a>`).join('\n')
     : '          <p class="empty-note">Фото скоро добавим. Позвоните — пришлём в мессенджер.</p>'}
         </div>
         ${list(c.videos).length ? `<h2>Видео</h2>\n${list(c.videos).map((v) => `        <video class="car-video" src="${esc(root + 'app/' + String(v).replace(/^\/+/, ''))}" controls playsinline preload="metadata"></video>`).join('\n')}` : ''}
@@ -179,7 +184,7 @@ function listPage(site, cars) {
     const ph = c.photos && c.photos[0] ? root + 'app/' + String(c.photos[0]).replace(/^\/+/, '') : '';
     const e = c.engine || {};
     return `      <article class="card${c.status === 'reserved' ? ' is-reserved' : ''}">
-        <a class="card-media" href="${encodeURIComponent(c.id)}/">${ph ? `<div class="card-track"><img src="${esc(ph)}" alt="${esc(title(c))}" loading="lazy" decoding="async"></div>` : ''}${c.status === 'reserved' ? '<span class="status reserved">Забронирована</span>' : ''}</a>
+        <a class="card-media" href="${encodeURIComponent(c.id)}/">${ph ? `<div class="card-track"><div class="photo-frame">${photoFrame(ph, title(c))}</div></div>` : ''}${c.status === 'reserved' ? '<span class="status reserved">Забронирована</span>' : ''}</a>
         <div class="card-body">
           <div class="card-head"><div><h2 class="card-title"><a href="${encodeURIComponent(c.id)}/">${esc(c.year + ' ' + c.make + ' ' + c.model)}</a></h2>
           <p class="card-trim">${esc([c.generation, c.trim, c.body].filter(Boolean).join(' · '))}</p></div>

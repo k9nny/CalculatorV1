@@ -428,8 +428,8 @@
     var html = '<div class="page-in">' +
       '<div class="gallery dark"><button class="page-back" data-action="back">' + icon('back') + 'Назад</button>' +
       '<div class="gallery-track" id="gtrack">' + ph.map(function (src, i) {
-        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + ', фото ' + (i + 1) + '"' + (i ? ' loading="lazy"' : '') +
-          (real ? ' data-action="zoom" data-id="' + esc(car.id) + '" data-index="' + i + '"' : '') + '>';
+        return UI.photoFrame(src, title(car) + ', фото ' + (i + 1), i ? 'lazy' : 'eager',
+          real ? ' data-action="zoom" data-id="' + esc(car.id) + '" data-index="' + i + '"' : '');
       }).join('') + '</div>' +
       (ph.length > 1
         ? '<button class="g-arrow prev" data-action="gslide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +

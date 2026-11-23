@@ -41,7 +41,6 @@
 .gallery { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .gallery a { display: block; border-radius: var(--radius-sm); overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 3; }
 .gallery a:first-child { grid-column: 1 / -1; border-radius: var(--radius); }
-.gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .car-aside .box { display: grid; gap: 12px; padding: 24px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); }
 .car-price { font: 700 32px/1.1 var(--f); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 .car-aside .deal { justify-self: start; }
