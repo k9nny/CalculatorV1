@@ -200,6 +200,10 @@ html.in-web .page-back { display: inline-flex; } /* в мессенджере �
 .spec-table.stacked dd { padding: 0 0 10px; text-align: left; }
 .d-desc { white-space: pre-line; font-size: 14px; color: var(--text-2); }
 .credit-block p, .dealer p { margin-bottom: 12px; font-size: 14px; color: var(--text-2); }
+.seller-invite { background: var(--accent-soft); }
+.seller-invite .eyebrow { margin: 0 0 7px; }
+.seller-invite h2 { margin-bottom: 8px; font-size: clamp(20px, 4vw, 25px); }
+.seller-invite-copy { margin: 0 0 16px; color: var(--text-2); font-size: 14px; line-height: 1.5; }
 .similar { padding-right: 0; }
 .sim-track { display: flex; gap: 8px; overflow-x: auto; padding-right: 16px; scroll-snap-type: x proximity; scrollbar-width: none; }
 .sim-track::-webkit-scrollbar { display: none; }

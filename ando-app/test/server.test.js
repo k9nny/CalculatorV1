@@ -154,11 +154,11 @@ test('сервер: предложение селлера приходит ме�
     const missing = await post(base, fields);
     assert.equal(missing.status, 400);
     assert.equal(sent.length, 0);
-    const res = await post(base, { ...fields, comment: 'Honda Accord 2005, 480 000 ₽, Москва' });
+    const res = await post(base, { ...fields, comment: '12 машин в наличии, Москва' });
     assert.equal(res.status, 200);
     assert.deepEqual(await res.json(), { ok: true, delivered: 1 });
-    assert.match(sent[0].text, /Для селлеров — автомобиль в каталог/);
-    assert.match(sent[0].text, /Автомобиль: Honda Accord 2005, 480 000 ₽, Москва/);
+    assert.match(sent[0].text, /Партнёрство с селлером/);
+    assert.match(sent[0].text, /Машины в наличии: 12 машин в наличии, Москва/);
     const entry = JSON.parse(fs.readFileSync(log, 'utf8').trim());
     assert.equal(entry.type, 'listing');
     assert.equal(entry.car, undefined);
