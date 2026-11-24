@@ -5,8 +5,8 @@ body.light { --bg: #f5f6f9; --surface: #fff; --surface-2: #f5f6f9; --text: #1719
 .crm-rail .top { position: static; justify-content: start; border: 0; background: transparent; height: auto; padding: 8px 10px 26px; }
 .crm-rail .top-title { color: #fff; letter-spacing: .025em; }
 .top-title small { display: block; margin-top: 3px; color: #aab0c3; font-size: 11px; letter-spacing: .14em; }
-.crm-rail .tabs { position: static; flex-direction: column; width: 100%; gap: 5px; overflow: visible; padding: 0; background: transparent; }
-.crm-rail .tabs button { height: 44px; padding: 0 12px; text-align: left; color: #c9ccda; border: 1px solid transparent; }
+.crm-rail .tabs { position: static; display: flex; flex-wrap: nowrap; flex-direction: column; width: 100%; gap: 5px; overflow: visible; padding: 0; background: transparent; }
+.crm-rail .tabs button { flex: 0 0 auto; height: 44px; padding: 0 12px; text-align: left; color: #c9ccda; border: 1px solid transparent; }
 .crm-rail .tabs button:hover, .crm-rail .tabs button[aria-selected="true"] { color: #fff; background: #292c39; }
 .crm-rail .tabs button[aria-selected="true"] { box-shadow: inset 3px 0 #ed3248; }
 .crm-rail .top-out { margin: auto 0 0; align-self: start; color: #d4d8e4; border-color: #424656; }
