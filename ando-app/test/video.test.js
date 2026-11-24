@@ -41,8 +41,11 @@ test('сценарии: три разных ролика, в тексте нет
   const voices = list.map((c) => c.scenes.map((s) => s.voice).join(' '));
   assert.equal(new Set(voices).size, 3);
   for (const v of voices) assert.doesNotMatch(v, /\d/);
-  assert.match(voices[1], /дешевле рынка на девяносто тысяч рублей/);
-  assert.match(caption(CAR, list[1], 'https://t.me/x/app'), /Ниже средней цены на 90 000 ₽[\s\S]*https:\/\/t\.me\/x\/app/);
+  assert.match(voices[1], /по цене ниже рынка/);
+  assert.doesNotMatch(voices[1], /на девяносто тысяч рублей|В среднем/);
+  const post = caption(CAR, list[1], 'https://t.me/x/app');
+  assert.match(post, /Цена ниже рынка[\s\S]*https:\/\/t\.me\/x\/app/);
+  assert.doesNotMatch(post, /(?:^|\s)90 000 ₽/);
   // без сервиса третий ролик — про детали, без рынка — просто цена
   const plain = scripts({ ...CAR, serviceDone: [], marketPrice: 0 });
   assert.equal(plain[2].key, 'detali');

@@ -64,10 +64,8 @@
   function rating(car) {
     if (!car.marketPrice || !car.price || car.price >= car.marketPrice) return null;
     var r = car.price / car.marketPrice;
-    var diff = Math.max(1, Math.round((1 - r) * 100));
-    var vs = rub(car.marketPrice - car.price) + ' ниже рынка';
-    if (r <= 0.92) return { cls: 'great', label: 'Сильно ниже рынка', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
-    return { cls: 'good', label: 'Ниже рынка', vs: vs, note: 'На ' + diff + '% ниже рыночной оценки' };
+    if (r <= 0.92) return { cls: 'great', label: 'Сильно ниже рынка' };
+    return { cls: 'good', label: 'Ниже рынка' };
   }
 
   function historyShort(car) {
@@ -148,7 +146,7 @@
       '<div><h3 class="card-title"><a href="' + esc(o.href || ('?car=' + encodeURIComponent(car.id))) + '">' + car.year + ' ' + esc(car.make + ' ' + car.model) + '</a></h3>' +
       '<p class="card-trim">' + esc([car.generation, car.trim, car.body].filter(Boolean).join(' · ')) + '</p></div>' +
       '<div class="card-price"><span class="price">' + rub(car.price) + '</span>' +
-      (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span><span class="vs">' + esc(r.vs) + '</span>' : '') +
+      (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span>' : '') +
       '</div></div>' +
       '<ul class="facts">' + facts.map(function (f) { return '<li>' + icon(f[0]) + '<span>' + esc(f[1]) + '</span></li>'; }).join('') + '</ul>' +
       (chips.length ? '<div class="opts">' + chips.map(function (c) { return '<span class="opt">' + esc(c) + '</span>'; }).join('') + '</div>' : '') +

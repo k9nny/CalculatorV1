@@ -4,6 +4,7 @@
 // Защита: админка живёт только по секретному адресу /<slug>/ — slug случайный, создаётся на сервере
 // (server/admin-cli.js) и в репозитории его нет; по любому другому адресу — обычный 404.
 // Пароль задаётся только на сервере, в браузере его создать нельзя. Подбор пароля ограничен.
+const { buildCrm, manualEntry, readManual, publicationUrl } = require('./crm');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -23,7 +24,7 @@ const MAX_PHOTOS = 15;
 const STATUSES = ['available', 'reserved', 'sold'];
 const IMAGE_TYPES = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp' };
 const UI_DIR = path.join(__dirname, 'admin-ui');
-const UI_FILES = { '/': ['index.html', 'text/html; charset=utf-8'], '/admin.js': ['admin.js', 'text/javascript; charset=utf-8'], '/admin.css': ['admin.css', 'text/css; charset=utf-8'] };
+const UI_FILES = { '/': ['index.html', 'text/html; charset=utf-8'], '/admin.js': ['admin.js', 'text/javascript; charset=utf-8'], '/admin.css': ['admin.css', 'text/css; charset=utf-8'], '/crm.js': ['crm.js', 'text/javascript; charset=utf-8'], '/crm.css': ['crm.css', 'text/css; charset=utf-8'] };
 // Заголовки страниц админки: не индексировать, не встраивать в чужие сайты, не передавать адрес наружу.
 const PRIVATE = {
   'X-Robots-Tag': 'noindex, nofollow, noarchive',
@@ -124,6 +125,7 @@ function createAdmin(config, opts = {}) {
   const dir = path.dirname(config.leadsLog);
   const stateFile = path.join(dir, 'admin.json');
   const leadsStateFile = path.join(dir, 'leads-state.json');
+  const manualFile = path.join(dir, 'crm-publications.jsonl');
   const attempts = new Map(); // ip → [время неудачных входов]
 
   // Состояние читается с диска (его меняет и admin-cli.js), но не чаще, чем файл меняется.
@@ -219,7 +221,7 @@ function createAdmin(config, opts = {}) {
     return { fields: out, fromPhoto, ...info };
   }
 
-  function leadsList() {
+  function leadsList(limit = 300) {
     let lines = [];
     try { lines = fs.readFileSync(config.leadsLog, 'utf8').split('\n'); } catch { /* заявок ещё нет */ }
     let done = {};
@@ -229,7 +231,7 @@ function createAdmin(config, opts = {}) {
       if (!line.trim()) return;
       try { out.push({ id: String(i), done: !!done[i], ...JSON.parse(line) }); } catch { /* битая строка */ }
     });
-    return out.reverse().slice(0, 300);
+    return out.reverse().slice(0, limit);
   }
 
   async function route(req, res, pathname) {
@@ -260,6 +262,27 @@ function createAdmin(config, opts = {}) {
     }
 
     if (!session(req)) return json(res, 401, { error: 'Войдите заново' });
+
+    if (pathname === '/api/admin/crm' && m === 'GET') {
+      const inventory = readCatalog(config.carsFile).cars;
+      return json(res, 200, buildCrm(inventory, social?.list(inventory) || [], social?.channels() || [], leadsList(Infinity), now(), readManual(manualFile)));
+    }
+
+    if (pathname === '/api/admin/crm/publications' && m === 'POST') {
+      const entry = manualEntry(await readJson(req), now());
+      if (!entry) return json(res, 400, { error: 'Укажите прямую ссылку на пост или ролик и прошедшую дату публикации.' });
+      const car = readCatalog(config.carsFile).cars.find((item) => !item.demo && String(item.id) === entry.carId);
+      if (!car) return json(res, 404, { error: 'Машина не найдена в каталоге.' });
+      const existing = readManual(manualFile).find((item) => publicationUrl(item.url) === publicationUrl(entry.url));
+      if (existing && (existing.carId !== entry.carId || existing.kind !== entry.kind)) {
+        return json(res, 409, { error: 'Эта ссылка уже сохранена для другой машины или формата.' });
+      }
+      if (!existing) {
+        fs.mkdirSync(dir, { recursive: true });
+        fs.appendFileSync(manualFile, JSON.stringify(entry) + '\n', { mode: 0o600 });
+      }
+      return json(res, existing ? 200 : 201, { ok: true });
+    }
 
     // Нейросеть: ключ вставляется здесь (на телефоне удобнее, чем в консоли сервера).
     if (pathname === '/api/admin/llm' && m === 'GET') {
@@ -415,14 +438,22 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    if (pathname === '/api/admin/social' && m === 'GET') {
+      if (!social) return json(res, 503, { error: 'Автопостинг не настроен' });
+      return json(res, 200, { batches: social.list(), channels: social.channels() });
+    }
     const socialPreview = /^\/api\/admin\/cars\/([^/]+)\/social$/.exec(pathname);
-    const socialAction = /^\/api\/admin\/social\/([a-f0-9]{16})(?:\/(approve|retry))?$/.exec(pathname);
+    const socialAction = /^\/api\/admin\/social\/([a-f0-9]{16})(?:\/(approve|retry|cancel-schedule))?$/.exec(pathname);
     if ((socialPreview && m === 'POST') || (socialAction && ['GET', 'POST'].includes(m))) {
       if (!social) return json(res, 503, { error: 'Автопостинг не настроен' });
       try {
         let batch;
         if (socialPreview) batch = social.preview(decodeURIComponent(socialPreview[1]));
-        else if (m === 'POST' && socialAction[2] === 'approve') batch = social.approve(socialAction[1]);
+        else if (m === 'POST' && socialAction[2] === 'approve') {
+          const options = await readJson(req);
+          batch = social.approve(socialAction[1], options?.scheduledAt);
+        }
+        else if (m === 'POST' && socialAction[2] === 'cancel-schedule') batch = social.cancelSchedule(socialAction[1]);
         else if (m === 'POST' && socialAction[2] === 'retry') batch = social.retry(socialAction[1]);
         else if (m === 'GET' && !socialAction[2]) batch = social.get(socialAction[1]);
         if (!batch) return json(res, 404, { error: 'Предпросмотр не найден' });

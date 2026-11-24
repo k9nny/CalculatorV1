@@ -43,6 +43,7 @@
   function showApp() {
     $('login').hidden = true;
     $('app').hidden = false;
+    openTab('crm');
     loadLeads();
   }
   $('login-form').addEventListener('submit', function (e) {
@@ -64,7 +65,9 @@
   function openTab(name) {
     tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
     document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== name; });
+    if (name === 'crm') crm.load();
     if (name === 'cars') loadCars();
+    if (name === 'publications') loadPublications();
     if (name === 'leads') loadLeads();
     if (name === 'settings') { loadLlm(); loadTg(); loadVk(); }
     window.scrollTo(0, 0);
@@ -302,9 +305,9 @@
   // Отметка как в карточке на сайте: «Отличная цена», «Хорошая цена», «Цена по рынку».
   function ratingTag(c) {
     var r = UI.rating(c);
-    if (r) return '<span class="tag ok">' + esc(r.label) + ' · ' + esc(r.vs) + '</span>';
+    if (r) return '<span class="tag ok">' + esc(r.label) + '</span>';
     var est = c.marketEstimate;
-    if (est) return '<span class="tag">Рынок ≈ ' + esc(UI.rub(est.price)) + ' — цена не ниже, отметки нет</span>';
+    if (est) return '<span class="tag">Рынок оценён</span>';
     return c.demo ? '' : '<span class="tag">Рынок ещё не оценён</span>';
   }
   // Похожие объявления в поиске — чтобы быстро прикинуть рыночную цену.
@@ -365,7 +368,7 @@
       api('cars/' + encodeURIComponent(rowEl.dataset.id) + '/' + what, { method: 'POST', json: {} })
         .then(function (d) {
           var r = d && d.car ? UI.rating(d.car) : null;
-          toast(what === 'vk' ? 'Опубликовано в ВК' : what === 'market' ? (r ? r.label + ': ' + r.vs : 'Рынок оценён, цена не ниже — отметки нет') : 'Справка о модели добавлена');
+          toast(what === 'vk' ? 'Опубликовано в ВК' : what === 'market' ? (r ? r.label : 'Рынок оценён, цена не ниже — отметки нет') : 'Справка о модели добавлена');
           loadCars();
         })
         .catch(function (err) { toast(err.message, true); loadCars(); });
@@ -479,14 +482,75 @@
     if (!$('app').hidden && document.visibilityState === 'visible') loadLeads();
   }, 60000);
 
+  var socialLabels = { draft: 'Ждёт подтверждения', queued: 'В очереди', sending: 'Отправляется', posted: 'Опубликовано', retry: 'Повтор запланирован', failed: 'Ошибка', blocked: 'Нужна проверка', review: 'Сверить с площадкой' };
+  var publicationGroups = { queue: ['queued', 'sending', 'retry'], draft: ['draft'], posted: ['posted'], attention: ['failed', 'blocked', 'review'] };
+  var moscowDate = new Intl.DateTimeFormat('ru-RU', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Moscow' });
+  var publicationBatches = [];
+
+  function canCancelSchedule(batch) {
+    return batch.scheduledAt && Date.parse(batch.scheduledAt) > Date.now() && batch.jobs.some(function (job) { return job.status === 'queued'; });
+  }
+
+  function publicationState(batch, job) {
+    if (job.status === 'queued' && canCancelSchedule(batch)) return 'Запланировано · ' + moscowDate.format(new Date(batch.scheduledAt)) + ' МСК';
+    var date = job.status === 'posted' ? job.postedAt : job.status === 'retry' ? job.nextAt : null;
+    return (socialLabels[job.status] || job.status) + (date ? ' · ' + moscowDate.format(new Date(date)) + ' МСК' : '');
+  }
+
+  function renderPublications() {
+    var group = publicationGroups[$('publication-filter').value];
+    var visible = publicationBatches.filter(function (batch) {
+      return !group || batch.jobs.some(function (job) { return group.includes(job.status); });
+    }).sort(function (a, b) {
+      var aDue = canCancelSchedule(a) ? Date.parse(a.scheduledAt) : Infinity;
+      var bDue = canCancelSchedule(b) ? Date.parse(b.scheduledAt) : Infinity;
+      return aDue === bDue ? Date.parse(b.createdAt) - Date.parse(a.createdAt) : aDue - bDue;
+    });
+    $('publication-list').innerHTML = visible.length ? visible.map(function (batch) {
+      return '<article class="publication-card"><div class="publication-heading"><div><span class="hint">' +
+        (batch.kind === 'video' ? 'Ролик' : 'Объявление') + ' · №' + esc(batch.carId) + '</span><h3>' +
+        esc(batch.title || 'Машина №' + batch.carId) + '</h3></div><button class="btn" type="button" data-publication="' +
+        esc(batch.id) + '">Подробнее</button></div><ul>' + batch.jobs.map(function (job) {
+          var url = /^https:\/\//.test(job.url || '') ? '<a href="' + esc(job.url) + '" target="_blank" rel="noopener noreferrer">Открыть пост</a>' : '';
+          return '<li><strong>' + esc(job.name) + '</strong><span class="publication-state" data-state="' + esc(job.status) + '">' +
+            esc(publicationState(batch, job)) + '</span>' + url + (job.error ? '<span class="err">' + esc(job.error) + '</span>' : '') + '</li>';
+        }).join('') + '</ul></article>';
+    }).join('') : '<p class="hint publication-empty">' + (group ? 'Нет публикаций с этим статусом.' : 'Откройте «Машины» и создайте предпросмотр поста.') + '</p>';
+  }
+
+  function loadPublications() {
+    return api('social').then(function (data) {
+      publicationBatches = data.batches;
+      $('publication-error').textContent = '';
+      $('publication-channels').textContent = data.channels.length ? 'Подключены: ' + data.channels.map(function (channel) { return channel.name; }).join(', ') : 'Подключите площадки в настройках.';
+      renderPublications();
+    }).catch(function (err) { $('publication-error').textContent = err.message; });
+  }
+
+  $('publication-filter').addEventListener('change', renderPublications);
+  $('publication-refresh').addEventListener('click', loadPublications);
+  $('publication-list').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-publication]');
+    if (!button) return;
+    api('social/' + button.dataset.publication).then(function (data) {
+      showSocial(data.batch);
+      if (!$('social-dialog').open) $('social-dialog').showModal();
+    }).catch(function (err) { $('publication-error').textContent = err.message; });
+  });
+  setInterval(function () {
+    if (!$('app').hidden && !document.querySelector('[data-pane="publications"]').hidden && document.visibilityState === 'visible') loadPublications();
+  }, 15000);
+
   var socialBatch = null;
   function showSocial(batch) {
+    if (!socialBatch || socialBatch.id !== batch.id || batch.approved) $('social-date').value = '';
     socialBatch = batch;
     $('social-error').textContent = '';
-    var labels = { draft: 'Предпросмотр', queued: 'В очереди', sending: 'Отправляется', posted: 'Опубликовано', retry: 'Повтор запланирован', failed: 'Ошибка', blocked: 'Нужна проверка', review: 'Проверьте канал перед повтором' };
     $('social-preview').innerHTML = batch.jobs.map(function (job) {
       var photos = job.payload.photos || (job.payload.photo ? [job.payload.photo] : []);
-      return '<section><h3>' + esc(job.name) + '</h3><p>' + esc(labels[job.status] || job.status) + '</p>' +
+      return '<section><h3>' + esc(job.name) + '</h3><p>' + esc(publicationState(batch, job)) +
+        (job.payload.privacyStatus ? ' · видимость: ' + esc({ public: 'публично', unlisted: 'по ссылке', private: 'только владелец' }[job.payload.privacyStatus] || job.payload.privacyStatus) : '') + '</p>' +
+        (job.payload.video && /^https:\/\//.test(job.payload.video.url || '') ? '<video controls preload="metadata" src="' + esc(job.payload.video.url) + '"></video>' : '') +
         '<p class="social-text">' + esc(job.payload.text) + '</p>' +
         '<div class="social-photos">' + photos.map(function (src) {
           var url = /^https:\/\//.test(src) ? src : '../' + src;
@@ -495,19 +559,31 @@
         (job.error ? '<p class="err">' + esc(job.error) + '</p>' : '') +
         (job.receipt && /^https:\/\//.test(job.receipt.url || '') ? '<a href="' + esc(job.receipt.url) + '" target="_blank" rel="noopener noreferrer">Открыть публикацию</a>' : '') + '</section>';
     }).join('');
-    $('social-approve').hidden = batch.approved;
+    var canApprove = !batch.approved && batch.jobs.some(function (job) { return job.status === 'draft'; });
+    $('social-approve').hidden = !canApprove;
+    $('social-schedule').hidden = !canApprove;
+    $('social-cancel-schedule').hidden = !canCancelSchedule(batch);
     $('social-retry').hidden = !batch.jobs.some(function (j) { return ['retry', 'failed', 'blocked'].includes(j.status); });
   }
-  function socialRequest(action) {
+  function socialRequest(action, options) {
     if (!socialBatch) return;
-    $('social-approve').disabled = true;
-    $('social-retry').disabled = true;
-    api('social/' + socialBatch.id + (action ? '/' + action : ''), action ? { method: 'POST', json: {} } : {})
-      .then(function (d) { showSocial(d.batch); })
+    var buttons = ['social-approve', 'social-retry', 'social-schedule-submit', 'social-cancel-schedule', 'social-refresh'];
+    buttons.forEach(function (id) { $(id).disabled = true; });
+    api('social/' + socialBatch.id + (action ? '/' + action : ''), action ? { method: 'POST', json: options || {} } : {})
+      .then(function (d) {
+        showSocial(d.batch);
+        if (!document.querySelector('[data-pane="publications"]').hidden) loadPublications();
+      })
       .catch(function (err) { $('social-error').textContent = err.message; })
-      .then(function () { $('social-approve').disabled = false; $('social-retry').disabled = false; });
+      .then(function () { buttons.forEach(function (id) { $(id).disabled = false; }); });
   }
   $('social-approve').addEventListener('click', function () { socialRequest('approve'); });
+  $('social-schedule-submit').addEventListener('click', function () {
+    var date = $('social-date').value;
+    if (!date) { $('social-error').textContent = 'Выберите дату и время по Москве.'; return; }
+    socialRequest('approve', { scheduledAt: date + ':00+03:00' });
+  });
+  $('social-cancel-schedule').addEventListener('click', function () { socialRequest('cancel-schedule'); });
   $('social-retry').addEventListener('click', function () { socialRequest('retry'); });
   $('social-refresh').addEventListener('click', function () { socialRequest(''); });
   $('social-close').addEventListener('click', function () { $('social-dialog').close(); });
@@ -614,6 +690,13 @@
     api('llm', { method: 'DELETE' }).then(function (data) { showLlm(data); $('llm-result').textContent = ''; }).catch(function (err) { toast(err.message, true); });
   });
 
+  var crm = window.AndoCRM({ api: api, openBatch: function (batch) {
+    showSocial(batch);
+    $('social-dialog').showModal();
+  } });
+  $('social-dialog').addEventListener('close', function () {
+    if (!document.querySelector('[data-pane="crm"]').hidden) crm.load();
+  });
   /* ---------- старт ---------- */
   UI.bindSlides($('preview'));
   api('status').then(function (data) { if (data.authed) showApp(); else showLogin(); }).catch(showLogin);

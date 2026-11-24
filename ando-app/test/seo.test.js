@@ -8,7 +8,7 @@ const { createApp, readConfig } = require('../server/server');
 const { createIndexNow } = require('../server/seo');
 
 const CARS = [
-  { id: '120', status: 'available', publishedAt: '2026-11-01', make: 'Kia', model: 'Rio', year: 2019, price: 1390000, mileage: 74000,
+  { id: '120', status: 'available', publishedAt: '2026-11-01', make: 'Kia', model: 'Rio', year: 2019, price: 1390000, marketPrice: 1480000, mileage: 74000,
     engine: { volume: 1.6, power: 123, fuel: 'Бензин' }, transmission: 'Автомат', photos: ['img/cars/120-1.jpg'], defects: ['Скол на капоте'],
     description: '<script>alert(1)</script>' },
   { id: '121', status: 'reserved', publishedAt: '2026-11-02', make: 'Toyota', model: 'Camry', year: 2018, price: 2450000, mileage: 98000, photos: [] },
@@ -37,6 +37,8 @@ test('seo: страница машины — заголовок, цена, ра�
     assert.match(html, /<link rel="canonical" href="https:\/\/andoauto\.ru\/cars\/120\/">/);
     assert.doesNotMatch(html, /<script>alert/);
     assert.match(html, /Скол на капоте/);
+    assert.match(html, /Ниже рынка/);
+    assert.doesNotMatch(html, /на 90\s000 ₽|1\s480\s000 ₽/);
     const car = ld(html).find((j) => j['@type'] === 'Car');
     assert.equal(car.offers.price, 1390000);
     assert.equal(car.offers.priceCurrency, 'RUB');

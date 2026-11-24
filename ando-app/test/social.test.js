@@ -63,6 +63,43 @@ test('посты: после рестарта повторяется тольк�
   assert.equal(h.calls.length, 3);
 });
 
+test('расписание: дата переживает рестарт, в журнале видны время и квитанции', async (t) => {
+  const h = setup(t), first = createSocial(h.deps), batch = first.preview('123');
+  h.recover();
+  assert.throws(() => first.approve(batch.id, '2026-11-19T11:59:00+03:00'), /будущее время/);
+  first.approve(batch.id, '2026-11-19T12:02:00+03:00');
+  const resumed = createSocial(h.deps);
+  assert.equal(resumed.list()[0].scheduledAt, '2026-11-19T09:02:00.000Z');
+  assert.equal(resumed.list()[0].title, 'Kia Rio 2019');
+  h.advance(119000);
+  await resumed.tick();
+  assert.deepEqual(h.calls, []);
+  h.advance(1000);
+  await resumed.tick();
+  assert.deepEqual(h.calls, ['Telegram', 'VK']);
+  assert.deepEqual(resumed.list()[0].jobs.map(({ status, url, postedAt }) => [status, url, postedAt]), [
+    ['posted', 'https://example.com/Telegram', '2026-11-19T09:02:00.000Z'],
+    ['posted', 'https://example.com/VK', '2026-11-19T09:02:00.000Z']
+  ]);
+  assert.throws(() => resumed.cancelSchedule(batch.id), /Время уже наступило/);
+});
+
+test('расписание: снятый с очереди пост не отправляется, изменённая цена блокирует отправку', async (t) => {
+  const h = setup(t), s = createSocial(h.deps), batch = s.preview('123');
+  s.approve(batch.id, '2026-11-19T09:02:00Z');
+  s.cancelSchedule(batch.id);
+  h.advance(120000);
+  await s.tick();
+  assert.deepEqual(h.calls, []);
+  assert.equal(s.get(batch.id).jobs[0].status, 'draft');
+  s.approve(batch.id, '2026-11-19T09:03:00Z');
+  h.update({ price: 1290000 });
+  h.advance(60000);
+  await s.tick();
+  assert.deepEqual(h.calls, []);
+  assert.equal(s.list()[0].jobs[0].status, 'blocked');
+});
+
 test('посты: изменение цены требует нового предпросмотра, проданная машина не отправляется', async (t) => {
   const h = setup(t), s = createSocial(h.deps), batch = s.preview('123');
   h.update({ price: 1290000 });

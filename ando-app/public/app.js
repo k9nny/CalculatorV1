@@ -445,7 +445,6 @@
       '<p class="d-trim">' + esc([car.generation, car.trim, car.body].filter(Boolean).join(' · ')) + '</p>' +
       '<div class="d-price"><span class="price">' + rub(car.price) + '</span>' +
       (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span>' : '') + '</div>' +
-      (r ? '<p class="d-note">' + esc(r.vs.charAt(0).toUpperCase() + r.vs.slice(1)) + '</p>' : '') +
       (car.status === 'reserved' ? '<p class="d-reserved">Машина забронирована. Оставьте заявку — сообщим, если бронь снимут.</p>' : '') +
       '<div class="summary">' + summary.map(function (x) {
         return '<div>' + icon(x[0]) + '<span>' + x[1] + '</span><b>' + esc(x[2]) + '</b></div>';
@@ -581,15 +580,12 @@
     var r = rating(car);
     return '<section class="block"><h2>Анализ цены</h2>' +
       '<p class="pa-lead">' + (r ? '<span class="deal ' + r.cls + '">' + icon('check') + r.label + '</span>' : '') + '</p>' +
-      '<p class="pa-text">' + (p < m
-        ? 'Цена на <b>' + rub(m - p) + '</b> ниже средней рыночной (' + Math.round((1 - p / m) * 100) + '%).'
-        : p > m ? 'Цена на ' + rub(p - m) + ' выше средней рыночной.' : 'Цена равна средней рыночной.') + '</p>' +
       '<div class="pa-scale">' + zones.map(function (z) {
         var a = Math.max(z[0], lo), b = Math.min(z[1], hi);
         return b > a ? '<i class="z-' + z[2] + '" style="left:' + pos(a) + '%;width:' + (pos(b) - pos(a)).toFixed(1) + '%"></i>' : '';
       }).join('') +
-      '<span class="pa-mark market" style="left:' + pos(m) + '%"><em>Рынок<br>' + rub(m) + '</em></span>' +
-      '<span class="pa-mark ours" style="left:' + pos(p) + '%"><em>Наша цена<br>' + rub(p) + '</em></span></div>' +
+      '<span class="pa-mark market" style="left:' + pos(m) + '%"><em>Рынок</em></span>' +
+      '<span class="pa-mark ours" style="left:' + pos(p) + '%"><em>Наша цена</em></span></div>' +
       '<div class="pa-legend"><span class="z-great">Сильно ниже рынка</span><span class="z-good">Ниже рынка</span><span class="z-fair">По рынку</span><span class="z-high">Выше рынка</span></div>' +
       '<p class="fine">Рыночная цена — оценка по похожим объявлениям на Авито, Авто.ру и Дроме (тот же год, пробег, мотор и коробка)' +
       (car.marketEstimate && car.marketEstimate.at ? ' на ' + esc(formatDate(car.marketEstimate.at)) : '') + '.</p></section>';

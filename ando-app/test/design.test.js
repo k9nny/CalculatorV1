@@ -16,7 +16,7 @@ test('дизайн: ui.css и шрифты сайта и приложения с
 test('дизайн: сайт берёт карточку и список машин из приложения', () => {
   const html = read('ando-site/index.html');
   const js = read('ando-site/assets/site.js');
-  assert.match(html, /<script src="app\/card\.js"><\/script>/);
+  assert.match(html, /<script src="app\/card\.js(?:\?[^"]+)?"><\/script>/);
   assert.match(js, /APP \+ 'data\/cars\.json'/);
   assert.match(read('deploy/Caddyfile.tmpl'), /handle_path \/app\/\*/);
 });

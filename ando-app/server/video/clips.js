@@ -75,7 +75,7 @@ function scripts(car, opts = {}) {
   const photos = (car.photos || []).filter(Boolean);
   const pick = (i) => (photos.length ? photos[i % photos.length] : null);
   const e = car.engine || {};
-  const below = car.marketPrice && car.marketPrice > car.price ? car.marketPrice - car.price : 0;
+  const below = car.price > 0 && car.marketPrice > car.price;
   const service = (car.serviceDone || []).slice(0, 3);
   const end = endCard(opts.phoneLabel);
   const yearMil = [car.year, car.mileage ? `${num(car.mileage)} км` : ''].filter(Boolean).join(' · ');
@@ -120,8 +120,8 @@ function scripts(car, opts = {}) {
     scenes: [
       below ? {
         photo: pick(1),
-        lines: [T.label('Ниже рынка'), T.big(`−${num(below)} ₽`), T.sub('от средней цены'), T.sub('на такие машины')],
-        voice: `${sayName} дешевле рынка на ${say.rub(below)}.`,
+        lines: [T.label('Ниже рынка'), T.head(name)],
+        voice: `${sayName} по цене ниже рынка.`,
       } : {
         photo: pick(1),
         lines: [T.label('Цена'), T.head(name), T.big(`${num(car.price)} ₽`)],
@@ -129,9 +129,8 @@ function scripts(car, opts = {}) {
       },
       {
         photo: pick(0),
-        lines: [T.label(`${car.year} · ${num(car.mileage)} км`), T.head(name), T.big(`${num(car.price)} ₽`),
-          T.sub(car.marketPrice ? `Рынок: ${num(car.marketPrice)} ₽` : '')],
-        voice: `Наша цена — ${say.rub(car.price)}.` + (car.marketPrice ? ` В среднем такие продают за ${say.rub(car.marketPrice)}.` : ''),
+        lines: [T.label(`${car.year} · ${num(car.mileage)} км`), T.head(name), T.big(`${num(car.price)} ₽`)],
+        voice: `Наша цена — ${say.rub(car.price)}.`,
       },
       {
         photo: pick(2),
@@ -197,7 +196,7 @@ function caption(car, clip, appLink) {
     `${title(car)}, ${car.year}`,
     `${num(car.price)} ₽ · ${num(car.mileage)} км`,
   ];
-  if (clip.key === 'cena' && car.marketPrice > car.price) lines.push(`Ниже средней цены на ${num(car.marketPrice - car.price)} ₽`);
+  if (clip.key === 'cena' && car.price > 0 && car.marketPrice > car.price) lines.push('Цена ниже рынка');
   if (clip.key === 'servis') lines.push(`Сделали: ${(car.serviceDone || []).slice(0, 3).join(', ').toLowerCase()}`);
   if (appLink) lines.push('', `Фото, характеристики и запись на осмотр: ${appLink}`);
   return lines.join('\n');

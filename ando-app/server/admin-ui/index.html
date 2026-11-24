@@ -6,10 +6,11 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
 <meta name="theme-color" content="#F4F4F2">
-<title>Кабинет</title>
+<title>ANDO AUTO · CRM</title>
 <link rel="stylesheet" href="../fonts.css">
-<link rel="stylesheet" href="../ui.css?v=covers-43">
+<link rel="stylesheet" href="../ui.css">
 <link rel="stylesheet" href="admin.css">
+<link rel="stylesheet" href="crm.css">
 </head>
 <body class="light">
 
@@ -25,19 +26,43 @@
 </section>
 
 <div id="app" hidden>
+  <aside class="crm-rail">
   <header class="top">
-    <strong class="top-title">ANDO AUTO · кабинет</strong>
-    <button class="btn btn-ghost top-out" type="button" id="logout">Выйти</button>
+    <img src="../favicon.svg" alt="" width="36" height="36"><strong class="top-title">ANDO AUTO<small>CRM</small></strong>
+
   </header>
-  <nav class="tabs" role="tablist">
-    <button type="button" role="tab" data-tab="add" aria-selected="true">Добавить</button>
+  <nav class="tabs" role="tablist" aria-label="Разделы CRM">
+    <button type="button" role="tab" data-tab="crm" aria-selected="true">Обзор</button>
+
     <button type="button" role="tab" data-tab="cars" aria-selected="false">Машины</button>
+    <button type="button" role="tab" data-tab="publications" aria-selected="false">Публикации</button>
     <button type="button" role="tab" data-tab="leads" aria-selected="false">Заявки</button>
+    <button type="button" role="tab" data-tab="add" aria-selected="false">Добавить машину</button>
     <button type="button" role="tab" data-tab="settings" aria-selected="false">Настройки</button>
   </nav>
+  <button class="btn btn-ghost top-out" type="button" id="logout">Выйти</button>
+  </aside>
 
   <main class="wrap">
-    <section data-pane="add">
+    <section data-pane="crm">
+      <header class="crm-heading"><div><h1>Обзор публикаций</h1><p id="crm-asof" class="hint" role="status">Загружаем данные CRM…</p></div><button type="button" class="btn" id="crm-refresh">Обновить</button></header>
+      <p id="crm-error" class="err" role="alert"></p>
+      <div id="crm-metrics" class="crm-metrics"></div>
+      <div class="crm-panel">
+        <div class="crm-section-title"><h2>Реестр автомобилей</h2><span id="crm-count"></span></div>
+        <div class="crm-tools">
+          <input type="search" id="crm-query" aria-label="Поиск машины" placeholder="Марка, модель или номер">
+          <select id="crm-filter" aria-label="Статус публикации"><option value="all">Все статусы</option><option value="none">Без публикаций</option><option value="posted">Опубликовано</option><option value="active">На автопостинге</option><option value="draft">Черновики</option><option value="attention">Нужна проверка</option><option value="uploaded">Доступ ограничен</option></select>
+          <select id="crm-format" aria-label="Формат"><option value="">Все форматы</option><option value="listing">Посты</option><option value="video">Видео</option></select>
+          <select id="crm-platform" aria-label="Площадка"><option value="">Все площадки</option></select>
+        </div>
+        <div class="crm-scroll" tabindex="0" role="region" aria-label="Таблица автомобилей"><table class="crm-table"><thead><tr><th>Автомобиль</th><th>Вышли посты</th><th>Вышли видео</th><th>Очередь · МСК</th><th>Заявки</th></tr></thead><tbody id="crm-rows"></tbody></table></div>
+        <p id="crm-empty" class="empty" hidden></p>
+      </div>
+      <div class="crm-insights"><section class="crm-panel"><div class="crm-section-title"><h2>Выходы по площадкам</h2><select id="crm-period" aria-label="Период статистики"><option value="0">Всё время</option><option value="7">7 дней</option><option value="30">30 дней</option></select></div><div id="crm-channels"></div></section><section class="crm-panel"><div class="crm-section-title"><h2>Ближайшие отправки</h2><span>МСК</span></div><div id="crm-schedule"></div></section></div>
+      <dialog id="crm-detail" aria-labelledby="crm-car-title"><div class="crm-section-title"><h2 id="crm-car-title">История машины</h2><button type="button" class="btn" id="crm-close">Закрыть</button></div><div id="crm-history"></div></dialog>
+    </section>
+    <section data-pane="add" hidden><h1>Добавить машину</h1>
       <div class="block">
         <h2>Фото</h2>
         <p class="hint">До 15 штук. Первое — обложка. Нажмите на фото, чтобы сделать его обложкой; ✕ — убрать.</p>
@@ -84,17 +109,37 @@
       <button class="btn btn-primary btn-block" type="button" id="publish" disabled>Опубликовать</button>
     </section>
 
-    <section data-pane="cars" hidden>
+    <section data-pane="cars" hidden><h1>Управление машинами</h1>
       <div class="list" id="cars"></div>
       <button class="btn btn-ghost btn-block" type="button" id="market-all">Оценить рынок для всех машин</button>
       <button class="btn btn-ghost btn-block" type="button" id="cleardemo" hidden>Убрать демо-объявления</button>
     </section>
 
-    <section data-pane="leads" hidden>
+    <section data-pane="leads" hidden><h1>Заявки</h1>
       <div class="list" id="leads"></div>
     </section>
 
-    <section data-pane="settings" hidden>
+    <section data-pane="publications" hidden>
+      <div class="block publication-board">
+        <div class="publication-heading">
+          <div><h2>Публикации</h2><p class="hint" id="publication-channels"></p></div>
+          <button class="btn" type="button" id="publication-refresh">Обновить</button>
+        </div>
+        <label class="field publication-filter">Статус
+          <select id="publication-filter">
+            <option value="all">Все публикации</option>
+            <option value="queue">В расписании и очереди</option>
+            <option value="draft">Ждут подтверждения</option>
+            <option value="posted">Опубликовано</option>
+            <option value="attention">Нужна проверка</option>
+          </select>
+        </label>
+        <p class="err" id="publication-error" role="alert"></p>
+        <div id="publication-list" class="publication-list"></div>
+      </div>
+    </section>
+
+    <section data-pane="settings" hidden><h1>Настройки подключений</h1>
       <div class="block" id="vk-block">
         <h2>ВКонтакте</h2>
         <p class="hint">Посты с текстом и фото отправляются после предпросмотра в разделе «Машины». Подключите администратора группы через VK ID.</p>
@@ -178,13 +223,19 @@
   <div id="social-preview"></div>
   <p class="err" id="social-error" role="alert"></p>
   <button class="btn btn-primary" type="button" id="social-approve">Опубликовать во всех каналах</button>
+  <div id="social-schedule" class="publication-schedule" hidden>
+    <label class="field">Дата и время по Москве<input id="social-date" type="datetime-local"></label>
+    <button class="btn" type="button" id="social-schedule-submit">Запланировать</button>
+  </div>
+  <button class="btn" type="button" id="social-cancel-schedule" hidden>Снять с расписания</button>
   <button class="btn" type="button" id="social-refresh">Обновить статус</button>
   <button class="btn" type="button" id="social-retry" hidden>Повторить ошибки</button>
   <button class="btn btn-ghost" type="button" id="social-close">Закрыть</button>
 </dialog>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<script src="../card.js?v=covers-43"></script>
+<script src="../card.js?v=market-44"></script>
+<script src="crm.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

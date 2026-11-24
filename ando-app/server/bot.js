@@ -70,7 +70,7 @@ function carSummary(car) {
     car.wheel === 'Правый' && 'правый руль', car.city].filter(Boolean).join(' · ');
   return [
     `<b>${esc([car.make, car.model, car.generation].filter(Boolean).join(' ') || 'Без названия')}${car.year ? ', ' + car.year : ''}</b>`,
-    car.price ? `Цена ${money(car.price)}${car.marketPrice ? ` (рынок ${money(car.marketPrice)})` : ''}` : '',
+    car.price ? `Цена ${money(car.price)}${car.marketPrice > car.price ? ' · ниже рынка' : ''}` : '',
     car.mileage != null ? `Пробег ${km(car.mileage)}` : '',
     specs ? esc(specs) : '',
     extra ? esc(extra) : '',

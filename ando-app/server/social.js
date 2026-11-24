@@ -102,15 +102,51 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
     const keys = publishers().map((p) => p.key);
     if (checkChannels && batch.jobs.some((j) => j.status !== 'posted' && !keys.includes(j.key))) throw new Error('Подключения изменились. Проверьте каналы.');
   }
-  function approve(id) {
+  function approve(id, scheduledAt) {
     const batch = get(id);
     validate(batch);
     if (batch.approved) return batch;
+    const approvedAt = now();
+    if (scheduledAt != null) {
+      const time = typeof scheduledAt === 'string' ? Date.parse(scheduledAt) : NaN;
+      if (!Number.isFinite(time) || time <= approvedAt.getTime()) throw new Error('Укажите будущее время публикации');
+      batch.scheduledAt = new Date(time).toISOString();
+    }
     batch.approved = true;
-    batch.approvedAt = now().toISOString();
+    batch.approvedAt = approvedAt.toISOString();
     for (const job of batch.jobs) if (job.status === 'draft') job.status = 'queued';
     save();
     return batch;
+  }
+  function cancelSchedule(id) {
+    const batch = get(id);
+    if (!batch?.approved || !batch.scheduledAt || Date.parse(batch.scheduledAt) <= now().getTime() ||
+        batch.jobs.some((job) => job.status !== 'queued' && job.status !== 'posted')) {
+      throw new Error('Время уже наступило или публикация не запланирована');
+    }
+    batch.approved = false;
+    delete batch.approvedAt;
+    delete batch.scheduledAt;
+    for (const job of batch.jobs) if (job.status === 'queued') job.status = 'draft';
+    save();
+    return batch;
+  }
+  function list(inventory = readCatalog(config.carsFile).cars) {
+    const cars = new Map(inventory.map((car) => [String(car.id), car]));
+    return state.batches.map((batch) => {
+      const car = cars.get(String(batch.carId)) || batch.jobs.find((job) => job.payload?.car)?.payload.car;
+      return {
+        id: batch.id, carId: batch.carId, title: [car?.make, car?.model, car?.year].filter(Boolean).join(' '),
+        kind: (batch.assetKey || 'listing').startsWith('video:') ? 'video' : 'listing',
+        revision: batch.revision, assetKey: batch.assetKey || 'listing',
+        createdAt: batch.createdAt, approvedAt: batch.approvedAt, scheduledAt: batch.scheduledAt,
+        jobs: batch.jobs.map(({ key, name, status, postedAt, nextAt, receipt, error }) => ({
+          key, name, status, postedAt, nextAt: status === 'retry' ? nextAt : undefined,
+          receiptId: receipt?.id ?? receipt?.postId ?? receipt?.containerId, privacyStatus: receipt?.privacyStatus,
+          url: receipt?.url, error
+        }))
+      };
+    });
   }
   function retry(id) {
     const batch = get(id);
@@ -129,6 +165,7 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
     busy = true;
     try {
       for (const batch of state.batches.filter((b) => b.approved)) {
+        if (batch.scheduledAt && Date.parse(batch.scheduledAt) > now().getTime()) continue;
         let changed = false;
         for (const job of batch.jobs) {
           if (!['queued', 'retry'].includes(job.status) || (job.nextAt && Date.parse(job.nextAt) > now().getTime())) continue;
@@ -138,7 +175,7 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
           const publisher = publishers().find((p) => p.key === job.key);
           if (!publisher) { job.status = 'blocked'; job.error = 'Канал отключён'; save(); changed = true; continue; }
           const prior = postedJob(batch.carId, batch.revision, job.key);
-          if (prior) { job.status = 'posted'; job.receipt = prior.receipt; save(); changed = true; continue; }
+          if (prior) { job.status = 'posted'; job.receipt = prior.receipt; job.postedAt = prior.postedAt; save(); changed = true; continue; }
           job.status = 'sending'; job.attempts++; save();
           try {
             const receipt = await publisher.post(job.payload);
@@ -157,7 +194,7 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
     } finally { busy = false; }
   }
   return {
-    preview, approve, retry, get, tick,
+    preview, approve, cancelSchedule, retry, get, list, tick,
     channels: () => publishers().map(({ key, name }) => ({ key, name })),
     start() { if (!timer) { save(); timer = setInterval(() => tick().catch(console.error), 5000); timer.unref(); } },
     stop() { clearInterval(timer); timer = null; }

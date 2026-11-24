@@ -39,7 +39,11 @@ test('отметка на карточке: «Сильно ниже рынка»
   const { rating } = global.window.AndoCard;
   assert.equal(rating({ price: 900000, marketPrice: 1000000 }).label, 'Сильно ниже рынка');
   assert.equal(rating({ price: 960000, marketPrice: 1000000 }).label, 'Ниже рынка');
-  assert.match(rating({ price: 960000, marketPrice: 1000000 }).vs, /40.000 ₽ ниже рынка/);
+  const html = global.window.AndoCard.cardHtml({ id: 'p', make: 'Kia', model: 'Rio', year: 2020, price: 960000, marketPrice: 1000000 });
+  const visible = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  assert.match(visible, /960 000 ₽/);
+  assert.match(visible, /Ниже рынка/);
+  assert.doesNotMatch(visible, /40 000|1 000 000|\d\s*%/);
   assert.equal(rating({ price: 1000000, marketPrice: 1000000 }), null);
   assert.equal(rating({ price: 1100000, marketPrice: 1000000 }), null);
   assert.equal(rating({ price: 1000000 }), null);

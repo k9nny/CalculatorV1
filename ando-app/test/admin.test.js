@@ -11,12 +11,49 @@ const PASSWORD = 'correct-horse-42';
 const JPEG = Buffer.concat([Buffer.from([0xFF, 0xD8, 0xFF, 0xE0]), Buffer.alloc(64, 1)]);
 const LISTING = 'Kia Rio 2019, 1.6 АКПП 123 л.с.\nПробег 74 000 км\nЦена 1 390 000\nНедостатки: скол на капоте';
 
+test('CRM сохраняет ручную публикацию и повторно не записывает тот же URL', async () => {
+  await withAdmin(async ({ call, login, config }) => {
+    fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [{ id: 17, make: 'Kia', model: 'Rio' }] }));
+    const entry = { carId: 17, url: 'https://www.youtube.com/shorts/ABCDE?si=share', kind: 'video', postedAt: '2026-07-01T14:00:00Z' };
+    const post = (json) => call('/api/crm/publications', { method: 'POST', json });
+    assert.equal((await post(entry)).status, 401);
+    await login();
+    assert.equal((await post({ ...entry, url: 'https://example.test/shorts/ABCDE' })).status, 400);
+    assert.equal((await post(entry)).status, 201);
+    assert.equal((await post({ ...entry, url: 'https://youtu.be/ABCDE' })).status, 200);
+    assert.equal((await post({ ...entry, kind: 'listing' })).status, 409);
+    const data = await (await call('/api/crm')).json();
+    assert.equal(data.totals.postedVideos, 1);
+    assert.equal(data.cars[0].publications[0].url, 'https://www.youtube.com/shorts/ABCDE');
+  });
+});
+
+test('CRM требует вход и считает все заявки без вывода телефонов', async () => {
+  await withAdmin(async ({ call, login, config }) => {
+    assert.equal((await call('/api/crm')).status, 401);
+    await login();
+    fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [{ id: 17, make: 'Kia', model: 'Rio' }, { id: '18', demo: true }] }));
+    const lead = JSON.stringify({ car: { id: '17' }, phone: '+79999999999' });
+    fs.writeFileSync(config.leadsLog, Array(301).fill(lead).join('\n') + '\n' + JSON.stringify({ type: 'sell' }));
+    const response = await call('/api/crm');
+    assert.equal(response.status, 200);
+    const data = await response.json();
+    assert.equal(data.totals.cars, 1);
+    assert.equal(data.totals.unpublishedCars, 1);
+    assert.equal(data.totals.leads, 302);
+    assert.equal(data.totals.unassignedLeads, 1);
+    assert.equal(data.cars[0].openLeads, 301);
+    assert.equal(JSON.stringify(data).includes('+79999999999'), false);
+  });
+});
+
 test('админка: снимок соцсетей защищён входом, подтверждение отдельное и повтор безопасен', async () => {
   let posts = 0;
   const vk = { status: () => ({ connected: true, groupId: 123, groupName: 'Тестовая группа' }), postCar: async () => { posts++; return { postId: 1 }; } };
   await withAdmin(async ({ call, login, config }) => {
     fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [{ id: '456', status: 'available', make: 'Kia', model: 'Rio', year: 2019, mileage: 74000, price: 1390000, photos: [] }] }));
     assert.equal((await call('/api/cars/456/social', { method: 'POST', json: {} })).status, 401);
+    assert.equal((await call('/api/social')).status, 401);
     await login();
     const res = await call('/api/cars/456/social', { method: 'POST', json: {} });
     assert.equal(res.status, 200);
@@ -24,6 +61,13 @@ test('админка: снимок соцсетей защищён входом,
     assert.equal(batch.approved, false);
     assert.match(batch.jobs[0].payload.text, /cars\/456\//);
     assert.equal(posts, 0);
+    const date = new Date(Date.now() + 60000).toISOString();
+    const scheduled = await call(`/api/social/${batch.id}/approve`, { method: 'POST', json: { scheduledAt: date } });
+    assert.equal(scheduled.status, 200);
+    const { batches } = await (await call('/api/social')).json();
+    assert.equal(batches[0].scheduledAt, date);
+    assert.equal(batches[0].jobs[0].payload, undefined);
+    assert.equal((await call(`/api/social/${batch.id}/cancel-schedule`, { method: 'POST', json: {} })).status, 200);
     const approved = await call(`/api/social/${batch.id}/approve`, { method: 'POST', json: {} });
     assert.equal(approved.status, 200);
     assert.equal((await approved.json()).batch.jobs[0].status, 'queued');
