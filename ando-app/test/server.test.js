@@ -148,6 +148,24 @@ test('сервер: заявка из Telegram с подписью уходит 
   });
 });
 
+test('сервер: предложение селлера приходит менеджеру и сохраняется отдельно от заявки на выкуп', async () => {
+  await withServer({ telegramToken: TOKEN, managerChatIds: ['111'] }, async (base, { sent, log }) => {
+    const fields = { type: 'listing', phone: '89001234567', consent: true, carId: '101' };
+    const missing = await post(base, fields);
+    assert.equal(missing.status, 400);
+    assert.equal(sent.length, 0);
+    const res = await post(base, { ...fields, comment: 'Honda Accord 2005, 480 000 ₽, Москва' });
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), { ok: true, delivered: 1 });
+    assert.match(sent[0].text, /Для селлеров — автомобиль в каталог/);
+    assert.match(sent[0].text, /Автомобиль: Honda Accord 2005, 480 000 ₽, Москва/);
+    const entry = JSON.parse(fs.readFileSync(log, 'utf8').trim());
+    assert.equal(entry.type, 'listing');
+    assert.equal(entry.car, undefined);
+    assert.equal(entry.sellCar, undefined);
+  });
+});
+
 test('сервер: поддельная подпись — 401, ошибки полей — 400 с текстом', async () => {
   await withServer({ telegramToken: TOKEN, managerChatIds: ['111'] }, async (base, { sent }) => {
     const forged = await post(base, { type: 'buy', carId: '101', phone: '89001234567', consent: true },

@@ -47,6 +47,7 @@
   var LEAD_TITLES = {
     buy: 'Записаться на осмотр',
     dealer: 'Оптовая цена для перекупов',
+    listing: 'Предложить автомобиль для каталога',
     callback: 'Заказать звонок',
     sell: 'Продать машину',
     credit: 'Покупка в кредит — анкета'
@@ -497,8 +498,8 @@
 
       similarHtml(car) +
 
-      '<section class="block dealer"><h2>Вы перекупщик?</h2><p>Для перекупов — оптовая цена по запросу.</p>' +
-      '<button class="btn btn-ghost btn-block" data-action="dealer" data-id="' + esc(car.id) + '">Узнать оптовую цену</button></section>' +
+      '<section class="block dealer"><h2>Для селлеров</h2><p>Продаёте машины? Разместите авто в каталоге ANDO AUTO бесплатно. Если мы приведём покупателя и сделка состоится, комиссия составит 15 000 ₽.</p>' +
+      '<button class="btn btn-ghost btn-block" data-action="lead" data-type="listing">Предложить автомобиль</button></section>' +
 
       '<section class="block d-foot"><span>Объявление № ' + esc(car.id) + (car.publishedAt ? ' · ' + esc(formatDate(car.publishedAt)) : '') + '</span>' +
       '<button class="link-btn" data-action="share" data-id="' + esc(car.id) + '">' + icon('share') + 'Поделиться</button></section>' +
@@ -771,8 +772,8 @@
       '<form class="form" id="lead-form" data-type="' + esc(type) + '" data-car="' + esc(carId || '') + '" novalidate>' +
       '<label class="field"><span>Имя</span><input name="name" autocomplete="given-name" maxlength="80" value="' + esc(user && user.first_name || '') + '"></label>' +
       phoneField() +
-      '<label class="field"><span>Комментарий</span><textarea name="comment" rows="2" maxlength="500" placeholder="' +
-      (type === 'buy' ? 'Когда удобно приехать на осмотр' : 'Удобное время для звонка') + '">' + esc(comment || '') + '</textarea></label>' +
+      '<label class="field"><span>' + (type === 'listing' ? 'Автомобиль и цена' : 'Комментарий') + '</span><textarea name="comment" rows="' + (type === 'listing' ? 3 : 2) + '" maxlength="500"' + (type === 'listing' ? ' required' : '') + ' placeholder="' +
+      (type === 'listing' ? 'Марка, модель, год, пробег, город и цена. Можно добавить ссылку на объявление.' : type === 'buy' ? 'Когда удобно приехать на осмотр' : 'Удобное время для звонка') + '">' + esc(comment || '') + '</textarea></label>' +
       consentField() +
       '<p class="form-error" role="alert"></p>' +
       '<button class="btn btn-primary btn-block" type="submit">Отправить заявку</button></form>');
@@ -871,6 +872,7 @@
       if (!lead.car.model) return ['model', 'Укажите модель'];
       if (!lead.car.year || lead.car.year < 1960 || lead.car.year > thisYear + 1) return ['year', 'Укажите год выпуска'];
     }
+    if (lead.type === 'listing' && !lead.comment) return ['comment', 'Расскажите, какой автомобиль хотите разместить'];
     if (lead.type === 'credit' && lead.name.split(/\s+/).filter(Boolean).length < 2) return ['name', 'Укажите фамилию и имя'];
     if (!lead.phone) return ['phone', 'Проверьте номер телефона: нужен российский номер из 11 цифр'];
     if (!lead.consent) return ['consent', 'Нужно согласие на обработку персональных данных'];

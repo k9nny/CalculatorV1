@@ -4,6 +4,7 @@
 const TYPES = {
   buy: 'Осмотр машины',
   dealer: 'Оптовая цена — перекуп',
+  listing: 'Для селлеров — автомобиль в каталог',
   callback: 'Обратный звонок',
   sell: 'Выкуп — продать машину',
   credit: 'Покупка в кредит — анкета'
@@ -51,7 +52,9 @@ function validateLead(body, cars, { now = new Date() } = {}) {
     platform: ['telegram', 'max', 'web'].includes(body.platform) ? body.platform : 'web'
   };
 
-  if (body.carId != null && body.carId !== '') {
+  if (type === 'listing' && !lead.comment) return { ok: false, error: 'Расскажите, какой автомобиль хотите разместить' };
+
+  if (type !== 'listing' && body.carId != null && body.carId !== '') {
     // Название и цену берём из каталога на сервере, а не из запроса.
     const car = (cars || []).find((c) => String(c.id) === String(body.carId));
     if (!car) return { ok: false, error: 'Машина не найдена — обновите каталог' };
@@ -139,7 +142,7 @@ function formatLeadMessage(lead, source) {
   lines.push('');
   if (lead.name) lines.push(`Имя: ${escapeHtml(lead.name)}`);
   lines.push(`Телефон: ${escapeHtml(lead.phone)}`);
-  if (lead.comment) lines.push(`Комментарий: ${escapeHtml(lead.comment)}`);
+  if (lead.comment) lines.push((lead.type === 'listing' ? 'Автомобиль: ' : 'Комментарий: ') + escapeHtml(lead.comment));
   const who = source.user
     ? [source.user.first_name, source.user.last_name].filter(Boolean).join(' ') + (source.user.username ? ` @${source.user.username}` : '')
     : '';
