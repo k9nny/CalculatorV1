@@ -29,8 +29,9 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
   };
   for (const batch of state.batches) {
     for (const job of batch.jobs) if (job.status === 'sending') {
-      job.status = 'review';
-      job.error = 'Сервер перезапустился во время отправки. Проверьте канал перед повтором.';
+      const canReconcile = publishers().some(p => p.key === job.key && p.reconciles);
+      job.status = canReconcile ? 'retry' : 'review';
+      job.error = canReconcile ? 'Проверяем результат отправки.' : 'Сервер перезапустился во время отправки. Проверьте канал перед повтором.';
     }
   }
   function carById(id) {
@@ -67,25 +68,42 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     const { marketEstimate, modelSpecs, vk, ...fields } = car;
     return digest(fields);
   }
-  function postedJob(carId, rev, key) {
-    return state.batches.filter((b) => b.carId === carId && b.revision === rev)
+  function reelAsset(car, index) {
+    const src = car.videos?.[index];
+    if (typeof src !== 'string' || !/^img\/cars\/[\w.-]+\.mp4$/i.test(src)) {
+      throw new Error('Для Reels добавьте к машине ролик MP4.');
+    }
+    const file = path.join(config.photosDir, path.basename(src));
+    const stat = fs.statSync(file, { throwIfNoEntry: false });
+    if (!stat?.isFile() || !stat.size) throw new Error('Файл ролика недоступен.');
+    const site = String(config.siteUrl || '').replace(/\/+$/, '');
+    return { video: { url: site + '/app/' + src }, key: 'video:' + digest([src, stat.size, stat.mtimeMs]) };
+  }
+  function postedJob(carId, rev, key, assetKey = 'listing') {
+    return state.batches.filter((b) => b.carId === carId && b.revision === rev && (b.assetKey || 'listing') === assetKey)
       .flatMap((b) => b.jobs).find((j) => j.key === key && j.status === 'posted');
   }
   function preview(id, options = {}) {
     const car = carById(id);
     const media = content(car);
-    const targets = publishers();
+    const reel = options.reelIndex !== undefined ? reelAsset(car, options.reelIndex) : null;
+    if (reel) media.video = reel.video;
+    const targets = publishers().filter(p => (!(options.instagramOnly || reel) || p.key.startsWith('instagram:'))
+      && (!p.supports || p.supports(media)));
+    if (!targets.length && (options.instagramOnly || reel)) throw new Error('Подключите Instagram в настройках и добавьте медиа к карточке.');
     if (!targets.length) throw new Error('Каналы не подключены. /social — настройки');
     const rev = revision(car);
     if (options.expectedRevision && options.expectedRevision !== rev) {
       return preview(id, { ...options, expectedRevision: undefined, telegramFacts: undefined, enhance: true });
     }
-    const telegramTarget = !options.video && targets.find(target => target.template);
+    const telegramTarget = !reel && targets.find(target => target.template);
     const templates = telegramTarget ? [telegramTarget.template] : undefined;
-    const key = digest({ id, rev, targets: targets.map((p) => p.key), templates });
+    const assetKey = reel?.key || 'listing';
+    const key = digest({ id, rev, targets: targets.map((p) => p.key), templates, ...(reel && { assetKey }) });
     const existing = state.batches.find((b) => b.key === key);
-    if (existing) return existing;
-    const pending = state.batches.find((b) => b.carId === String(id) && b.revision === rev && b.approved && b.jobs.some((j) => j.status !== 'posted'));
+    if (existing && (existing.approved || !existing.jobs.some(job => job.preparationFailed))) return existing;
+    const pending = !options.instagramOnly && state.batches.find((b) => b.carId === String(id) && b.revision === rev
+      && (b.assetKey || 'listing') === assetKey && b.approved && b.jobs.some((j) => j.status !== 'posted'));
     if (pending) return pending;
     const needsTelegramDraft = telegramTarget && !postedJob(String(id), rev, telegramTarget.key);
     if (needsTelegramDraft && options.enhance && copywriter?.enabled) {
@@ -99,23 +117,31 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     if (telegramTarget) Object.assign(media, { telegramListing: true, telegramFacts: options.telegramFacts });
     const batch = {
       id: crypto.randomBytes(8).toString('hex'), key, carId: String(id), revision: rev,
-      createdAt: now().toISOString(), approved: false,
+      createdAt: now().toISOString(), approved: false, ...(reel && { assetKey, reelIndex: options.reelIndex }),
       jobs: targets.map((p) => {
-        const prior = postedJob(String(id), rev, p.key);
-        const oldPost = p.key.startsWith('vk:') && car.vk?.postId &&
+        const prior = postedJob(String(id), rev, p.key, assetKey);
+        const oldPost = !reel && p.key.startsWith('vk:') && car.vk?.postId &&
           String(car.vk.url || '').includes(`wall-${p.key.slice(3)}_`);
-        return { key: p.key, name: p.name, status: prior || oldPost ? 'posted' : 'draft', attempts: 0,
+        const job = { key: p.key, name: p.name, status: prior || oldPost ? 'posted' : 'draft', attempts: 0 };
+        try { return { ...job,
           ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(media) };
+        } catch (error) {
+          if (options.instagramOnly || !p.key.startsWith('instagram:')) throw error;
+          return { ...job, status: 'blocked', preparationFailed: true, error: error.message, payload: { text: '' } };
+        }
       })
     };
-    state.batches.push(batch);
+    if (existing && !existing.approved) state.batches.splice(state.batches.indexOf(existing), 1, batch);
+    else state.batches.push(batch);
     save();
     return batch;
   }
   const get = (id) => state.batches.find((b) => b.id === id);
   function validate(batch, checkChannels = true) {
     if (!batch) throw new Error('Предпросмотр не найден. Создайте новый.');
-    if (revision(carById(batch.carId)) !== batch.revision) throw new Error('Карточка изменилась. Создайте новый предпросмотр.');
+    const car = carById(batch.carId);
+    if (batch.reelIndex !== undefined && reelAsset(car, batch.reelIndex).key !== batch.assetKey) throw new Error('Видео изменилось. Создайте новый предпросмотр.');
+    if (revision(car) !== batch.revision) throw new Error('Карточка изменилась. Создайте новый предпросмотр.');
     const currentPublishers = publishers();
     const keys = currentPublishers.map((p) => p.key);
     if (!batch.approved && (!batch.assetKey || batch.assetKey === 'listing') && batch.jobs.some(job =>
@@ -143,7 +169,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
   function cancelSchedule(id) {
     const batch = get(id);
     if (!batch?.approved || !batch.scheduledAt || Date.parse(batch.scheduledAt) <= now().getTime() ||
-        batch.jobs.some((job) => job.status !== 'queued' && job.status !== 'posted')) {
+        batch.jobs.some((job) => !job.preparationFailed && job.status !== 'queued' && job.status !== 'posted')) {
       throw new Error('Время уже наступило или публикация не запланирована');
     }
     batch.approved = false;
@@ -174,7 +200,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     const batch = get(id);
     validate(batch, false);
     if (!batch.approved) throw new Error('Сначала подтвердите публикацию');
-    for (const job of batch.jobs) if (['failed', 'blocked', 'retry'].includes(job.status)) {
+    for (const job of batch.jobs) if (!job.preparationFailed && ['failed', 'blocked', 'retry'].includes(job.status)) {
       job.status = 'queued';
       job.attempts = 0;
       delete job.nextAt;
@@ -196,11 +222,11 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
           }
           const publisher = publishers().find((p) => p.key === job.key);
           if (!publisher) { job.status = 'blocked'; job.error = 'Канал отключён'; save(); changed = true; continue; }
-          const prior = postedJob(batch.carId, batch.revision, job.key);
+          const prior = postedJob(batch.carId, batch.revision, job.key, batch.assetKey);
           if (prior) { job.status = 'posted'; job.receipt = prior.receipt; job.postedAt = prior.postedAt; save(); changed = true; continue; }
           job.status = 'sending'; job.attempts++; save();
           try {
-            const receipt = await publisher.post(job.payload);
+            const receipt = await publisher.post(job.payload, { approved: batch.approved });
             job.status = 'posted'; job.receipt = receipt; job.postedAt = now().toISOString(); delete job.error;
           } catch (error) {
             job.error = error.message.slice(0, 300);

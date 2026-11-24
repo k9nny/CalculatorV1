@@ -32,7 +32,7 @@ const PRIVATE = {
   'X-Frame-Options': 'DENY',
   'X-Content-Type-Options': 'nosniff',
   'Cache-Control': 'no-store',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
 };
 
 // Картинка ли это на самом деле — по первым байтам, а не по заявленному типу.
@@ -111,6 +111,7 @@ function createAdmin(config, opts = {}) {
   const vk = opts.vk || null;
   const afterPublish = opts.afterPublish || null;
   const social = opts.social || null;
+  const instagram = opts.instagram;
   const specs = opts.specs || null;
   const siteBase = (req) => {
     if (config.siteUrl) return String(config.siteUrl).replace(/\/?$/, '/');
@@ -441,6 +442,15 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    if (pathname === '/api/admin/instagram' && instagram) {
+      if (m === 'GET') return json(res, 200, instagram.status());
+      if (m === 'POST') {
+        const body = await readJson(req);
+        try { return json(res, 200, await instagram.attach(body.accessToken, body.expiresAt)); }
+        catch (error) { return json(res, 400, { error: error.message }); }
+      }
+    }
+
     if (pathname === '/api/admin/social' && m === 'GET') {
       if (!social) return json(res, 503, { error: 'Автопостинг не настроен' });
       return json(res, 200, { batches: social.list(), channels: social.channels() });
@@ -451,7 +461,15 @@ function createAdmin(config, opts = {}) {
       if (!social) return json(res, 503, { error: 'Автопостинг не настроен' });
       try {
         let batch;
-        if (socialPreview) batch = await social.preview(decodeURIComponent(socialPreview[1]), { enhance: true });
+        if (socialPreview) {
+          const body = await readJson(req);
+          const instagramOnly = body?.platform === 'instagram';
+          const reelIndex = body?.reelIndex;
+          if (reelIndex !== undefined && (!instagramOnly || !Number.isInteger(reelIndex) || reelIndex < 0 || reelIndex >= MAX_VIDEOS)) {
+            return json(res, 400, { error: 'Выберите MP4 для Reels.' });
+          }
+          batch = await social.preview(decodeURIComponent(socialPreview[1]), { enhance: true, instagramOnly, reelIndex });
+        }
         else if (m === 'POST' && socialAction[2] === 'approve') {
           const options = await readJson(req);
           batch = social.approve(socialAction[1], options?.scheduledAt);

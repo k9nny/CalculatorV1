@@ -78,6 +78,53 @@ test('админка: снимок соцсетей защищён входом,
   }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { vk } });
 });
 
+test('Instagram: безопасно подключается проверенный аккаунт и Reels отделён от поста', async () => {
+  const token = 'fixture-instagram-token';
+  const seen = [];
+  const instagramTransport = async ({url, headers}) => {
+    const pathname = new URL(url).pathname;
+    assert.equal(headers.Authorization, 'Bearer ' + token);
+    seen.push(pathname);
+    if (pathname.endsWith('/me')) return { status: 200, body: { user_id: '741', username: 'andoauto_test' } };
+    assert.match(pathname, /\/741\/content_publishing_limit$/);
+    return { status: 200, body: { data: [{ quota_usage: 0 }] } };
+  };
+  await withAdmin(async ({ call, login, config, base }) => {
+    assert.equal((await call('/api/instagram', { method: 'POST', json: { accessToken: token } })).status, 401);
+    await login();
+    assert.match(await (await fetch(base + '/')).text(), /id="instagram-connect"/);
+    const add = await call('/api/instagram', { method: 'POST', json: { accessToken: token } });
+    assert.equal(add.status, 200);
+    const html = await add.text();
+    assert.match(html, /andoauto_test/);
+    assert.doesNotMatch(html, /fixture-instagram-token/);
+    assert.equal(seen.length, 2);
+    fs.writeFileSync(path.join(config.photosDir, '751-1.jpg'), JPEG);
+    fs.writeFileSync(path.join(config.photosDir, '751-v1.mp4'), Buffer.from('test-video'));
+    const car = { id: '751', make: 'Kia', model: 'Rio', year: 2019, price: 1900000, mileage: 74000,
+      status: 'available', photos: ['img/cars/751-1.jpg'], videos: ['img/cars/751-v1.mp4'] };
+    fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [car] }));
+    const preview = async options => {
+      const res = await call('/api/cars/751/social', { method: 'POST', json: { platform: 'instagram', ...options } });
+      assert.equal(res.status, 200);
+      return (await res.json()).batch;
+    };
+    const post = await preview({});
+    const reel = await preview({ reelIndex: 0 });
+    assert.equal(post.jobs[0].payload.kind, 'IMAGE');
+    assert.match(post.jobs[0].payload.photos[0], /\/api\/social\/photo\/751\/0\/[a-f0-9]+\.jpg$/);
+    assert.equal(reel.jobs[0].payload.kind, 'REELS');
+    assert.equal(reel.jobs[0].payload.video.url, 'https://andoauto.ru/app/img/cars/751-v1.mp4');
+    assert.equal(reel.jobs.length, 1);
+    assert.notEqual(reel.id, post.id);
+    assert.equal(post.approved, false);
+    assert.equal(reel.approved, false);
+    assert.equal(seen.length, 2);
+    const crm = await (await call('/api/crm')).json();
+    assert.deepEqual(crm.cars[0].publications.map(pub => pub.destination), ['instagram-post', 'instagram-reel']);
+  }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { instagramTransport } });
+});
+
 async function withAdmin(fn, { configure = true, overrides = {}, deps = {} } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-admin-'));
   fs.mkdirSync(path.join(dir, 'photos'));

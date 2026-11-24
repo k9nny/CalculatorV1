@@ -16,6 +16,9 @@ const { createVk } = require('./vk');
 const { createCarSpecs } = require('./car-specs');
 const { createAfterPublish } = require('./after-publish');
 const { createSocial } = require('./social');
+const { createPhotoRenditions } = require('./photo-renditions');
+const { createInstagramSettings } = require('./instagram-settings');
+const { createInstagramPublisher } = require('./social-platforms/meta');
 const { createPostPublishers } = require('./social-publishers');
 const { createMarketPrice } = require('./market-price');
 
@@ -156,7 +159,19 @@ function servicesFor(config, deps = {}) {
     const vk = deps.vk || createVk(config);
     const specs = deps.specs !== undefined ? deps.specs : createCarSpecs(smartParser(config));
     const market = deps.market !== undefined ? deps.market : createMarketPrice(smartParser(config));
-    const social = createSocial({ config, copywriter: deps.copywriter || smartParser(config), publishers: () => createPostPublishers(config, vk),
+    const instagram = createInstagramSettings(config, { request: deps.instagramTransport });
+    const renditions = createPhotoRenditions(config);
+    const publishers = () => {
+      const channels = createPostPublishers(config, vk);
+      const account = instagram.publisherConfig();
+      if (account) {
+        const publisher = createInstagramPublisher(account, { transport: deps.instagramTransport });
+        channels.push({ ...publisher, name: 'Instagram @' + account.instagramUsername,
+          prepare: (media) => publisher.prepare({ ...media, jpegPhotos: media.video ? undefined : renditions.urls(media.car) }) });
+      }
+      return channels;
+    };
+    const social = createSocial({ config, copywriter: deps.copywriter || smartParser(config), publishers,
       notify: async (batch) => {
         if (!config.telegramToken) return;
         const lines = batch.jobs.map((j) => `${j.name}: ${j.status}${j.error ? ' — ' + j.error : ''}${j.receipt?.url ? '\n' + j.receipt.url : ''}`);
@@ -175,8 +190,8 @@ function servicesFor(config, deps = {}) {
         }).catch(() => {});
       }
     });
-    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social };
-    services.set(config.leadsLog, { vk, afterPublish, specs, social });
+    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social, instagram, renditions };
+    services.set(config.leadsLog, { vk, afterPublish, specs, social, instagram, renditions });
   }
   return services.get(config.leadsLog);
 }
@@ -343,7 +358,7 @@ function createApp(config = readConfig(), deps = {}) {
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
   const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser,
     telegram: deps.telegram, restart: deps.restart, ...servicesFor(config, deps) });
-  const { vk } = servicesFor(config, deps);
+  const { vk, renditions } = servicesFor(config, deps);
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 
@@ -351,6 +366,7 @@ function createApp(config = readConfig(), deps = {}) {
     const pathname = (req.url || '/').split('?')[0];
     if (admin.handle(req, res, pathname)) return;
     if (seo.handle(req, res, pathname)) return;
+    if (renditions.handle(req, res, pathname)) return;
     if (pathname === '/api/lead') {
       handleLead(req, res).catch(() => json(res, 500, { error: 'Ошибка сервера' }));
       return;
