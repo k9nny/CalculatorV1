@@ -8,7 +8,7 @@ function telegramPublisher(config, request = postMultipart) {
   const channel = config.postTelegramChannel;
   return {
     key: `telegram:${channel}`, name: `Telegram ${channel}`,
-    template: 'telegram-listing-2',
+    template: 'telegram-listing-3',
     prepare(media) {
       if (media.telegramListing) {
         const draft = telegramDraft(media.car, media.link, config, media.telegramFacts);

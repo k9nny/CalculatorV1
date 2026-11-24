@@ -242,7 +242,8 @@ test('Telegram собирает оформленный пост из подтв�
   assert.equal(prompts, 1);
   const payload = batch.jobs[0].payload;
   assert.match(payload.text, /В продаже Škoda Roomster, 2012 год/);
-  assert.match(payload.text, /280\s000 ₽ · пробег 198\s000 км/);
+  assert.match(payload.text, /🛣 Пробег 198\s000 км/);
+  assert.match(payload.text, /💵 Цена 280\s000 ₽/);
   assert.match(payload.text, /Крыша и дверные проёмы в родной краске/);
   assert.match(payload.text, /Двигатель работает ровно/);
   assert.doesNotMatch(payload.text, /Скол|ржавчина|не работает|https/);

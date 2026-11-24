@@ -97,8 +97,9 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     if (options.expectedRevision && options.expectedRevision !== rev) {
       return preview(id, { ...options, expectedRevision: undefined, telegramFacts: undefined, enhance: true });
     }
-    const telegramTarget = !reel && targets.find(target => target.template);
-    const templates = telegramTarget ? [telegramTarget.template] : undefined;
+    const telegramTarget = !reel && targets.find(target => target.key.startsWith('telegram:') && target.template);
+    const versions = targets.map(target => target.template).filter(Boolean);
+    const templates = versions.length ? versions : undefined;
     const assetKey = reel?.key || 'listing';
     const key = digest({ id, rev, targets: targets.map((p) => p.key), templates, ...(reel && { assetKey }) });
     const existing = state.batches.find((b) => b.key === key);
@@ -123,7 +124,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
         const prior = postedJob(String(id), rev, p.key, assetKey);
         const oldPost = !reel && p.key.startsWith('vk:') && car.vk?.postId &&
           String(car.vk.url || '').includes(`wall-${p.key.slice(3)}_`);
-        const job = { key: p.key, name: p.name, status: prior || oldPost ? 'posted' : 'draft', attempts: 0 };
+        const job = { key: p.key, name: p.name, status: prior || oldPost ? 'posted' : 'draft', attempts: 0, ...(p.template && { template: p.template }) };
         try { return { ...job,
           ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(media) };
         } catch (error) {
@@ -146,7 +147,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     const currentPublishers = publishers();
     const keys = currentPublishers.map((p) => p.key);
     if (!batch.approved && (!batch.assetKey || batch.assetKey === 'listing') && batch.jobs.some(job =>
-      job.status === 'draft' && !job.payload.entities && currentPublishers.some(p => p.key === job.key && p.template))) {
+      job.status === 'draft' && currentPublishers.some(p => p.key === job.key && p.template && job.template !== p.template))) {
       throw new Error('Формат поста обновлён. Подготовьте новый предпросмотр из карточки машины.');
     }
     if (checkChannels && batch.jobs.some((j) => j.status !== 'posted' && !keys.includes(j.key))) throw new Error('Подключения изменились. Проверьте каналы.');

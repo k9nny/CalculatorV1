@@ -16,6 +16,7 @@ const { createVk } = require('./vk');
 const { createCarSpecs } = require('./car-specs');
 const { createAfterPublish } = require('./after-publish');
 const { createSocial } = require('./social');
+const { threadsDraft } = require('./telegram-post');
 const { createPhotoRenditions } = require('./photo-renditions');
 const { createMetaSettings } = require('./meta-settings');
 const { createInstagramPublisher, createThreadsPublisher } = require('./social-platforms/meta');
@@ -174,7 +175,8 @@ function servicesFor(config, deps = {}) {
       if (threadsAccount) {
         const publisher = createThreadsPublisher(threadsAccount, { transport: deps.threadsTransport });
         channels.push({ ...publisher, name: 'Threads @' + threadsAccount.threadsUsername,
-          prepare: media => publisher.prepare({ ...media, photos: [] }) });
+          template: 'threads-listing-2',
+          prepare: media => publisher.prepare({ ...media, photos: [], text: threadsDraft(media.car, media.link) }) });
       }
       return channels;
     };

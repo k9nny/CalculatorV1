@@ -67,10 +67,9 @@ function telegramDraft(car, siteLink, config, facts = officialFacts(car).slice(0
   const model = [car.make, car.model].map(textOf).filter(Boolean).join(' ').slice(0, 96);
   add('🔥 В продаже ' + model + (car.year ? ', ' + car.year + ' год' : ''), 'bold');
   add('\n\n');
-  add(fmt(car.price) + ' ₽', 'bold');
-  if (car.mileage != null) add(' · пробег ' + fmt(car.mileage) + ' км');
+  if (car.mileage != null) add('🛣 Пробег ' + fmt(car.mileage) + ' км');
   const specs = [car.engine?.volume ? 'Двигатель ' + fmt(car.engine.volume) + ' л' : '', textOf(car.transmission), textOf(car.drive)].filter(Boolean);
-  if (specs.length) add('\n' + specs.join(' · ').slice(0, 100));
+  if (specs.length) add((car.mileage != null ? '\n' : '') + '⚙️ ' + specs.join(' · ').slice(0, 100));
 
   const groups = new Map();
   for (const { section, text } of facts) {
@@ -81,14 +80,33 @@ function telegramDraft(car, siteLink, config, facts = officialFacts(car).slice(0
   for (const [section, details] of groups) {
     add('\n\n');
     add(icons[section] + ' ' + section, 'bold');
-    add('\n' + details.join(section === 'Оснащение' ? ', ' : ' '));
+    for (const detail of details) add('\n✅ ' + detail);
   }
-  if (car.city) add('\n\n📍 ' + textOf(car.city).slice(0, 70));
-  add('\n\nФотографии, описание и запись на осмотр в карточке машины.\n\n');
+  add('\n\n');
+  add('💵 Цена ' + fmt(car.price) + ' ₽', 'bold');
+  if (car.city) add('\n📍 ' + textOf(car.city).slice(0, 70));
+  add('\n\n👇 Фото и запись на осмотр\n\n');
   add(SITE_LABEL, 'text_link', siteLink);
   add('\n');
   add(BOT_LABEL, 'text_link', telegramBotLink(config, car.id));
   return { text, entities };
 }
 
-module.exports = { officialFacts, selectFacts, telegramDraft };
+function threadsDraft(car, link) {
+  const model = [car.make, car.model].map(textOf).filter(Boolean).join(' ').slice(0, 85);
+  const price = fmt(car.price) + ' ₽';
+  const hooks = [
+    '👀 Что бы вы взяли за ' + price + '?',
+    '🔥 ' + model + ' за ' + price + '. Поехали бы смотреть?',
+    '🚗 ' + price + ' на машину. Как вам этот вариант?'
+  ];
+  const index = Array.from(String(car.id || model)).reduce((sum, char) => sum + char.codePointAt(0), 0) % hooks.length;
+  const specs = [car.engine?.volume && fmt(car.engine.volume) + ' л', textOf(car.transmission),
+    car.mileage != null && fmt(car.mileage) + ' км'].filter(Boolean);
+  const details = officialFacts(car).slice(0, 2).map(fact => '✅ ' + fact.text).join('\n');
+  const placement = ['💵 ' + price, car.city && '📍 ' + textOf(car.city)].filter(Boolean).join(' · ');
+  return [hooks[index], ('🚘 ' + model + (car.year ? ' · ' + car.year : '') + (specs.length ? '\n' + specs.join(' · ') : '')),
+    details, placement, '👇 Фото и детали\n' + link].filter(Boolean).join('\n\n');
+}
+
+module.exports = { officialFacts, selectFacts, telegramDraft, threadsDraft };

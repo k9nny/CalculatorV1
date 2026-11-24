@@ -159,6 +159,8 @@ test('Threads: токен проверяется, текст со ссылкой
     const post = await preview({});
     assert.equal(post.jobs.length, 1);
     assert.equal(post.jobs[0].payload.kind, 'TEXT');
+    assert.match(post.jobs[0].payload.text, /^[👀🔥🚗].*\?\n\n🚘/u);
+    assert.match(post.jobs[0].payload.text, /💵 1[\s]900[\s]000 ₽/);
     assert.ok(post.jobs[0].payload.text.endsWith('/cars/751/'));
     assert.equal(post.approved, false);
     assert.equal(seen.length, 2);
