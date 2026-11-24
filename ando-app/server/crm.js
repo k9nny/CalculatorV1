@@ -1,6 +1,52 @@
 'use strict';
 
 const fs = require('node:fs');
+const path = require('node:path');
+const { createQueue, parseTimes, currentSlot } = require('./video/queue');
+
+function legacyVideoBatches(config, now) {
+  if (!config.clipsDir) return [];
+  const queue = createQueue(path.join(config.clipsDir, 'queue.json'));
+  const state = queue.read();
+  const enabled = config.clipsEnabled && config.adminIds?.length && config.telegramToken && config.renderBackend !== 'resolve';
+  const names = enabled ? [
+    config.clipTelegramChannel && 'Telegram',
+    config.vkToken && config.vkGroupId && 'VK'
+  ].filter(Boolean) : [];
+  const slots = names.length ? parseTimes(config.clipTimes) : [];
+  const current = currentSlot(slots, now);
+  const nextItem = slots.length ? queue.next(state) : null;
+  const nextDate = nextItem && (!current || current === state.lastSlot) ? nextClipDate(slots, now) : null;
+  return state.items.filter(item => ['pending', 'approved', 'posted'].includes(item.status)).map(item => {
+    const actual = Object.keys(item.results || {});
+    const destinations = [...new Set([...(item.targets || (item.status === 'posted' ? [] : names)), ...actual])];
+    if (!destinations.length) destinations.push('Видео');
+    return {
+      id: null, assetKey: 'legacy-video:' + item.id, carId: item.carId, kind: 'video',
+      createdAt: item.createdAt, scheduledAt: nextItem?.id === item.id ? nextDate : null,
+      jobs: destinations.map(name => {
+        const result = item.results?.[name];
+        const posted = result === 'ok' || (item.status === 'posted' && !actual.length);
+        const ready = names.includes(name) && slots.length > 0;
+        return { key: 'legacy-video:' + name, name, status: posted ? 'posted' : item.status === 'pending' ? 'draft'
+          : !ready ? 'blocked' : result ? 'retry' : 'queued',
+        nextAt: result && ready && nextItem?.id === item.id ? nextDate : null,
+        postedAt: posted ? item.postedAt : null,
+        error: !posted && (result || (item.status === 'approved' && !ready ? 'Публикация роликов для этой площадки не настроена' : null)) };
+      })
+    };
+  });
+}
+
+function nextClipDate(slots, now) {
+  const local = new Date(now.getTime() + 10800000);
+  const iso = local.toISOString();
+  const ahead = slots.find(slot => slot > iso.slice(11, 16));
+  if (!ahead) local.setUTCDate(local.getUTCDate() + 1);
+  const date = local.toISOString().slice(0, 10) + 'T' + (ahead || slots[0]) + ':00+03:00';
+  const time = Date.parse(date);
+  return Number.isFinite(time) ? new Date(time).toISOString() : null;
+}
 
 function crmCar(car, inCatalog) {
   return {
@@ -147,4 +193,4 @@ function buildCrm(inventory, batches, channels, leads, now, manual = []) {
   return { generatedAt: now.toISOString(), channels, cars: Array.from(cars.values()), totals };
 }
 
-module.exports = { buildCrm, manualEntry, readManual, publicationUrl };
+module.exports = { buildCrm, manualEntry, readManual, publicationUrl, legacyVideoBatches };

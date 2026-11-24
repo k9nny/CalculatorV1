@@ -33,3 +33,33 @@ test('CRM объединяет старую квитанцию VK и копии 
   assert.equal(result.cars[2].title, 'Lada Vesta');
   assert.equal(result.cars[2].inCatalog, false);
 });
+
+test('CRM читает старую очередь роликов, показывает результаты и ближайший слот', () => {
+  const os = require('node:os');
+  const path = require('node:path');
+  const fs = require('node:fs');
+  const { legacyVideoBatches } = require('../server/crm');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-crm-legacy-video-'));
+  try {
+    const items = [
+      { id: '1', status: 'posted', carId: '9', results: { Telegram: 'ok' }, postedAt: '2026-11-24T10:00:00Z' },
+      { id: '2', status: 'approved', carId: '10', targets: ['Telegram'] },
+      { id: '3', status: 'pending', carId: '11', targets: ['VK'] }
+    ];
+    const data = JSON.stringify({ items, lastSlot: '2026-11-24 13:00' });
+    const queueFile = path.join(dir, 'queue.json');
+    fs.writeFileSync(queueFile, data);
+    const now = new Date('2026-11-24T11:00:00Z');
+    const config = { clipsDir: dir, clipsEnabled: true, telegramToken: 'test', clipTelegramChannel:'@test', adminIds:['1'], clipTimes:'13:00, 18:00' };
+    const batches = legacyVideoBatches(config, now);
+    const result = buildCrm([], batches, [], [], now);
+    assert.equal(result.totals.postedVideos, 1);
+    assert.equal(result.totals.scheduled, 1);
+    assert.equal(result.cars[1].publications[0].scheduledAt, '2026-11-24T15:00:00.000Z');
+    assert.equal(result.cars[2].publications[0].status, 'draft');
+    assert.equal(legacyVideoBatches({ ...config, clipsEnabled: false }, now)[1].jobs[0].status, 'blocked');
+    assert.equal(fs.readFileSync(queueFile,'utf8'), data);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

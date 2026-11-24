@@ -4,7 +4,7 @@
 // Защита: админка живёт только по секретному адресу /<slug>/ — slug случайный, создаётся на сервере
 // (server/admin-cli.js) и в репозитории его нет; по любому другому адресу — обычный 404.
 // Пароль задаётся только на сервере, в браузере его создать нельзя. Подбор пароля ограничен.
-const { buildCrm, manualEntry, readManual, publicationUrl } = require('./crm');
+const { buildCrm, manualEntry, readManual, publicationUrl, legacyVideoBatches } = require('./crm');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -265,7 +265,9 @@ function createAdmin(config, opts = {}) {
 
     if (pathname === '/api/admin/crm' && m === 'GET') {
       const inventory = readCatalog(config.carsFile).cars;
-      return json(res, 200, buildCrm(inventory, social?.list(inventory) || [], social?.channels() || [], leadsList(Infinity), now(), readManual(manualFile)));
+      const time = now();
+      const batches = [...(social?.list(inventory) || []), ...legacyVideoBatches(config, time)];
+      return json(res, 200, buildCrm(inventory, batches, social?.channels() || [], leadsList(Infinity), time, readManual(manualFile)));
     }
 
     if (pathname === '/api/admin/crm/publications' && m === 'POST') {
