@@ -245,7 +245,8 @@ test('Telegram собирает оформленный пост из подтв�
   assert.match(payload.text, /🛣 Пробег 198\s000 км/);
   assert.match(payload.text, /💵 Цена 280\s000 ₽/);
   assert.match(payload.text, /Крыша и дверные проёмы в родной краске/);
-  assert.match(payload.text, /Двигатель работает ровно/);
+  assert.match(payload.text, /По описанию продавца/);
+  assert.match(payload.text, /Двигатель работает стабильно/);
   assert.doesNotMatch(payload.text, /Скол|ржавчина|не работает|https/);
   assert.deepEqual(payload.entities.filter(e => e.type === 'text_link').map(e => [payload.text.slice(e.offset, e.offset + e.length), e.url]), [
     ['ПОДРОБНЕЕ НА САЙТЕ', 'https://andoauto.ru/cars/123/'],

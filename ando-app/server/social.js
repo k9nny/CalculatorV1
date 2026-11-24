@@ -128,7 +128,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
         try { return { ...job,
           ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(media) };
         } catch (error) {
-          if (platform || !p.key.startsWith('instagram:')) throw error;
+          if (platform || !/^(instagram|threads):/.test(p.key)) throw error;
           return { ...job, status: 'blocked', preparationFailed: true, error: error.message, payload: { text: '' } };
         }
       })

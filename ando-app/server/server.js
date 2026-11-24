@@ -175,8 +175,13 @@ function servicesFor(config, deps = {}) {
       if (threadsAccount) {
         const publisher = createThreadsPublisher(threadsAccount, { transport: deps.threadsTransport });
         channels.push({ ...publisher, name: 'Threads @' + threadsAccount.threadsUsername,
-          template: 'threads-listing-2',
-          prepare: media => publisher.prepare({ ...media, photos: [], text: threadsDraft(media.car, media.link) }) });
+          template: 'threads-listing-3',
+          prepare: media => {
+            const cover = media.photos[0];
+            const photos = cover && !/\.(?:jpe?g|png)$/i.test(new URL(cover).pathname)
+              ? renditions.urls({ ...media.car, photos: media.car.photos.slice(0, 1) }) : media.photos.slice(0, 1);
+            return publisher.prepare({ ...media, photos, link: '', text: threadsDraft(media.car) });
+          } });
       }
       return channels;
     };

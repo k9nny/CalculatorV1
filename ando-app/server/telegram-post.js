@@ -11,7 +11,7 @@ function officialFacts(car) {
   const facts = [];
   const description = [car.description, car.paint].map(textOf).join(' ').toLowerCase().replace(/ё/g, 'е');
   if (/(?:^|[.!?]\s+)(?:двигатель|мотор)\s+работает ровно(?=[.!?,;]|$)/.test(description)) {
-    facts.push({ section: 'Техника', text: 'Двигатель работает ровно.' });
+    facts.push({ section: 'Техника', text: 'Двигатель работает стабильно.' });
   }
   if (/(?:^|[.!?]\s+)(?:коробка(?: передач)?|кпп)\s+(?:работает (?:отлично|без (?:нареканий|проблем))|без (?:заявленных проблем|замечаний|нареканий))(?=[.!?,;]|$)/.test(description)) {
     facts.push({ section: 'Техника', text: 'По коробке передач замечаний не заявлено.' });
@@ -76,6 +76,7 @@ function telegramDraft(car, siteLink, config, facts = officialFacts(car).slice(0
     if (!groups.has(section)) groups.set(section, []);
     groups.get(section).push(text);
   }
+  if (groups.size) add('\n\nПо описанию продавца:');
   const icons = { Техника: '🔧', Ходовая: '🔧', 'Кузов и салон': '🚘', Оснащение: '📋' };
   for (const [section, details] of groups) {
     add('\n\n');
@@ -92,7 +93,7 @@ function telegramDraft(car, siteLink, config, facts = officialFacts(car).slice(0
   return { text, entities };
 }
 
-function threadsDraft(car, link) {
+function threadsDraft(car) {
   const model = [car.make, car.model].map(textOf).filter(Boolean).join(' ').slice(0, 85);
   const price = fmt(car.price) + ' ₽';
   const hooks = [
@@ -101,12 +102,24 @@ function threadsDraft(car, link) {
     '🚗 ' + price + ' на машину. Как вам этот вариант?'
   ];
   const index = Array.from(String(car.id || model)).reduce((sum, char) => sum + char.codePointAt(0), 0) % hooks.length;
-  const specs = [car.engine?.volume && fmt(car.engine.volume) + ' л', textOf(car.transmission),
-    car.mileage != null && fmt(car.mileage) + ' км'].filter(Boolean);
-  const details = officialFacts(car).slice(0, 2).map(fact => '✅ ' + fact.text).join('\n');
-  const placement = ['💵 ' + price, car.city && '📍 ' + textOf(car.city)].filter(Boolean).join(' · ');
-  return [hooks[index], ('🚘 ' + model + (car.year ? ' · ' + car.year : '') + (specs.length ? '\n' + specs.join(' · ') : '')),
-    details, placement, '👇 Фото и детали\n' + link].filter(Boolean).join('\n\n');
+  const power = car.engine?.power;
+  const engine = [car.engine?.volume && fmt(car.engine.volume) + ' л', power && fmt(power) + ' л.с.'].filter(Boolean).join(' · ');
+  const specs = [engine, textOf(car.transmission).slice(0, 40), car.mileage != null && fmt(car.mileage) + ' км',
+    textOf(car.drive).slice(0, 25)].filter(Boolean);
+  const name = '🚘 ' + model + (car.year ? ' · ' + car.year : '');
+  const placement = ['💵 ' + price, car.city && '📍 ' + textOf(car.city).slice(0, 36)].filter(Boolean).join(' · ');
+  const footer = 'Все машины в профиле';
+  const fromSeller = 'По описанию продавца:';
+  const trim = textOf(car.trim).slice(0, 45);
+  const header = [hooks[index], [name, specs.join(' · '), trim && 'Комплектация ' + trim].filter(Boolean).join('\n')];
+  const lines = [];
+  const units = text => Array.from(text).reduce((sum, ch) => sum + (/\p{Extended_Pictographic}/u.test(ch) ? Buffer.byteLength(ch) : 1), 0);
+  const render = () => [...header, lines.length && [fromSeller, ...lines].join('\n'), placement, footer].filter(Boolean).join('\n\n');
+  for (const fact of officialFacts(car).slice(0, 5)) {
+    lines.push('✅ ' + fact.text);
+    if (units(render()) > 500) lines.pop();
+  }
+  return render();
 }
 
 module.exports = { officialFacts, selectFacts, telegramDraft, threadsDraft };

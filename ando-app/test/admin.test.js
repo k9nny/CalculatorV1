@@ -150,6 +150,8 @@ test('Threads: токен проверяется, текст со ссылкой
     fs.writeFileSync(path.join(config.photosDir, '751-v1.mp4'), Buffer.from('test-video'));
     const car = { id: '751', make: 'Kia', model: 'Rio', year: 2019, price: 1900000, mileage: 74000,
       status: 'available', photos: ['img/cars/751-1.jpg'], videos: ['img/cars/751-v1.mp4'] };
+    car.engine = { volume: 1.6, power: 123 };
+    car.description = 'Двигатель работает ровно.';
     fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [car] }));
     const preview = async options => {
       const res = await call('/api/cars/751/social', { method: 'POST', json: { platform: 'threads', ...options } });
@@ -158,10 +160,14 @@ test('Threads: токен проверяется, текст со ссылкой
     };
     const post = await preview({});
     assert.equal(post.jobs.length, 1);
-    assert.equal(post.jobs[0].payload.kind, 'TEXT');
+    assert.equal(post.jobs[0].payload.kind, 'IMAGE');
+    assert.deepEqual(post.jobs[0].payload.photos, ['https://andoauto.ru/app/img/cars/751-1.jpg']);
     assert.match(post.jobs[0].payload.text, /^[👀🔥🚗].*\?\n\n🚘/u);
     assert.match(post.jobs[0].payload.text, /💵 1[\s]900[\s]000 ₽/);
-    assert.ok(post.jobs[0].payload.text.endsWith('/cars/751/'));
+    assert.match(post.jobs[0].payload.text, /123 л\.с\./);
+    assert.match(post.jobs[0].payload.text, /По описанию продавца:\n✅ Двигатель работает стабильно/);
+    assert.doesNotMatch(post.jobs[0].payload.text, /https?:\/\//);
+    assert.ok(post.jobs[0].payload.text.endsWith('Все машины в профиле'));
     assert.equal(post.approved, false);
     assert.equal(seen.length, 2);
   }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { threadsTransport } });

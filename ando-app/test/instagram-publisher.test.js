@@ -196,6 +196,20 @@ test('Threads: короткая подпись со ссылкой, выдерж
   assert.equal(new URLSearchParams(requests[0].body).get('media_type'), 'TEXT');
 });
 
+test('Threads отправляет обложку автомобиля и подпись без ссылки', async (t) => {
+  const h = fixture(t), requests = [];
+  const p = createThreadsPublisher(h.config, { transport: metaTransport('threads', requests), now: h.now });
+  const caption = 'Все машины в профиле';
+  const payload = p.prepare({ ...MEDIA, photos: MEDIA.photos.slice(0, 1), text: caption, link: '' });
+  await assert.rejects(p.post(payload, APPROVED), (e) => e.retryable);
+  const body = new URLSearchParams(requests.find(r => r.url.endsWith('/threads')).body);
+  assert.equal(body.get('media_type'), 'IMAGE');
+  assert.equal(body.get('image_url'), MEDIA.photos[0]);
+  assert.equal(body.get('text'), caption);
+  h.advance(30000);
+  assert.equal((await p.post(payload, APPROVED)).id, '9000');
+});
+
 test('Threads: emoji учитываются в лимите, ссылка сохраняется целиком', (t) => {
   const h = fixture(t);
   const p = createThreadsPublisher(h.config, { now: h.now });
