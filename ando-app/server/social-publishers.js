@@ -1,13 +1,19 @@
 'use strict';
 
 const path = require('node:path');
+const { telegramDraft } = require('./telegram-post');
 const { postMultipart } = require('./video/publish');
 
 function telegramPublisher(config, request = postMultipart) {
   const channel = config.postTelegramChannel;
   return {
     key: `telegram:${channel}`, name: `Telegram ${channel}`,
+    template: 'telegram-listing-2',
     prepare(media) {
+      if (media.telegramListing) {
+        const draft = telegramDraft(media.car, media.link, config, media.telegramFacts);
+        return { ...draft, photo: media.car.photos?.[0] || null, photoUrl: media.photos[0] || null, link: media.link };
+      }
       const text = media.text.length <= 1024 ? media.text : media.text.slice(0, 850) + `…\nПодробнее в карточке\n${media.link}`;
       return { text, photo: media.car.photos?.[0] || null, photoUrl: media.photos[0] || null, link: media.link };
     },
@@ -20,7 +26,10 @@ function telegramPublisher(config, request = postMultipart) {
         photo = { field: 'photo', path: file, type: /\.png$/i.test(file) ? 'image/png' : 'image/jpeg' };
       } else if (payload.photo && /^https:\/\//.test(payload.photo)) fields.photo = payload.photo;
       const method = photo || fields.photo ? 'sendPhoto' : 'sendMessage';
-      fields[method === 'sendPhoto' ? 'caption' : 'text'] = payload.text;
+      const hasPhoto = method === 'sendPhoto';
+      fields[hasPhoto ? 'caption' : 'text'] = payload.text;
+      if (payload.entities) fields[hasPhoto ? 'caption_entities' : 'entities'] = JSON.stringify(payload.entities);
+      if (!hasPhoto && payload.entities) fields.link_preview_options = JSON.stringify({ is_disabled: true });
       let result;
       try { result = await request(`${base}/bot${config.telegramToken}/${method}`, fields, photo); }
       catch (error) {

@@ -156,7 +156,7 @@ function servicesFor(config, deps = {}) {
     const vk = deps.vk || createVk(config);
     const specs = deps.specs !== undefined ? deps.specs : createCarSpecs(smartParser(config));
     const market = deps.market !== undefined ? deps.market : createMarketPrice(smartParser(config));
-    const social = createSocial({ config, publishers: () => createPostPublishers(config, vk),
+    const social = createSocial({ config, copywriter: deps.copywriter || smartParser(config), publishers: () => createPostPublishers(config, vk),
       notify: async (batch) => {
         if (!config.telegramToken) return;
         const lines = batch.jobs.map((j) => `${j.name}: ${j.status}${j.error ? ' — ' + j.error : ''}${j.receipt?.url ? '\n' + j.receipt.url : ''}`);

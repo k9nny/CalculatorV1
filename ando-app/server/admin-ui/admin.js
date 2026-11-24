@@ -542,6 +542,21 @@
   }, 15000);
 
   var socialBatch = null;
+  function socialText(payload) {
+    if (!payload.entities) return esc(payload.text);
+    var cursor = 0;
+    var html = payload.entities.map(function (entity) {
+      var before = esc(payload.text.slice(cursor, entity.offset));
+      cursor = entity.offset + entity.length;
+      var text = esc(payload.text.slice(entity.offset, cursor));
+      if (entity.type === 'bold') return before + '<strong>' + text + '</strong>';
+      if (entity.type === 'text_link' && /^https:\/\//.test(entity.url)) {
+        return before + '<a href="' + esc(entity.url) + '" target="_blank" rel="noopener noreferrer">' + text + '</a>';
+      }
+      return before + text;
+    }).join('');
+    return html + esc(payload.text.slice(cursor));
+  }
   function showSocial(batch) {
     if (!socialBatch || socialBatch.id !== batch.id || batch.approved) $('social-date').value = '';
     socialBatch = batch;
@@ -551,7 +566,7 @@
       return '<section><h3>' + esc(job.name) + '</h3><p>' + esc(publicationState(batch, job)) +
         (job.payload.privacyStatus ? ' · видимость: ' + esc({ public: 'публично', unlisted: 'по ссылке', private: 'только владелец' }[job.payload.privacyStatus] || job.payload.privacyStatus) : '') + '</p>' +
         (job.payload.video && /^https:\/\//.test(job.payload.video.url || '') ? '<video controls preload="metadata" src="' + esc(job.payload.video.url) + '"></video>' : '') +
-        '<p class="social-text">' + esc(job.payload.text) + '</p>' +
+        '<p class="social-text">' + socialText(job.payload) + '</p>' +
         '<div class="social-photos">' + photos.map(function (src) {
           var url = /^https:\/\//.test(src) ? src : '../' + src;
           return '<img src="' + esc(url) + '" alt="Фото машины">';

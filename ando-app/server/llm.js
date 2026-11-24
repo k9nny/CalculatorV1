@@ -295,7 +295,7 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
   // Произвольный запрос к модели. webSearch — встроенный поиск Kimi ($web_search): модель сама ищет в интернете.
   // Посредник или модель без поиска — повторяем без него (тогда модель отвечает по своим знаниям).
   let noWebSearch = false;
-  async function complete(messages, { webSearch = false, maxTokens = 3000 } = {}) {
+  async function complete(messages, { webSearch = false, maxTokens = 3000, requestTimeoutMs } = {}) {
     const { baseUrl, apiKey, model, timeoutMs, enabled } = conf();
     if (!enabled) throw new Error('нейросеть не подключена');
     const url = baseUrl.replace(/\/+$/, '') + '/chat/completions';
@@ -309,10 +309,10 @@ function createSmartParser(source = {}, { post = postJson, log = console.log } =
       if (useSearch) body.tools = [{ type: 'builtin_function', function: { name: '$web_search' } }];
       let res;
       try {
-        res = await post(url, body, auth, Math.max(timeoutMs, 120000));
+        res = await post(url, body, auth, requestTimeoutMs || Math.max(timeoutMs, 120000));
       } catch (e) {
-        if (useSearch && round === 0 && /HTTP (400|404|422)/.test(e.message)) { noWebSearch = true; return complete(messages, { webSearch: false, maxTokens }); }
-        if (compat < 1 && /temperature/i.test(e.message)) { compat = 1; return complete(messages, { webSearch, maxTokens }); }
+        if (useSearch && round === 0 && /HTTP (400|404|422)/.test(e.message)) { noWebSearch = true; return complete(messages, { webSearch: false, maxTokens, requestTimeoutMs }); }
+        if (compat < 1 && /temperature/i.test(e.message)) { compat = 1; return complete(messages, { webSearch, maxTokens, requestTimeoutMs }); }
         throw e;
       }
       const choice = res && res.choices && res.choices[0];

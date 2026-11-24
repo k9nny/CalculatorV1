@@ -218,3 +218,42 @@ test('сохранение карточки не обходит подтверж
   await after.publish(h.car);
   assert.equal(posts, 0); assert.equal(previews, 1);
 });
+
+test('Telegram собирает оформленный пост из подтверждённых фактов и отправляет гиперссылки', async (t) => {
+  const h = setup(t);
+  let prompts = 0;
+  const requests = [];
+  h.update({ make: 'Škoda', model: 'Roomster', year: 2012, price: 280000, mileage: 198000,
+    description: 'Двигатель работает ровно. Коробка передач без заявленных проблем. Есть ржавчина.',
+    paint: 'Крыша и проёмы — родная краска.',
+    features: ['климат-контроль', 'камера не работает', 'вмятина'] });
+  const copywriter = { enabled: true, async complete(messages) {
+    prompts++;
+    assert.doesNotMatch(messages[1].content, /ржавчина|вмятина|не работает/);
+    return { content: '[3,1,2,4,999]' };
+  } };
+  const publisher = telegramPublisher(h.config, async (url, fields) => {
+    requests.push(fields);
+    return { ok: true, result: { message_id: 42 } };
+  });
+  const social = createSocial({ ...h.deps, copywriter, publishers: () => [publisher] });
+  const [batch, repeat] = await Promise.all([social.preview('123', { enhance: true }), social.preview('123', { enhance: true })]);
+  assert.equal(batch.id, repeat.id);
+  assert.equal(prompts, 1);
+  const payload = batch.jobs[0].payload;
+  assert.match(payload.text, /В продаже Škoda Roomster, 2012 год/);
+  assert.match(payload.text, /280\s000 ₽ · пробег 198\s000 км/);
+  assert.match(payload.text, /Крыша и дверные проёмы в родной краске/);
+  assert.match(payload.text, /Двигатель работает ровно/);
+  assert.doesNotMatch(payload.text, /Скол|ржавчина|не работает|https/);
+  assert.deepEqual(payload.entities.filter(e => e.type === 'text_link').map(e => [payload.text.slice(e.offset, e.offset + e.length), e.url]), [
+    ['ПОДРОБНЕЕ НА САЙТЕ', 'https://andoauto.ru/cars/123/'],
+    ['ПОДРОБНЕЕ В БОТЕ', 'https://t.me/andoavtobot/cars?startapp=car_123']
+  ]);
+  await social.tick();
+  assert.equal(requests.length, 0);
+  social.approve(batch.id);
+  await social.tick();
+  assert.equal(requests[0].caption, payload.text);
+  assert.deepEqual(JSON.parse(requests[0].caption_entities), payload.entities);
+});

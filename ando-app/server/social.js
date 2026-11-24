@@ -4,12 +4,13 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { readCatalog } = require('./catalog');
+const { officialFacts, selectFacts } = require('./telegram-post');
 
 const digest = (value) => crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');
 
 // Один процесс сервера владеет журналом. sending после рестарта требует сверки:
 // площадка могла принять запрос до обрыва соединения.
-function createSocial({ config, publishers, now = () => new Date(), notify = async () => {} }) {
+function createSocial({ config, publishers, copywriter, now = () => new Date(), notify = async () => {} }) {
   const file = path.join(path.dirname(config.leadsLog), 'social.json');
   let state;
   try { state = JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -18,6 +19,7 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
     state = { batches: [] };
   }
   if (!Array.isArray(state.batches)) throw new Error('Повреждён журнал публикаций');
+  const draftsInProgress = new Map();
   let busy = false;
   let timer;
   const save = () => {
@@ -69,17 +71,32 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
     return state.batches.filter((b) => b.carId === carId && b.revision === rev)
       .flatMap((b) => b.jobs).find((j) => j.key === key && j.status === 'posted');
   }
-  function preview(id) {
+  function preview(id, options = {}) {
     const car = carById(id);
     const media = content(car);
     const targets = publishers();
     if (!targets.length) throw new Error('Каналы не подключены. /social — настройки');
     const rev = revision(car);
-    const key = digest({ id, rev, targets: targets.map((p) => p.key) });
+    if (options.expectedRevision && options.expectedRevision !== rev) {
+      return preview(id, { ...options, expectedRevision: undefined, telegramFacts: undefined, enhance: true });
+    }
+    const telegramTarget = !options.video && targets.find(target => target.template);
+    const templates = telegramTarget ? [telegramTarget.template] : undefined;
+    const key = digest({ id, rev, targets: targets.map((p) => p.key), templates });
     const existing = state.batches.find((b) => b.key === key);
     if (existing) return existing;
     const pending = state.batches.find((b) => b.carId === String(id) && b.revision === rev && b.approved && b.jobs.some((j) => j.status !== 'posted'));
     if (pending) return pending;
+    const needsTelegramDraft = telegramTarget && !postedJob(String(id), rev, telegramTarget.key);
+    if (needsTelegramDraft && options.enhance && copywriter?.enabled) {
+      if (draftsInProgress.has(key)) return draftsInProgress.get(key);
+      const generation = selectFacts(officialFacts(car), copywriter)
+        .then(telegramFacts => preview(id, { ...options, enhance: false, expectedRevision: rev, telegramFacts }))
+        .finally(() => draftsInProgress.delete(key));
+      draftsInProgress.set(key, generation);
+      return generation;
+    }
+    if (telegramTarget) Object.assign(media, { telegramListing: true, telegramFacts: options.telegramFacts });
     const batch = {
       id: crypto.randomBytes(8).toString('hex'), key, carId: String(id), revision: rev,
       createdAt: now().toISOString(), approved: false,
@@ -88,7 +105,7 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
         const oldPost = p.key.startsWith('vk:') && car.vk?.postId &&
           String(car.vk.url || '').includes(`wall-${p.key.slice(3)}_`);
         return { key: p.key, name: p.name, status: prior || oldPost ? 'posted' : 'draft', attempts: 0,
-          ...(prior || oldPost ? { receipt: prior?.receipt || car.vk } : {}), payload: p.prepare(media) };
+          ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(media) };
       })
     };
     state.batches.push(batch);
@@ -99,7 +116,12 @@ function createSocial({ config, publishers, now = () => new Date(), notify = asy
   function validate(batch, checkChannels = true) {
     if (!batch) throw new Error('Предпросмотр не найден. Создайте новый.');
     if (revision(carById(batch.carId)) !== batch.revision) throw new Error('Карточка изменилась. Создайте новый предпросмотр.');
-    const keys = publishers().map((p) => p.key);
+    const currentPublishers = publishers();
+    const keys = currentPublishers.map((p) => p.key);
+    if (!batch.approved && (!batch.assetKey || batch.assetKey === 'listing') && batch.jobs.some(job =>
+      job.status === 'draft' && !job.payload.entities && currentPublishers.some(p => p.key === job.key && p.template))) {
+      throw new Error('Формат поста обновлён. Подготовьте новый предпросмотр из карточки машины.');
+    }
     if (checkChannels && batch.jobs.some((j) => j.status !== 'posted' && !keys.includes(j.key))) throw new Error('Подключения изменились. Проверьте каналы.');
   }
   function approve(id, scheduledAt) {

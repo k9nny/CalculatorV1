@@ -1,0 +1,94 @@
+'use strict';
+
+const SITE_LABEL = 'ПОДРОБНЕЕ НА САЙТЕ';
+const BOT_LABEL = 'ПОДРОБНЕЕ В БОТЕ';
+
+function textOf(value) {
+  return String(value ?? '').replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
+function officialFacts(car) {
+  const facts = [];
+  const description = [car.description, car.paint].map(textOf).join(' ').toLowerCase().replace(/ё/g, 'е');
+  if (/(?:^|[.!?]\s+)(?:двигатель|мотор)\s+работает ровно(?=[.!?,;]|$)/.test(description)) {
+    facts.push({ section: 'Техника', text: 'Двигатель работает ровно.' });
+  }
+  if (/(?:^|[.!?]\s+)(?:коробка(?: передач)?|кпп)\s+(?:работает (?:отлично|без (?:нареканий|проблем))|без (?:заявленных проблем|замечаний|нареканий))(?=[.!?,;]|$)/.test(description)) {
+    facts.push({ section: 'Техника', text: 'По коробке передач замечаний не заявлено.' });
+  }
+  if (/(?:^|[.!?]\s+)(?:ходовая|подвеска)(?:\s+[—–-])?\s+без (?:нареканий|замечаний)(?=[.!?,;]|$)/.test(description)) {
+    facts.push({ section: 'Ходовая', text: 'По ходовой части замечаний не заявлено.' });
+  }
+  if (/крыша и (?:дверные )?проемы\s*(?:[—–-]\s*|в\s+)?родн(?:ая|ой) краск[ае](?=[.!?,;]|$)/.test(description)) {
+    facts.push({ section: 'Кузов и салон', text: 'Крыша и дверные проёмы в родной краске.' });
+  }
+  const features = [...new Set((Array.isArray(car.features) ? car.features : []).map(textOf))]
+    .filter(feature => /^[а-яёa-z0-9][а-яёa-z0-9 .–-]{1,45}$/i.test(feature)
+      && /климат|кондиционер|круиз|камер[аы]|парктроник|подогрев|обогрев|кожан|электропривод|датчик|люк|carplay|android auto|мультируль|навигац/i.test(feature)
+      && !/(сня[тл]|проблем|требуе|ошиб|неисправ|недостат|ремонт|скол|царап|вмят|корроз|ржав|тресн|слом|отказ|порван|не работает|не исправ|нет |без )/i.test(feature));
+  for (const feature of features.slice(0, 8)) facts.push({ section: 'Оснащение', text: feature });
+  return facts;
+}
+
+async function selectFacts(facts, model) {
+  const fallback = facts.slice(0, 5);
+  if (!model?.enabled || !facts.length) return fallback;
+  try {
+    const result = await model.complete([
+      { role: 'system', content: 'Ты редактор объявлений ANDO AUTO. Для поста в Telegram отбирай до пяти фактов. Сначала техника, затем кузов и самое полезное оснащение. Без лозунгов, оценок и новых сведений. Ответь только JSON-массивом номеров от 1 до числа фактов, в нужном порядке.' },
+      { role: 'user', content: JSON.stringify(facts.map((fact, i) => ({ number: i + 1, ...fact }))) }
+    ], { maxTokens: 180, requestTimeoutMs: 8000 });
+    const numbers = JSON.parse(result.content.trim().replace(/^```(?:json)?\s*|\s*```$/gi, ''));
+    if (!Array.isArray(numbers)) return fallback;
+    const selected = [...new Set(numbers)].filter(n => Number.isInteger(n) && n >= 1 && n <= facts.length).slice(0, 5);
+    return selected.length ? selected.map(number => facts[number - 1]) : fallback;
+  } catch { return fallback; }
+}
+
+function telegramBotLink(config, id) {
+  const app = config.appLink || 'https://t.me/andoavtobot/cars';
+  try {
+    let url = new URL(app);
+    if (url.protocol !== 'https:' || url.hostname !== 't.me') url = new URL('https://t.me/andoavtobot/cars');
+    url.searchParams.set('startapp', 'car_' + id);
+    return url.href;
+  } catch { return 'https://t.me/andoavtobot/cars?startapp=' + encodeURIComponent('car_' + id); }
+}
+
+const fmt = (value) => Number(value).toLocaleString('ru-RU');
+
+function telegramDraft(car, siteLink, config, facts = officialFacts(car).slice(0, 5)) {
+  let text = '';
+  const entities = [];
+  function add(fragment, type, url) {
+    if (type) entities.push({ type, offset: text.length, length: fragment.length, ...(url && { url }) });
+    text += fragment;
+  }
+  const model = [car.make, car.model].map(textOf).filter(Boolean).join(' ').slice(0, 96);
+  add('🔥 В продаже ' + model + (car.year ? ', ' + car.year + ' год' : ''), 'bold');
+  add('\n\n');
+  add(fmt(car.price) + ' ₽', 'bold');
+  if (car.mileage != null) add(' · пробег ' + fmt(car.mileage) + ' км');
+  const specs = [car.engine?.volume ? 'Двигатель ' + fmt(car.engine.volume) + ' л' : '', textOf(car.transmission), textOf(car.drive)].filter(Boolean);
+  if (specs.length) add('\n' + specs.join(' · ').slice(0, 100));
+
+  const groups = new Map();
+  for (const { section, text } of facts) {
+    if (!groups.has(section)) groups.set(section, []);
+    groups.get(section).push(text);
+  }
+  const icons = { Техника: '🔧', Ходовая: '🔧', 'Кузов и салон': '🚘', Оснащение: '📋' };
+  for (const [section, details] of groups) {
+    add('\n\n');
+    add(icons[section] + ' ' + section, 'bold');
+    add('\n' + details.join(section === 'Оснащение' ? ', ' : ' '));
+  }
+  if (car.city) add('\n\n📍 ' + textOf(car.city).slice(0, 70));
+  add('\n\nФотографии, описание и запись на осмотр в карточке машины.\n\n');
+  add(SITE_LABEL, 'text_link', siteLink);
+  add('\n');
+  add(BOT_LABEL, 'text_link', telegramBotLink(config, car.id));
+  return { text, entities };
+}
+
+module.exports = { officialFacts, selectFacts, telegramDraft };

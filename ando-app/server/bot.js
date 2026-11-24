@@ -308,12 +308,16 @@ function createBot(options) {
   async function socialPreview(chatId, carId) {
     if (!social) return send(chatId, 'Автопостинг не настроен на сервере.');
     try {
-      const batch = social.preview(carId);
+      const batch = await social.preview(carId, { enhance: true });
       for (const job of batch.jobs) {
         const firstPhoto = job.payload.photoUrl || job.payload.photos?.[0];
         if (firstPhoto) await api.request('sendPhoto', { chat_id: chatId, photo: firstPhoto }).catch(() => {});
         const text = `${job.name}\n\n${job.payload.text}`;
-        for (let i = 0; i < text.length; i += 3000) await send(chatId, esc(text.slice(i, i + 3000)));
+        if (job.payload.entities) {
+          await api.request('sendMessage', { chat_id: chatId, text: job.payload.text, entities: job.payload.entities, disable_web_page_preview: true });
+        } else {
+          for (let i = 0; i < text.length; i += 3000) await send(chatId, esc(text.slice(i, i + 3000)));
+        }
         const photos = job.payload.photos || (job.payload.photo ? [job.payload.photo] : []);
         if (photos.length) await send(chatId, 'Фото в публикации:\n' + photos.map((p) => esc(p)).join('\n'));
       }

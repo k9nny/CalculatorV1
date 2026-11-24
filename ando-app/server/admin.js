@@ -451,7 +451,7 @@ function createAdmin(config, opts = {}) {
       if (!social) return json(res, 503, { error: 'Автопостинг не настроен' });
       try {
         let batch;
-        if (socialPreview) batch = social.preview(decodeURIComponent(socialPreview[1]));
+        if (socialPreview) batch = await social.preview(decodeURIComponent(socialPreview[1]), { enhance: true });
         else if (m === 'POST' && socialAction[2] === 'approve') {
           const options = await readJson(req);
           batch = social.approve(socialAction[1], options?.scheduledAt);
