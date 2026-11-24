@@ -69,7 +69,7 @@
     if (name === 'cars') loadCars();
     if (name === 'publications') loadPublications();
     if (name === 'leads') loadLeads();
-    if (name === 'settings') { loadLlm(); loadTg(); loadVk(); loadInstagram(); }
+    if (name === 'settings') { loadLlm(); loadTg(); loadVk(); loadMetaAccount('instagram'); loadMetaAccount('threads'); }
     window.scrollTo(0, 0);
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { openTab(b.dataset.tab); }); });
@@ -295,7 +295,7 @@
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
           '<button class="btn btn-ghost" type="button" data-social>Посты в соцсети</button>' +
-          (c.status === 'available' && !c.demo ? '<button class="btn btn-ghost" type="button" data-instagram-post>Пост Instagram</button>' +
+          (c.status === 'available' && !c.demo ? '<button class="btn btn-ghost" type="button" data-instagram-post>Пост Instagram</button><button class="btn btn-ghost" type="button" data-threads-post>Пост Threads</button>' +
             (c.videos || []).map(function (src, index) {
               return /[.]mp4$/i.test(src) ? '<button class="btn btn-ghost" type="button" data-instagram-reel="' + index +
                 '">Reels · видео ' + (index + 1) + '</button>' : '';
@@ -358,9 +358,9 @@
       .catch(function (err) { toast(err.message, true); btn.disabled = false; btn.textContent = 'Добавить видео'; });
   });
   $('cars').addEventListener('click', function (e) {
-    var socialButton = e.target.closest('[data-social], [data-instagram-post], [data-instagram-reel]');
+    var socialButton = e.target.closest('[data-social], [data-instagram-post], [data-instagram-reel], [data-threads-post]');
     if (socialButton) {
-      var options = socialButton.hasAttribute('data-social') ? {} : { platform: 'instagram' };
+      var options = socialButton.hasAttribute('data-social') ? {} : { platform: socialButton.hasAttribute('data-threads-post') ? 'threads' : 'instagram' };
       if (socialButton.hasAttribute('data-instagram-reel')) options.reelIndex = Number(socialButton.dataset.instagramReel);
       api('cars/' + encodeURIComponent(socialButton.closest('.row').dataset.id) + '/social', { method: 'POST', json: options })
         .then(function (d) { showSocial(d.batch); $('social-dialog').showModal(); })
@@ -713,23 +713,27 @@
     api('llm', { method: 'DELETE' }).then(function (data) { showLlm(data); $('llm-result').textContent = ''; }).catch(function (err) { toast(err.message, true); });
   });
 
-  function showInstagram(data) {
-    $('instagram-status').textContent = data.connected ? 'Проверен доступ к публикациям для @' + data.username : 'Instagram не подключён';
+  function showMetaAccount(platform, data) {
+    const name = platform === 'instagram' ? 'Instagram' : 'Threads';
+    $(platform + '-status').textContent = data.connected ? 'Подключён @' + data.username : name + ' не подключён';
   }
-  function loadInstagram() {
-    api('instagram').then(showInstagram).catch(function (err) { $('instagram-error').textContent = err.message; });
+  function loadMetaAccount(platform) {
+    api(platform).then(data => showMetaAccount(platform, data))
+      .catch(err => { $(platform + '-error').textContent = err.message; });
   }
-  $('instagram-connect').addEventListener('submit', function (event) {
-    event.preventDefault();
-    var form = event.currentTarget;
-    var button = form.querySelector('button');
-    var date = $('instagram-expiry').value;
-    button.disabled = true;
-    $('instagram-error').textContent = '';
-    api('instagram', { method: 'POST', json: { accessToken: $('instagram-token').value, expiresAt: date || undefined } })
-      .then(function (data) { form.reset(); showInstagram(data); toast('Instagram подключён'); })
-      .catch(function (err) { $('instagram-error').textContent = err.message; })
-      .finally(function () { button.disabled = false; });
+  ['instagram', 'threads'].forEach(platform => {
+    $(platform + '-connect').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const button = form.querySelector('button');
+      const date = $(platform + '-expiry').value;
+      button.disabled = true;
+      $(platform + '-error').textContent = '';
+      api(platform, { method: 'POST', json: { accessToken: $(platform + '-token').value, expiresAt: date || undefined } })
+        .then(data => { form.reset(); showMetaAccount(platform, data); })
+        .catch(err => { $(platform + '-error').textContent = err.message; })
+        .finally(() => { button.disabled = false; });
+    });
   });
 
   var crm = window.AndoCRM({ api: api, openBatch: function (batch) {

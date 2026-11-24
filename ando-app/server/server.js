@@ -17,8 +17,8 @@ const { createCarSpecs } = require('./car-specs');
 const { createAfterPublish } = require('./after-publish');
 const { createSocial } = require('./social');
 const { createPhotoRenditions } = require('./photo-renditions');
-const { createInstagramSettings } = require('./instagram-settings');
-const { createInstagramPublisher } = require('./social-platforms/meta');
+const { createMetaSettings } = require('./meta-settings');
+const { createInstagramPublisher, createThreadsPublisher } = require('./social-platforms/meta');
 const { createPostPublishers } = require('./social-publishers');
 const { createMarketPrice } = require('./market-price');
 
@@ -159,7 +159,8 @@ function servicesFor(config, deps = {}) {
     const vk = deps.vk || createVk(config);
     const specs = deps.specs !== undefined ? deps.specs : createCarSpecs(smartParser(config));
     const market = deps.market !== undefined ? deps.market : createMarketPrice(smartParser(config));
-    const instagram = createInstagramSettings(config, { request: deps.instagramTransport });
+    const instagram = createMetaSettings(config, 'instagram', { request: deps.instagramTransport });
+    const threads = createMetaSettings(config, 'threads', { request: deps.threadsTransport });
     const renditions = createPhotoRenditions(config);
     const publishers = () => {
       const channels = createPostPublishers(config, vk);
@@ -168,6 +169,12 @@ function servicesFor(config, deps = {}) {
         const publisher = createInstagramPublisher(account, { transport: deps.instagramTransport });
         channels.push({ ...publisher, name: 'Instagram @' + account.instagramUsername,
           prepare: (media) => publisher.prepare({ ...media, jpegPhotos: media.video ? undefined : renditions.urls(media.car) }) });
+      }
+      const threadsAccount = threads.publisherConfig();
+      if (threadsAccount) {
+        const publisher = createThreadsPublisher(threadsAccount, { transport: deps.threadsTransport });
+        channels.push({ ...publisher, name: 'Threads @' + threadsAccount.threadsUsername,
+          prepare: media => publisher.prepare({ ...media, photos: [] }) });
       }
       return channels;
     };
@@ -190,8 +197,8 @@ function servicesFor(config, deps = {}) {
         }).catch(() => {});
       }
     });
-    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social, instagram, renditions };
-    services.set(config.leadsLog, { vk, afterPublish, specs, social, instagram, renditions });
+    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social, instagram, threads, renditions };
+    services.set(config.leadsLog, { vk, afterPublish, specs, social, instagram, threads, renditions });
   }
   return services.get(config.leadsLog);
 }

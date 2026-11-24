@@ -88,9 +88,10 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     const media = content(car);
     const reel = options.reelIndex !== undefined ? reelAsset(car, options.reelIndex) : null;
     if (reel) media.video = reel.video;
-    const targets = publishers().filter(p => (!(options.instagramOnly || reel) || p.key.startsWith('instagram:'))
+    const platform = reel ? 'instagram' : options.platform;
+    const targets = publishers().filter(p => (!platform || p.key.startsWith(platform + ':'))
       && (!p.supports || p.supports(media)));
-    if (!targets.length && (options.instagramOnly || reel)) throw new Error('Подключите Instagram в настройках и добавьте медиа к карточке.');
+    if (!targets.length && platform) throw new Error(platform === 'instagram' ? 'Подключите Instagram в настройках и добавьте медиа к карточке.' : 'Подключите Threads в настройках.');
     if (!targets.length) throw new Error('Каналы не подключены. /social — настройки');
     const rev = revision(car);
     if (options.expectedRevision && options.expectedRevision !== rev) {
@@ -102,7 +103,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     const key = digest({ id, rev, targets: targets.map((p) => p.key), templates, ...(reel && { assetKey }) });
     const existing = state.batches.find((b) => b.key === key);
     if (existing && (existing.approved || !existing.jobs.some(job => job.preparationFailed))) return existing;
-    const pending = !options.instagramOnly && state.batches.find((b) => b.carId === String(id) && b.revision === rev
+    const pending = !platform && state.batches.find((b) => b.carId === String(id) && b.revision === rev
       && (b.assetKey || 'listing') === assetKey && b.approved && b.jobs.some((j) => j.status !== 'posted'));
     if (pending) return pending;
     const needsTelegramDraft = telegramTarget && !postedJob(String(id), rev, telegramTarget.key);
@@ -126,7 +127,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
         try { return { ...job,
           ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(media) };
         } catch (error) {
-          if (options.instagramOnly || !p.key.startsWith('instagram:')) throw error;
+          if (platform || !p.key.startsWith('instagram:')) throw error;
           return { ...job, status: 'blocked', preparationFailed: true, error: error.message, payload: { text: '' } };
         }
       })

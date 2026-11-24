@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createInstagramPublisher } = require('../server/social-platforms/meta');
+const { createInstagramPublisher, createThreadsPublisher } = require('../server/social-platforms/meta');
 
 const APPROVED = { approved: true };
 const MEDIA = { text: 'Kia Rio 2019\nЦена 1 390 000 ₽\nПробег 74 000 км',
@@ -17,7 +17,7 @@ function fixture(t) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-platforms-'));
   t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
   const config = { leadsLog: path.join(dir, 'leads.jsonl'),
-    instagramUserId: '123', instagramAccessToken: 'ig-secret' };
+    instagramUserId: '123', instagramAccessToken: 'ig-secret', threadsUserId: '456', threadsAccessToken: 'threads-secret' };
   let time = Date.parse('2026-11-19T03:00:00Z');
   const now = () => new Date(time);
   return { dir, config, now, advance: (ms) => { time += ms; } };
@@ -179,4 +179,45 @@ test('Meta: ожидающая обработка повторно исполь�
   processing = false;
   await createInstagramPublisher(h.config, opts).post(payload, APPROVED);
   assert.equal(requests.filter((r) => r.url.endsWith('/media')).length, 1);
+});
+test('Threads: короткая подпись со ссылкой, выдержка обработки и checkpoint контейнера', async (t) => {
+  const h = fixture(t), requests = [];
+  const opts = { transport: metaTransport('threads', requests), now: h.now };
+  const p = createThreadsPublisher(h.config, opts);
+  const payload = p.prepare({ ...MEDIA, text: 'А'.repeat(700), photos: [] });
+  assert.ok(Array.from(payload.text).length <= 500);
+  assert.ok(payload.text.endsWith(MEDIA.link));
+  await assert.rejects(p.post(payload, APPROVED), (e) => e.retryable && e.retryAfter === 30);
+  assert.equal(requests.filter((r) => r.url.endsWith('/threads_publish')).length, 0);
+  h.advance(30000);
+  const receipt = await createThreadsPublisher(h.config, opts).post(payload, APPROVED);
+  assert.equal(receipt.id, '9000');
+  assert.equal(requests.filter((r) => r.url.endsWith('/threads')).length, 1);
+  assert.equal(new URLSearchParams(requests[0].body).get('media_type'), 'TEXT');
+});
+
+test('Threads: emoji учитываются в лимите, ссылка сохраняется целиком', (t) => {
+  const h = fixture(t);
+  const p = createThreadsPublisher(h.config, { now: h.now });
+  const payload = p.prepare({ ...MEDIA, text: '🚗'.repeat(500) });
+  const units = Array.from(payload.text).reduce((sum, char) => sum + (/\p{Extended_Pictographic}/u.test(char) ? Buffer.byteLength(char, 'utf8') : 1), 0);
+  assert.ok(units <= 500);
+  assert.ok(payload.text.endsWith(MEDIA.link));
+});
+
+test('Threads: обновление использует th_refresh_token и просроченный токен требует входа', async (t) => {
+  const h = fixture(t), requests = [];
+  h.config.threadsTokenExpiresAt = new Date(h.now().getTime() + 2 * 86400000).toISOString();
+  const p = createThreadsPublisher(h.config, { now: h.now, transport: async (r) => {
+    requests.push(r);
+    const u = new URL(r.url);
+    assert.equal(u.origin, 'https://graph.threads.com');
+    assert.equal(u.searchParams.get('grant_type'), 'th_refresh_token');
+    return ok({ access_token: 'new-threads', expires_in: 5184000 });
+  } });
+  await p.refresh();
+  assert.equal(requests.length, 1);
+  h.config.threadsAccessToken = 'expired-token';
+  h.config.threadsTokenExpiresAt = new Date(h.now().getTime() - 1000).toISOString();
+  await assert.rejects(createThreadsPublisher(h.config, { now: h.now, transport: async () => { throw new Error('unexpected request'); } }).refresh(), /истёк/);
 });

@@ -155,6 +155,21 @@
         </form>
         <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Открыть Meta for Developers</a>
       </div>
+      <div class="block" id="threads-settings">
+        <h2>Threads</h2>
+        <p id="threads-status" class="hint" role="status">Проверяем подключение…</p>
+        <form id="threads-connect" class="llm-form" autocomplete="off">
+          <label class="field">Долгоживущий Threads User Access Token
+            <input id="threads-token" type="password" autocomplete="new-password" required>
+          </label>
+          <label class="field">Дата истечения токена, если известна
+            <input id="threads-expiry" type="date">
+          </label>
+          <button class="btn btn-primary" type="submit">Проверить и подключить</button>
+          <p id="threads-error" class="err" role="alert"></p>
+        </form>
+        <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Открыть Meta for Developers</a>
+      </div>
       <div class="block" id="vk-block">
         <h2>ВКонтакте</h2>
         <p class="hint">Посты с текстом и фото отправляются после предпросмотра в разделе «Машины». Подключите администратора группы через VK ID.</p>

@@ -1,22 +1,23 @@
 'use strict';
 
 const { failure, approved, secureUrl, textWithLink, store, transport, check, numericId, accountPayload } = require('./common');
-const { createInstagramToken } = require('./tokens');
+const { createMetaToken } = require('./tokens');
 
 const inflight = new Map();
 
-function createInstagramPublisher(config, opts = {}) {
+function createMetaPublisher(config, platform, opts = {}) {
   const request = opts.transport || transport;
   const now = opts.now || (() => new Date());
-  const userId = numericId(config.instagramUserId, 'Instagram');
-  const key = `instagram:${userId}`;
-  const name = 'Instagram';
-  const version = config.instagramApiVersion || 'v27.0';
+  const userId = numericId(config[platform + 'UserId'], platform);
+  const key = `${platform}:${userId}`;
+  const instagram = platform === 'instagram';
+  const name = instagram ? 'Instagram' : 'Threads';
+  const version = config[platform + 'ApiVersion'] || (instagram ? 'v27.0' : 'v1.0');
   if (!/^v\d+\.\d+$/.test(version)) throw failure(`${name}: неверная версия API`);
-  const origin = 'https://graph.instagram.com';
-  const token = createInstagramToken(config, opts);
-  const createEndpoint = `${userId}/media`;
-  const publishEndpoint = `${userId}/media_publish`;
+  const origin = instagram ? 'https://graph.instagram.com' : 'https://graph.threads.com';
+  const token = createMetaToken(config, platform, opts);
+  const createEndpoint = `${userId}/${instagram ? 'media' : 'threads'}`;
+  const publishEndpoint = `${userId}/${instagram ? 'media_publish' : 'threads_publish'}`;
 
   async function call(endpoint, fields, method = 'GET', beforeRequest) {
     const accessToken = await token.get();
@@ -33,15 +34,16 @@ function createInstagramPublisher(config, opts = {}) {
 
   function prepare(media) {
     const video = media.video?.url ? { url: secureUrl(media.video.url) } : undefined;
-    const photos = video ? [] : (media.jpegPhotos || media.photos || []).map(secureUrl).slice(0, 10);
-    if (!video && !photos.length) throw failure('Instagram: добавьте фото JPEG или публичный MP4');
-    if (photos.some((url) => /\.(?:png|webp|gif|heic|avif)$/i.test(new URL(url).pathname))) {
+    const photos = video ? [] : ((instagram ? media.jpegPhotos : null) || media.photos || []).map(secureUrl).slice(0, 10);
+    if (instagram && !video && !photos.length) throw failure('Instagram: добавьте фото JPEG или публичный MP4');
+    if (instagram && photos.some((url) => /\.(?:png|webp|gif|heic|avif)$/i.test(new URL(url).pathname))) {
       throw failure('Instagram принимает JPEG. Подготовьте JPEG-копии фотографий.');
     }
     return {
-      account: key, text: textWithLink(media.text, media.link, 2200),
+      account: key, text: instagram ? textWithLink(media.text, media.link, 2200)
+        : textWithLink(media.text, media.link, 500, (char) => /\p{Extended_Pictographic}/u.test(char) ? Buffer.byteLength(char, 'utf8') : 1),
       photos, ...(video ? { video } : {}), link: media.link || '',
-      kind: video ? 'REELS' : photos.length > 1 ? 'CAROUSEL' : 'IMAGE',
+      kind: video ? (instagram ? 'REELS' : 'VIDEO') : photos.length > 1 ? 'CAROUSEL' : photos.length ? 'IMAGE' : 'TEXT',
     };
   }
 
@@ -50,8 +52,8 @@ function createInstagramPublisher(config, opts = {}) {
   }
 
   async function containerStatus(id) {
-    const result = await call(id, { fields: 'status_code,status' });
-    return result?.status_code;
+    const result = await call(id, { fields: instagram ? 'status_code,status' : 'status,error_message' });
+    return instagram ? result?.status_code : result?.status;
   }
 
   function checkStatus(status) {
@@ -62,7 +64,7 @@ function createInstagramPublisher(config, opts = {}) {
   }
 
   async function postSnapshot(payload) {
-    const checkpoint = store(config, 'instagram-post', payload);
+    const checkpoint = store(config, platform + '-post', payload);
     const state = checkpoint.read();
     if (state.receipt) return state.receipt;
     if (!state.createdAt) state.createdAt = now().toISOString();
@@ -79,7 +81,8 @@ function createInstagramPublisher(config, opts = {}) {
       if (payload.kind === 'CAROUSEL') {
         for (let i = 0; i < payload.photos.length; i++) {
           if (!state.children[i]) {
-            state.children[i] = await create({ image_url: payload.photos[i], is_carousel_item: true });
+            state.children[i] = await create({ image_url: payload.photos[i], is_carousel_item: true,
+              ...(!instagram ? { media_type: 'IMAGE' } : {}) });
             save();
           }
           const childStatus = await containerStatus(state.children[i]);
@@ -91,11 +94,12 @@ function createInstagramPublisher(config, opts = {}) {
           checkStatus(childStatus);
         }
         state.containerId = await create({ media_type: 'CAROUSEL', children: state.children.join(','),
-          caption: payload.text });
+          [instagram ? 'caption' : 'text']: payload.text });
       } else {
-        const fields = { caption: payload.text };
-        if (payload.video) { fields.video_url = payload.video.url; fields.media_type = 'REELS'; }
-        else fields.image_url = payload.photos[0];
+        const fields = { [instagram ? 'caption' : 'text']: payload.text };
+        if (payload.video) { fields.video_url = payload.video.url; fields.media_type = instagram ? 'REELS' : 'VIDEO'; }
+        else if (payload.photos.length) { fields.image_url = payload.photos[0]; if (!instagram) fields.media_type = 'IMAGE'; }
+        else fields.media_type = 'TEXT';
         state.containerId = await create(fields);
       }
       state.containerCreatedAt = now().toISOString();
@@ -124,6 +128,9 @@ function createInstagramPublisher(config, opts = {}) {
       // Poll until Meta confirms PUBLISHED, then require a human if it stays unclear.
       if (now().getTime() - Date.parse(state.publishAttemptedAt) < 5 * 60000) throw waiting('проверяю результат предыдущей отправки');
       throw failure(`${name}: ответ на публикацию потерян. Проверьте аккаунт перед повтором.`, { uncertain: true });
+    }
+    if (!instagram && now().getTime() - Date.parse(state.containerCreatedAt) < 30000) {
+      throw waiting('контейнер готовится к публикации', 30);
     }
     let result;
     let publishStarted = false;
@@ -157,16 +164,19 @@ function createInstagramPublisher(config, opts = {}) {
 
   return {
     key, name, prepare, reconciles: true,
-    supports: (media) => Boolean(media.video?.url || media.photos?.length),
+    supports: (media) => !instagram || Boolean(media.video?.url || media.photos?.length),
     refresh: () => token.get(),
     async post(payload, context) {
       approved(context);
       accountPayload(payload, key);
-      const lock = store(config, 'instagram-post', payload).file;
+      const lock = store(config, platform + '-post', payload).file;
       if (!inflight.has(lock)) inflight.set(lock, postSnapshot(payload).finally(() => inflight.delete(lock)));
       return inflight.get(lock);
     },
   };
 }
 
-module.exports = { createInstagramPublisher };
+const createInstagramPublisher = (config, opts) => createMetaPublisher(config, 'instagram', opts);
+const createThreadsPublisher = (config, opts) => createMetaPublisher(config, 'threads', opts);
+
+module.exports = { createInstagramPublisher, createThreadsPublisher };

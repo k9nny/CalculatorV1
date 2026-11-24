@@ -111,7 +111,7 @@ function createAdmin(config, opts = {}) {
   const vk = opts.vk || null;
   const afterPublish = opts.afterPublish || null;
   const social = opts.social || null;
-  const instagram = opts.instagram;
+  const connectedAccounts = { instagram: opts.instagram, threads: opts.threads };
   const specs = opts.specs || null;
   const siteBase = (req) => {
     if (config.siteUrl) return String(config.siteUrl).replace(/\/?$/, '/');
@@ -442,11 +442,13 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
-    if (pathname === '/api/admin/instagram' && instagram) {
-      if (m === 'GET') return json(res, 200, instagram.status());
+    const connection = /^\/api\/admin\/(instagram|threads)$/.exec(pathname);
+    if (connection && connectedAccounts[connection[1]]) {
+      const account = connectedAccounts[connection[1]];
+      if (m === 'GET') return json(res, 200, account.status());
       if (m === 'POST') {
         const body = await readJson(req);
-        try { return json(res, 200, await instagram.attach(body.accessToken, body.expiresAt)); }
+        try { return json(res, 200, await account.attach(body.accessToken, body.expiresAt)); }
         catch (error) { return json(res, 400, { error: error.message }); }
       }
     }
@@ -463,12 +465,12 @@ function createAdmin(config, opts = {}) {
         let batch;
         if (socialPreview) {
           const body = await readJson(req);
-          const instagramOnly = body?.platform === 'instagram';
+          const platform = ['instagram', 'threads'].includes(body?.platform) ? body.platform : undefined;
           const reelIndex = body?.reelIndex;
-          if (reelIndex !== undefined && (!instagramOnly || !Number.isInteger(reelIndex) || reelIndex < 0 || reelIndex >= MAX_VIDEOS)) {
+          if (reelIndex !== undefined && (platform !== 'instagram' || !Number.isInteger(reelIndex) || reelIndex < 0 || reelIndex >= MAX_VIDEOS)) {
             return json(res, 400, { error: 'Выберите MP4 для Reels.' });
           }
-          batch = await social.preview(decodeURIComponent(socialPreview[1]), { enhance: true, instagramOnly, reelIndex });
+          batch = await social.preview(decodeURIComponent(socialPreview[1]), { enhance: true, platform, reelIndex });
         }
         else if (m === 'POST' && socialAction[2] === 'approve') {
           const options = await readJson(req);
