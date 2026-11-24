@@ -63,3 +63,30 @@ test('CRM читает старую очередь роликов, показы�
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('CRM всегда показывает площадки и различает Рилс, посты ВК, клипы и обычные видео', () => {
+  const { manualEntry } = require('../server/crm');
+  const now = new Date('2026-11-24T13:00:00Z');
+  const postedAt = '2026-11-24T12:00:00Z';
+  const history = [
+    'https://vk.com/wall-12_34',
+    'https://vk.ru/clip-12_34',
+    'https://instagram.com/p/ABCD/',
+    'https://www.instagram.com/reel/EFGH/',
+    'https://www.threads.com/@ando/post/JKL',
+    'https://t.me/andoavtomsk/124'
+  ].map(url => manualEntry({ carId: '1', kind: 'listing', url, postedAt }, now));
+  const jobs = [{ key: 'legacy-video:VK', name: 'VK', kind: 'video', status: 'posted', postedAt }];
+  const channels = [{ key: 'vk:12', name: 'ВКонтакте' }, { key: 'telegram:@andoavtomsk', name: 'Telegram' }];
+  const result = buildCrm([{ id: 1 }, { id: 2 }], [{ carId: 1, id: 'old', kind: 'video', jobs }], channels, [], now, history);
+  assert.deepEqual(result.cars[0].publications.map(pub => pub.destination),
+    ['vk-video', 'vk-post', 'vk-clip', 'instagram-post', 'instagram-reel', 'threads', 'telegram']);
+  assert.equal(result.cars[0].publications.at(-1).name, 'Telegram @andoavtomsk');
+  assert.equal(result.cars[1].publications.length, 0);
+  assert.equal(result.destinations.find(item => item.id === 'vk-clip').configured, false);
+  assert.equal(result.destinations.find(item => item.id === 'vk-post').configured, true);
+  assert.equal(result.destinations.find(item => item.id === 'youtube').configured, false);
+  const empty = buildCrm([], [], [], [], now);
+  assert.deepEqual(empty.destinations.map(item => item.id),
+    ['vk-post', 'vk-clip', 'instagram-post', 'instagram-reel', 'threads', 'telegram', 'youtube']);
+});

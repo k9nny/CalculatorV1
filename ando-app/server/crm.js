@@ -4,15 +4,72 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createQueue, parseTimes, currentSlot } = require('./video/queue');
 
+const crmDestinations = [
+  { id: 'vk-post', platform: 'vk', name: 'ВКонтакте', format: 'Пост' },
+  { id: 'vk-clip', platform: 'vk', name: 'ВКонтакте', format: 'Клип' },
+  { id: 'vk-video', platform: 'vk', name: 'ВКонтакте', format: 'Видео' },
+  { id: 'instagram-post', platform: 'instagram', name: 'Instagram', format: 'Пост' },
+  { id: 'instagram-reel', platform: 'instagram', name: 'Instagram', format: 'Reels' },
+  { id: 'threads', platform: 'threads', name: 'Threads', format: 'Пост' },
+  { id: 'telegram', platform: 'telegram', name: 'Telegram', format: '' },
+  { id: 'youtube', platform: 'youtube', name: 'YouTube', format: 'Shorts' }
+];
+
+function destinationFor({ key = '', kind, url }) {
+  const platform = key.split(':')[/^(manual|legacy-video):/.test(key) ? 1 : 0].toLowerCase();
+  const route = url && publicationUrl(url);
+  if (platform === 'vk') {
+    if (/^vk\.ru\/clip/.test(route || '') || key.startsWith('vk-clips:')) return 'vk-clip';
+    if (/^vk\.ru\/wall/.test(route || '') || kind === 'listing') return 'vk-post';
+    return 'vk-video';
+  }
+  if (platform === 'vk-clips') return 'vk-clip';
+  if (platform === 'instagram') {
+    const reel = route ? /^instagram\.com\/reel\//.test(route) : kind === 'video';
+    return reel ? 'instagram-reel' : 'instagram-post';
+  }
+  return ['telegram', 'threads', 'youtube'].includes(platform) ? platform : 'other';
+}
+
+function publicationName({ key, name, url }) {
+  if (key === 'manual:telegram') {
+    const route = publicationUrl(url);
+    const handle = /^t\.me\/(?!c\/)([\w]+)\/\d+$/.exec(route || '')?.[1];
+    return handle ? 'Telegram @' + handle : name;
+  }
+  return name;
+}
+
+function configuredDestinations(channels) {
+  const ids = new Set();
+  for (const channel of channels) {
+    if (channel.key.startsWith('instagram:')) {
+      ids.add('instagram-post');
+      ids.add('instagram-reel');
+    } else {
+      const kind = /^(?:legacy-video|youtube|vk-clips):/.test(channel.key) ? 'video' : 'listing';
+      ids.add(destinationFor({ key: channel.key, kind }));
+    }
+  }
+  return ids;
+}
+
+function legacyVideoChannels(config) {
+  if (!config.clipsEnabled || !config.adminIds?.length || !config.telegramToken || config.renderBackend === 'resolve'
+      || !parseTimes(config.clipTimes).length) return [];
+  return [
+    config.clipTelegramChannel && { key: 'legacy-video:Telegram', name: 'Telegram ' + config.clipTelegramChannel },
+    config.vkToken && config.vkGroupId && { key: 'legacy-video:VK', name: 'ВКонтакте · видео' }
+  ].filter(Boolean);
+}
+
 function legacyVideoBatches(config, now) {
   if (!config.clipsDir) return [];
   const queue = createQueue(path.join(config.clipsDir, 'queue.json'));
   const state = queue.read();
   const enabled = config.clipsEnabled && config.adminIds?.length && config.telegramToken && config.renderBackend !== 'resolve';
-  const names = enabled ? [
-    config.clipTelegramChannel && 'Telegram',
-    config.vkToken && config.vkGroupId && 'VK'
-  ].filter(Boolean) : [];
+  const connections = new Map(legacyVideoChannels(config).map(channel => [channel.key, channel.name]));
+  const names = enabled ? [...connections.keys()].map(key => key.split(':')[1]) : [];
   const slots = names.length ? parseTimes(config.clipTimes) : [];
   const current = currentSlot(slots, now);
   const nextItem = slots.length ? queue.next(state) : null;
@@ -28,7 +85,7 @@ function legacyVideoBatches(config, now) {
         const result = item.results?.[name];
         const posted = result === 'ok' || (item.status === 'posted' && !actual.length);
         const ready = names.includes(name) && slots.length > 0;
-        return { key: 'legacy-video:' + name, name, status: posted ? 'posted' : item.status === 'pending' ? 'draft'
+        return { key: 'legacy-video:' + name, name: connections.get('legacy-video:' + name) || name, status: posted ? 'posted' : item.status === 'pending' ? 'draft'
           : !ready ? 'blocked' : result ? 'retry' : 'queued',
         nextAt: result && ready && nextItem?.id === item.id ? nextDate : null,
         postedAt: posted ? item.postedAt : null,
@@ -78,7 +135,10 @@ function manualEntry(body, now) {
   if (url.pathname === '/watch' && !/^[\w-]+$/.test(videoId || '')) return null;
   url.search = videoId ? '?v=' + videoId : '';
   url.hash = '';
-  return { carId: String(body.carId), kind: body.kind, key: 'manual:' + site[0], name: site[1],
+  let kind = body.kind;
+  if (site[0] === 'vk') kind = url.pathname.startsWith('/wall') ? 'listing' : 'video';
+  if (site[0] === 'instagram') kind = url.pathname.startsWith('/reel/') ? 'video' : 'listing';
+  return { carId: String(body.carId), kind, key: 'manual:' + site[0], name: site[1],
     url: url.href, postedAt: new Date(time).toISOString() };
 }
 
@@ -161,7 +221,7 @@ function buildCrm(inventory, batches, channels, leads, now, manual = []) {
     const existing = car.publications.find(pub => pub.kind === entry.kind && pub.status === 'posted'
       && publicationUrl(pub.url) === publicationUrl(entry.url));
     if (existing) { existing.postedAt ||= entry.postedAt; continue; }
-    car.publications.push({ ...entry, batchId: null, status: 'posted', manual: true });
+    car.publications.push({ ...entry, name: publicationName(entry), batchId: null, status: 'posted', manual: true });
   }
 
   const totals = { cars: 0, publishedCars: 0, unpublishedCars: 0, postedListings: 0, postedVideos: 0,
@@ -182,6 +242,7 @@ function buildCrm(inventory, batches, channels, leads, now, manual = []) {
       else totals.unpublishedCars++;
     }
     for (const pub of car.publications) {
+      pub.destination = destinationFor(pub);
       if (pub.status === 'posted') totals[pub.kind === 'video' ? 'postedVideos' : 'postedListings']++;
       if (pub.status === 'scheduled') totals.scheduled++;
       if (pub.status === 'uploaded') totals.uploaded++;
@@ -190,7 +251,12 @@ function buildCrm(inventory, batches, channels, leads, now, manual = []) {
     }
   }
 
-  return { generatedAt: now.toISOString(), channels, cars: Array.from(cars.values()), totals };
+  const configured = configuredDestinations(channels);
+  const used = new Set(Array.from(cars.values()).flatMap(car => car.publications.map(pub => pub.destination)));
+  const destinations = crmDestinations.filter(item => item.id !== 'vk-video' || configured.has(item.id) || used.has(item.id))
+    .map(item => ({ ...item, configured: configured.has(item.id) }));
+  if (used.has('other')) destinations.push({ id: 'other', platform: 'other', name: 'Другие площадки', format: '', configured: false });
+  return { generatedAt: now.toISOString(), channels, destinations, cars: Array.from(cars.values()), totals };
 }
 
-module.exports = { buildCrm, manualEntry, readManual, publicationUrl, legacyVideoBatches };
+module.exports = { buildCrm, manualEntry, readManual, publicationUrl, legacyVideoBatches, legacyVideoChannels };

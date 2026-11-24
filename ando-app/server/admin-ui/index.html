@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="../fonts.css">
 <link rel="stylesheet" href="../ui.css">
 <link rel="stylesheet" href="admin.css">
-<link rel="stylesheet" href="crm.css">
+<link rel="stylesheet" href="crm.css?v=channels-2">
 </head>
 <body class="light">
 
@@ -54,9 +54,9 @@
           <input type="search" id="crm-query" aria-label="Поиск машины" placeholder="Марка, модель или номер">
           <select id="crm-filter" aria-label="Статус публикации"><option value="all">Все статусы</option><option value="none">Без публикаций</option><option value="posted">Опубликовано</option><option value="active">На автопостинге</option><option value="draft">Черновики</option><option value="attention">Нужна проверка</option><option value="uploaded">Доступ ограничен</option></select>
           <select id="crm-format" aria-label="Формат"><option value="">Все форматы</option><option value="listing">Посты</option><option value="video">Видео</option></select>
-          <select id="crm-platform" aria-label="Площадка"><option value="">Все площадки</option></select>
+          <select id="crm-platform" aria-label="Площадка и формат"><option value="">Все площадки и форматы</option></select>
         </div>
-        <div class="crm-scroll" tabindex="0" role="region" aria-label="Таблица автомобилей"><table class="crm-table"><thead><tr><th>Автомобиль</th><th>Вышли посты</th><th>Вышли видео</th><th>Очередь · МСК</th><th>Заявки</th></tr></thead><tbody id="crm-rows"></tbody></table></div>
+        <div class="crm-scroll" tabindex="0" role="region" aria-label="Таблица автомобилей"><table class="crm-table"><thead id="crm-columns"></thead><tbody id="crm-rows"></tbody></table></div>
         <p id="crm-empty" class="empty" hidden></p>
       </div>
       <div class="crm-insights"><section class="crm-panel"><div class="crm-section-title"><h2>Выходы по площадкам</h2><select id="crm-period" aria-label="Период статистики"><option value="0">Всё время</option><option value="7">7 дней</option><option value="30">30 дней</option></select></div><div id="crm-channels"></div></section><section class="crm-panel"><div class="crm-section-title"><h2>Ближайшие отправки</h2><span>МСК</span></div><div id="crm-schedule"></div></section></div>
@@ -235,7 +235,7 @@
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="../card.js?v=market-44"></script>
-<script src="crm.js"></script>
+<script src="crm.js?v=channels-2"></script>
 <script src="admin.js"></script>
 </body>
 </html>

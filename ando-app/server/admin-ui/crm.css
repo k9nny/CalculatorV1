@@ -32,17 +32,18 @@ body.light { --bg: #f5f6f9; --surface: #fff; --surface-2: #f5f6f9; --text: #1719
 .crm-tools input, .crm-tools select, #crm-period, .crm-manual :is(input, select) { border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; min-height: 39px; color: var(--text); background: #fff; font: 500 13px var(--f); }
 .crm-tools input { flex: 1 1 195px; min-width: 0; }
 .crm-scroll { overflow: auto; }
-.crm-table { width: 100%; min-width: 690px; border-collapse: collapse; text-align: left; font-size: 13px; }
+.crm-table { width: 100%; min-width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
 .crm-table th { background: #f7f8fb; font-weight: 600; color: var(--text-2); white-space: nowrap; }
 .crm-table td, .crm-table th { border-top: 1px solid var(--line); padding: 11px 12px; }
-.crm-table td:first-child, .crm-table th:first-child { padding-left: 17px; width: 30%; }
-.crm-table tbody tr:hover { background: #fafbfe; }
+.crm-table td:first-child, .crm-table th:first-child { padding-left: 17px; min-width: 176px; position: sticky; left: 0; z-index: 1; background: #fff; }
+.crm-table th:first-child { background: #f7f8fb; }
+.crm-table tbody tr:hover td:first-child, .crm-table tbody tr:hover { background: #fafbfe; }
 .crm-table small, .crm-event small, .crm-channel small, .crm-upcoming small { display: block; margin-top: 4px; }
 .crm-car { display: flex; align-items: center; gap: 10px; border: 0; padding: 0; color: var(--text); background: transparent; text-align: left; font: inherit; cursor: pointer; }
 .crm-car:hover b, .crm-upcoming:hover b { text-decoration: underline; }
 .crm-car img { border-radius: 7px; object-fit: cover; background: var(--surface-2); flex-shrink: 0; }
-.crm-chip, .crm-state { display: inline-block; padding: 3px 7px; margin: 2px 0; border-radius: 5px; font-size: 11px; font-weight: 600; background: #edf1f8; color: #344866; }
-.crm-chip, .crm-state[data-state="posted"] { background: #e7f4ed; color: #215840; }
+.crm-state { display: inline-block; padding: 3px 7px; margin: 2px 0; border-radius: 5px; font-size: 11px; font-weight: 600; background: #edf1f8; color: #344866; }
+.crm-state[data-state="posted"] { background: #e7f4ed; color: #215840; }
 .crm-state:is([data-state="failed"],[data-state="blocked"],[data-state="review"]) { background: #fff0ee; color: #9f292d; }
 .crm-insights { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
 .crm-channel, .crm-upcoming { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 13px 17px; text-align: left; border: 0; border-top: 1px solid var(--line); gap: 12px; color: var(--text); background: transparent; font: 13px var(--f); }
@@ -74,4 +75,16 @@ body.light { --bg: #f5f6f9; --surface: #fff; --surface-2: #f5f6f9; --text: #1719
   .crm-metrics article { padding: 12px; }
 }
 
-.crm-table small.crm-danger { color: #9f292d; font-weight: 600; }
+
+.crm-table td:has(.crm-cell), .crm-table th { min-width: 90px; }
+.crm-table td:has(.crm-cell) { padding: 6px; }
+.crm-cell { display: flex; flex-wrap: wrap; align-items: center; gap: 1px 4px; width: 100%; min-height: 42px; padding: 4px 6px; border-radius: 7px; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.crm-cell:hover { background: #f0f3f9; }
+.crm-cell .crm-muted { white-space: nowrap; }
+.crm-channel > div { flex: 1; }
+.crm-channel > strong { font-variant-numeric: tabular-nums; }
+@media (max-width: 480px) {
+  .crm-table td:first-child, .crm-table th:first-child { min-width: 133px; max-width: 133px; padding-left: 10px; }
+  .crm-car img { width: 36px; height: 30px; }
+  .crm-car { gap: 6px; overflow-wrap: anywhere; }
+}
