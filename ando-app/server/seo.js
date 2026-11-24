@@ -109,11 +109,6 @@ function vehicleJsonLd(site, c, url) {
   return ld;
 }
 
-function photoFrame(src, alt, loading = 'lazy') {
-  const image = ` src="${esc(src)}" loading="${loading}" decoding="async"`;
-  return `<img class="photo-backdrop"${image} alt="" aria-hidden="true"><img class="photo-image"${image} alt="${esc(alt)}">`;
-}
-
 function carPage(site, c) {
   const root = '../../';
   const url = `${site}cars/${encodeURIComponent(c.id)}/`;
@@ -142,7 +137,7 @@ function carPage(site, c) {
     <div class="wrap car-layout">
       <div class="car-block">
         <div class="gallery">
-${photos.length ? photos.map((src, i) => `          <a class="photo-frame" href="${esc(book)}">${photoFrame(src, h + (i ? ', фото ' + (i + 1) : ''), i ? 'lazy' : 'eager')}</a>`).join('\n')
+${photos.length ? photos.map((src, i) => `          <a href="${esc(book)}"><img src="${esc(src)}" alt="${esc(h)}${i ? ', фото ' + (i + 1) : ''}" loading="${i ? 'lazy' : 'eager'}" decoding="async"></a>`).join('\n')
     : '          <p class="empty-note">Фото скоро добавим. Позвоните — пришлём в мессенджер.</p>'}
         </div>
         ${list(c.videos).length ? `<h2>Видео</h2>\n${list(c.videos).map((v) => `        <video class="car-video" src="${esc(root + 'app/' + String(v).replace(/^\/+/, ''))}" controls playsinline preload="metadata"></video>`).join('\n')}` : ''}

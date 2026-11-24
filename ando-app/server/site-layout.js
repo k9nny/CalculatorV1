@@ -63,7 +63,7 @@ ${robots ? `<meta name="robots" content="${esc(robots)}">\n` : ''}<link rel="can
 <link rel="stylesheet" href="${root}assets/fonts.css">
 <link rel="stylesheet" href="${root}assets/ui.css?v=covers-43">
 <link rel="stylesheet" href="${root}assets/site.css">
-<link rel="stylesheet" href="${root}assets/pages.css">
+<link rel="stylesheet" href="${root}assets/pages.css?v=photos-47">
 ${extraCss.map((c) => `<link rel="stylesheet" href="${root}${c}">`).join('\n')}
 ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('\n')}
 </head>

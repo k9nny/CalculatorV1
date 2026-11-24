@@ -107,9 +107,9 @@ html:not(.vt) .page.enter { animation: page-in .4s var(--ease) both; }
 @keyframes fade-up { from { opacity: 0; transform: translateY(16px); } }
 
 .gallery { position: relative; overflow: hidden; }
-.gallery-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; aspect-ratio: 4 / 3; }
+.gallery-track { display: flex; overflow-x: auto; overflow-y: hidden; align-items: start; scroll-snap-type: x mandatory; scrollbar-width: none; aspect-ratio: var(--photo-ratio, 4 / 3); }
 .gallery-track::-webkit-scrollbar { display: none; }
-.gallery-track > .photo-frame { flex: 0 0 100%; min-width: 0; height: 100%; scroll-snap-align: center; }
+.gallery-track > img { display: block; flex: 0 0 100%; min-width: 0; width: 100%; height: auto; scroll-snap-align: center; }
 .gallery-track img[data-action] { cursor: zoom-in; }
 .gallery-dots { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 4px; pointer-events: none; }
 .gallery-dots i { width: 6px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .5); transition: width .3s var(--spring), background-color .3s; }

@@ -429,8 +429,8 @@
     var html = '<div class="page-in">' +
       '<div class="gallery dark"><button class="page-back" data-action="back">' + icon('back') + 'Назад</button>' +
       '<div class="gallery-track" id="gtrack">' + ph.map(function (src, i) {
-        return UI.photoFrame(src, title(car) + ', фото ' + (i + 1), i ? 'lazy' : 'eager',
-          real ? ' data-action="zoom" data-id="' + esc(car.id) + '" data-index="' + i + '"' : '');
+        return '<img src="' + esc(src) + '" alt="' + esc(title(car)) + ', фото ' + (i + 1) + '"' + (i ? ' loading="lazy"' : '') +
+          (real ? ' data-action="zoom" data-id="' + esc(car.id) + '" data-index="' + i + '"' : '') + '>';
       }).join('') + '</div>' +
       (ph.length > 1
         ? '<button class="g-arrow prev" data-action="gslide" data-dir="-1" aria-label="Предыдущее фото">' + icon('left') + '</button>' +
@@ -524,14 +524,20 @@
       var dots = document.getElementById('gdots');
       var count = document.getElementById('gcount');
       var zoom = page.querySelector('.g-zoom');
-      if (track && dots) {
-        track.addEventListener('scroll', function () {
-          var i = Math.round(track.scrollLeft / Math.max(track.clientWidth, 1));
-          Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
-          if (count) count.textContent = (i + 1) + ' / ' + dots.children.length;
-          if (zoom) zoom.setAttribute('data-index', i);
-        }, { passive: true });
+      function syncGallery() {
+        var slides = track.children;
+        var i = Math.max(0, Math.min(slides.length - 1, Math.round(track.scrollLeft / Math.max(track.clientWidth, 1))));
+        var photo = slides[i];
+        if (photo.naturalWidth && photo.naturalHeight) {
+          track.style.setProperty('--photo-ratio', photo.naturalWidth + ' / ' + photo.naturalHeight);
+        }
+        if (dots) Array.prototype.forEach.call(dots.children, function (d, k) { d.classList.toggle('on', k === i); });
+        if (count) count.textContent = (i + 1) + ' / ' + slides.length;
+        if (zoom) zoom.setAttribute('data-index', i);
       }
+      track.addEventListener('scroll', syncGallery, { passive: true });
+      track.addEventListener('load', syncGallery, true);
+      syncGallery();
       // Блоки страницы проявляются по очереди, цена «набегает».
       Array.prototype.forEach.call(page.querySelectorAll('.block, .d-foot'), function (el, i) {
         el.style.setProperty('--d', (0.08 + i * 0.05) + 's');
