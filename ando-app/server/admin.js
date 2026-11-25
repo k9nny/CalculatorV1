@@ -449,7 +449,7 @@ function createAdmin(config, opts = {}) {
       if (m === 'GET') return json(res, 200, opts.youtube.status());
       if (m === 'POST') {
         const body = await readJson(req);
-        try { return json(res, 200, { url: opts.youtube.start(body, '/' + slug() + '/#settings') }); }
+        try { return json(res, 200, { url: opts.youtube.start(body, '/app/' + slug() + '/#settings') }); }
         catch (error) { return json(res, 400, { error: error.message }); }
       }
     }

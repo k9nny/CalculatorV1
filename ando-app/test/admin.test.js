@@ -219,7 +219,7 @@ test('YouTube: OAuth проверяет канал, скрывает ключи 
     const newState = await authorize();
     const response = await callback(newState);
     assert.equal(response.status, 303);
-    assert.equal(response.headers.get('location'), '/' + slug + '/#settings');
+    assert.equal(response.headers.get('location'), '/app/' + slug + '/#settings');
     assert.equal((await callback(newState)).status, 400);
     assert.equal(new URLSearchParams(requests[2].body).get('client_secret'), clientSecret);
     assert.deepEqual(await (await call('/api/youtube')).json(), { connected: true, channelId, title: 'ANDO AUTO' });
