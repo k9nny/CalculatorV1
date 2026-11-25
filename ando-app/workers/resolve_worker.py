@@ -23,6 +23,7 @@ from pathlib import Path
 
 ELEVENLABS_VOICE_ID = "txnCCHHGKmYIwrn7HfHQ"  # Alexandr Vlasov - Vibrant and Energetic
 ELEVENLABS_SAMPLE_RATE = 24000
+resolve_dll_handles = []
 
 
 class VoiceAccessError(RuntimeError):
@@ -51,6 +52,12 @@ def write_json(file, data):
 
 
 def connect_resolve():
+    library = os.environ.get("RESOLVE_SCRIPT_LIB")
+    if sys.platform == "win32" and library and not resolve_dll_handles:
+        directory = Path(library).resolve().parent
+        for candidate in (directory, directory / "ResolvePython"):
+            if candidate.is_dir():
+                resolve_dll_handles.append(os.add_dll_directory(str(candidate)))
     roots = [os.environ.get("RESOLVE_SCRIPT_API", "")]
     if sys.platform == "win32":
         roots.append(str(Path(os.environ.get("PROGRAMDATA", "C:/ProgramData")) /
@@ -121,6 +128,15 @@ def connect_elevenlabs():
 def speak_elevenlabs(client, text, file, previous_text=None, next_text=None):
     from elevenlabs.core.api_error import ApiError
 
+    if file.is_file():
+        try:
+            with wave.open(str(file), "rb") as saved:
+                if (saved.getnchannels(), saved.getsampwidth(), saved.getframerate()) == (1, 2, ELEVENLABS_SAMPLE_RATE):
+                    frames = saved.getnframes()
+                    if 0 < frames <= 60 * ELEVENLABS_SAMPLE_RATE and len(saved.readframes(frames)) == frames * 2:
+                        return frames / ELEVENLABS_SAMPLE_RATE
+        except (EOFError, wave.Error):
+            pass
     audio = bytearray()
     try:
         for chunk in client.text_to_speech.convert(
@@ -143,9 +159,11 @@ def speak_elevenlabs(client, text, file, previous_text=None, next_text=None):
         raise RuntimeError(f"ElevenLabs narration failed (HTTP {error.status_code})") from None
     if not audio or len(audio) % 2:
         raise RuntimeError("ElevenLabs returned empty or incomplete PCM audio")
-    with wave.open(str(file), "wb") as wav:
+    temporary = file.with_suffix(".part")
+    with wave.open(str(temporary), "wb") as wav:
         wav.setparams((1, 2, ELEVENLABS_SAMPLE_RATE, 0, "NONE", "not compressed"))
         wav.writeframes(audio)
+    temporary.replace(file)
     return len(audio) / (2 * ELEVENLABS_SAMPLE_RATE)
 
 
