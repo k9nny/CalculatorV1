@@ -1,0 +1,362 @@
+[
+  {
+    "id": "sale-price-reveal",
+    "intent": "sale",
+    "template": "{{make}} {{model}} за {{price}} ₽. Покажу, что входит в эту цену.",
+    "requiredFields": ["make", "model", "price"],
+    "requiredMedia": ["photo_or_video"],
+    "sourceUrls": ["https://ads.tiktok.com/business/library/SMB_Creative_Playbook_External.pdf"],
+    "adaptationNote": "Авторская адаптация приёма открытия ценой. Итоговую цену брать из карточки.",
+    "evidenceType": "platform_guidance"
+  },
+  {
+    "id": "sale-local-search",
+    "intent": "sale",
+    "template": "Ищешь {{make}} {{model}}? {{city}}, {{year}} год, {{price}} ₽. Покажем машину.",
+    "requiredFields": ["make", "model", "city", "year", "price"],
+    "requiredMedia": ["exterior"],
+    "sourceUrls": ["https://ads.tiktok.com/business/library/ENG_TikTok_SMB_META_Automotive.pdf"],
+    "adaptationNote": "Авторская адаптация обращения к аудитории по её запросу.",
+    "evidenceType": "platform_guidance"
+  },
+  {
+    "id": "sale-gearbox-match",
+    "intent": "sale",
+    "template": "Нужен {{make}} {{model}} с коробкой «{{transmission}}»? Смотрим этот экземпляр.",
+    "requiredFields": ["make", "model", "transmission"],
+    "requiredMedia": ["exterior", "gearbox"],
+    "sourceUrls": ["https://ads.tiktok.com/business/library/SMB_Creative_Playbook_External.pdf"],
+    "adaptationNote": "Авторская адаптация адресного обращения к покупателю с конкретным требованием.",
+    "evidenceType": "platform_guidance"
+  },
+  {
+    "id": "sale-feature-demo",
+    "intent": "sale",
+    "template": "Как работает {{editorial.feature}} в этом {{make}} {{model}}? Показываем в кадре.",
+    "requiredFields": ["make", "model", "features", "editorial.feature"],
+    "requiredMedia": ["feature_demo"],
+    "sourceUrls": ["https://ads.tiktok.com/business/en-GB/blog/rev-up-your-automotive-ads"],
+    "adaptationNote": "Авторский хук для объяснения детали. Опция должна присутствовать в features.",
+    "evidenceType": "platform_research"
+  },
+  {
+    "id": "sale-driver-pov",
+    "intent": "sale",
+    "template": "Садимся за руль {{make}} {{model}}. Вот что видишь с водительского места.",
+    "requiredFields": ["make", "model"],
+    "requiredMedia": ["driver_pov"],
+    "sourceUrls": ["https://ads.tiktok.com/business/en-GB/blog/rev-up-your-automotive-ads"],
+    "adaptationNote": "Авторская адаптация ракурса водителя из отраслевого исследования платформы.",
+    "evidenceType": "platform_research"
+  },
+  {
+    "id": "sale-design-detail",
+    "intent": "sale",
+    "template": "Посмотри на {{editorial.detail}} у этого {{make}} {{model}} вблизи.",
+    "requiredFields": ["make", "model", "editorial.detail"],
+    "requiredMedia": ["detail"],
+    "sourceUrls": ["https://ads.tiktok.com/business/library/ENG_TikTok_SMB_META_Automotive.pdf"],
+    "adaptationNote": "Авторская адаптация формата крупного плана автомобильной детали.",
+    "evidenceType": "platform_guidance"
+  },
+  {
+    "id": "sale-service-before-after",
+    "intent": "sale",
+    "template": "Что изменилось после {{editorial.serviceOperation}}? Показываем до и после.",
+    "requiredFields": ["serviceDone", "editorial.serviceOperation"],
+    "requiredMedia": ["before", "after"],
+    "sourceUrls": ["https://ads.tiktok.com/business/library/ENG_TikTok_SMB_META_Automotive.pdf"],
+    "adaptationNote": "Авторская адаптация до/после. Одна и та же машина, операция подтверждена.",
+    "evidenceType": "platform_guidance"
+  },
+  {
+    "id": "sale-one-minute-walkaround",
+    "intent": "sale",
+    "template": "{{make}} {{model}}, {{year}} год. Пройдём вокруг машины перед осмотром.",
+    "requiredFields": ["make", "model", "year"],
+    "requiredMedia": ["exterior_walkaround"],
+    "sourceUrls": ["https://www.carscommerce.inc/digital-road-to-the-sale-strategy/"],
+    "adaptationNote": "Авторское вступление к видеообходу конкретного автомобиля.",
+    "evidenceType": "vendor_guidance"
+  },
+  {
+    "id": "sale-personal-detail-request",
+    "intent": "sale",
+    "template": "Хочешь увидеть {{editorial.detail}} у {{make}} {{model}}? Начнём с крупного плана.",
+    "requiredFields": ["make", "model", "editorial.detail"],
+    "requiredMedia": ["detail"],
+    "sourceUrls": ["https://www.carscommerce.inc/digital-road-to-the-sale-strategy/"],
+    "adaptationNote": "Авторская адаптация персонального видеоответа покупателю. Вопрос зрителя не выдумывается.",
+    "evidenceType": "vendor_guidance"
+  },
+  {
+    "id": "sale-visible-mileage",
+    "intent": "sale",
+    "template": "В объявлении {{mileage}} км. Покажем приборку и салон крупным планом.",
+    "requiredFields": ["mileage"],
+    "requiredMedia": ["odometer", "interior"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/prepare-to-sell/preparing-your-vehicle/preparing-a-car-for-sale"],
+    "adaptationNote": "Авторская адаптация совета снять одометр. Кадр показывает показания, подлинность пробега требует отдельного подтверждения.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-defect-first",
+    "intent": "sale",
+    "template": "Начнём с недостатка этого {{make}} {{model}} — {{editorial.defect}}.",
+    "requiredFields": ["make", "model", "defects", "editorial.defect"],
+    "requiredMedia": ["defect"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/advertise-your-car/create-effective-car-ad"],
+    "adaptationNote": "Авторский заход через раскрытие состояния. Недостаток должен совпадать с defects.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-service-records",
+    "intent": "sale",
+    "template": "Вот что известно об обслуживании этого {{make}} {{model}} — {{serviceHistory}}.",
+    "requiredFields": ["make", "model", "serviceHistory"],
+    "requiredMedia": ["service_records_redacted"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/advertise-your-car/create-effective-car-ad"],
+    "adaptationNote": "Авторская адаптация подтверждения истории. В кадре обезличенные документы или запись сервиса.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-equipment-focus",
+    "intent": "sale",
+    "template": "Есть {{editorial.feature}}. Посмотрим, как эта опция устроена в {{make}} {{model}}.",
+    "requiredFields": ["make", "model", "features", "editorial.feature"],
+    "requiredMedia": ["feature_demo"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/advertise-your-car/create-effective-car-ad"],
+    "adaptationNote": "Авторская адаптация акцента на конкретной комплектации. Требуется совпадение с features.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-owner-story",
+    "intent": "sale",
+    "template": "Почему продают этот {{make}} {{model}}? Владелец объяснил — {{editorial.sellerReason}}.",
+    "requiredFields": ["make", "model", "editorial.sellerReason", "editorial.sellerReasonConfirmed"],
+    "requiredMedia": ["exterior"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/advertise-your-car/when-to-update"],
+    "adaptationNote": "Авторская адаптация истории владельца. Причина получена от продавца, разрешена к публикации.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-multiple-angles",
+    "intent": "sale",
+    "template": "Как выглядит этот {{make}} {{model}} с разных сторон? Смотрим кузов и салон.",
+    "requiredFields": ["make", "model"],
+    "requiredMedia": ["exterior_front", "exterior_rear", "interior"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/advertise-your-car/when-to-update"],
+    "adaptationNote": "Авторское вступление для обзора состояния с нескольких ракурсов.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-rear-seat-and-boot",
+    "intent": "sale",
+    "template": "Выбираешь {{make}} {{model}} для семьи? Покажу задний ряд и багажник.",
+    "requiredFields": ["make", "model"],
+    "requiredMedia": ["rear_seats", "boot"],
+    "sourceUrls": ["https://www.autotrader.com/car-shopping/how-to-sell-a-car"],
+    "adaptationNote": "Авторская адаптация рекомендаций по ракурсам для практического запроса покупателя.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-interior-condition",
+    "intent": "sale",
+    "template": "Состояние салона этого {{make}} {{model}} — показываем сиденья, руль и кнопки вблизи.",
+    "requiredFields": ["make", "model"],
+    "requiredMedia": ["front_seats", "steering_wheel", "controls"],
+    "sourceUrls": ["https://www.autotrader.com/car-shopping/how-to-sell-a-car"],
+    "adaptationNote": "Авторская адаптация подробных интерьерных фото. Видимые следы износа сохраняются.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-vehicle-facts",
+    "intent": "sale",
+    "template": "{{make}} {{model}}, {{year}} год, {{mileage}} км, {{price}} ₽. Теперь посмотрим саму машину.",
+    "requiredFields": ["make", "model", "year", "mileage", "price"],
+    "requiredMedia": ["exterior", "interior"],
+    "sourceUrls": ["https://www.carscommerce.inc/video/how-to-make-ai-video-ads-for-car-dealer-inventory/"],
+    "adaptationNote": "Авторская адаптация индивидуального видео по карточке. Пилот источника относится к рекламе целиком.",
+    "evidenceType": "vendor_pilot"
+  },
+  {
+    "id": "sale-feature-budget-fit",
+    "intent": "sale",
+    "template": "За {{price}} ₽ здесь есть {{editorial.feature}}. Покажем именно эту комплектацию {{make}} {{model}}.",
+    "requiredFields": ["price", "make", "model", "features", "editorial.feature"],
+    "requiredMedia": ["feature_demo", "exterior"],
+    "sourceUrls": ["https://ads.tiktok.com/business/en-GB/inspiration/ocassion-plus-tiktok-success-story"],
+    "adaptationNote": "Авторский хук по принципу ясного сообщения о конкретном товаре. Кейс не испытывал эту формулировку.",
+    "evidenceType": "vendor_case_study"
+  },
+  {
+    "id": "sale-owner-count",
+    "intent": "sale",
+    "template": "У этого {{make}} {{model}} указано владельцев — {{owners}}. Что ещё есть в карточке?",
+    "requiredFields": ["make", "model", "owners"],
+    "requiredMedia": ["exterior"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/find-a-buyer/common-selling-pitfalls-to-avoid"],
+    "adaptationNote": "Авторская адаптация раскрытия истории. Сведения продавца обозначаются как сведения продавца.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-known-work",
+    "intent": "sale",
+    "template": "Перед продажей сделали {{editorial.serviceOperation}}. Покажем результат на этом {{make}} {{model}}.",
+    "requiredFields": ["make", "model", "serviceDone", "editorial.serviceOperation"],
+    "requiredMedia": ["service_detail"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/prepare-to-sell/preparing-your-vehicle/preparing-a-car-for-sale"],
+    "adaptationNote": "Авторский хук про подготовку. Операция должна быть в serviceDone, нужен кадр результата.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "sale-two-features",
+    "intent": "sale",
+    "template": "Две детали этого {{make}} {{model}} — {{editorial.feature}} и {{editorial.secondFeature}}. Покажем обе.",
+    "requiredFields": ["make", "model", "features", "editorial.feature", "editorial.secondFeature"],
+    "requiredMedia": ["feature_demo", "second_feature_demo"],
+    "sourceUrls": ["https://ads.tiktok.com/business/library/SMB_Creative_Playbook_External.pdf"],
+    "adaptationNote": "Авторская адаптация короткого списка преимуществ. Обе детали входят в features.",
+    "evidenceType": "platform_guidance"
+  },
+  {
+    "id": "sale-test-drive-invite",
+    "intent": "sale",
+    "template": "Хочешь посмотреть этот {{make}} {{model}} вживую? Город осмотра — {{city}}.",
+    "requiredFields": ["make", "model", "city"],
+    "requiredMedia": ["exterior"],
+    "sourceUrls": ["https://www.carscommerce.inc/digital-road-to-the-sale-strategy/"],
+    "adaptationNote": "Авторский переход от цифрового обхода к осмотру. Актуальная доступность проверяется перед отправкой.",
+    "evidenceType": "vendor_guidance"
+  },
+  {
+    "id": "buyback-first-estimate",
+    "intent": "buyback",
+    "template": "Твой город — {{service.city}}? Пришли данные и фото машины для предварительной оценки выкупа.",
+    "requiredFields": ["service.city", "service.buybackUrl"],
+    "requiredMedia": ["buyback_form"],
+    "sourceUrls": ["https://www.carvana.com/sell-my-car/"],
+    "adaptationNote": "Авторская адаптация простого первого шага. У ANDO предварительная оценка с последующим осмотром.",
+    "evidenceType": "dealer_offer"
+  },
+  {
+    "id": "buyback-process-three-steps",
+    "intent": "buyback",
+    "template": "Как продать машину ANDO AUTO? Данные и фото, предварительная оценка, затем осмотр по договорённости.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["buyback_form", "inspection_process"],
+    "sourceUrls": ["https://www.carvana.com/help/sell-or-trade/how-do-i-sell-my-car"],
+    "adaptationNote": "Авторское объяснение процесса ANDO по структуре пошагового предложения дилера.",
+    "evidenceType": "dealer_offer"
+  },
+  {
+    "id": "buyback-price-inputs",
+    "intent": "buyback",
+    "template": "От чего зависит оценка машины? Начнём с года, пробега, комплектации и состояния.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["buyback_form"],
+    "sourceUrls": ["https://www.carmax.com/faq/selling-a-car/how-does-carmax-determine-my-offer"],
+    "adaptationNote": "Авторская адаптация раскрытия входных данных оценки, без обещания итоговой суммы.",
+    "evidenceType": "dealer_explainer"
+  },
+  {
+    "id": "buyback-show-condition",
+    "intent": "buyback",
+    "template": "На кузове есть повреждение? Сними его крупно и добавь к заявке на оценку.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["condition_example"],
+    "sourceUrls": ["https://www.carvana.com/help/sell-or-trade/will-the-trade-in-offer-change"],
+    "adaptationNote": "Авторское приглашение раскрыть состояние до осмотра. Пример помечается как пример.",
+    "evidenceType": "dealer_explainer"
+  },
+  {
+    "id": "buyback-what-to-photograph",
+    "intent": "buyback",
+    "template": "Какие фото прислать для оценки? Кузов с разных сторон, салон и показания пробега.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["exterior_example", "interior_example", "odometer_example"],
+    "sourceUrls": ["https://www.autotrader.com/car-shopping/how-to-sell-a-car"],
+    "adaptationNote": "Авторское применение чек-листа фото к форме выкупа ANDO.",
+    "evidenceType": "marketplace_guidance"
+  },
+  {
+    "id": "buyback-maintenance-evidence",
+    "intent": "buyback",
+    "template": "Сохранились записи об обслуживании? Добавь их к описанию машины для оценки.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["service_records_redacted"],
+    "sourceUrls": ["https://www.carmax.com/faq/selling-a-car/how-does-carmax-determine-my-offer"],
+    "adaptationNote": "Авторская адаптация фактора истории обслуживания. Пример документа обезличен.",
+    "evidenceType": "dealer_explainer"
+  },
+  {
+    "id": "buyback-inspection-explained",
+    "intent": "buyback",
+    "template": "Что происходит после предварительной оценки? Покажем, как проходит осмотр в ANDO AUTO.",
+    "requiredFields": ["service.buybackUrl", "service.inspectionSteps"],
+    "requiredMedia": ["inspection_process"],
+    "sourceUrls": ["https://www.carvana.com/help/sell-or-trade/how-do-pickup-and-drop-off-appointments-work-when-selling-my-car/"],
+    "adaptationNote": "Авторская адаптация объяснения следующего шага. Показываются реальные этапы ANDO.",
+    "evidenceType": "dealer_explainer"
+  },
+  {
+    "id": "buyback-options-before-decision",
+    "intent": "buyback",
+    "template": "Выбираешь, как продать машину? Получи предварительную оценку выкупа и сравни варианты.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["buyback_form"],
+    "sourceUrls": ["https://www.carmax.com/articles/how-to-sell-your-car-to-carmax"],
+    "adaptationNote": "Авторская адаптация приглашения сравнить способы продажи. Срок действия предложения CarMax не переносится.",
+    "evidenceType": "dealer_offer"
+  },
+  {
+    "id": "buyback-does-not-require-purchase",
+    "intent": "buyback",
+    "template": "Хочешь только продать машину? Выкуп в ANDO AUTO доступен отдельно от покупки другого авто.",
+    "requiredFields": ["service.buybackUrl", "service.standaloneBuybackConfirmed"],
+    "requiredMedia": ["buyback_form"],
+    "sourceUrls": ["https://www.carmax.com/sell-my-car"],
+    "adaptationNote": "Авторская адаптация дилерского предложения. Условие должно быть явно подтверждено ANDO.",
+    "evidenceType": "dealer_offer"
+  },
+  {
+    "id": "buyback-appointment-choice",
+    "intent": "buyback",
+    "template": "Предварительная оценка подходит? Согласуем время осмотра. Город — {{service.city}}.",
+    "requiredFields": ["service.city", "service.buybackUrl"],
+    "requiredMedia": ["inspection_process"],
+    "sourceUrls": ["https://www.carvana.com/help/sell-or-trade/how-do-i-sell-my-car"],
+    "adaptationNote": "Авторская адаптация записи после оценки. Выезд и срок ответа здесь не обещаются.",
+    "evidenceType": "dealer_offer"
+  },
+  {
+    "id": "buyback-correct-description",
+    "intent": "buyback",
+    "template": "Почему важны точные данные в заявке на выкуп? На осмотре их сверяют с автомобилем.",
+    "requiredFields": ["service.buybackUrl", "service.verificationProcessConfirmed"],
+    "requiredMedia": ["inspection_process", "buyback_form"],
+    "sourceUrls": ["https://www.carvana.com/help/sell-or-trade/will-the-trade-in-offer-change"],
+    "adaptationNote": "Авторское объяснение сверки состояния. Условия фиксации цены Carvana не заимствуются.",
+    "evidenceType": "dealer_explainer"
+  },
+  {
+    "id": "buyback-real-case",
+    "intent": "buyback",
+    "template": "Как мы выкупили {{make}} {{model}}? Город — {{city}}. Покажем путь от заявки до осмотра.",
+    "requiredFields": ["make", "model", "city", "editorial.buybackCaseConfirmed", "service.buybackUrl"],
+    "requiredMedia": ["case_exterior", "case_inspection"],
+    "sourceUrls": ["https://ads.tiktok.com/business/en-GB/inspiration/ocassion-plus-tiktok-success-story"],
+    "adaptationNote": "Авторская адаптация реального процесса купли-продажи. Нужен завершённый кейс ANDO и разрешённые кадры.",
+    "evidenceType": "vendor_case_study"
+  },
+  {
+    "id": "buyback-prepare-facts",
+    "intent": "buyback",
+    "template": "Перед оценкой собери факты о машине — пробег, обслуживание и известные неисправности.",
+    "requiredFields": ["service.buybackUrl"],
+    "requiredMedia": ["buyback_form", "condition_example"],
+    "sourceUrls": ["https://www.autotrader.com/sell-car/adviser/find-a-buyer/common-selling-pitfalls-to-avoid"],
+    "adaptationNote": "Авторская адаптация подготовки достоверного описания для заявки ANDO.",
+    "evidenceType": "marketplace_guidance"
+  }
+]

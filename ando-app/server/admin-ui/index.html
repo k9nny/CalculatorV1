@@ -110,6 +110,13 @@
     </section>
 
     <section data-pane="cars" hidden><h1>Управление машинами</h1>
+      <div class="block" id="render-board" hidden>
+        <div class="publication-heading">
+          <h2>Видео для публикации</h2>
+          <button class="btn" type="button" id="render-refresh">Обновить</button>
+        </div>
+        <div id="render-jobs" class="publication-list" role="status"></div>
+      </div>
       <div class="list" id="cars"></div>
       <button class="btn btn-ghost btn-block" type="button" id="market-all">Оценить рынок для всех машин</button>
       <button class="btn btn-ghost btn-block" type="button" id="cleardemo" hidden>Убрать демо-объявления</button>
@@ -183,6 +190,13 @@
         </form>
         <button class="btn btn-ghost" id="youtube-diagnose" type="button">Проверить связь с Google</button>
         <p class="hint" id="youtube-diagnose-result" role="status"></p>
+      </div>
+
+      <div class="block">
+        <h2>Монтаж DaVinci</h2>
+        <p class="hint">Подключите компьютер с DaVinci Resolve Studio. Озвучка — Alexandr Vlasov из ElevenLabs.</p>
+        <button class="btn btn-ghost" type="button" id="render-worker-copy">Скопировать ключ компьютера</button>
+        <p class="hint" role="status" id="render-worker-status"></p>
       </div>
 
       <div class="block" id="vk-block">

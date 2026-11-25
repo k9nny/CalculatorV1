@@ -442,6 +442,31 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    if (pathname === '/api/admin/render/worker' && m === 'POST' && opts.configureWorker) {
+      return json(res, 200, { token: opts.configureWorker() });
+    }
+    if (pathname === '/api/admin/render' && m === 'GET' && opts.renderJobs) {
+      return json(res, 200, { jobs: opts.renderJobs.list(), configured: Boolean(opts.workerToken()) });
+    }
+    const renderCar = /^\/api\/admin\/cars\/([^/]+)\/render$/.exec(pathname);
+    const renderAction = /^\/api\/admin\/render\/([a-f0-9]{32})\/(retry|social)$/.exec(pathname);
+    if (m === 'POST' && opts.renderJobs && (renderCar || renderAction)) {
+      try {
+        if (renderCar) {
+          if (!opts.workerToken()) throw new Error('Сначала подключите компьютер с DaVinci в настройках.');
+          const car = readCatalog(config.carsFile).cars.find(item => String(item.id) === decodeURIComponent(renderCar[1]));
+          if (!car || car.demo || (car.status && car.status !== 'available')) throw new Error('Выберите машину в продаже.');
+          const link = new URL('/cars/' + encodeURIComponent(car.id) + '/', config.siteUrl).href;
+          return json(res, 200, { job: opts.renderJobs.enqueue(car, opts.buildStoryboard(car, { link })) });
+        }
+        if (renderAction[2] === 'retry') return json(res, 200, { job: opts.renderJobs.retry(renderAction[1]) });
+        const { platform } = await readJson(req);
+        if (!['youtube', 'instagram'].includes(platform)) throw new Error('Выберите YouTube Shorts или Instagram Reels.');
+        const job = opts.renderJobs.get(renderAction[1]);
+        if (!job) throw new Error('Ролик не найден');
+        return json(res, 200, { batch: await social.preview(job.carId, { platform, renderId: job.id }) });
+      } catch (error) { return json(res, 409, { error: error.message }); }
+    }
     if (pathname === '/api/admin/youtube/diagnose' && m === 'POST' && opts.youtube) {
       return json(res, 200, { checks: await opts.youtube.diagnose() });
     }

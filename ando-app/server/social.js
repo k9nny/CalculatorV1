@@ -10,7 +10,7 @@ const digest = (value) => crypto.createHash('sha256').update(JSON.stringify(valu
 
 // Один процесс сервера владеет журналом. sending после рестарта требует сверки:
 // площадка могла принять запрос до обрыва соединения.
-function createSocial({ config, publishers, copywriter, now = () => new Date(), notify = async () => {} }) {
+function createSocial({ config, publishers, copywriter, renderedAsset, now = () => new Date(), notify = async () => {} }) {
   const file = path.join(path.dirname(config.leadsLog), 'social.json');
   let state;
   try { state = JSON.parse(fs.readFileSync(file, 'utf8')); }
@@ -86,7 +86,8 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
   function preview(id, options = {}) {
     const car = carById(id);
     const media = content(car);
-    const reel = options.reelIndex !== undefined ? reelAsset(car, options.reelIndex) : null;
+    const reel = options.renderId ? renderedAsset(options.renderId, car)
+      : options.reelIndex !== undefined ? reelAsset(car, options.reelIndex) : null;
     if (reel) media.video = reel.video;
     const platform = options.platform || (reel ? 'instagram' : undefined);
     const targets = publishers().filter(p => (!platform || p.key.startsWith(platform + ':'))
@@ -122,7 +123,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     if (telegramTarget) Object.assign(media, { telegramListing: true, telegramFacts: options.telegramFacts });
     const batch = {
       id: crypto.randomBytes(8).toString('hex'), key, carId: String(id), revision: rev,
-      createdAt: now().toISOString(), approved: false, ...(reel && { assetKey, reelIndex: options.reelIndex }),
+      createdAt: now().toISOString(), approved: false, ...(reel && { assetKey, reelIndex: options.reelIndex, renderId: options.renderId }),
       jobs: targets.map((p) => {
         const prior = postedJob(String(id), rev, p.key, assetKey);
         const oldPost = !reel && p.key.startsWith('vk:') && car.vk?.postId &&
@@ -145,6 +146,7 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
   function validate(batch, checkChannels = true) {
     if (!batch) throw new Error('Предпросмотр не найден. Создайте новый.');
     const car = carById(batch.carId);
+    if (batch.renderId && renderedAsset(batch.renderId, car).key !== batch.assetKey) throw new Error('Файл монтажа изменился. Создайте новый предпросмотр.');
     if (batch.reelIndex !== undefined && reelAsset(car, batch.reelIndex).key !== batch.assetKey) throw new Error('Видео изменилось. Создайте новый предпросмотр.');
     if (revision(car) !== batch.revision) throw new Error('Карточка изменилась. Создайте новый предпросмотр.');
     const currentPublishers = publishers();

@@ -66,7 +66,7 @@
     tabs.forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === name)); });
     document.querySelectorAll('[data-pane]').forEach(function (p) { p.hidden = p.dataset.pane !== name; });
     if (name === 'crm') crm.load();
-    if (name === 'cars') loadCars();
+    if (name === 'cars') { loadCars(); loadRenderJobs(); }
     if (name === 'publications') loadPublications();
     if (name === 'leads') loadLeads();
     if (name === 'settings') { loadLlm(); loadTg(); loadVk(); loadMetaAccount('instagram'); loadMetaAccount('threads'); loadYouTube(); }
@@ -295,7 +295,7 @@
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
           '<button class="btn btn-ghost" type="button" data-social>Посты в соцсети</button>' +
-          (c.status === 'available' && !c.demo ? '<button class="btn btn-ghost" type="button" data-instagram-post>Пост Instagram</button><button class="btn btn-ghost" type="button" data-threads-post>Пост Threads</button>' +
+          (c.status === 'available' && !c.demo ? '<button class="btn btn-ghost" type="button" data-prepare-video>Видео для публикации</button><button class="btn btn-ghost" type="button" data-instagram-post>Пост Instagram</button><button class="btn btn-ghost" type="button" data-threads-post>Пост Threads</button>' +
             (c.videos || []).map(function (src, index) {
               return /[.]mp4$/i.test(src) ? '<button class="btn btn-ghost" type="button" data-instagram-reel="' + index +
                 '">Reels · видео ' + (index + 1) + '</button><button class="btn btn-ghost" type="button" data-youtube-short="' +
@@ -359,6 +359,16 @@
       .catch(function (err) { toast(err.message, true); btn.disabled = false; btn.textContent = 'Добавить видео'; });
   });
   $('cars').addEventListener('click', function (e) {
+    const prepare = e.target.closest('[data-prepare-video]');
+    if (prepare) {
+      prepare.disabled = true;
+      api('cars/' + encodeURIComponent(prepare.closest('.row').dataset.id) + '/render', { method: 'POST', json: {} })
+        .then(loadRenderJobs)
+        .then(() => { $('render-board').scrollIntoView({ block: 'start' }); })
+        .catch(err => toast(err.message, true))
+        .finally(() => { prepare.disabled = false; });
+      return;
+    }
     var socialButton = e.target.closest('[data-social], [data-instagram-post], [data-instagram-reel], [data-threads-post], [data-youtube-short]');
     if (socialButton) {
       var options = socialButton.hasAttribute('data-social') ? {} : { platform: socialButton.hasAttribute('data-threads-post') ? 'threads' : 'instagram' };
@@ -743,6 +753,50 @@
     });
   });
 
+  let renderTimer;
+  function loadRenderJobs() {
+    clearTimeout(renderTimer);
+    return api('render').then(data => {
+      $('render-board').hidden = !data.jobs.length;
+      const labels = { queued: 'Ждёт компьютер с DaVinci', rendering: 'Монтируется', failed: 'Ошибка, запланирован повтор', blocked: 'Нужна проверка', ready: 'Готов' };
+      $('render-jobs').innerHTML = data.jobs.slice(-20).reverse().map(job => {
+        const actions = job.status === 'ready' && /^\/api\/social\/video\/[a-f0-9]{32}\.mp4$/.test(job.result?.publicUrl)
+          ? '<a class="btn" target="_blank" rel="noopener noreferrer" href="' + esc(job.result.publicUrl) + '">Открыть MP4</a> ' +
+            '<button class="btn" type="button" data-render-platform="instagram">Предпросмотр Reels</button> ' +
+            '<button class="btn" type="button" data-render-platform="youtube">Предпросмотр Shorts</button>'
+          : ['failed', 'blocked'].includes(job.status) ? '<button class="btn" type="button" data-render-retry>Повторить</button>' : '';
+        return '<section data-render-id="' + esc(job.id) + '"><h3>' + esc(job.storyboard.title) + '</h3><p>' +
+          esc(labels[job.status] || job.status) + (job.error ? ' · ' + esc(job.error) : '') + '</p>' + actions + '</section>';
+      }).join('');
+      if (!document.querySelector('[data-pane="cars"]').hidden && data.jobs.some(job => ['queued', 'rendering', 'failed'].includes(job.status))) {
+        renderTimer = setTimeout(loadRenderJobs, 8000);
+      }
+    }).catch(err => toast(err.message, true));
+  }
+  $('render-refresh').addEventListener('click', loadRenderJobs);
+  $('render-jobs').addEventListener('click', event => {
+    const button = event.target.closest('[data-render-platform], [data-render-retry]');
+    if (!button) return;
+    const id = button.closest('[data-render-id]').dataset.renderId;
+    const platform = button.dataset.renderPlatform;
+    button.disabled = true;
+    api('render/' + id + (platform ? '/social' : '/retry'), { method: 'POST', json: { platform } })
+      .then(data => {
+        if (platform) { showSocial(data.batch); $('social-dialog').showModal(); }
+        else loadRenderJobs();
+      })
+      .catch(err => toast(err.message, true))
+      .finally(() => { button.disabled = false; });
+  });
+  $('render-worker-copy').addEventListener('click', event => {
+    const button = event.currentTarget;
+    button.disabled = true;
+    api('render/worker', { method: 'POST', json: {} })
+      .then(data => navigator.clipboard.writeText(data.token))
+      .then(() => { $('render-worker-status').textContent = 'Ключ скопирован. Вставьте его в окно запуска DaVinci.'; })
+      .catch(err => { $('render-worker-status').textContent = err.message; })
+      .finally(() => { button.disabled = false; });
+  });
   function loadYouTube() {
     api('youtube').then(data => {
       $('youtube-status').textContent = data.connected ? 'Подключён ' + data.title + ' · ' + data.channelId : 'Канал YouTube не подключён';

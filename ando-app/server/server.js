@@ -22,6 +22,10 @@ const { createMetaSettings } = require('./meta-settings');
 const { createInstagramPublisher, createThreadsPublisher } = require('./social-platforms/meta');
 const { createYouTubePublisher } = require('./social-platforms/youtube');
 const { createYouTubeSettings, CALLBACK: YOUTUBE_CALLBACK } = require('./youtube-settings');
+const { createRenderJobs } = require('./video/render-jobs');
+const { createRenderApi } = require('./video/render-api');
+const { buildStoryboard } = require('./video/storyboard');
+const { store } = require('./social-platforms/common');
 const { createPostPublishers } = require('./social-publishers');
 const { createMarketPrice } = require('./market-price');
 
@@ -81,6 +85,7 @@ function readConfig(env = process.env) {
     socialPreview: true,
     vkToken: env.VK_TOKEN || '',
     vkGroupId: env.VK_GROUP_ID || '',
+    renderWorkerToken: env.RENDER_WORKER_TOKEN || '',
     // Нейросеть для разбора объявлений и фото (Kimi или другая с API как у OpenAI). Пусто — обычный разбор.
     llm: { baseUrl: env.LLM_BASE_URL || '', apiKey: env.LLM_API_KEY || '', model: env.LLM_MODEL || '', vision: env.LLM_VISION !== '0' },
     phoneLabel: env.PHONE_LABEL || '+7 928 333-95-70'
@@ -166,6 +171,23 @@ function servicesFor(config, deps = {}) {
     const threads = createMetaSettings(config, 'threads', { request: deps.threadsTransport });
     const youtube = createYouTubeSettings(config, { request: deps.youtubeTransport });
     const renditions = createPhotoRenditions(config);
+    const workerSettings = store(config, 'resolve-worker', {});
+    const workerToken = () => config.renderWorkerToken || workerSettings.read().token;
+    const configureWorker = () => {
+      const existing = workerToken();
+      if (existing) return existing;
+      const token = require('node:crypto').randomBytes(32).toString('hex');
+      workerSettings.write({ token });
+      return token;
+    };
+    const renderJobs = createRenderJobs({ config });
+    function renderedAsset(jobId, car) {
+      const job = renderJobs.get(jobId);
+      if (!job || job.carId !== String(car.id) || job.status !== 'ready') throw new Error('Ролик ещё не готов');
+      const file = renderJobs.outputFile(jobId);
+      const url = new URL(job.result.publicUrl, config.siteUrl).href;
+      return { video: { file, url, title: job.storyboard.title }, key: 'video:' + job.result.sha256 };
+    }
     const publishers = () => {
       const channels = createPostPublishers(config, vk);
       const youtubeAccount = youtube.publisherConfig();
@@ -199,7 +221,7 @@ function servicesFor(config, deps = {}) {
       }
       return channels;
     };
-    const social = createSocial({ config, copywriter: deps.copywriter || smartParser(config), publishers,
+    const social = createSocial({ config, copywriter: deps.copywriter || smartParser(config), publishers, renderedAsset,
       notify: async (batch) => {
         if (!config.telegramToken) return;
         const lines = batch.jobs.map((j) => `${j.name}: ${j.status}${j.error ? ' — ' + j.error : ''}${j.receipt?.url ? '\n' + j.receipt.url : ''}`);
@@ -218,8 +240,9 @@ function servicesFor(config, deps = {}) {
         }).catch(() => {});
       }
     });
-    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social, instagram, threads, youtube, renditions };
-    services.set(config.leadsLog, { vk, afterPublish, specs, social, instagram, threads, youtube, renditions });
+    const all = { vk, afterPublish, specs, social, instagram, threads, youtube, renditions, renderJobs, workerToken, configureWorker, buildStoryboard };
+    if (deps.vk || deps.afterPublish) return all;
+    services.set(config.leadsLog, all);
   }
   return services.get(config.leadsLog);
 }
@@ -387,13 +410,15 @@ function createApp(config = readConfig(), deps = {}) {
   const services = servicesFor(config, deps);
   const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser,
     telegram: deps.telegram, restart: deps.restart, ...services });
-  const { vk, youtube, renditions } = services;
+  const { vk, youtube, renditions, renderJobs, workerToken } = services;
+  const renderApi = createRenderApi({ config, jobs: renderJobs, workerToken, inspect: deps.inspectVideo });
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 
   return http.createServer((req, res) => {
     const pathname = (req.url || '/').split('?')[0];
     if (admin.handle(req, res, pathname)) return;
+    if (renderApi.handle(req, res, pathname)) return;
     if (seo.handle(req, res, pathname)) return;
     if (renditions.handle(req, res, pathname)) return;
     if (pathname === '/api/lead') {

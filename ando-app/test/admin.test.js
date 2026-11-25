@@ -241,7 +241,33 @@ test('YouTube: OAuth проверяет канал, скрывает ключи 
     const { checks } = await probe.json();
     assert.match(checks[0].result, /HTTP 400/);
     assert.match(checks[1].result, /ETIMEDOUT/);
-  }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { youtubeTransport } });
+    const pair = await call('/api/render/worker', { method: 'POST', json: {} });
+    const { token } = await pair.json();
+    assert.match(token, /^[a-f0-9]{64}$/);
+    const queue = async () => (await (await call('/api/cars/751/render', { method: 'POST', json: {} })).json()).job;
+    const queued = await queue();
+    assert.equal(queued.status, 'queued');
+    assert.equal((await queue()).id, queued.id);
+    const workerRequest = (url, body, headers = {}) => fetch(origin + url, {
+      method: 'POST', headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', ...headers }, body
+    });
+    const claimed = await workerRequest('/api/render/claim', '{"workerId":"fixture"}');
+    const { job } = await claimed.json();
+    assert.equal(job.id, queued.id);
+    const result = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypisom'), Buffer.alloc(32)]);
+    const uploaded = await workerRequest('/api/render/jobs/' + job.id + '/complete', result, {
+      'Content-Type': 'video/mp4', 'X-Render-Lease': job.leaseToken
+    });
+    assert.equal(uploaded.status, 200);
+    const ready = await call('/api/render/' + job.id + '/social', { method: 'POST', json: { platform: 'youtube' } });
+    assert.equal(ready.status, 200);
+    const { batch: renderBatch } = await ready.json();
+    assert.equal(renderBatch.approved, false);
+    assert.equal(renderBatch.jobs[0].payload.privacyStatus, 'private');
+    assert.equal(renderBatch.jobs[0].payload.video.url, 'https://andoauto.ru/api/social/video/' + job.id + '.mp4');
+    assert.notEqual(renderBatch.id, batch.id);
+    assert.equal(requests.length, 6);
+  }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { youtubeTransport, inspectVideo: async () => {} } });
 });
 
 async function withAdmin(fn, { configure = true, overrides = {}, deps = {} } = {}) {
