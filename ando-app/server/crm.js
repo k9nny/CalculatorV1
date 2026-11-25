@@ -125,12 +125,23 @@ const manualSites = [
 ];
 
 function manualEntry(body, now) {
+  if (!body || !['listing', 'video'].includes(body.kind)) return null;
+  const time = body.postedAt ? Date.parse(body.postedAt) : now.getTime();
+  if (!Number.isFinite(time) || time > now.getTime()) return null;
+  const postedAt = new Date(time).toISOString();
+  if (body.url == null || body.url === '') {
+    const target = crmDestinations.find(item => item.id === body.destination);
+    if (!target) return null;
+    const kind = target.id === 'telegram' ? body.kind
+      : ['vk-clip', 'vk-video', 'instagram-reel', 'youtube'].includes(target.id) ? 'video' : 'listing';
+    return { carId: String(body.carId), kind, key: 'manual:' + target.platform,
+      name: target.name, destination: target.id, url: null, postedAt };
+  }
   let url;
   try { url = new URL(body.url); } catch { return null; }
   if (url.protocol !== 'https:' || url.username || url.password || url.port || url.href.length > 500) return null;
   const site = manualSites.find(([, , host, path]) => host.test(url.hostname) && path.test(url.pathname));
-  const time = Date.parse(body.postedAt);
-  if (!site || !['listing', 'video'].includes(body.kind) || !Number.isFinite(time) || time > now.getTime()) return null;
+  if (!site) return null;
   const videoId = url.pathname === '/watch' ? url.searchParams.get('v') : null;
   if (url.pathname === '/watch' && !/^[\w-]+$/.test(videoId || '')) return null;
   url.search = videoId ? '?v=' + videoId : '';
@@ -138,8 +149,9 @@ function manualEntry(body, now) {
   let kind = body.kind;
   if (site[0] === 'vk') kind = url.pathname.startsWith('/wall') ? 'listing' : 'video';
   if (site[0] === 'instagram') kind = url.pathname.startsWith('/reel/') ? 'video' : 'listing';
-  return { carId: String(body.carId), kind, key: 'manual:' + site[0], name: site[1],
-    url: url.href, postedAt: new Date(time).toISOString() };
+  const entry = { carId: String(body.carId), kind, key: 'manual:' + site[0], name: site[1],
+    url: url.href, postedAt };
+  return !body.destination || destinationFor(entry) === body.destination ? entry : null;
 }
 
 function readManual(file) {
@@ -215,11 +227,12 @@ function buildCrm(inventory, batches, channels, leads, now, manual = []) {
     }, String(car.vk.postId));
   }
 
-  for (const entry of manual) {
+  for (const entry of [...manual.filter(item => item.url), ...manual.filter(item => !item.url)]) {
     if (demo.has(entry.carId)) continue;
     const car = byId(entry.carId);
     const existing = car.publications.find(pub => pub.kind === entry.kind && pub.status === 'posted'
-      && publicationUrl(pub.url) === publicationUrl(entry.url));
+      && (entry.url ? publicationUrl(pub.url) === publicationUrl(entry.url)
+        : (pub.destination || destinationFor(pub)) === entry.destination));
     if (existing) { existing.postedAt ||= entry.postedAt; continue; }
     car.publications.push({ ...entry, name: publicationName(entry), batchId: null, status: 'posted', manual: true });
   }
@@ -242,7 +255,7 @@ function buildCrm(inventory, batches, channels, leads, now, manual = []) {
       else totals.unpublishedCars++;
     }
     for (const pub of car.publications) {
-      pub.destination = destinationFor(pub);
+      pub.destination ||= destinationFor(pub);
       if (pub.status === 'posted') totals[pub.kind === 'video' ? 'postedVideos' : 'postedListings']++;
       if (pub.status === 'scheduled') totals.scheduled++;
       if (pub.status === 'uploaded') totals.uploaded++;

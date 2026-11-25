@@ -80,6 +80,18 @@ window.AndoCRM = function ({ api, openBatch }) {
     $('empty').hidden = cars.length > 0;
     $('empty').textContent = data.cars.length ? 'По этим фильтрам машин нет.' : 'После добавления первой машины здесь появится история публикаций.';
   }
+  function manualOptions(selected) {
+    const videoDestinations = ['vk-clip', 'vk-video', 'instagram-reel', 'youtube'];
+    return data.destinations.filter(item => item.id !== 'other').flatMap(item => {
+      const kinds = item.id === 'telegram' ? ['listing', 'video']
+        : [videoDestinations.includes(item.id) ? 'video' : 'listing'];
+      return kinds.map((kind, index) => {
+        const label = item.name + ' · ' + (item.format || (kind === 'video' ? 'Видео' : 'Пост'));
+        return '<option value="' + esc(item.id + ':' + kind) + '"' +
+          (item.id === selected && index === 0 ? ' selected' : '') + '>' + esc(label) + '</option>';
+      });
+    }).join('');
+  }
   function detail(car, destinationId = '') {
     detailDestination = destinationId;
     const target = data.destinations.find(destination => destination.id === destinationId);
@@ -91,15 +103,15 @@ window.AndoCRM = function ({ api, openBatch }) {
         const link = /^https:\/\//.test(j.url || '') ? '<a href="' + esc(j.url) + '" target="_blank" rel="noopener noreferrer">Открыть на площадке ↗</a>' : '';
         const completed = j.status === 'posted' || j.status === 'uploaded';
         const stamp = date(completed ? j.postedAt : due(j) || j.createdAt);
-        return '<article class="crm-event"><div><b>' + esc(j.name) + '</b><small>' + format(j) + '</small></div><div><span class="crm-state" data-state="' + esc(j.status) + '">' + esc(j.privacyStatus === 'private' ? 'Только владелец' : j.privacyStatus === 'unlisted' ? 'По ссылке' : labels[j.status] || j.status) + '</span><small>' + esc(stamp ? stamp + ' МСК' : 'Дата неизвестна') + '</small></div><div>' + link + (j.batchId ? '<button class="crm-link" data-batch="' + esc(j.batchId) + '">Предпросмотр</button>' : '') + '</div>' + (j.error ? '<p class="err">' + esc(j.error) + '</p>' : '') + '</article>';
+        return '<article class="crm-event"><div><b>' + esc(j.name) + '</b><small>' + format(j) + (j.manual ? ' · Отмечено вручную' : '') + '</small></div><div><span class="crm-state" data-state="' + esc(j.status) + '">' + esc(j.privacyStatus === 'private' ? 'Только владелец' : j.privacyStatus === 'unlisted' ? 'По ссылке' : labels[j.status] || j.status) + '</span><small>' + esc(stamp ? stamp + ' МСК' : 'Дата неизвестна') + '</small></div><div>' + link + (j.batchId ? '<button class="crm-link" data-batch="' + esc(j.batchId) + '">Предпросмотр</button>' : '') + '</div>' + (j.error ? '<p class="err">' + esc(j.error) + '</p>' : '') + '</article>';
       }).join('') : '<p class="empty">Здесь пока нет записей о публикациях.</p>') +
       (!target && car.inCatalog && car.status === 'available' ? '<button type="button" class="btn" data-prepare="' + esc(car.id) + '">Подготовить пост</button>' : '') +
-      (car.inCatalog ? '<details class="crm-manual"><summary>Добавить ссылку на вышедшую публикацию</summary>' +
+      (car.inCatalog ? '<details class="crm-manual"' + (target && target.id !== 'other' && !jobs.some(job => job.status === 'posted') ? ' open' : '') + '><summary>Отметить как опубликованное</summary>' +
         '<form data-manual-car="' + esc(car.id) + '">' +
-        '<label class="field">Прямая ссылка на публикацию<input name="url" type="url" required></label>' +
-        '<label class="field">Формат<select name="kind"><option value="listing">Пост</option><option value="video">Видео</option></select></label>' +
-        '<label class="field">Дата и время по Москве<input name="date" type="datetime-local" required></label>' +
-        '<button class="btn" type="submit">Сохранить в истории</button><p class="err" role="alert"></p></form></details>' : '');
+        '<label class="field">Площадка и формат<select name="target" required><option value="">Выбрать</option>' + manualOptions(destinationId) + '</select></label>' +
+        '<label class="field">Дата и время по Москве · по умолчанию сейчас<input name="date" type="datetime-local"></label>' +
+        '<label class="field">Ссылка · необязательно<input name="url" type="url"></label>' +
+        '<button class="btn" type="submit">Уже опубликовано</button><p class="err" role="alert"></p></form></details>' : '');
     if (!$('detail').open) $('detail').showModal();
   }
   function summary() {
@@ -143,13 +155,15 @@ window.AndoCRM = function ({ api, openBatch }) {
     const form = event.target;
     const fields = new FormData(form);
     const carId = form.dataset.manualCar;
+    const [destination, kind] = fields.get('target').split(':');
+    const postedAt = fields.get('date');
     const button = form.querySelector('button');
     const error = form.querySelector('.err');
     error.textContent = '';
     button.disabled = true;
     try {
-      await api('crm/publications', { method:'POST', json:{ carId, url:fields.get('url'),
-        kind:fields.get('kind'), postedAt:fields.get('date') + ':00+03:00' } });
+      await api('crm/publications', { method:'POST', json:{ carId, destination, kind, url:fields.get('url').trim(),
+        postedAt:postedAt ? postedAt + ':00+03:00' : undefined } });
       await load();
       if ($('detail').open) detail(data.cars.find(car => String(car.id) === carId), detailDestination);
     } catch (err) { error.textContent = err.message; }

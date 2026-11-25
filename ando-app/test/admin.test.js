@@ -28,6 +28,31 @@ test('CRM сохраняет ручную публикацию и повторн
   });
 });
 
+test('CRM отмечает публикации без ссылки отдельно по форматам и сохраняет дату', async () => {
+  await withAdmin(async ({ call, login, config }) => {
+    await login();
+    fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [{ id: 17, make: 'Kia', model: 'Rio' }] }));
+    const post = (json) => call('/api/crm/publications', { method: 'POST', json: { carId: '17', ...json } });
+    const reel = { destination: 'instagram-reel', kind: 'video' };
+    const postedAt = '2026-07-01T14:00:00.000Z';
+    assert.equal((await post(reel)).status, 201);
+    assert.equal((await post(reel)).status, 200);
+    assert.equal((await post({ kind: 'listing' })).status, 400);
+    assert.equal((await post({ destination: 'instagram-post', kind: 'listing', postedAt })).status, 201);
+    assert.equal((await post({ destination: 'vk-clip', kind: 'video' })).status, 201);
+    const data = await (await call('/api/crm')).json();
+    assert.equal(data.totals.postedListings, 1);
+    assert.equal(data.totals.postedVideos, 2);
+    assert.deepEqual(data.cars[0].publications.map(p => p.destination), ['instagram-reel', 'instagram-post', 'vk-clip']);
+    assert.ok(data.cars[0].publications.every(p => p.manual && p.status === 'posted' && p.url === null));
+    assert.equal(data.cars[0].publications[1].postedAt, postedAt);
+    assert.equal((await post({ ...reel, url: 'https://instagram.com/reel/ABCD/' })).status, 201);
+    const linked = await (await call('/api/crm')).json();
+    assert.equal(linked.totals.postedVideos, 2);
+    assert.equal(linked.cars[0].publications.find(p => p.destination === 'instagram-reel').url, 'https://instagram.com/reel/ABCD/');
+  });
+});
+
 test('CRM требует вход и считает все заявки без вывода телефонов', async () => {
   await withAdmin(async ({ call, login, config }) => {
     assert.equal((await call('/api/crm')).status, 401);

@@ -274,10 +274,12 @@ function createAdmin(config, opts = {}) {
 
     if (pathname === '/api/admin/crm/publications' && m === 'POST') {
       const entry = manualEntry(await readJson(req), now());
-      if (!entry) return json(res, 400, { error: 'Укажите прямую ссылку на пост или ролик и прошедшую дату публикации.' });
+      if (!entry) return json(res, 400, { error: 'Выберите площадку и формат. Если указали ссылку или дату, проверьте их.' });
       const car = readCatalog(config.carsFile).cars.find((item) => !item.demo && String(item.id) === entry.carId);
       if (!car) return json(res, 404, { error: 'Машина не найдена в каталоге.' });
-      const existing = readManual(manualFile).find((item) => publicationUrl(item.url) === publicationUrl(entry.url));
+      const existing = readManual(manualFile).find((item) => entry.url
+        ? publicationUrl(item.url) === publicationUrl(entry.url)
+        : !item.url && item.carId === entry.carId && item.destination === entry.destination && item.kind === entry.kind);
       if (existing && (existing.carId !== entry.carId || existing.kind !== entry.kind)) {
         return json(res, 409, { error: 'Эта ссылка уже сохранена для другой машины или формата.' });
       }
