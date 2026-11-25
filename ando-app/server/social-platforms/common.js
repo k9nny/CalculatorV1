@@ -38,6 +38,22 @@ function textWithLink(text, link, limit, units = () => 1) {
   return parts.join('') + '…' + end;
 }
 
+function textWithByteLimit(text, link, limit) {
+  const full = textWithLink(text, link, limit);
+  if (Buffer.byteLength(full, 'utf8') <= limit) return full;
+  const end = link ? '…\n' + link : '…';
+  let room = limit - Buffer.byteLength(end, 'utf8');
+  if (room < 0) throw failure('Ссылка превышает ограничение площадки');
+  const parts = [];
+  for (const char of String(text || '')) {
+    const bytes = Buffer.byteLength(char, 'utf8');
+    if (room < bytes) break;
+    parts.push(char);
+    room -= bytes;
+  }
+  return parts.join('') + end;
+}
+
 // Files are private, outside public/. Each checkpoint belongs to one account and snapshot.
 function store(config, name, identity) {
   const dir = config.socialPlatformDir || path.join(path.dirname(config.leadsLog), 'social-platforms');
@@ -118,4 +134,4 @@ function accountPayload(payload, key) {
   if (!payload || payload.account !== key) throw failure('Аккаунт изменился после предпросмотра');
 }
 
-module.exports = { hash, failure, approved, secureUrl, textWithLink, store, transport, check, numericId, accountPayload };
+module.exports = { hash, failure, approved, secureUrl, textWithLink, textWithByteLimit, store, transport, header, check, numericId, accountPayload };

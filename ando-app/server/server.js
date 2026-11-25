@@ -20,6 +20,8 @@ const { threadsDraft } = require('./telegram-post');
 const { createPhotoRenditions } = require('./photo-renditions');
 const { createMetaSettings } = require('./meta-settings');
 const { createInstagramPublisher, createThreadsPublisher } = require('./social-platforms/meta');
+const { createYouTubePublisher } = require('./social-platforms/youtube');
+const { createYouTubeSettings, CALLBACK: YOUTUBE_CALLBACK } = require('./youtube-settings');
 const { createPostPublishers } = require('./social-publishers');
 const { createMarketPrice } = require('./market-price');
 
@@ -162,9 +164,21 @@ function servicesFor(config, deps = {}) {
     const market = deps.market !== undefined ? deps.market : createMarketPrice(smartParser(config));
     const instagram = createMetaSettings(config, 'instagram', { request: deps.instagramTransport });
     const threads = createMetaSettings(config, 'threads', { request: deps.threadsTransport });
+    const youtube = createYouTubeSettings(config, { request: deps.youtubeTransport });
     const renditions = createPhotoRenditions(config);
     const publishers = () => {
       const channels = createPostPublishers(config, vk);
+      const youtubeAccount = youtube.publisherConfig();
+      if (youtubeAccount) {
+        const publisher = createYouTubePublisher(youtubeAccount, { transport: deps.youtubeTransport });
+        channels.push({ ...publisher, name: 'YouTube Shorts · ' + youtubeAccount.youtubeChannelTitle, prepare: media => {
+          const car = media.car;
+          const price = Number(car.price).toLocaleString('ru-RU') + ' ₽';
+          const text = [[car.make, car.model, car.year].filter(Boolean).join(' '), price, car.city,
+            'Все машины — по ссылке в профиле ANDO AUTO'].filter(Boolean).join('\n');
+          return publisher.prepare({ ...media, text, link: '' });
+        } });
+      }
       const account = instagram.publisherConfig();
       if (account) {
         const publisher = createInstagramPublisher(account, { transport: deps.instagramTransport });
@@ -204,8 +218,8 @@ function servicesFor(config, deps = {}) {
         }).catch(() => {});
       }
     });
-    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social, instagram, threads, renditions };
-    services.set(config.leadsLog, { vk, afterPublish, specs, social, instagram, threads, renditions });
+    if (deps.vk || deps.afterPublish) return { vk, afterPublish, specs, social, instagram, threads, youtube, renditions };
+    services.set(config.leadsLog, { vk, afterPublish, specs, social, instagram, threads, youtube, renditions });
   }
   return services.get(config.leadsLog);
 }
@@ -370,9 +384,10 @@ function createApp(config = readConfig(), deps = {}) {
   }
 
   // Админка — только по секретному адресу из admin.json (deploy/admin.sh); остальным она не видна.
+  const services = servicesFor(config, deps);
   const admin = createAdmin(config, { parser: deps.parser || smartParser(config), llmStore: deps.llmStore || llmStore(config), discover: deps.discover, makeParser: deps.makeParser,
-    telegram: deps.telegram, restart: deps.restart, ...servicesFor(config, deps) });
-  const { vk, renditions } = servicesFor(config, deps);
+    telegram: deps.telegram, restart: deps.restart, ...services });
+  const { vk, youtube, renditions } = services;
   // Страницы машин, список и карта сайта для поисковиков.
   const seo = createSeo(config, deps.seo);
 
@@ -386,6 +401,18 @@ function createApp(config = readConfig(), deps = {}) {
       return;
     }
     if (pathname === '/healthz') return json(res, 200, { ok: true });
+    if (pathname === YOUTUBE_CALLBACK && req.method === 'GET') {
+      const query = new URL(req.url, 'http://x').searchParams;
+      const headers = { ...SECURITY_HEADERS, 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' };
+      youtube.finish(query).then(returnPath => {
+        res.writeHead(303, { ...headers, Location: returnPath });
+        res.end();
+      }).catch(error => {
+        res.writeHead(400, { ...headers, 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end(error.message);
+      });
+      return;
+    }
     // Возврат из VK ID после «Подключить ВК» в админке: без state, выданного админкой, ничего не делает.
     if (pathname === '/api/vk/callback' && req.method === 'GET') {
       const q = new URL(req.url, 'http://x').searchParams;

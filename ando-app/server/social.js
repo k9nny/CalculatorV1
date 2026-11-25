@@ -71,13 +71,13 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
   function reelAsset(car, index) {
     const src = car.videos?.[index];
     if (typeof src !== 'string' || !/^img\/cars\/[\w.-]+\.mp4$/i.test(src)) {
-      throw new Error('Для Reels добавьте к машине ролик MP4.');
+      throw new Error('Добавьте к машине ролик MP4.');
     }
     const file = path.join(config.photosDir, path.basename(src));
     const stat = fs.statSync(file, { throwIfNoEntry: false });
     if (!stat?.isFile() || !stat.size) throw new Error('Файл ролика недоступен.');
     const site = String(config.siteUrl || '').replace(/\/+$/, '');
-    return { video: { url: site + '/app/' + src }, key: 'video:' + digest([src, stat.size, stat.mtimeMs]) };
+    return { video: { file, url: site + '/app/' + src }, key: 'video:' + digest([src, stat.size, stat.mtimeMs]) };
   }
   function postedJob(carId, rev, key, assetKey = 'listing') {
     return state.batches.filter((b) => b.carId === carId && b.revision === rev && (b.assetKey || 'listing') === assetKey)
@@ -88,10 +88,13 @@ function createSocial({ config, publishers, copywriter, now = () => new Date(), 
     const media = content(car);
     const reel = options.reelIndex !== undefined ? reelAsset(car, options.reelIndex) : null;
     if (reel) media.video = reel.video;
-    const platform = reel ? 'instagram' : options.platform;
+    const platform = options.platform || (reel ? 'instagram' : undefined);
     const targets = publishers().filter(p => (!platform || p.key.startsWith(platform + ':'))
       && (!p.supports || p.supports(media)));
-    if (!targets.length && platform) throw new Error(platform === 'instagram' ? 'Подключите Instagram в настройках и добавьте медиа к карточке.' : 'Подключите Threads в настройках.');
+    if (!targets.length && platform) {
+      const names = { instagram: 'Instagram', threads: 'Threads', youtube: 'YouTube' };
+      throw new Error('Подключите ' + names[platform] + ' в настройках CRM.');
+    }
     if (!targets.length) throw new Error('Каналы не подключены. /social — настройки');
     const rev = revision(car);
     if (options.expectedRevision && options.expectedRevision !== rev) {

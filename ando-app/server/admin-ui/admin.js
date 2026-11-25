@@ -43,7 +43,7 @@
   function showApp() {
     $('login').hidden = true;
     $('app').hidden = false;
-    openTab('crm');
+    openTab(location.hash === '#settings' ? 'settings' : 'crm');
     loadLeads();
   }
   $('login-form').addEventListener('submit', function (e) {
@@ -69,7 +69,7 @@
     if (name === 'cars') loadCars();
     if (name === 'publications') loadPublications();
     if (name === 'leads') loadLeads();
-    if (name === 'settings') { loadLlm(); loadTg(); loadVk(); loadMetaAccount('instagram'); loadMetaAccount('threads'); }
+    if (name === 'settings') { loadLlm(); loadTg(); loadVk(); loadMetaAccount('instagram'); loadMetaAccount('threads'); loadYouTube(); }
     window.scrollTo(0, 0);
   }
   tabs.forEach(function (b) { b.addEventListener('click', function () { openTab(b.dataset.tab); }); });
@@ -298,7 +298,8 @@
           (c.status === 'available' && !c.demo ? '<button class="btn btn-ghost" type="button" data-instagram-post>Пост Instagram</button><button class="btn btn-ghost" type="button" data-threads-post>Пост Threads</button>' +
             (c.videos || []).map(function (src, index) {
               return /[.]mp4$/i.test(src) ? '<button class="btn btn-ghost" type="button" data-instagram-reel="' + index +
-                '">Reels · видео ' + (index + 1) + '</button>' : '';
+                '">Reels · видео ' + (index + 1) + '</button><button class="btn btn-ghost" type="button" data-youtube-short="' +
+                index + '">Shorts · видео ' + (index + 1) + '</button>' : '';
             }).join('') : '') +
           '<button class="btn btn-ghost row-specs" type="button" data-act="specs">' + (c.modelSpecs ? 'Справка о модели ✓' : 'Справка о модели') + '</button>' +
           (c.videos && c.videos.length ? '<button class="btn btn-ghost row-video-off" type="button" data-delvideos>Убрать видео</button>' : '') +
@@ -358,10 +359,11 @@
       .catch(function (err) { toast(err.message, true); btn.disabled = false; btn.textContent = 'Добавить видео'; });
   });
   $('cars').addEventListener('click', function (e) {
-    var socialButton = e.target.closest('[data-social], [data-instagram-post], [data-instagram-reel], [data-threads-post]');
+    var socialButton = e.target.closest('[data-social], [data-instagram-post], [data-instagram-reel], [data-threads-post], [data-youtube-short]');
     if (socialButton) {
       var options = socialButton.hasAttribute('data-social') ? {} : { platform: socialButton.hasAttribute('data-threads-post') ? 'threads' : 'instagram' };
       if (socialButton.hasAttribute('data-instagram-reel')) options.reelIndex = Number(socialButton.dataset.instagramReel);
+      if (socialButton.hasAttribute('data-youtube-short')) options = { platform: 'youtube', reelIndex: Number(socialButton.dataset.youtubeShort) };
       api('cars/' + encodeURIComponent(socialButton.closest('.row').dataset.id) + '/social', { method: 'POST', json: options })
         .then(function (d) { showSocial(d.batch); $('social-dialog').showModal(); })
         .catch(function (err) { toast(err.message, true); });
@@ -501,7 +503,9 @@
   function publicationState(batch, job) {
     if (job.status === 'queued' && canCancelSchedule(batch)) return 'Запланировано · ' + moscowDate.format(new Date(batch.scheduledAt)) + ' МСК';
     var date = job.status === 'posted' ? job.postedAt : job.status === 'retry' ? job.nextAt : null;
-    return (socialLabels[job.status] || job.status) + (date ? ' · ' + moscowDate.format(new Date(date)) + ' МСК' : '');
+    var label = job.status === 'posted' && (job.privacyStatus || job.receipt?.privacyStatus) === 'private'
+      ? 'Загружено приватно' : socialLabels[job.status] || job.status;
+    return label + (date ? ' · ' + moscowDate.format(new Date(date)) + ' МСК' : '');
   }
 
   function renderPublications() {
@@ -573,6 +577,7 @@
       return '<section><h3>' + esc(job.name) + '</h3><p>' + esc(publicationState(batch, job)) +
         (job.payload.privacyStatus ? ' · видимость: ' + esc({ public: 'публично', unlisted: 'по ссылке', private: 'только владелец' }[job.payload.privacyStatus] || job.payload.privacyStatus) : '') + '</p>' +
         (job.payload.video && /^https:\/\//.test(job.payload.video.url || '') ? '<video controls preload="metadata" src="' + esc(job.payload.video.url) + '"></video>' : '') +
+        (job.key.startsWith('youtube:') ? '<p class="hint">Для Shorts нужен вертикальный или квадратный ролик до 3 минут.</p><strong>' + esc(job.payload.title) + '</strong>' : '') +
         '<p class="social-text">' + socialText(job.payload) + '</p>' +
         '<div class="social-photos">' + photos.map(function (src) {
           var url = /^https:\/\//.test(src) ? src : '../' + src;
@@ -583,7 +588,9 @@
     }).join('');
     var canApprove = !batch.approved && batch.jobs.some(function (job) { return job.status === 'draft'; });
     $('social-approve').hidden = !canApprove;
-    $('social-approve').textContent = batch.jobs.length === 1 ? 'Опубликовать в ' + batch.jobs[0].name : 'Опубликовать во всех каналах';
+    $('social-approve').textContent = batch.jobs.length === 1
+      ? (batch.jobs[0].key.startsWith('youtube:') ? 'Загрузить приватно на YouTube' : 'Опубликовать в ' + batch.jobs[0].name)
+      : 'Опубликовать во всех каналах';
     $('social-schedule').hidden = !canApprove;
     $('social-cancel-schedule').hidden = !canCancelSchedule(batch);
     $('social-retry').hidden = !batch.jobs.some(function (j) { return !j.preparationFailed && ['retry', 'failed', 'blocked'].includes(j.status); });
@@ -734,6 +741,24 @@
         .catch(err => { $(platform + '-error').textContent = err.message; })
         .finally(() => { button.disabled = false; });
     });
+  });
+
+  function loadYouTube() {
+    api('youtube').then(data => {
+      $('youtube-status').textContent = data.connected ? 'Подключён ' + data.title + ' · ' + data.channelId : 'Канал YouTube не подключён';
+    }).catch(err => { $('youtube-error').textContent = err.message; });
+  }
+  $('youtube-connect').addEventListener('submit', function (event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector('button');
+    button.disabled = true;
+    $('youtube-error').textContent = '';
+    api('youtube', { method: 'POST', json: {
+      clientId: $('youtube-client').value, clientSecret: $('youtube-secret').value, channelId: $('youtube-channel').value
+    } }).then(data => { form.reset(); location.assign(data.url); })
+      .catch(err => { $('youtube-error').textContent = err.message; })
+      .finally(() => { button.disabled = false; });
   });
 
   var crm = window.AndoCRM({ api: api, openBatch: function (batch) {

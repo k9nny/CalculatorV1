@@ -442,6 +442,15 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    if (pathname === '/api/admin/youtube' && opts.youtube) {
+      if (m === 'GET') return json(res, 200, opts.youtube.status());
+      if (m === 'POST') {
+        const body = await readJson(req);
+        try { return json(res, 200, { url: opts.youtube.start(body, '/' + slug() + '/#settings') }); }
+        catch (error) { return json(res, 400, { error: error.message }); }
+      }
+    }
+
     const connection = /^\/api\/admin\/(instagram|threads)$/.exec(pathname);
     if (connection && connectedAccounts[connection[1]]) {
       const account = connectedAccounts[connection[1]];
@@ -465,10 +474,11 @@ function createAdmin(config, opts = {}) {
         let batch;
         if (socialPreview) {
           const body = await readJson(req);
-          const platform = ['instagram', 'threads'].includes(body?.platform) ? body.platform : undefined;
+          const platform = ['instagram', 'threads', 'youtube'].includes(body?.platform) ? body.platform : undefined;
           const reelIndex = body?.reelIndex;
-          if (reelIndex !== undefined && (platform !== 'instagram' || !Number.isInteger(reelIndex) || reelIndex < 0 || reelIndex >= MAX_VIDEOS)) {
-            return json(res, 400, { error: 'Выберите MP4 для Reels.' });
+          if ((platform === 'youtube' && reelIndex === undefined) ||
+            (reelIndex !== undefined && (!['instagram', 'youtube'].includes(platform) || !Number.isInteger(reelIndex) || reelIndex < 0 || reelIndex >= MAX_VIDEOS))) {
+            return json(res, 400, { error: 'Выберите MP4 для публикации видео.' });
           }
           batch = await social.preview(decodeURIComponent(socialPreview[1]), { enhance: true, platform, reelIndex });
         }

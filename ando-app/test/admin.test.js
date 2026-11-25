@@ -173,6 +173,67 @@ test('Threads: токен проверяется, текст со ссылкой
   }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { threadsTransport } });
 });
 
+test('YouTube: OAuth проверяет канал, скрывает ключи и готовит приватный ролик', async () => {
+  const channelId = 'UC751OsxXbkvP9FqqA3tQH7Q';
+  const clientSecret = 'test-secret-abc';
+  const scopes = ['youtube.upload', 'youtube.readonly'].map(s => 'https://www.googleapis.com/auth/' + s).join(' ');
+  const requests = [];
+  let returnedChannel = 'UC' + 'X'.repeat(22);
+  const youtubeTransport = async request => {
+    requests.push(request);
+    if (request.url === 'https://oauth2.googleapis.com/token') {
+      return { status: 200, body: { access_token: 'access-test', refresh_token: 'refresh-test', scope: scopes } };
+    }
+    assert.match(request.url, /\/youtube\/v3\/channels\?/);
+    assert.equal(request.headers.Authorization, 'Bearer access-test');
+    return { status: 200, body: { items: [{ id: returnedChannel, snippet: { title: 'ANDO AUTO' } }] } };
+  };
+  await withAdmin(async ({ config, call, login, origin, slug }) => {
+    const credentials = { channelId, clientId: 'test-client.apps.googleusercontent.com', clientSecret };
+    const start = { method: 'POST', json: credentials };
+    assert.equal((await call('/api/youtube', start)).status, 401);
+    await login();
+    const authorize = async () => {
+      const response = await call('/api/youtube', start);
+      assert.equal(response.status, 200);
+      const url = new URL((await response.json()).url);
+      assert.equal(url.origin, 'https://accounts.google.com');
+      assert.equal(url.searchParams.get('redirect_uri'), 'https://andoauto.ru/api/youtube/callback');
+      assert.equal(url.searchParams.get('code_challenge_method'), 'S256');
+      assert.equal(url.searchParams.get('scope'), scopes);
+      assert.ok(!url.href.includes(clientSecret));
+      return url.searchParams.get('state');
+    };
+    const callback = state => fetch(origin + '/api/youtube/callback?code=test-code&state=' + state, { redirect: 'manual' });
+    const state = await authorize();
+    assert.equal((await callback('invalid')).status, 400);
+    assert.equal(requests.length, 0);
+    assert.match(await (await callback(state)).text(), /Выбран другой YouTube-канал/);
+    assert.deepEqual(await (await call('/api/youtube')).json(), { connected: false });
+    returnedChannel = channelId;
+    const newState = await authorize();
+    const response = await callback(newState);
+    assert.equal(response.status, 303);
+    assert.equal(response.headers.get('location'), '/' + slug + '/#settings');
+    assert.equal((await callback(newState)).status, 400);
+    assert.equal(new URLSearchParams(requests[2].body).get('client_secret'), clientSecret);
+    assert.deepEqual(await (await call('/api/youtube')).json(), { connected: true, channelId, title: 'ANDO AUTO' });
+
+    fs.writeFileSync(path.join(config.photosDir, '751-v1.mp4'), 'test-video');
+    fs.writeFileSync(config.carsFile, JSON.stringify({ cars: [{ id: '751', make: 'Kia', model: 'Rio',
+      year: 2019, price: 1390000, status: 'available', videos: ['img/cars/751-v1.mp4'] }] }));
+    const preview = await call('/api/cars/751/social', { method: 'POST', json: { platform: 'youtube', reelIndex: 0 } });
+    assert.equal(preview.status, 200);
+    const { batch } = await preview.json();
+    assert.equal(batch.approved, false);
+    assert.equal(batch.jobs.length, 1);
+    assert.equal(batch.jobs[0].key, 'youtube:' + channelId);
+    assert.equal(batch.jobs[0].payload.privacyStatus, 'private');
+    assert.equal(batch.jobs[0].payload.video.url, 'https://andoauto.ru/app/img/cars/751-v1.mp4');
+    assert.equal(requests.length, 4);
+  }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { youtubeTransport } });
+});
+
 async function withAdmin(fn, { configure = true, overrides = {}, deps = {} } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-admin-'));
   fs.mkdirSync(path.join(dir, 'photos'));

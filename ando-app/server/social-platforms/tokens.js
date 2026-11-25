@@ -50,4 +50,38 @@ function createMetaToken(config, platform, opts = {}) {
   };
 }
 
-module.exports = { createMetaToken };
+function createYouTubeToken(config, opts = {}) {
+  const request = opts.transport || transport;
+  const now = opts.now || (() => new Date());
+  const cache = store(config, 'youtube-token', {
+    client: config.youtubeClientId, refresh: hash(config.youtubeRefreshToken || ''),
+  });
+  async function refresh() {
+    const saved = cache.read();
+    if (saved.accessToken && Date.parse(saved.expiresAt) - now().getTime() > 60000) return saved.accessToken;
+    if (!config.youtubeClientId || !config.youtubeClientSecret || !config.youtubeRefreshToken) throw failure('YouTube: требуется OAuth-подключение');
+    const params = new URLSearchParams({ grant_type: 'refresh_token', client_id: config.youtubeClientId,
+      client_secret: config.youtubeClientSecret, refresh_token: saved.refreshToken || config.youtubeRefreshToken });
+    const response = check(await request({ url: 'https://oauth2.googleapis.com/token', method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }), 'YouTube OAuth');
+    const token = response.body;
+    if (!token?.access_token || !(Number(token.expires_in) > 0)) throw failure('YouTube: Google не вернул токен');
+    cache.write({ accessToken: token.access_token, refreshToken: token.refresh_token || saved.refreshToken,
+      expiresAt: new Date(now().getTime() + Number(token.expires_in) * 1000).toISOString() });
+    return token.access_token;
+  }
+  return {
+    invalidate() {
+      const saved = cache.read();
+      delete saved.accessToken;
+      delete saved.expiresAt;
+      cache.write(saved);
+    },
+    get() {
+      if (!inflight.has(cache.file)) inflight.set(cache.file, refresh().finally(() => inflight.delete(cache.file)));
+      return inflight.get(cache.file);
+    }
+  };
+}
+
+module.exports = { createMetaToken, createYouTubeToken };

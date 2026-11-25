@@ -170,6 +170,19 @@
         </form>
         <a href="https://developers.facebook.com/apps/" target="_blank" rel="noopener noreferrer">Открыть Meta for Developers</a>
       </div>
+      <div class="block">
+        <h2>YouTube Shorts</h2>
+        <p id="youtube-status" class="hint" role="status">Проверяем подключение…</p>
+        <form id="youtube-connect" class="llm-form" method="post" autocomplete="off">
+          <label class="field">Client ID <input id="youtube-client" required></label>
+          <label class="field">Client Secret <input id="youtube-secret" type="password" autocomplete="new-password" required></label>
+          <label class="field">ID канала <input id="youtube-channel" placeholder="UC…" required></label>
+          <p class="hint">После входа через Google CRM проверит ID выбранного канала. Ролики загружаются в приватном режиме.</p>
+          <p id="youtube-error" class="err" role="alert"></p>
+          <button class="btn btn-ghost btn-block" type="submit">Подключить через Google</button>
+        </form>
+      </div>
+
       <div class="block" id="vk-block">
         <h2>ВКонтакте</h2>
         <p class="hint">Посты с текстом и фото отправляются после предпросмотра в разделе «Машины». Подключите администратора группы через VK ID.</p>
