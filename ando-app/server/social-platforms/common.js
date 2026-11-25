@@ -93,11 +93,12 @@ function transport({ url, method = 'GET', headers = {}, body, timeoutMs = 180000
         resolve({ status: res.statusCode, headers: res.headers, body: parsed });
       });
     });
-    req.on('timeout', () => req.destroy(failure('API timeout')));
-    req.on('error', () => {
+    req.on('timeout', () => req.destroy(failure('API timeout', { code: 'ETIMEDOUT' })));
+    req.on('error', (error) => {
       if (body && typeof body.destroy === 'function') body.destroy();
       // Never include a URL, request headers, or access tokens in errors shown to admins.
-      reject(failure('Не удалось получить ответ API', { network: true, retryable: true }));
+      const networkCode = /^[A-Z][A-Z0-9_]{1,60}$/.test(error.code || '') ? error.code : undefined;
+      reject(failure('Не удалось получить ответ API', { network: true, retryable: true, networkCode }));
     });
     if (body && typeof body.pipe === 'function') {
       body.on('error', (error) => req.destroy(error));

@@ -442,6 +442,9 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { text: listingText(car, { link, mode }) });
     }
 
+    if (pathname === '/api/admin/youtube/diagnose' && m === 'POST' && opts.youtube) {
+      return json(res, 200, { checks: await opts.youtube.diagnose() });
+    }
     if (pathname === '/api/admin/youtube' && opts.youtube) {
       if (m === 'GET') return json(res, 200, opts.youtube.status());
       if (m === 'POST') {

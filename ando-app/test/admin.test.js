@@ -182,9 +182,13 @@ test('YouTube: OAuth проверяет канал, скрывает ключи 
   const youtubeTransport = async request => {
     requests.push(request);
     if (request.url === 'https://oauth2.googleapis.com/token') {
+      const fields = new URLSearchParams(request.body);
+      assert.equal(request.headers['Content-Length'], Buffer.byteLength(request.body));
+      if (!fields.has('client_secret')) return { status: 400, body: { error: 'invalid_request' } };
       return { status: 200, body: { access_token: 'access-test', refresh_token: 'refresh-test', scope: scopes } };
     }
     assert.match(request.url, /\/youtube\/v3\/channels\?/);
+    if (!request.headers?.Authorization) throw Object.assign(new Error('internal'), { network: true, networkCode: 'ETIMEDOUT' });
     assert.equal(request.headers.Authorization, 'Bearer access-test');
     return { status: 200, body: { items: [{ id: returnedChannel, snippet: { title: 'ANDO AUTO' } }] } };
   };
@@ -192,6 +196,7 @@ test('YouTube: OAuth проверяет канал, скрывает ключи 
     const credentials = { channelId, clientId: 'test-client.apps.googleusercontent.com', clientSecret };
     const start = { method: 'POST', json: credentials };
     assert.equal((await call('/api/youtube', start)).status, 401);
+    assert.equal((await call('/api/youtube/diagnose', { method: 'POST', json: {} })).status, 401);
     await login();
     const authorize = async () => {
       const response = await call('/api/youtube', start);
@@ -231,6 +236,11 @@ test('YouTube: OAuth проверяет канал, скрывает ключи 
     assert.equal(batch.jobs[0].payload.privacyStatus, 'private');
     assert.equal(batch.jobs[0].payload.video.url, 'https://andoauto.ru/app/img/cars/751-v1.mp4');
     assert.equal(requests.length, 4);
+    const probe = await call('/api/youtube/diagnose', { method: 'POST', json: {} });
+    assert.equal(probe.status, 200);
+    const { checks } = await probe.json();
+    assert.match(checks[0].result, /HTTP 400/);
+    assert.match(checks[1].result, /ETIMEDOUT/);
   }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { youtubeTransport } });
 });
 

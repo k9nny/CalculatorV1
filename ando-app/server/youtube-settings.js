@@ -5,11 +5,44 @@ const { store, transport, check } = require('./social-platforms/common');
 
 const SCOPES = ['youtube.upload', 'youtube.readonly'].map(name => 'https://www.googleapis.com/auth/' + name);
 const CALLBACK = '/api/youtube/callback';
+const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+const CHANNELS_URL = 'https://www.googleapis.com/youtube/v3/channels?part=id%2Csnippet&mine=true';
 
 function createYouTubeSettings(config, { request = transport, now = Date.now } = {}) {
   const storage = store(config, 'youtube-settings', {});
   let pending;
   let latestState;
+
+  function tokenRequest(params) {
+    const body = params.toString();
+    return { url: TOKEN_URL, method: 'POST', timeoutMs: 15000,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) }, body };
+  }
+
+  async function googleRequest(options, stage) {
+    try {
+      return await request(options);
+    } catch (error) {
+      if (!error.network) throw error;
+      const code = error.networkCode ? ' (' + error.networkCode + ')' : '';
+      throw new Error(stage + '. Сервер ANDO AUTO не получил ответ от Google' + code + '.');
+    }
+  }
+
+  async function diagnose() {
+    const checks = [
+      ['Вход Google', tokenRequest(new URLSearchParams({ grant_type: 'authorization_code' }))],
+      ['YouTube API', { url: CHANNELS_URL, timeoutMs: 15000 }]
+    ];
+    return Promise.all(checks.map(async ([name, options]) => {
+      try {
+        const response = await googleRequest(options, name);
+        return { name, result: 'Google ответил (HTTP ' + response.status + ').' };
+      } catch (error) {
+        return { name, result: error.message };
+      }
+    }));
+  }
 
   function start(body, returnPath) {
     const clientId = String(body.clientId || '').trim();
@@ -40,13 +73,12 @@ function createYouTubeSettings(config, { request = transport, now = Date.now } =
     if (query.has('error') || !code) throw new Error('Вход в Google не завершён. Начните подключение заново в CRM.');
     const params = new URLSearchParams({ code, client_id: attempt.clientId, client_secret: attempt.clientSecret,
       code_verifier: attempt.verifier, redirect_uri: attempt.redirectUri, grant_type: 'authorization_code' });
-    const token = check(await request({ url: 'https://oauth2.googleapis.com/token', method: 'POST', timeoutMs: 10000,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: params.toString() }), 'YouTube OAuth').body;
+    const token = check(await googleRequest(tokenRequest(params), 'Обмен кода входа'), 'YouTube OAuth').body;
     if (!token?.access_token || !token.refresh_token || !SCOPES.every(scope => String(token.scope || '').split(/\s+/).includes(scope))) {
       throw new Error('Google не подтвердил оба разрешения YouTube. Подключите канал заново и подтвердите доступы.');
     }
-    const profile = check(await request({ url: 'https://www.googleapis.com/youtube/v3/channels?part=id%2Csnippet&mine=true',
-      headers: { Authorization: 'Bearer ' + token.access_token }, timeoutMs: 10000 }), 'YouTube').body;
+    const profile = check(await googleRequest({ url: CHANNELS_URL,
+      headers: { Authorization: 'Bearer ' + token.access_token }, timeoutMs: 15000 }, 'Проверка YouTube-канала'), 'YouTube').body;
     const channel = profile?.items?.find(item => item.id === attempt.channelId);
     if (!channel) throw new Error('Выбран другой YouTube-канал. Вернитесь в CRM и выберите канал ANDO AUTO при входе.');
     if (latestState !== attempt.state) throw new Error('Начато другое подключение. Завершите последний вход из CRM.');
@@ -67,7 +99,7 @@ function createYouTubeSettings(config, { request = transport, now = Date.now } =
     return state.youtubeRefreshToken ? { ...config, ...state, youtubePrivacyStatus: 'private' } : null;
   }
 
-  return { start, finish, status, publisherConfig };
+  return { start, finish, status, publisherConfig, diagnose };
 }
 
 module.exports = { createYouTubeSettings, CALLBACK };

@@ -748,6 +748,16 @@
       $('youtube-status').textContent = data.connected ? 'Подключён ' + data.title + ' · ' + data.channelId : 'Канал YouTube не подключён';
     }).catch(err => { $('youtube-error').textContent = err.message; });
   }
+  $('youtube-diagnose').addEventListener('click', function (event) {
+    const button = event.currentTarget;
+    const result = $('youtube-diagnose-result');
+    button.disabled = true;
+    result.textContent = 'Проверяем связь с сервера…';
+    api('youtube/diagnose', { method: 'POST', json: {} })
+      .then(data => { result.textContent = data.checks.map(check => check.name + ' — ' + check.result).join(' '); })
+      .catch(err => { result.textContent = err.message; })
+      .finally(() => { button.disabled = false; });
+  });
   $('youtube-connect').addEventListener('submit', function (event) {
     event.preventDefault();
     const form = event.currentTarget;
