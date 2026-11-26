@@ -774,6 +774,20 @@
     api(platform).then(data => showMetaAccount(platform, data))
       .catch(err => { $(platform + '-error').textContent = err.message; });
   }
+  $('threads-diagnose').addEventListener('click', async (event) => {
+    const button = event.currentTarget;
+    const result = $('threads-diagnosis');
+    button.disabled = true;
+    result.textContent = 'Проверяем доступ…';
+    try {
+      const account = await api('threads/diagnose', { method: 'POST', json: {} });
+      result.textContent = 'Threads подтвердил доступ к публикациям для @' + account.username;
+    } catch (error) {
+      result.textContent = error.message;
+    } finally {
+      button.disabled = false;
+    }
+  });
   ['instagram', 'threads'].forEach(platform => {
     $(platform + '-connect').addEventListener('submit', function (event) {
       event.preventDefault();

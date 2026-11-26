@@ -171,6 +171,10 @@ test('Threads: токен проверяется, текст со ссылкой
     assert.match(html, /andoauto_test/);
     assert.doesNotMatch(html, /fixture-threads-token/);
     assert.equal(seen.length, 2);
+    const diagnosis = await call('/api/threads/diagnose', { method: 'POST', json: {} });
+    assert.equal(diagnosis.status, 200);
+    assert.equal((await diagnosis.json()).username, 'andoauto_test');
+    assert.equal(seen.length, 3);
     fs.writeFileSync(path.join(config.photosDir, '751-1.jpg'), JPEG);
     fs.writeFileSync(path.join(config.photosDir, '751-v1.mp4'), Buffer.from('test-video'));
     const car = { id: '751', make: 'Kia', model: 'Rio', year: 2019, price: 1900000, mileage: 74000,
@@ -194,7 +198,7 @@ test('Threads: токен проверяется, текст со ссылкой
     assert.doesNotMatch(post.jobs[0].payload.text, /https?:\/\//);
     assert.ok(post.jobs[0].payload.text.endsWith('Все машины в профиле'));
     assert.equal(post.approved, false);
-    assert.equal(seen.length, 2);
+    assert.equal(seen.length, 3);
   }, { overrides: { siteUrl: 'https://andoauto.ru' }, deps: { threadsTransport } });
 });
 

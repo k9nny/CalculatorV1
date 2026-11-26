@@ -153,7 +153,7 @@
         <h2>Instagram</h2>
         <p id="instagram-status" class="hint" role="status">Проверяем подключение…</p>
         <form id="instagram-connect" class="llm-form" autocomplete="off">
-          <label class="field">Долгоживущий Instagram User Access Token
+          <label class="field">Маркер доступа Instagram из Meta
             <input id="instagram-token" type="password" autocomplete="new-password" required>
           </label>
           <label class="field">Дата истечения токена, если известна
@@ -167,6 +167,8 @@
       <div class="block" id="threads-settings">
         <h2>Threads</h2>
         <p id="threads-status" class="hint" role="status">Проверяем подключение…</p>
+        <button class="btn" id="threads-diagnose" type="button">Проверить доступ к публикациям</button>
+        <p id="threads-diagnosis" class="hint" role="status"></p>
         <form id="threads-connect" class="llm-form" autocomplete="off">
           <label class="field">Долгоживущий Threads User Access Token
             <input id="threads-token" type="password" autocomplete="new-password" required>
@@ -297,6 +299,6 @@
 
 <script src="../card.js?v=market-44"></script>
 <script src="crm.js?v=manual-publication-1"></script>
-<script src="admin.js?v=lead-paths-1"></script>
+<script src="admin.js?v=meta-diagnostics-1"></script>
 </body>
 </html>

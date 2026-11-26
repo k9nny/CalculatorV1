@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { createInstagramPublisher, createThreadsPublisher } = require('../server/social-platforms/meta');
+const { createMetaSettings } = require('../server/meta-settings');
 
 const APPROVED = { approved: true };
 const MEDIA = { text: 'Kia Rio 2019\nЦена 1 390 000 ₽\nПробег 74 000 км',
@@ -208,6 +209,51 @@ test('Threads отправляет обложку автомобиля и под
   assert.equal(body.get('text'), caption);
   h.advance(30000);
   assert.equal((await p.post(payload, APPROVED)).id, '9000');
+});
+
+test('Threads: неизвестный ответ при публикации проверяется без повторной отправки', async (t) => {
+  const h = fixture(t), requests = [];
+  const normal = metaTransport('threads', requests);
+  let publishCalls = 0;
+  const publisher = createThreadsPublisher(h.config, { now: h.now, transport: async (request) => {
+    if (!request.url.endsWith('/threads_publish')) return normal(request);
+    publishCalls++;
+    return { status: 400, body: { error: { code: 1, error_subcode: 501, fbtrace_id: 'Trace_123', message: 'private data' } } };
+  } });
+  const payload = publisher.prepare(MEDIA);
+  await assert.rejects(publisher.post(payload, APPROVED), /готовится/);
+  h.advance(30_000);
+  await assert.rejects(publisher.post(payload, APPROVED), (error) => {
+    assert.match(error.message, /публикация.*HTTP 400, код 1, подкод 501, ID Meta Trace_123/);
+    assert.doesNotMatch(error.message, /private data/);
+    return error.uncertain && error.retryable;
+  });
+  h.advance(60_000);
+  await assert.rejects(publisher.post(payload, APPROVED), /результат предыдущей отправки/);
+  assert.equal(publishCalls, 1);
+});
+
+test('Instagram: единый вход использует назначенный аккаунт и Facebook Graph для публикации', async (t) => {
+  const h = fixture(t), requests = [];
+  const normal = metaTransport('instagram', requests);
+  const request = async (options) => {
+    const url = new URL(options.url);
+    if (url.origin === 'https://graph.instagram.com') {
+      assert.equal(url.pathname, '/v27.0/me');
+      return { status: 400, body: { error: { code: 190 } } };
+    }
+    assert.equal(url.origin, 'https://graph.facebook.com');
+    if (url.pathname === '/v27.0/me/assigned_instagram_accounts') return ok({ data: [{ id: '456', username: 'ando.auto' }] });
+    if (url.pathname === '/v27.0/456/content_publishing_limit') return ok({ data: [{ quota_usage: 0 }] });
+    return normal(options);
+  };
+  const settings = createMetaSettings(h.config, 'instagram', { request, now: h.now });
+  const token = 'unified-test-token';
+  assert.equal((await settings.attach(token)).username, 'ando.auto');
+  h.advance(2 * 86400000);
+  const publisher = createInstagramPublisher(settings.publisherConfig(), { transport: request, now: h.now });
+  assert.equal((await publisher.post(publisher.prepare(MEDIA), APPROVED)).id, '9000');
+  assert.ok(requests.some(({ url }) => url === 'https://graph.facebook.com/v27.0/456/media_publish'));
 });
 
 test('Threads: emoji учитываются в лимите, ссылка сохраняется целиком', (t) => {

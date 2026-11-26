@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { transport, check, numericId } = require('./social-platforms/common');
+const { createMetaToken } = require('./social-platforms/tokens');
 
 const platforms = {
   instagram: { label: 'Instagram', origin: 'https://graph.instagram.com', version: 'v27.0', fields: 'user_id,username', limit: 'content_publishing_limit' },
@@ -26,6 +27,23 @@ function createMetaSettings(config, platform, { request = transport, now = () =>
     const state = read();
     return state && { ...config, ...state, [platform + 'ApiVersion']: spec.version };
   }
+  async function get(origin, token, endpoint, fields, stage) {
+    const url = new URL(origin + '/' + spec.version + '/' + endpoint);
+    url.searchParams.set('fields', fields);
+    return check(await request({ url: url.href, timeoutMs: 10000, headers: { Authorization: 'Bearer ' + token } }), spec.label, stage).body;
+  }
+  async function verifyPublishing(origin, token, id) {
+    const quota = await get(origin, token, id + '/' + spec.limit, 'quota_usage', 'проверка права публикации');
+    if (!Array.isArray(quota?.data) || !quota.data.length) throw new Error(spec.label + ' не подтвердил доступ к публикациям.');
+  }
+  async function diagnose() {
+    const settings = publisherConfig();
+    if (!settings) throw new Error('Сначала подключите ' + spec.label + '.');
+    const token = await createMetaToken(settings, platform, { transport: request, now }).get();
+    const origin = settings.instagramUnifiedLogin && platform === 'instagram' ? 'https://graph.facebook.com' : spec.origin;
+    await verifyPublishing(origin, token, numericId(settings[platform + 'UserId'], spec.label));
+    return status();
+  }
   async function attach(raw, expiry) {
     const accessToken = String(raw || '').trim();
     if (!/^[\w.-]{16,4096}$/.test(accessToken)) throw new Error('Вставьте ' + spec.label + ' User Access Token.');
@@ -35,18 +53,25 @@ function createMetaSettings(config, platform, { request = transport, now = () =>
       if (!Number.isFinite(date) || date <= now().getTime()) throw new Error('Укажите будущую дату истечения токена.');
       expiresAt = new Date(date).toISOString();
     }
-    async function get(endpoint, fields) {
-      const url = new URL(spec.origin + '/' + spec.version + '/' + endpoint);
-      url.searchParams.set('fields', fields);
-      return check(await request({ url: url.href, timeoutMs: 10000, headers: { Authorization: 'Bearer ' + accessToken } }), spec.label).body;
+    let origin = spec.origin;
+    let profile;
+    try {
+      profile = await get(origin, accessToken, 'me', spec.fields, 'проверка профиля');
+    } catch (error) {
+      if (platform !== 'instagram' || ![100, 190].includes(error.code)) throw error;
+      origin = 'https://graph.facebook.com';
+      const accounts = await get(origin, accessToken, 'me/assigned_instagram_accounts', 'id,username', 'проверка единого входа');
+      if (accounts?.data?.length !== 1 || accounts.paging?.next) {
+        throw new Error('В Meta предоставьте приложению доступ ровно к одному аккаунту Instagram.');
+      }
+      [profile] = accounts.data;
     }
-    const profile = await get('me', spec.fields);
     const id = numericId(profile?.user_id || profile?.id, spec.label);
     if (!/^[\w.]{1,30}$/.test(profile?.username || '')) throw new Error(spec.label + ' не вернул имя профиля.');
-    const quota = await get(id + '/' + spec.limit, 'quota_usage');
-    if (!Array.isArray(quota?.data) || !quota.data.length) throw new Error(spec.label + ' не подтвердил доступ к публикациям.');
+    await verifyPublishing(origin, accessToken, id);
     const state = { [platform + 'UserId']: id, [platform + 'Username']: profile.username,
       [platform + 'AccessToken']: accessToken, [platform + 'TokenExpiresAt']: expiresAt, checkedAt: now().toISOString() };
+    if (platform === 'instagram') state.instagramUnifiedLogin = origin !== spec.origin;
     fs.mkdirSync(path.dirname(file), { recursive: true });
     const temporary = file + '.' + crypto.randomBytes(8).toString('hex') + '.tmp';
     try {
@@ -57,7 +82,7 @@ function createMetaSettings(config, platform, { request = transport, now = () =>
     }
     return status();
   }
-  return { status, attach, publisherConfig };
+  return { status, attach, diagnose, publisherConfig };
 }
 
 module.exports = { createMetaSettings };

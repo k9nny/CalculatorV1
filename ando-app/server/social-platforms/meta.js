@@ -14,12 +14,13 @@ function createMetaPublisher(config, platform, opts = {}) {
   const name = instagram ? 'Instagram' : 'Threads';
   const version = config[platform + 'ApiVersion'] || (instagram ? 'v27.0' : 'v1.0');
   if (!/^v\d+\.\d+$/.test(version)) throw failure(`${name}: неверная версия API`);
-  const origin = instagram ? 'https://graph.instagram.com' : 'https://graph.threads.com';
+  const instagramOrigin = config.instagramUnifiedLogin ? 'https://graph.facebook.com' : 'https://graph.instagram.com';
+  const origin = instagram ? instagramOrigin : 'https://graph.threads.com';
   const token = createMetaToken(config, platform, opts);
   const createEndpoint = `${userId}/${instagram ? 'media' : 'threads'}`;
   const publishEndpoint = `${userId}/${instagram ? 'media_publish' : 'threads_publish'}`;
 
-  async function call(endpoint, fields, method = 'GET', beforeRequest) {
+  async function call(stage, endpoint, fields, method = 'GET', beforeRequest) {
     const accessToken = await token.get();
     const url = new URL(`/${version}/${endpoint}`, origin);
     const params = new URLSearchParams();
@@ -29,7 +30,7 @@ function createMetaPublisher(config, platform, opts = {}) {
     if (method === 'GET') url.search = params.toString();
     else { headers['Content-Type'] = 'application/x-www-form-urlencoded'; body = params.toString(); }
     if (beforeRequest) beforeRequest();
-    return check(await request({ url: url.href, method, headers, body }), name).body;
+    return check(await request({ url: url.href, method, headers, body }), name, stage).body;
   }
 
   function prepare(media) {
@@ -52,7 +53,7 @@ function createMetaPublisher(config, platform, opts = {}) {
   }
 
   async function containerStatus(id) {
-    const result = await call(id, { fields: instagram ? 'status_code,status' : 'status,error_message' });
+    const result = await call('проверка медиа', id, { fields: instagram ? 'status_code,status' : 'status,error_message' });
     return instagram ? result?.status_code : result?.status;
   }
 
@@ -72,7 +73,7 @@ function createMetaPublisher(config, platform, opts = {}) {
     const save = () => checkpoint.write(state);
 
     async function create(fields) {
-      const result = await call(createEndpoint, fields, 'POST');
+      const result = await call('создание материала', createEndpoint, fields, 'POST');
       if (!/^\d+$/.test(String(result?.id || ''))) throw waiting('API не вернул ID контейнера');
       return String(result.id);
     }
@@ -135,7 +136,7 @@ function createMetaPublisher(config, platform, opts = {}) {
     let result;
     let publishStarted = false;
     try {
-      result = await call(publishEndpoint, { creation_id: state.containerId }, 'POST', () => {
+      result = await call('публикация', publishEndpoint, { creation_id: state.containerId }, 'POST', () => {
         state.publishAttemptedAt = now().toISOString();
         save();
         publishStarted = true;
@@ -143,10 +144,13 @@ function createMetaPublisher(config, platform, opts = {}) {
     }
     catch (error) {
       if (!publishStarted) throw error;
-      if (error.status && error.status < 500) {
+      if (error.status && error.status < 500 && !error.uncertain) {
         delete state.publishAttemptedAt;
         save();
         throw error;
+      }
+      if (error.uncertain) {
+        throw failure(`${error.message}. Проверяю, приняла ли площадка публикацию`, { uncertain: true, retryable: true, retryAfter: 60 });
       }
       throw waiting('проверяю, приняла ли площадка публикацию');
     }
@@ -156,7 +160,7 @@ function createMetaPublisher(config, platform, opts = {}) {
     // Receipt is durable before this optional read. Failed permalink lookup must
     // never repeat publication on a retry.
     try {
-      const media = await call(String(result.id), { fields: 'permalink' });
+      const media = await call('получение ссылки', String(result.id), { fields: 'permalink' });
       if (media?.permalink) { state.receipt.url = secureUrl(media.permalink); save(); }
     } catch { /* published ID is already recorded */ }
     return state.receipt;

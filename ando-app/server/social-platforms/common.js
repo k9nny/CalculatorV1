@@ -113,15 +113,21 @@ function header(response, name) {
   return headers[name.toLowerCase()] || headers[name];
 }
 
-function check(response, platform) {
+function check(response, platform, stage) {
   if (response.status >= 200 && response.status < 300 && !response.body?.error) return response;
-  const code = response.body?.error?.code;
-  const reason = response.body?.error?.errors?.[0]?.reason;
+  const error = response.body?.error;
+  const code = Number.isSafeInteger(error?.code) ? error.code : undefined;
+  const rawReason = error?.errors?.[0]?.reason;
+  const reason = /^[a-z][a-zA-Z_]{1,48}$/.test(rawReason || '') ? rawReason : undefined;
+  const subcode = Number.isSafeInteger(error?.error_subcode) ? error.error_subcode : undefined;
+  const trace = /^[A-Za-z0-9_-]{6,40}$/.test(error?.fbtrace_id || '') ? error.fbtrace_id : undefined;
   const throttled = response.status === 429 || [4, 17, 32, 613].includes(code) || reason === 'rateLimitExceeded';
-  const temporary = response.status >= 500 || response.body?.error?.is_transient === true;
+  const uncertain = Boolean(stage && ([1, 2].includes(code) || error?.is_transient === true));
+  const temporary = response.status >= 500 || error?.is_transient === true || uncertain;
   // Use codes only: upstream errors sometimes echo a secret or a signed media URL.
-  throw failure(`${platform}: API отклонил запрос (HTTP ${response.status}${code ? ', код ' + code : ''}${reason ? ', ' + reason : ''})`, {
-    status: response.status, code, retryable: throttled || temporary,
+  const details = [`HTTP ${response.status}`, code && `код ${code}`, subcode && `подкод ${subcode}`, reason, trace && `ID Meta ${trace}`].filter(Boolean);
+  throw failure(`${platform}: API отклонил запрос${stage ? ' на этапе «' + stage + '»' : ''} (${details.join(', ')})`, {
+    status: response.status, code, uncertain, retryable: throttled || temporary,
     retryAfter: Number(header(response, 'retry-after')) || undefined,
   });
 }

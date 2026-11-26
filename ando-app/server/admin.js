@@ -489,11 +489,15 @@ function createAdmin(config, opts = {}) {
       }
     }
 
-    const connection = /^\/api\/admin\/(instagram|threads)$/.exec(pathname);
+    const connection = /^\/api\/admin\/(instagram|threads)(\/diagnose)?$/.exec(pathname);
     if (connection && connectedAccounts[connection[1]]) {
       const account = connectedAccounts[connection[1]];
-      if (m === 'GET') return json(res, 200, account.status());
-      if (m === 'POST') {
+      if (connection[2] && m === 'POST') {
+        try { return json(res, 200, await account.diagnose()); }
+        catch (error) { return json(res, 400, { error: error.message }); }
+      }
+      if (!connection[2] && m === 'GET') return json(res, 200, account.status());
+      if (!connection[2] && m === 'POST') {
         const body = await readJson(req);
         try { return json(res, 200, await account.attach(body.accessToken, body.expiresAt)); }
         catch (error) { return json(res, 400, { error: error.message }); }

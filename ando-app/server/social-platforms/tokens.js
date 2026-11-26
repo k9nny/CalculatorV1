@@ -28,6 +28,7 @@ function createMetaToken(config, platform, opts = {}) {
     const expiresAt = state.expiresAt ? Date.parse(state.expiresAt) : null;
     if (state.expiresAt && !Number.isFinite(expiresAt)) throw failure(`${platform}: неверная дата истечения токена`);
     if (expiresAt && expiresAt <= time) throw failure(`${platform}: токен истёк, подключите аккаунт заново`);
+    if (platform === 'instagram' && config.instagramUnifiedLogin) return state.accessToken;
     if (!saved.accessToken) cache.write(state);
     const oldEnough = time - Date.parse(state.refreshedAt) >= DAY;
     const due = expiresAt ? expiresAt - time < 7 * DAY : oldEnough;
