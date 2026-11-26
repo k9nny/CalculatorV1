@@ -212,11 +212,11 @@ test('бот: /social → предпросмотр → отдельная кно
 
 test('сохранение карточки не обходит подтверждение даже с прежним vk.auto', async (t) => {
   const h = setup(t); let posts = 0, previews = 0;
-  const after = createAfterPublish({ config: { ...h.config, socialPreview: true },
+  const after = createAfterPublish({ config: { ...h.config, socialPreview: false },
     vk: { status: () => ({ connected: true, auto: true }), postCar: async () => { posts++; } },
     onPrepared: async () => { previews++; } });
   await after.publish(h.car);
-  assert.equal(posts, 0); assert.equal(previews, 1);
+  assert.equal(posts, 0); assert.equal(previews, 0);
 });
 
 test('Telegram собирает оформленный пост из подтверждённых фактов и отправляет гиперссылки', async (t) => {

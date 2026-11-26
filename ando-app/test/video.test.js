@@ -162,14 +162,18 @@ test('очередь: отключённая площадка ждёт восс�
   assert.deepEqual(q.read().items[0].results, { Telegram: 'ok', VK: 'ошибка' });
 });
 
-test('бот: после сохранения машины с фото собирает ролики и ждёт одобрения', async () => {
+test('бот: сохраняет машину в каталог и собирает ролики только по /video', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ando-bot-clips-'));
   const carsFile = path.join(dir, 'cars.json');
   fs.writeFileSync(carsFile, JSON.stringify({ cars: [] }));
   const sent = [], videos = [];
+  let publishButton;
   const api = {
     request: async (method, p) => {
-      if (method === 'sendMessage') sent.push(p.text);
+      if (method === 'sendMessage') {
+        sent.push(p.text);
+        if (p.text.includes('Черновик объявления')) publishButton = p.reply_markup.inline_keyboard[0][0].callback_data;
+      }
       if (method === 'getFile') return { file_path: 'photos/test.jpg' };
       return { message_id: 1 };
     },
@@ -184,11 +188,15 @@ test('бот: после сохранения машины с фото соби�
   await bot.handleUpdate(msg({ photo: [{ file_id: 'test' }], caption: 'Kia Rio 2019\nЦена 1 390 000\nПробег 74 000' }));
   await bot.clipsIdle();
   assert.equal(videos.length, 0);
-  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 7 }, data: 'pub', message: { chat: { id: 7 }, message_id: 5 } } });
+  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 7 }, data: publishButton, message: { chat: { id: 7 }, message_id: 5 } } });
   await bot.clipsIdle();
-  assert.equal(videos.length, 3);
+  assert.equal(videos.length, 0);
+  assert.equal(queue.read().items.length, 0);
   const car = JSON.parse(fs.readFileSync(carsFile, 'utf8')).cars[0];
   assert.deepEqual(car.photos, [`img/cars/${car.id}-1.jpg`]);
+  await bot.handleUpdate(msg({ text: '/video ' + car.id }));
+  await bot.clipsIdle();
+  assert.equal(videos.length, 3);
   assert.ok(videos.every(({ cap }) => cap.includes(`${appLink}?startapp=car_${car.id}`)));
   const okData = videos[0].extra.reply_markup.inline_keyboard[0][0].callback_data;
   assert.match(okData, /^clip_ok:\d+$/);

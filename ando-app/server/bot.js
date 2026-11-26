@@ -4,6 +4,7 @@
 const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
+const { randomBytes } = require('node:crypto');
 const { parseListing, toCar, missing } = require('./listing-parser');
 const { listingText } = require('./listing-text');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
@@ -117,7 +118,7 @@ const HELP = [
   '/cleardemo — убрать демо-объявления',
   '/post 101 — текст для канала',
   '/social 101 — предпросмотр и публикация в соцсетях · /social — подключённые каналы',
-  '/video 101 — повторить сборку роликов по машине · /queue — очередь роликов',
+  '/video 101 — собрать ролики по машине · /queue — очередь роликов',
   '/cancel — удалить черновик'
 ].join('\n');
 
@@ -175,7 +176,8 @@ function createBot(options) {
       ...(draft.fromPhoto && draft.fromPhoto.length ? [`По фото определил: ${draft.fromPhoto.map((k) => ({ make: 'марка', model: 'модель', generation: 'поколение', body: 'кузов', color: 'цвет' }[k])).join(', ')}. Проверьте.`] : []),
       lack.length ? `Не хватает: ${lack.join(', ')}. Допишите строкой, например «${lack[0]} …».` : 'Всё нужное есть.'
     ];
-    const buttons = [[{ text: 'Опубликовать', callback_data: 'pub' }, { text: 'Отменить', callback_data: 'cancel' }]];
+    if (drafts.get(chatId) !== draft) return;
+    const buttons = [[{ text: 'В каталог', callback_data: `pub:${draft.id}` }, { text: 'Отменить', callback_data: `cancel:${draft.id}` }]];
     await send(chatId, lines.join('\n'), { reply_markup: { inline_keyboard: buttons } });
   }
 
@@ -226,28 +228,21 @@ function createBot(options) {
     }
     const car = { id, status: 'available', publishedAt: now().toISOString().slice(0, 10), ...draftCar(draft), photos };
     if (videos.length) car.videos = videos;
-    const announce = () => { if (options.onPublished) options.onPublished(car); };
     if (!car.status || !STATUS_NAMES[car.status]) car.status = 'available';
     catalog.cars.unshift(car);
     writeCatalog(carsFile, catalog, now());
-    announce(); // справка о модели и пост в ВК — в фоне
+    if (draft.timer) clearTimeout(draft.timer);
     drafts.delete(chatId);
+    if (options.onPublished) options.onPublished(car);
     const link = appLink ? `${appLink}${appLink.includes('?') ? '&' : '?'}startapp=car_${id}` : '';
     const lostPhotos = draft.photos.length - photos.length;
-    let report = `Опубликовано: объявление № ${id}. Машина уже в приложении и на сайте.`;
+    let report = `Машина № ${id} добавлена в каталог. Можно присылать следующую.`;
     if (lostPhotos) report += `\nНе удалось сохранить фото: ${lostPhotos}.`;
     const lostVideos = (draft.videos || []).length - videos.length;
     if (videos.length) report += `\nВидео: ${videos.length}.`;
     if (lostVideos) report += `\nНе удалось сохранить видео: ${lostVideos}.`;
     if (link) report += `\nСсылка на машину: ${link}`;
-    const buttons = [{ text: 'Текст для канала', callback_data: `post:${id}` }];
-    if (social) buttons.push({ text: 'Посты в соцсети', callback_data: `social:${id}` });
-    if (clips && !photos.length) report += '\nДля автоматической сборки роликов нужно хотя бы одно сохранённое фото.';
-    try {
-      await send(chatId, report, { reply_markup: { inline_keyboard: [buttons] } });
-    } finally {
-      if (clips && photos.length) makeClips(chatId, car);
-    }
+    await send(chatId, report);
     return car;
   }
 
@@ -436,7 +431,7 @@ function createBot(options) {
     if (msg.text && text.startsWith('/')) return command(chatId, text);
 
     let draft = drafts.get(chatId);
-    if (!draft) { draft = { fields: {}, photos: [], videos: [], timer: null }; drafts.set(chatId, draft); }
+    if (!draft) { draft = { id: randomBytes(8).toString('hex'), fields: {}, photos: [], videos: [], timer: null }; drafts.set(chatId, draft); }
     draft.videos = draft.videos || [];
     const video = msg.video || msg.animation || (msg.document && /^video\//.test(msg.document.mime_type || '') ? msg.document : null);
     if (video && video.file_id && !draft.videos.some((v) => v.id === video.file_id)) {
@@ -465,8 +460,15 @@ function createBot(options) {
     if (socialCallback) return socialAction(chatId, socialCallback[1], socialCallback[2]);
     const socialCar = /^social:(\d+)$/.exec(q.data || '');
     if (socialCar) return socialPreview(chatId, socialCar[1]);
-    if (q.data === 'pub') return publish(chatId);
-    if (q.data === 'cancel') { drafts.delete(chatId); return send(chatId, 'Черновик удалён.'); }
+    const draftAction = /^(pub|cancel)(?::([a-f0-9]{16}))?$/.exec(q.data || '');
+    if (draftAction) {
+      const draft = drafts.get(chatId);
+      if (!draft || draft.id !== draftAction[2]) return send(chatId, 'Эта кнопка устарела. Откройте актуальный предпросмотр машины.');
+      if (draftAction[1] === 'pub') return publish(chatId);
+      if (draft.timer) clearTimeout(draft.timer);
+      drafts.delete(chatId);
+      return send(chatId, 'Черновик удалён.');
+    }
     if (/^clip_(ok|no):\d+$/.test(q.data || '')) return clipDecision(q, q.data.startsWith('clip_ok'));
     const ask = /^(post|clips):(\d+)$/.exec(q.data || '');
     if (ask) {

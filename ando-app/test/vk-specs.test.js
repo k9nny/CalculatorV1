@@ -105,22 +105,12 @@ test('справка о модели: только проверенные чис
   assert.match(listingText({ make: 'Kia', model: 'Rio', year: 2019, modelSpecs: { acceleration: 11.2, clearance: 160 } }), /О модели\n• Разгон 0–100 км\/ч: 11,2 с\n• Клиренс: 160 мм/);
 });
 
-test('после публикации: справка и пост в ВК в фоне, повторно не публикуется', async () => {
+test('после добавления в каталог сохраняется справка о модели', async () => {
   const { config, car } = setup();
-  let posts = 0;
-  const vk = { status: () => ({ connected: true, auto: true }), postCar: async () => { posts++; return { postId: 1, url: 'https://vk.ru/wall-1_1' }; } };
   const specs = { lookup: async () => ({ modelSpecs: { clearance: 160 } }) };
-  const ap = createAfterPublish({ config, vk, specs, log: () => {} });
+  const ap = createAfterPublish({ config, specs, log: () => {} });
   ap.publish(car);
   await ap.idle();
   const saved = JSON.parse(fs.readFileSync(config.carsFile, 'utf8')).cars[0];
   assert.equal(saved.modelSpecs.clearance, 160);
-  assert.equal(saved.vk.postId, 1);
-  ap.publish(saved);
-  await ap.idle();
-  assert.equal(posts, 1);
-  // Демо не публикуем.
-  ap.publish({ ...car, id: '999', demo: true });
-  await ap.idle();
-  assert.equal(posts, 1);
 });

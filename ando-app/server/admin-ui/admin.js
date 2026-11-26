@@ -242,12 +242,12 @@
   function refreshPublish() {
     var busy = photos.some(function (p) { return p.state === 'loading'; }) || videos.some(function (v) { return v.state === 'loading'; });
     $('publish').disabled = busy || !parsed || parsed.missing.length > 0;
-    $('publish').textContent = busy ? 'Загружаю фото и видео…' : 'Опубликовать';
+    $('publish').textContent = busy ? 'Загружаю фото и видео…' : 'Добавить в каталог';
   }
 
   $('publish').addEventListener('click', function () {
     var btn = $('publish');
-    if (!photos.length && !confirm('Опубликовать без фото?')) return;
+    if (!photos.length && !confirm('Добавить в каталог без фото?')) return;
     btn.disabled = true;
     $('add-err').textContent = '';
     var names = photos.filter(function (p) { return p.state === 'ok'; }).map(function (p) { return p.name; });
@@ -262,8 +262,8 @@
         $('text').value = '';
         $('lack').textContent = '';
         renderPhotos();
-        toast('Опубликовано: ' + UI.title(data.car) + '. Уже на сайте и в приложении.');
-        openTab('cars');
+        toast(UI.title(data.car) + ' · уже в каталоге. Можно добавлять следующую машину.');
+        openTab('add');
       })
       .catch(function (err) { $('add-err').textContent = err.message; refreshPublish(); });
   });

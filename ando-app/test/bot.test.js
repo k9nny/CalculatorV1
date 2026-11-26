@@ -93,7 +93,7 @@ function harness() {
 }
 const msg = (extra) => ({ message: { chat: { id: 1, type: 'private' }, from: { id: 1 }, ...extra } });
 
-test('бот: фото + текст → превью → «Опубликовать» → машина в каталоге с фото', async () => {
+test('бот: фото + текст → превью → «В каталог» → машина в каталоге с фото', async () => {
   const { bot, sent, messages, read, dir } = harness();
   await bot.handleUpdate(msg({ photo: [{ file_id: 'small' }, { file_id: 'A' }], caption: 'Hyundai Solaris 2017 1.6 АКПП\nцена 1 090 000' }));
   await bot.handleUpdate(msg({ photo: [{ file_id: 'B' }] }));
@@ -102,7 +102,10 @@ test('бот: фото + текст → превью → «Опубликова�
   assert.match(messages().at(-1), /Всё нужное есть/);
   await bot.handleUpdate(msg({ text: 'цена 1 050 000' }));
   assert.match(messages().at(-1), /1 050 000 ₽/);
-  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 1 }, data: 'pub', message: { chat: { id: 1 } } } });
+  const publishButton = sent.at(-1).params.reply_markup.inline_keyboard[0][0];
+  const callback = data => ({ callback_query: { id: 'q', from: { id: 1 }, data, message: { chat: { id: 1 } } } });
+  assert.equal(publishButton.text, 'В каталог');
+  await bot.handleUpdate(callback(publishButton.callback_data));
   const car = read()[0];
   assert.equal(car.id, '102');
   assert.equal(car.mileage, undefined);
@@ -113,8 +116,8 @@ test('бот: фото + текст → превью → «Опубликова�
   assert.match(messages().at(-1), /startapp=car_102/);
   assert.doesNotMatch(messages().at(-1), /Текст для канала/);
   const pubMsg = sent.filter((s) => s.method === 'sendMessage').at(-1);
-  const postBtn = pubMsg.params.reply_markup.inline_keyboard[0][0];
-  assert.equal(postBtn.callback_data, 'post:102');
+  assert.equal(pubMsg.params.reply_markup, undefined);
+  assert.match(pubMsg.params.text, /Можно присылать следующую/);
   assert.equal(bot.drafts.size, 0);
   await bot.handleUpdate({ callback_query: { id: 'q2', from: { id: 1 }, data: 'post:102', message: { chat: { id: 1 } } } });
   const post = messages().at(-1);
@@ -122,13 +125,22 @@ test('бот: фото + текст → превью → «Опубликова�
   assert.match(post, /1 050 000 ₽/);
   assert.doesNotMatch(post, /Пробег|NaN|0 км/);
   assert.match(post, /https:\/\/t\.me\/ando_bot\/catalog\?startapp=car_102/);
+  await bot.handleUpdate(msg({ text: 'Kia Rio 2020\nцена 1 150 000' }));
+  const nextButton = sent.at(-1).params.reply_markup.inline_keyboard[0][0];
+  await bot.handleUpdate(callback(publishButton.callback_data));
+  assert.match(messages().at(-1), /кнопка устарела/);
+  assert.equal(read().length, 2);
+  await bot.handleUpdate(callback(nextButton.callback_data));
+  assert.equal(read()[0].id, '103');
+  assert.equal(read()[0].model, 'Rio');
 });
 
 test('бот: без обязательных полей не публикует', async () => {
-  const { bot, messages, read } = harness();
+  const { bot, sent, messages, read } = harness();
   await bot.handleUpdate(msg({ text: 'Kia Rio 2019' }));
   assert.match(messages().at(-1), /Не хватает: цена/);
-  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 1 }, data: 'pub', message: { chat: { id: 1 } } } });
+  const data = sent.at(-1).params.reply_markup.inline_keyboard[0][0].callback_data;
+  await bot.handleUpdate({ callback_query: { id: 'q', from: { id: 1 }, data, message: { chat: { id: 1 } } } });
   assert.match(messages().at(-1), /Не могу опубликовать/);
   assert.equal(read().length, 1);
 });

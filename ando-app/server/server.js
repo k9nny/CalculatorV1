@@ -230,16 +230,7 @@ function servicesFor(config, deps = {}) {
           text: `Публикация машины №${batch.carId}\n${lines.join('\n')}\n/social ${batch.carId} — предпросмотр и статусы` }).catch(() => {});
       }
     });
-    const afterPublish = deps.afterPublish || createAfterPublish({ config, vk, specs, market,
-      onPrepared: async (car) => {
-        if (!config.socialPreview || !config.telegramToken) return;
-        const api = telegramApi(config.telegramToken);
-        for (const id of config.adminIds) await api.request('sendMessage', { chat_id: id,
-          text: `Машина №${car.id} сохранена. Соцсети ждут подтверждения.\n/social ${car.id} — посмотреть материалы`,
-          reply_markup: { inline_keyboard: [[{ text: 'Предпросмотр соцсетей', callback_data: `social:${car.id}` }]] }
-        }).catch(() => {});
-      }
-    });
+    const afterPublish = deps.afterPublish || createAfterPublish({ config, specs, market });
     const all = { vk, afterPublish, specs, social, instagram, threads, youtube, renditions, renderJobs, workerToken, configureWorker, buildStoryboard };
     if (deps.vk || deps.afterPublish) return all;
     services.set(config.leadsLog, all);
