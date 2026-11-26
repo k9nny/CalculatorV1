@@ -376,7 +376,7 @@
   function cardHtml(car) {
     return UI.cardHtml(car, {
       fav: favButton(car.id),
-      actions: '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
+      actions: '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">' + (car.status === 'reserved' ? 'Узнать о брони' : 'На осмотр') + '</button>' +
         (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В кредит</button>' : '')
     });
   }
@@ -464,9 +464,12 @@
             return '<li class="' + (row[0] ? 'ok' : 'bad') + '">' + icon(row[0] ? 'check' : 'warn') + '<span>' + esc(row[1]) + '</span><b>' + esc(row[2]) + '</b></li>';
           }).join('') + '</ul>' +
           '<p class="fine">' + (car.history && car.history.checkedAt ? 'Проверили по VIN ' + esc(formatDate(car.history.checkedAt)) + ': база ГИБДД, реестр залогов ФНП, сервисы проверки истории. ' : '') +
-          'Полный отчёт пришлём по запросу.</p>'
-        : '<p class="d-note" style="margin-top:0">Проверим машину по VIN в базе ГИБДД и реестре залогов и пришлём отчёт.</p>') +
-      '<button class="btn btn-ghost btn-block" data-action="lead" data-type="callback" data-id="' + esc(car.id) + '" data-comment="Пришлите отчёт по VIN">Получить отчёт по VIN</button>' +
+          '</p>'
+        : '') +
+      (!hist.length && !car.autotekaUrl ? '<p class="d-note" style="margin-top:0">Уточните у менеджера, какие сведения об истории доступны.</p>' : '') +
+      (/^https:\/\/(?:api\.autoteka\.ru\/pdf-report\/uuid\/|(?:www\.)?autoteka\.ru\/report\/web\/uuid\/)[a-f0-9-]{36}(?:[/?]|$)/i.test(car.autotekaUrl || '')
+        ? '<p class="d-note">Отчёт предоставил продавец.</p><a class="btn btn-ghost btn-block" target="_blank" rel="noopener noreferrer" href="' + esc(car.autotekaUrl) + '">Открыть Автотеку</a>'
+        : '<button class="btn btn-ghost btn-block" data-action="lead" data-type="callback" data-id="' + esc(car.id) + '" data-comment="Пришлите отчёт по VIN">Запросить отчёт по VIN</button>') +
       '</section>' +
 
       conditionHtml(car) +
@@ -511,7 +514,7 @@
       '<div class="action-bar"><div class="action-bar-in">' +
       (CFG.phone ? '<a class="btn btn-ghost btn-icon" href="tel:' + esc(CFG.phone) + '" aria-label="Позвонить ' + esc(CFG.phoneLabel || CFG.phone) + '">' + icon('phone') + '</a>' : '') +
       (CREDIT.enabled ? '<button class="btn btn-ghost" data-action="credit" data-id="' + esc(car.id) + '">В кредит</button>' : '') +
-      '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">На осмотр</button>' +
+      '<button class="btn btn-primary" data-action="lead" data-type="buy" data-id="' + esc(car.id) + '">' + (car.status === 'reserved' ? 'Узнать о брони' : 'На осмотр') + '</button>' +
       '</div></div>';
 
     transition(function () {
@@ -774,6 +777,17 @@
   function openLead(type, carId, comment) {
     var car = carId ? byId(carId) : null;
     var user = P.user;
+    var inspection = type === 'buy';
+    var reserved = inspection && car && car.status === 'reserved';
+    if (inspection) {
+      openSheet(sheetHead(reserved ? 'Сообщить о снятии брони' : LEAD_TITLES.buy) +
+        (car ? '<div class="sheet-car"><img src="' + esc(photos(car)[0]) + '" alt=""><div><b>' + esc(title(car)) + '</b><span>' + rub(car.price) + '</span></div></div>' : '') +
+        '<p class="d-note sheet-note">' + (reserved ? 'Свяжемся, если машина снова будет доступна.' : 'Перезвоним и согласуем время и место осмотра.') + '</p>' +
+        '<form class="form" id="lead-form" data-type="buy" data-car="' + esc(carId || '') + '" novalidate>' +
+        phoneField() + consentField() + '<p class="form-error" role="alert"></p>' +
+        '<button class="btn btn-primary btn-block" type="submit">' + (reserved ? 'Сообщить, если освободится' : 'Записаться на осмотр') + '</button></form>');
+      return;
+    }
     openSheet(sheetHead(LEAD_TITLES[type] || 'Заявка') +
       (car ? '<div class="sheet-car"><img src="' + esc(photos(car)[0]) + '" alt=""><div><b>' + esc(title(car)) + '</b><span>' + rub(car.price) + '</span></div></div>' : '') +
       (type === 'dealer' ? '<p class="d-note sheet-note">Оставьте контакты — пришлём оптовую цену и условия для перекупов.</p>' : '') +
@@ -781,7 +795,7 @@
       '<label class="field"><span>Имя</span><input name="name" autocomplete="given-name" maxlength="80" value="' + esc(user && user.first_name || '') + '"></label>' +
       phoneField() +
       '<label class="field"><span>' + (type === 'listing' ? 'Машины в наличии' : 'Комментарий') + '</span><textarea name="comment" rows="' + (type === 'listing' ? 3 : 2) + '" maxlength="500"' + (type === 'listing' ? ' required' : '') + ' placeholder="' +
-      (type === 'listing' ? 'Укажите город, число машин в наличии и ссылку на профиль или объявления, если есть.' : type === 'buy' ? 'Когда удобно приехать на осмотр' : 'Удобное время для звонка') + '">' + esc(comment || '') + '</textarea></label>' +
+      (type === 'listing' ? 'Укажите город, число машин в наличии и ссылку на профиль или объявления, если есть.' : 'Удобное время для звонка') + '">' + esc(comment || '') + '</textarea></label>' +
       consentField() +
       '<p class="form-error" role="alert"></p>' +
       '<button class="btn btn-primary btn-block" type="submit">Отправить заявку</button></form>');
@@ -816,23 +830,24 @@
     return '<section class="sell-hero"><p class="eyebrow">Выкуп авто</p><h1>Выкупим<span class="rotator" aria-hidden="true">' +
       ROTATE.map(function (w, i) { return '<span class="rot-word' + (i ? '' : ' on') + '">' + w + '</span>'; }).join('') +
       '</span><span class="sr-only">ваше авто в любом состоянии</span></h1>' +
-      '<p>Оставьте данные — оценим автомобиль и перезвоним. Берём машины в любом состоянии: ремонтируем в своём автосервисе.</p></section>' +
+      '<p>Оставьте данные. Перезвоним, уточним состояние и обсудим предварительную цену. Если условия подойдут, договоримся об осмотре.</p></section>' +
       '<div class="steps"><div class="step" style="--d:.3s"><b>1</b>Заявка</div><div class="step" style="--d:.55s"><b>2</b>Оценка и осмотр</div><div class="step" style="--d:.8s"><b>3</b>Сделка и деньги</div></div>' +
       '<form class="block form sell-form" id="sell-form" data-type="sell" novalidate>' +
       '<div class="grid-2"><label class="field"><span>Марка</span><input name="make" maxlength="40" placeholder="Toyota" required></label>' +
       '<label class="field"><span>Модель</span><input name="model" maxlength="40" placeholder="Camry" required></label></div>' +
-      '<div class="grid-2"><label class="field"><span>Год выпуска</span><input name="year" inputmode="numeric" maxlength="4" placeholder="2018" required></label>' +
-      '<label class="field"><span>Пробег, км</span><input name="mileage" inputmode="numeric" maxlength="7" placeholder="95000"></label></div>' +
-      '<div><p class="legend">Состояние</p><div class="seg" id="condition">' + CONDITIONS.map(function (c, i) {
-        return '<button type="button" data-action="condition" data-value="' + esc(c) + '" aria-pressed="' + (i === 0) + '">' + esc(c) + '</button>';
+      '<label class="field"><span>Год выпуска</span><input name="year" inputmode="numeric" maxlength="4" placeholder="2018" required></label>' +
+      phoneField() +
+      '<details class="block"><summary>Дополнить заявку · необязательно</summary>' +
+      '<label class="field"><span>Пробег, км</span><input name="mileage" inputmode="numeric" maxlength="7" placeholder="95000"></label>' +
+      '<div><p class="legend">Состояние</p><div class="seg" id="condition">' + CONDITIONS.map(function (c) {
+        return '<button type="button" data-action="condition" data-value="' + esc(c) + '" aria-pressed="false">' + esc(c) + '</button>';
       }).join('') + '</div></div>' +
       '<label class="field"><span>Желаемая цена, ₽</span><input name="desiredPrice" inputmode="numeric" maxlength="11" placeholder="Необязательно"></label>' +
       '<label class="field"><span>Имя</span><input name="name" autocomplete="given-name" maxlength="80" value="' + esc(P.user && P.user.first_name || '') + '"></label>' +
-      phoneField() +
-      '<label class="field"><span>Комментарий</span><textarea name="comment" rows="2" maxlength="500" placeholder="Комплектация, что требует ремонта"></textarea></label>' +
+      '<label class="field"><span>Комментарий</span><textarea name="comment" rows="2" maxlength="500" placeholder="Комплектация, что требует ремонта"></textarea></label></details>' +
       consentField() +
       '<p class="form-error" role="alert"></p>' +
-      '<button class="btn btn-primary btn-block" type="submit">Узнать цену выкупа</button></form>';
+      '<button class="btn btn-primary btn-block" type="submit">Запросить оценку</button></form>';
   }
 
   // ---------- Заявки ----------
@@ -848,6 +863,12 @@
     var type = form.getAttribute('data-type');
     var get = function (name) { var el = form.elements[name]; return el ? el.value.trim() : ''; };
     var lead = { type: type, name: get('name'), phone: normalizePhone(get('phone')), comment: get('comment'), consent: form.elements.consent.checked };
+    if (type === 'buy' || type === 'sell') {
+      var utm = new URLSearchParams(location.search);
+      lead.entryPoint = type === 'buy' ? 'app-car' : 'app-buyout';
+      lead.utmSource = utm.get('utm_source') || '';
+      lead.utmContent = utm.get('utm_content') || '';
+    }
     var carId = form.getAttribute('data-car');
     if (carId) lead.carId = carId;
     if (type === 'credit') {
@@ -866,7 +887,7 @@
         make: get('make'), model: get('model'),
         year: +digits(get('year')) || null,
         mileage: get('mileage') ? +digits(get('mileage')) : null,
-        condition: pressed ? pressed.getAttribute('data-value') : CONDITIONS[0],
+        condition: pressed ? pressed.getAttribute('data-value') : null,
         desiredPrice: get('desiredPrice') ? +digits(get('desiredPrice')) : null
       };
     }
@@ -893,7 +914,7 @@
     if (car) lines.push(title(car) + ' — ' + rub(car.price) + ' (№ ' + car.id + ')');
     if (lead.car) {
       var c = lead.car;
-      lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage != null ? ', ' + num(c.mileage) + ' км' : '') + ', ' + c.condition +
+      lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage != null ? ', ' + num(c.mileage) + ' км' : '') + (c.condition ? ', ' + c.condition : '') +
         (c.desiredPrice ? ', хочу ' + rub(c.desiredPrice) : ''));
     }
     if (lead.credit && lead.credit.downPayment) lines.push('Первоначальный взнос: ' + rub(lead.credit.downPayment));
@@ -952,10 +973,15 @@
     var label = btn.textContent;
     btn.textContent = 'Отправляем…';
     sendLead(lead).then(function (outcome) {
+      if (outcome === 'sent') window.AndoAnalytics?.accepted(lead.type);
       P.haptic('success');
       if (form.id === 'lead-form') closeTop();
-      showDone(outcome);
-      if (form.id === 'sell-form') form.reset();
+      var car = lead.carId && byId(lead.carId);
+      showDone(outcome, lead.type === 'buy' && car && car.status === 'reserved');
+      if (form.id === 'sell-form') {
+        form.reset();
+        form.querySelectorAll('#condition [aria-pressed="true"]').forEach(function (button) { button.setAttribute('aria-pressed', 'false'); });
+      }
     }, function (err) {
       error.textContent = err.userFacing ? err.message : 'Не получилось отправить. Позвоните нам: ' + (CFG.phoneLabel || CFG.phone || '');
       P.haptic('error');
@@ -965,9 +991,9 @@
     });
   }
 
-  function showDone(outcome) {
+  function showDone(outcome, reserved) {
     var texts = {
-      sent: ['Заявка отправлена', 'Менеджер свяжется с вами в ближайшее время.'],
+      sent: ['Заявка отправлена', reserved ? 'Свяжемся, если машину снимут с брони.' : 'Менеджер свяжется с вами в ближайшее время.'],
       chat: ['Почти готово', 'Открылся чат с менеджером — отправьте сообщение с заявкой.'],
       'chat-copied': ['Почти готово', 'Текст заявки скопирован. Вставьте его в чат с менеджером и отправьте.'],
       phone: ['Позвоните нам', 'Сейчас заявки принимаем по телефону: ' + (CFG.phoneLabel || CFG.phone || '') + '.']

@@ -95,7 +95,9 @@ const msg = (extra) => ({ message: { chat: { id: 1, type: 'private' }, from: { i
 
 test('бот: фото + текст → превью → «В каталог» → машина в каталоге с фото', async () => {
   const { bot, sent, messages, read, dir } = harness();
-  await bot.handleUpdate(msg({ photo: [{ file_id: 'small' }, { file_id: 'A' }], caption: 'Hyundai Solaris 2017 1.6 АКПП\nцена 1 090 000' }));
+  const report = 'https://api.autoteka.ru/pdf-report/uuid/11111111-2222-3333-4444-555555555555?vin=TEST';
+  await bot.handleUpdate(msg({ photo: [{ file_id: 'small' }, { file_id: 'A' }], caption: 'Hyundai Solaris 2017 1.6 АКПП\nцена 1 090 000\nАвтотека',
+    caption_entities: [{ type: 'text_link', url: report }] }));
   await bot.handleUpdate(msg({ photo: [{ file_id: 'B' }] }));
   assert.match(messages().at(-1), /Hyundai Solaris, 2017/);
   assert.match(messages().at(-1), /Фото: 2/);
@@ -109,6 +111,7 @@ test('бот: фото + текст → превью → «В каталог» �
   const car = read()[0];
   assert.equal(car.id, '102');
   assert.equal(car.mileage, undefined);
+  assert.equal(car.autotekaUrl, report);
   assert.equal(car.price, 1050000);
   assert.equal(car.publishedAt, '2026-11-02');
   assert.deepEqual(car.photos, ['img/cars/102-1.jpg', 'img/cars/102-2.jpg']);

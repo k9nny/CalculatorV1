@@ -5,7 +5,7 @@ const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
 const { randomBytes } = require('node:crypto');
-const { parseListing, toCar, missing } = require('./listing-parser');
+const { parseListing, toCar, missing, autotekaUrl } = require('./listing-parser');
 const { listingText } = require('./listing-text');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
 const { telegramVideo } = require('./video/publish');
@@ -167,6 +167,7 @@ function createBot(options) {
     const lines = [
       '<b>Черновик объявления</b>', '',
       carSummary(car), '',
+      ...(car.autotekaUrl ? ['Автотека: ссылка добавлена'] : []),
       `Фото: ${draft.photos.length}${draft.photos.length ? '' : ' — пришлите хотя бы одно'}` +
         ((draft.videos || []).length ? ` · видео: ${draft.videos.length}` : ''),
       ...(draft.bigVideos ? [`Видео больше 20 МБ бот скачать не может (ограничение Telegram) — добавьте его в админке на сайте после публикации.`] : []),
@@ -444,11 +445,14 @@ function createBot(options) {
     const photo = msg.photo && msg.photo.length ? msg.photo[msg.photo.length - 1].file_id
       : msg.document && /^image\//.test(msg.document.mime_type || '') ? msg.document.file_id : null;
     if (photo && draft.photos.length < MAX_PHOTOS && !draft.photos.includes(photo)) draft.photos.push(photo);
+    const report = (msg.entities || msg.caption_entities || []).filter(entity => entity.type === 'text_link')
+      .map(entity => autotekaUrl(entity.url)).find(Boolean);
     if (text) {
       const r = await parseDetailed(text);
       mergeFields(draft.fields, r.fields);
       if (r.via !== 'edit') draft.parsedBy = r;
     }
+    if (report) draft.fields.autotekaUrl = report;
     return schedulePreview(chatId);
   }
 

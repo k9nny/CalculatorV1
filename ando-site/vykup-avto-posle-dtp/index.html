@@ -18,9 +18,9 @@
 <link rel="icon" href="../app/favicon.svg" type="image/svg+xml">
 <script>(function(){var d=document.documentElement;if('IntersectionObserver' in window&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('js')})()</script>
 <link rel="stylesheet" href="../assets/fonts.css">
-<link rel="stylesheet" href="../assets/ui.css">
-<link rel="stylesheet" href="../assets/site.css">
-<link rel="stylesheet" href="../assets/pages.css">
+<link rel="stylesheet" href="../assets/ui.css?v=covers-43">
+<link rel="stylesheet" href="../assets/site.css?v=lead-paths-1">
+<link rel="stylesheet" href="../assets/pages.css?v=lead-paths-1">
 
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"AutoDealer","@id":"https://andoauto.ru/#org","name":"ANDO AUTO","url":"https://andoauto.ru/","logo":"https://andoauto.ru/assets/logo.png","image":"https://andoauto.ru/assets/og.jpg","telephone":"+79283339570","priceRange":"₽₽","areaServed":[{"@type":"City","name":"Москва"},{"@type":"AdministrativeArea","name":"Московская область"}],"sameAs":["https://t.me/andoavtobot","https://max.ru/join/Ow6AUctKrPUqeZonaOx3PEoVxAVsQgykyW2uXxQHO1E","https://vk.ru/andoauto"],"legalName":"ИП Семенюк Марк Вячеславович","taxID":"230914702494"}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Service","name":"Выкуп авто после ДТП в Москве","serviceType":"Выкуп автомобилей после ДТП","url":"https://andoauto.ru/vykup-avto-posle-dtp/","provider":{"@id":"https://andoauto.ru/#org"},"areaServed":[{"@type":"City","name":"Москва"},{"@type":"AdministrativeArea","name":"Московская область"}]}</script>
@@ -36,7 +36,7 @@
     </a>
     <nav class="nav" aria-label="Разделы">
       <a href="../#process">Выкуп</a>
-      <a href="../cars/" class="keep">Машины в продаже</a>
+      <a href="../cars/" class="keep">Каталог</a>
       <a href="../#faq">Вопросы</a>
     </nav>
     <a class="header-phone" href="tel:+79283339570">+7 (928) 333-95-70</a>
@@ -59,10 +59,10 @@
       </div>
       <div data-reveal style="--d:.1s">
       <div class="lead-card light" id="sell">
-        <form class="lead-form" id="form-hero" novalidate>
+        <form class="lead-form" method="post" id="form-hero" data-entry="service-buyout" novalidate>
           <h2>Узнать цену машины</h2>
-          <label class="field"><span>Марка и модель</span>
-            <input id="hero-model" name="model" autocomplete="off" placeholder="Например, Kia Rio, 2019">
+          <label class="field"><span>Марка, модель и год · необязательно</span>
+            <input id="hero-model" name="model" maxlength="120" autocomplete="off" placeholder="Например, Kia Rio, 2019">
             <span class="err" aria-live="polite"></span>
           </label>
           <label class="field"><span>Телефон</span>
@@ -76,7 +76,8 @@
             </label>
             <span class="err" aria-live="polite"></span>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Заказать звонок</button>
+          <button class="btn btn-primary btn-block" type="submit">Запросить оценку</button>
+          <p class="form-note">Перезвоним, уточним состояние и обсудим предварительную цену.</p>
         </form>
         <div class="done" hidden tabindex="-1">
           <span class="done-mark"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m16 9-5.5 5.5L8 12"/></svg></span>
@@ -224,7 +225,8 @@
   </div>
 </footer>
 <script src="../assets/vendor/lenis.min.js"></script>
-<script src="../app/card.js"></script>
-<script src="../assets/site.js"></script>
+<script src="../app/card.js?v=covers-43"></script>
+<script src="../app/analytics.js"></script>
+<script src="../assets/site.js?v=lead-paths-1"></script>
 </body>
 </html>

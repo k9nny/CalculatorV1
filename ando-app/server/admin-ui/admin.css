@@ -69,6 +69,7 @@ h2 { font-size: 17px; }
 .lead-head { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--text-3); }
 .lead-what { font-weight: 600; color: var(--text); }
 .lead-body { font-size: 14px; color: var(--text-2); line-height: 1.45; white-space: pre-line; }
+.lead-stage { display: grid; gap: 8px; margin-top: 8px; }
 .lead-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .lead-tools .btn { height: 40px; font-size: 14px; }
 .empty { padding: 32px 16px; text-align: center; color: var(--text-3); font-size: 14px; }

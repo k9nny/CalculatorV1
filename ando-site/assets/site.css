@@ -75,9 +75,8 @@ html { scroll-padding-top: 64px; }
 .done p { color: var(--text-2); }
 .linkish { padding: 0; border: 0; background: none; font-size: 14px; color: var(--text-2); text-decoration: underline; text-underline-offset: 3px; }
 .linkish:hover { color: var(--text); }
-.hero-more { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; font: 500 15px/1 var(--f); color: var(--text); text-decoration: none; }
-.hero-more .i { width: 18px; height: 18px; color: var(--accent); transition: transform .25s var(--ease); }
-.hero-more:hover .i { transform: translateX(4px); }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.form-note { font-size: 14px; color: var(--text-2); }
 @media (min-width: 960px) {
   .hero { min-height: min(100svh, 860px); display: grid; align-items: center; }
   .stage { position: absolute; inset: 0; height: auto; max-height: none; }
@@ -91,6 +90,8 @@ html { scroll-padding-top: 64px; }
 .section + .section { border-top: 1px solid var(--line); }
 .section-head { display: grid; gap: 12px 48px; margin-bottom: clamp(24px, 4vw, 48px); }
 .section-titles { display: grid; gap: 12px; }
+#stock { scroll-margin-top: 64px; padding-top: clamp(36px, 5vw, 72px); }
+#stock .section-titles .btn { justify-self: start; }
 @media (min-width: 960px) { .section-head { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: end; } }
 
 .tiles { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; }

@@ -166,6 +166,35 @@ test('сервер: предложение селлера приходит ме�
   });
 });
 
+test('сервер: публичные формы различают оценку выкупа и осмотр конкретного авто', async () => {
+  await withServer({ telegramToken: TOKEN, managerChatIds: ['111'] }, async (base, { sent, log }) => {
+    const contact = { phone: '89001234567', consent: true };
+    const sell = await post(base, { ...contact, type: 'sell', entryPoint: 'homepage-buyout', vehicle: 'Kia Rio, 2019', utmSource: 'VK', utmContent: 'buyout-vk-test' });
+    assert.equal(sell.status, 200);
+    const buy = await post(base, { ...contact, type: 'buy', entryPoint: 'web-car', carId: '102' });
+    assert.equal(buy.status, 200);
+    const [valuation, inspection] = fs.readFileSync(log, 'utf8').trim().split('\n').map(JSON.parse);
+    assert.equal(valuation.type, 'sell');
+    assert.equal(valuation.sellVehicle, 'Kia Rio, 2019');
+    assert.equal(valuation.utmSource, 'vk');
+    assert.equal(valuation.utmContent, 'buyout-vk-test');
+    assert.match(sent[0].text, /Выкуп.*продать машину/);
+    assert.equal(inspection.car.id, '102');
+    assert.equal(inspection.entryPoint, 'web-car');
+    assert.match(sent[1].text, /Осмотр машины/);
+    assert.equal(validateLead({ ...contact, type: 'buy', carId: 'x' }, [{ id: 'x', status: 'sold' }]).ok, false);
+  });
+});
+
+test('Метрика: публичная конфигурация без персональных данных и условный CSP', async () => {
+  await withServer({ metrikaCounter: 123456 }, async (base) => {
+    const config = await (await fetch(base + '/api/public-analytics')).json();
+    assert.deepEqual(config, { metrikaCounter: 123456 });
+    const headers = (await fetch(base + '/')).headers;
+    assert.match(headers.get('content-security-policy'), /connect-src [^;]*https:\/\/mc\.yandex\.ru/);
+  });
+});
+
 test('сервер: поддельная подпись — 401, ошибки полей — 400 с текстом', async () => {
   await withServer({ telegramToken: TOKEN, managerChatIds: ['111'] }, async (base, { sent }) => {
     const forged = await post(base, { type: 'buy', carId: '101', phone: '89001234567', consent: true },

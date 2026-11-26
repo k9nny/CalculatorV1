@@ -128,16 +128,14 @@
   /* Заявка уходит на сервер ANDO AUTO (ando-app): менеджеру в Telegram и в журнал на сервере в России.
      На GitHub Pages сервера нет — тогда просим позвонить. */
   var LEAD_API = window.ANDO_LEAD_API || (/github\.io$/.test(location.hostname) || location.protocol === 'file:' ? '' : '/api/lead');
+  var PHOTO_API = new URL('../app/api/lead-photo', document.currentScript.src);
   var CALL_US = 'Не получилось отправить. Позвоните: +7 (928) 333-95-70';
   function sendLead(data) {
     if (!LEAD_API) return Promise.reject(new Error(CALL_US));
     return fetch(LEAD_API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'callback', platform: 'web', phone: data.phone, consent: data.consent,
-        comment: data.model ? 'Выкуп. Машина: ' + data.model : 'Выкуп'
-      })
+      body: JSON.stringify(data)
     }).then(function (res) {
       return res.json().catch(function () { return {}; }).then(function (body) {
         if (!res.ok || !body.ok) throw new Error(body.error || CALL_US);
@@ -146,20 +144,77 @@
     }, function () { throw new Error(CALL_US); });
   }
 
-  function showDone(form, phone) {
+  async function preparePhoto(file) {
+    if (file.size > 20 * 1024 * 1024) throw new Error('Выберите фото до 20 МБ.');
+    var bitmap = await createImageBitmap(file).catch(function () {
+      throw new Error('Не удалось открыть фото. Попробуйте JPG, PNG или WebP.');
+    });
+    var canvas = document.createElement('canvas');
+    try {
+      var scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      var context = canvas.getContext('2d');
+      context.fillStyle = '#fff';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      var jpeg = await new Promise(function (resolve) { canvas.toBlob(resolve, 'image/jpeg', 0.8); });
+      if (!jpeg || jpeg.size > 900 * 1024) throw new Error('Не получилось сжать фото. Выберите файл поменьше.');
+      return jpeg;
+    } finally { bitmap.close(); }
+  }
+
+  function addPhotoControl(done, token) {
+    var control = document.createElement('div');
+    control.className = 'lead-photo';
+    control.innerHTML = '<label class="field"><span>Добавить до 3 фото автомобиля · необязательно</span>' +
+      '<input type="file" accept="image/*" multiple></label><p class="form-note">Фото будут доступны команде ANDO AUTO в этой заявке.</p>' +
+      '<p class="form-note" role="status"></p>';
+    var input = control.querySelector('input');
+    var status = control.querySelector('[role="status"]');
+    var count = 0;
+    input.addEventListener('change', async function () {
+      var files = Array.from(input.files);
+      if (!files.length) return;
+      input.disabled = true;
+      status.textContent = 'Загружаем фото…';
+      try {
+        for (var file of files.slice(0, 3 - count)) {
+          var res = await fetch(PHOTO_API, {
+            method: 'POST', headers: { 'Content-Type': 'image/jpeg', 'X-Ando-Lead-Upload': token },
+            body: await preparePhoto(file)
+          });
+          var result = await res.json();
+          if (!res.ok) throw new Error(result.error);
+          count = result.count;
+        }
+        status.textContent = 'Фото в заявке: ' + count + ' из 3.';
+      } catch (err) {
+        status.textContent = (count ? 'Сохранено фото: ' + count + '. ' : '') + (err.message || 'Не удалось добавить фото.');
+      } finally {
+        input.value = '';
+        input.disabled = count >= 3;
+      }
+    });
+    done.querySelector('[data-reset]').before(control);
+  }
+
+  function showDone(form, phone, uploadToken) {
     var card = form.parentElement;
     var done = card.querySelector('.done');
     done.querySelector('[data-done-phone]').textContent = formatPhone(phoneDigits(phone));
+    if (uploadToken) addPhotoControl(done, uploadToken);
     form.hidden = true;
     done.hidden = false;
     done.focus();
   }
   document.querySelectorAll('[data-reset]').forEach(function (b) {
     b.addEventListener('click', function () {
-      var card = b.closest('.lead-card');
+      var card = b.closest('.lead-card, .car-lead');
       var form = card.querySelector('form');
       form.reset();
       card.querySelector('.done').hidden = true;
+      card.querySelector('.lead-photo')?.remove();
       form.hidden = false;
       form.querySelector('[type="submit"]').disabled = false;
       form.querySelector('input').focus();
@@ -174,7 +229,10 @@
       var btn = form.querySelector('[type="submit"]');
       btn.disabled = true;
       var data = collect();
-      sendLead(data).then(function () { showDone(form, data.phone); }, function (err) {
+      sendLead(data).then(function (result) {
+        window.AndoAnalytics?.accepted(data.type);
+        showDone(form, data.phone, result.uploadToken);
+      }, function (err) {
         btn.disabled = false;
         var phone = form.querySelector('[data-phone]');
         if (phone) { setError(phone, err.message); phone.focus(); }
@@ -182,17 +240,26 @@
     });
   }
 
-  var hModel = document.getElementById('hero-model');
-  var hPhone = document.getElementById('hero-phone');
-  var hConsent = document.getElementById('hero-consent');
-  if (hConsent) hConsent.addEventListener('change', function () { if (hConsent.checked) setError(hConsent, ''); });
-  if (hConsent) submitWith(document.getElementById('form-hero'), function () {
-    if (!checkPhone(hPhone)) return hPhone;
-    // Согласие — отдельной галочкой, которую человек ставит сам (152-ФЗ, ст. 9).
-    if (!setError(hConsent, hConsent.checked ? '' : 'Отметьте согласие на обработку персональных данных')) return hConsent;
-    return null;
-  }, function () {
-    return { source: 'hero', model: hModel.value.trim(), phone: hPhone.value, consent: true, consentAt: new Date().toISOString() };
+  var utm = new URLSearchParams(location.search);
+  var utmSource = (utm.get('utm_source') || '').toLowerCase();
+  if (!['vk', 'telegram', 'instagram', 'threads', 'youtube', 'yandex', 'max'].includes(utmSource)) utmSource = '';
+  var utmContent = utm.get('utm_content') || '';
+  if (!/^(car|buyout)-[\w-]{1,80}$/i.test(utmContent)) utmContent = '';
+  document.querySelectorAll('.lead-form[data-entry]').forEach(function (form) {
+    var phone = form.elements.phone;
+    var consent = form.elements.consent;
+    consent.addEventListener('change', function () { if (consent.checked) setError(consent, ''); });
+    submitWith(form, function () {
+      if (!checkPhone(phone)) return phone;
+      if (!setError(consent, consent.checked ? '' : 'Отметьте согласие на обработку персональных данных')) return consent;
+      return null;
+    }, function () {
+      return {
+        type: form.dataset.type || 'sell', platform: 'web', phone: phone.value, consent: true,
+        entryPoint: form.dataset.entry, utmSource: utmSource, utmContent: utmContent,
+        carId: form.dataset.car, vehicle: form.elements.model ? form.elements.model.value.trim() : undefined
+      };
+    });
   });
 
   /* Снимаем ошибку, как только поле исправлено */
@@ -209,19 +276,28 @@
     var list = document.getElementById('stock-list');
     var UI = window.AndoCard;
     var APP = 'app/';
+    function attributed(href) {
+      return utmSource ? href + (href.includes('?') ? '&' : '?') + 'utm_source=' + encodeURIComponent(utmSource) +
+        (utmContent ? '&utm_content=' + encodeURIComponent(utmContent) : '') : href;
+    }
     // Страница машины на сервере (/cars/101/) видна поисковикам; на GitHub Pages сервера нет — открываем каталог.
-    var PAGE = /github\.io$/.test(location.hostname) || location.protocol === 'file:'
-      ? function (id) { return APP + '?car=' + encodeURIComponent(id); }
-      : function (id) { return 'cars/' + encodeURIComponent(id) + '/'; };
+    var localCatalog = /github\.io$/.test(location.hostname) || location.protocol === 'file:';
+    function PAGE(id) {
+      return attributed(localCatalog ? APP + '?car=' + encodeURIComponent(id) : 'cars/' + encodeURIComponent(id) + '/');
+    }
     function fail() {
       list.innerHTML = '<p class="stock-note">Каталог сейчас не загрузился. Откройте его по кнопке ниже или позвоните — расскажем, что есть в наличии.</p>';
     }
     if (!list) return;
+    var all = document.getElementById('stock-all');
+    document.querySelectorAll('[data-catalog-link], #stock-all').forEach(function (link) {
+      link.setAttribute('href', attributed(link.getAttribute('href')));
+    });
     if (!UI || !window.fetch) { fail(); return; }
     fetch(APP + 'data/cars.json', { cache: 'no-cache' })
       .then(function (res) { if (!res.ok) throw new Error('cars ' + res.status); return res.json(); })
       .then(function (data) {
-        var cars = (Array.isArray(data) ? data : data.cars || []).filter(function (c) { return c && c.id != null && c.status !== 'sold'; });
+        var cars = (Array.isArray(data) ? data : data.cars || []).filter(function (c) { return c && c.id != null && !c.demo && c.status !== 'sold'; });
         cars.sort(function (a, b) {
           return (a.status === 'reserved') - (b.status === 'reserved') || String(b.publishedAt || '').localeCompare(String(a.publishedAt || ''));
         });
@@ -229,14 +305,12 @@
           list.innerHTML = '<p class="stock-note">Сейчас все машины проданы. Новые появляются каждую неделю — загляните позже или позвоните.</p>';
           return;
         }
-        var all = document.getElementById('stock-all');
         if (all && cars.length > 6) all.firstChild.textContent = 'Все ' + cars.length + ' ' + UI.plural(cars.length, 'машина', 'машины', 'машин') + ' ';
         list.innerHTML = cars.slice(0, 6).map(function (car) {
           var href = PAGE(car.id);
           return UI.cardHtml(car, {
             base: APP, href: href,
-            actions: '<a class="btn btn-primary" href="' + UI.esc(href) + '">Подробнее</a>' +
-              '<a class="btn btn-ghost" href="' + APP + '?car=' + encodeURIComponent(car.id) + '&amp;credit=1">В кредит</a>'
+            actions: '<a class="btn btn-primary" href="' + UI.esc(href) + '">Смотреть машину</a>'
           });
         }).join('');
         Array.prototype.forEach.call(list.children, function (el, i) {

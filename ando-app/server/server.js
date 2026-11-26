@@ -5,8 +5,10 @@ const http = require('node:http');
 const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
+const { randomBytes } = require('node:crypto');
 const { validateInitData } = require('./initdata');
 const { validateLead, formatLeadMessage } = require('./leads');
+const leadPhotos = require('./lead-photos');
 const { createBot, telegramApi, apiHost } = require('./bot');
 const { createAdmin } = require('./admin');
 const { createSeo } = require('./seo');
@@ -77,6 +79,7 @@ function readConfig(env = process.env) {
     allowedOrigins: String(env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean),
     // Адрес сайта для ссылок в карте сайта и IndexNow. По умолчанию — первый из ALLOWED_ORIGINS (основной домен).
     siteUrl,
+    metrikaCounter: /^[1-9]\d{3,11}$/.test(env.METRIKA_COUNTER_ID || '') ? Number(env.METRIKA_COUNTER_ID) : null,
     clipsEnabled: env.CLIPS !== '0',
     clipsDir: path.resolve(env.CLIPS_DIR || path.join(root, 'data-private', 'clips')),
     clipTimes: env.CLIP_TIMES || '10:40,15:20,19:40',
@@ -130,7 +133,7 @@ function createRateLimiter(limit = 6, windowMs = 10 * 60 * 1000) {
   };
 }
 
-function readBody(req, limit = 16 * 1024) {
+function readBody(req, limit = 16 * 1024, binary = false) {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks = [];
@@ -143,7 +146,10 @@ function readBody(req, limit = 16 * 1024) {
       }
       chunks.push(chunk);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => {
+      const buffer = Buffer.concat(chunks);
+      resolve(binary ? buffer : buffer.toString('utf8'));
+    });
     req.on('error', reject);
   });
 }
@@ -241,6 +247,7 @@ function servicesFor(config, deps = {}) {
 function createApp(config = readConfig(), deps = {}) {
   const send = deps.sendTelegramMessage || sendTelegramMessage;
   const allow = deps.rateLimiter || createRateLimiter();
+  const allowPhoto = createRateLimiter(24);
 
   function json(res, status, payload, extra = {}) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...SECURITY_HEADERS, ...extra });
@@ -318,9 +325,12 @@ function createApp(config = readConfig(), deps = {}) {
     if (!checked.ok) return json(res, 400, { error: checked.error }, cors);
 
     const lead = checked.lead;
+    const uploadToken = lead.type === 'sell' && ['homepage-buyout', 'service-buyout'].includes(lead.entryPoint)
+      ? randomBytes(32).toString('hex') : null;
     const logged = appendLog({
       at: new Date().toISOString(),
       ...lead,
+      ...(uploadToken ? { photoKey: leadPhotos.digest(uploadToken) } : {}),
       source: { platform: source.platform, verified: source.verified, userId: source.user && source.user.id }
     });
 
@@ -331,7 +341,30 @@ function createApp(config = readConfig(), deps = {}) {
       delivered = results.filter(Boolean).length;
     }
     if (!logged && !delivered) return json(res, 502, { error: 'Не получилось принять заявку. Позвоните нам.' }, cors);
-    return json(res, 200, { ok: true, delivered }, cors);
+    return json(res, 200, { ok: true, delivered, ...(logged && uploadToken ? { uploadToken } : {}) }, cors);
+  }
+
+  async function handleLeadPhoto(req, res) {
+    if (req.method !== 'POST') return json(res, 405, { error: 'Метод не поддерживается' });
+    if (req.headers['content-type'] !== 'image/jpeg') return json(res, 415, { error: 'Нужно фото JPEG.' });
+    if (Number(req.headers['content-length']) > leadPhotos.limit) return json(res, 413, { error: 'Фото слишком большое.' });
+    const token = req.headers['x-ando-lead-upload'];
+    if (typeof token !== 'string' || !/^[a-f0-9]{64}$/.test(token)) return json(res, 403, { error: 'Загрузка недоступна.' });
+    const ip = (config.trustProxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress;
+    if (!allowPhoto(ip)) return json(res, 429, { error: 'Слишком много загрузок. Попробуйте позже.' });
+    const key = leadPhotos.digest(token);
+    let eligible = false;
+    try {
+      eligible = fs.readFileSync(config.leadsLog, 'utf8').split('\n').some(line => {
+        if (!line.includes(key)) return false;
+        const entry = JSON.parse(line);
+        return entry.photoKey === key && Date.now() - Date.parse(entry.at) < 86400000;
+      });
+    } catch { /* журнал недоступен */ }
+    if (!eligible) return json(res, 403, { error: 'Загрузка недоступна.' });
+    const bytes = await readBody(req, leadPhotos.limit, true);
+    const result = leadPhotos.savePhoto(config.leadsLog, key, bytes);
+    return json(res, result.status, result.error ? { error: result.error } : { count: result.count });
   }
 
   function serveStatic(req, res) {
@@ -375,6 +408,11 @@ function createApp(config = readConfig(), deps = {}) {
         'Accept-Ranges': 'bytes',
         ...SECURITY_HEADERS
       };
+      if (config.metrikaCounter && pathname === '/index.html') {
+        headers['Content-Security-Policy'] = headers['Content-Security-Policy']
+          .replace("https://st.max.ru;", "https://st.max.ru https://mc.yandex.ru;")
+          .replace("connect-src 'self';", "connect-src 'self' https://mc.yandex.ru;");
+      }
       // Видео отдаётся кусками (Range): без этого Safari на iPhone не играет и не перематывает.
       const range = /^bytes=(\d*)-(\d*)$/.exec(String(req.headers.range || ''));
       if (range && stat.size > 0) {
@@ -414,6 +452,11 @@ function createApp(config = readConfig(), deps = {}) {
     if (renditions.handle(req, res, pathname)) return;
     if (pathname === '/api/lead') {
       handleLead(req, res).catch(() => json(res, 500, { error: 'Ошибка сервера' }));
+      return;
+    }
+    if (pathname === '/api/public-analytics' && req.method === 'GET') return json(res, 200, { metrikaCounter: config.metrikaCounter || null });
+    if (pathname === '/api/lead-photo') {
+      handleLeadPhoto(req, res).catch(error => json(res, error.status || 500, { error: 'Фото не удалось сохранить.' }));
       return;
     }
     if (pathname === '/healthz') return json(res, 200, { ok: true });

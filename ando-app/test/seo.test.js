@@ -10,6 +10,7 @@ const { createIndexNow } = require('../server/seo');
 const CARS = [
   { id: '120', status: 'available', publishedAt: '2026-11-01', make: 'Kia', model: 'Rio', year: 2019, price: 1390000, marketPrice: 1480000, mileage: 74000,
     engine: { volume: 1.6, power: 123, fuel: 'Бензин' }, transmission: 'Автомат', photos: ['img/cars/120-1.jpg'], defects: ['Скол на капоте'],
+    autotekaUrl: 'https://autoteka.ru/report/web/uuid/11111111-2222-3333-4444-555555555555',
     description: '<script>alert(1)</script>' },
   { id: '121', status: 'reserved', publishedAt: '2026-11-02', make: 'Toyota', model: 'Camry', year: 2018, price: 2450000, mileage: 98000, photos: [] },
   { id: '122', status: 'sold', make: 'Lada', model: 'Vesta', year: 2021, price: 980000, mileage: 45000 },
@@ -39,6 +40,13 @@ test('seo: страница машины — заголовок, цена, ра�
     assert.match(html, /Скол на капоте/);
     assert.match(html, /Ниже рынка/);
     assert.doesNotMatch(html, /на 90\s000 ₽|1\s480\s000 ₽/);
+    assert.match(html, /href="#inspection">Записаться на осмотр/);
+    assert.match(html, /data-entry="web-car" data-type="buy" data-car="120"/);
+    assert.match(html, /Отчёт предоставил продавец/);
+    assert.match(html, /Открыть Автотеку/);
+    const reserved = await (await fetch(base + '/cars/121/')).text();
+    assert.match(reserved, /href="#inspection">Сообщить о снятии брони/);
+    assert.match(reserved, /data-entry="web-car" data-type="buy" data-car="121"/);
     const car = ld(html).find((j) => j['@type'] === 'Car');
     assert.equal(car.offers.price, 1390000);
     assert.equal(car.offers.priceCurrency, 'RUB');
@@ -109,5 +117,6 @@ test('seo: страницы услуг собраны, у каждой свои 
     const types = ld(html).map((j) => j['@type']);
     assert.deepEqual(types, ['AutoDealer', 'Service', 'BreadcrumbList', 'FAQPage']);
     assert.match(html, /id="form-hero"/);
+    assert.match(html, /data-entry="service-buyout"/);
   }
 });

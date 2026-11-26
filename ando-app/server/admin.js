@@ -8,9 +8,11 @@ const { buildCrm, manualEntry, readManual, publicationUrl, legacyVideoBatches, l
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { parseListing, toCar, missing } = require('./listing-parser');
+const { parseListing, toCar, missing, autotekaUrl } = require('./listing-parser');
 const { readCatalog, writeCatalog, nextId } = require('./catalog');
 const { listingText } = require('./listing-text');
+const { LEAD_STAGES } = require('./leads');
+const { listLeadPhotos, photoPath: leadPhotoPath } = require('./lead-photos');
 const llm = require('./llm');
 const telegramSettings = require('./telegram-settings');
 const SAMPLE = 'Продаю мерс ешку 2017г, 2.0 бенз 184 лс, полный привод, пробег 98т.км, 2 хозяина, цена 2 млн 650, торг';
@@ -222,15 +224,21 @@ function createAdmin(config, opts = {}) {
     return { fields: out, fromPhoto, ...info };
   }
 
-  function leadsList(limit = 300) {
+  function leadsList(limit = 300, { includePhotos = false } = {}) {
     let lines = [];
     try { lines = fs.readFileSync(config.leadsLog, 'utf8').split('\n'); } catch { /* заявок ещё нет */ }
-    let done = {};
-    try { done = JSON.parse(fs.readFileSync(leadsStateFile, 'utf8')).done || {}; } catch { /* нет отметок */ }
+    let state = {};
+    try { state = JSON.parse(fs.readFileSync(leadsStateFile, 'utf8')); } catch { /* нет отметок */ }
     const out = [];
     lines.forEach((line, i) => {
       if (!line.trim()) return;
-      try { out.push({ id: String(i), done: !!done[i], ...JSON.parse(line) }); } catch { /* битая строка */ }
+      try {
+        const progress = state.progress?.[i] || { stage: state.done?.[i] ? 'handled' : 'new' };
+        const { photoKey, ...record } = JSON.parse(line);
+        const photos = includePhotos ? listLeadPhotos(config.leadsLog, photoKey) : [];
+        out.push({ ...record, ...progress, id: String(i), done: ['won', 'lost', 'handled'].includes(progress.stage),
+          ...(photos.length ? { photos } : {}) });
+      } catch { /* битая строка */ }
     });
     return out.reverse().slice(0, limit);
   }
@@ -630,6 +638,12 @@ function createAdmin(config, opts = {}) {
         return json(res, 200, { ok: true });
       }
       const body = await readJson(req);
+      if (Object.hasOwn(body, 'autotekaUrl')) {
+        const raw = String(body.autotekaUrl ?? '').trim();
+        const report = autotekaUrl(raw);
+        if (raw && !report) return json(res, 400, { error: 'Вставьте прямую HTTPS-ссылку на отчёт Автотеки.' });
+        if (report) car.autotekaUrl = report; else delete car.autotekaUrl;
+      }
       if (body.status !== undefined) {
         if (!STATUSES.includes(body.status)) return json(res, 400, { error: 'Неизвестный статус' });
         car.status = body.status;
@@ -662,17 +676,50 @@ function createAdmin(config, opts = {}) {
       return json(res, 200, { removed: before - catalog.cars.length });
     }
 
-    if (pathname === '/api/admin/leads' && m === 'GET') return json(res, 200, { leads: leadsList() });
+    if (pathname === '/api/admin/leads' && m === 'GET') return json(res, 200, { leads: leadsList(300, { includePhotos: true }), stages: LEAD_STAGES });
+
+    const leadPhoto = /^\/api\/admin\/leads\/(\d+)\/photos\/([1-3]\.jpg)$/.exec(pathname);
+    if (leadPhoto && m === 'GET') {
+      try {
+        const row = fs.readFileSync(config.leadsLog, 'utf8').split('\n')[Number(leadPhoto[1])];
+        const file = leadPhotoPath(config.leadsLog, JSON.parse(row).photoKey, leadPhoto[2]);
+        const photo = file && fs.readFileSync(file);
+        if (photo) {
+          res.writeHead(200, { ...PRIVATE, 'Content-Type': 'image/jpeg', 'X-Content-Type-Options': 'nosniff' });
+          res.end(photo);
+          return;
+        }
+      } catch { /* Фото или заявка удалены. */ }
+      return json(res, 404, { error: 'Фото не найдено.' });
+    }
 
     const lead = /^\/api\/admin\/leads\/(\d+)$/.exec(pathname);
     if (lead && m === 'PATCH') {
       const body = await readJson(req);
+      if (!body || typeof body !== 'object') return json(res, 400, { error: 'Укажите этап заявки.' });
+      const id = lead[1];
+      const current = leadsList(Infinity).find(item => item.id === id);
+      if (!current) return json(res, 404, { error: 'Заявка не найдена.' });
+      const stage = body.stage ?? (body.done === true ? 'handled' : body.done === false ? 'new' : null);
+      if (!Object.hasOwn(LEAD_STAGES, stage)) return json(res, 400, { error: 'Неизвестный этап заявки.' });
+      const offer = body.offer ?? null;
+      const margin = body.margin ?? null;
+      if (offer !== null && (current.type !== 'sell' || !Number.isSafeInteger(offer) || offer < 0 || offer > 1e9)) {
+        return json(res, 400, { error: 'Проверьте предварительную оценку выкупа.' });
+      }
+      if (margin !== null && (!['buy', 'sell'].includes(current.type) || !Number.isSafeInteger(margin) || Math.abs(margin) > 1e9)) {
+        return json(res, 400, { error: 'Проверьте сумму маржи.' });
+      }
       let st = { done: {} };
       try { st = JSON.parse(fs.readFileSync(leadsStateFile, 'utf8')); } catch { /* первая отметка */ }
       st.done = st.done || {};
-      if (body.done) st.done[lead[1]] = true; else delete st.done[lead[1]];
+      st.progress = st.progress || {};
+      st.progress[id] = { stage, offer: Object.hasOwn(body, 'offer') ? offer : current.offer ?? null,
+        margin: Object.hasOwn(body, 'margin') ? margin : current.margin ?? null, stageUpdatedAt: now().toISOString() };
+      delete st.done[id];
       fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(leadsStateFile, JSON.stringify(st), { mode: 0o600 });
+      fs.writeFileSync(leadsStateFile + '.tmp', JSON.stringify(st), { mode: 0o600 });
+      fs.renameSync(leadsStateFile + '.tmp', leadsStateFile);
       return json(res, 200, { ok: true });
     }
 

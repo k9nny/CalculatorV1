@@ -62,15 +62,15 @@ ${robots ? `<meta name="robots" content="${esc(robots)}">\n` : ''}<link rel="can
 <script>(function(){var d=document.documentElement;if('IntersectionObserver' in window&&!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))d.classList.add('js')})()</script>
 <link rel="stylesheet" href="${root}assets/fonts.css">
 <link rel="stylesheet" href="${root}assets/ui.css?v=covers-43">
-<link rel="stylesheet" href="${root}assets/site.css">
-<link rel="stylesheet" href="${root}assets/pages.css?v=photos-47">
+<link rel="stylesheet" href="${root}assets/site.css?v=lead-paths-1">
+<link rel="stylesheet" href="${root}assets/pages.css?v=lead-paths-1">
 ${extraCss.map((c) => `<link rel="stylesheet" href="${root}${c}">`).join('\n')}
 ${jsonLd.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, '\\u003c')}</script>`).join('\n')}
 </head>
 <body>`;
 }
 
-function header(root) {
+function header(root, { sellHere = false } = {}) {
   const home = root || './';
   return `
 <header class="site-header" id="site-header">
@@ -81,26 +81,27 @@ function header(root) {
     </a>
     <nav class="nav" aria-label="Разделы">
       <a href="${home}#process">Выкуп</a>
-      <a href="${root}cars/" class="keep">Машины в продаже</a>
+      <a href="${root}cars/" class="keep">Каталог</a>
       <a href="${home}#faq">Вопросы</a>
     </nav>
     <a class="header-phone" href="tel:${PHONE}">${PHONE_LABEL}</a>
     <a class="icon-btn call-btn" href="tel:${PHONE}" aria-label="Позвонить: ${PHONE_LABEL}">${ICON.phone}</a>
-    <a class="btn btn-primary header-cta" href="#sell">Продать авто</a>
+    <a class="btn btn-primary header-cta" href="${sellHere ? '' : home}#sell">Продать авто</a>
   </div>
 </header>`;
 }
 
 // Форма заявки на выкуп. id те же, что на главной: её обрабатывает assets/site.js.
-function leadForm(title = 'Продать автомобиль') {
+function leadForm(title = 'Предварительная оценка', { carId, reserved = false } = {}) {
+  const inspection = carId != null;
   return `
-      <div class="lead-card light" id="sell">
-        <form class="lead-form" id="form-hero" novalidate>
+      <div class="${inspection ? 'car-lead' : 'lead-card light'}" id="${inspection ? 'inspection' : 'sell'}">
+        <form class="lead-form" method="post" ${inspection ? `data-entry="web-car" data-type="buy" data-car="${esc(carId)}"` : 'id="form-hero" data-entry="service-buyout"'} novalidate>
           <h2>${esc(title)}</h2>
-          <label class="field"><span>Марка и модель</span>
-            <input id="hero-model" name="model" autocomplete="off" placeholder="Например, Kia Rio, 2019">
+          ${inspection ? '' : `<label class="field"><span>Марка, модель и год · необязательно</span>
+            <input id="hero-model" name="model" maxlength="120" autocomplete="off" placeholder="Например, Kia Rio, 2019">
             <span class="err" aria-live="polite"></span>
-          </label>
+          </label>`}
           <label class="field"><span>Телефон</span>
             <input id="hero-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 (___) ___-__-__" data-phone>
             <span class="err" aria-live="polite"></span>
@@ -112,12 +113,13 @@ function leadForm(title = 'Продать автомобиль') {
             </label>
             <span class="err" aria-live="polite"></span>
           </div>
-          <button class="btn btn-primary btn-block" type="submit">Заказать звонок</button>
+          <button class="btn btn-primary btn-block" type="submit">${inspection ? (reserved ? 'Сообщить, если освободится' : 'Записаться на осмотр') : 'Запросить оценку'}</button>
+          <p class="form-note">${inspection ? (reserved ? 'Свяжемся с вами, если машина снова будет доступна.' : 'Перезвоним и согласуем время и место осмотра.') : 'Перезвоним, уточним состояние и обсудим предварительную цену.'}</p>
         </form>
         <div class="done" hidden tabindex="-1">
           <span class="done-mark">${ICON.check}</span>
           <h3>Заявка принята</h3>
-          <p>Перезвоним на <span data-done-phone></span>.</p>
+          <p>${reserved ? 'Если бронь снимут, свяжемся с вами по номеру' : 'Перезвоним на'} <span data-done-phone></span>.</p>
           <button class="linkish" type="button" data-reset>Отправить другую заявку</button>
         </div>
       </div>`;
@@ -195,7 +197,8 @@ ${PAGES.map((p) => `        <a href="${root}${p.slug}/">${esc(p.nav)}</a>`).join
 </footer>
 ${scripts ? `<script src="${root}assets/vendor/lenis.min.js"></script>
 <script src="${root}app/card.js?v=covers-43"></script>
-<script src="${root}assets/site.js"></script>` : ''}
+<script src="${root}app/analytics.js"></script>
+<script src="${root}assets/site.js?v=lead-paths-1"></script>` : ''}
 </body>
 </html>
 `;

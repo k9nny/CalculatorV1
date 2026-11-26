@@ -123,6 +123,8 @@
     </section>
 
     <section data-pane="leads" hidden><h1>Заявки</h1>
+      <label class="field"><span>Тип заявки</span><select id="lead-type-filter"><option value="">Все</option><option value="sell">Выкуп</option><option value="buy">Осмотр машины</option></select></label>
+      <p class="hint" id="lead-summary" role="status"></p>
       <div class="list" id="leads"></div>
     </section>
 
@@ -295,6 +297,6 @@
 
 <script src="../card.js?v=market-44"></script>
 <script src="crm.js?v=manual-publication-1"></script>
-<script src="admin.js?v=catalog-only-1"></script>
+<script src="admin.js?v=lead-paths-1"></script>
 </body>
 </html>

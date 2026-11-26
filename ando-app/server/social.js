@@ -121,16 +121,22 @@ function createSocial({ config, publishers, copywriter, renderedAsset, now = () 
       return generation;
     }
     if (telegramTarget) Object.assign(media, { telegramListing: true, telegramFacts: options.telegramFacts });
+    const batchId = crypto.randomBytes(8).toString('hex');
     const batch = {
-      id: crypto.randomBytes(8).toString('hex'), key, carId: String(id), revision: rev,
+      id: batchId, key, carId: String(id), revision: rev,
       createdAt: now().toISOString(), approved: false, ...(reel && { assetKey, reelIndex: options.reelIndex, renderId: options.renderId }),
       jobs: targets.map((p) => {
         const prior = postedJob(String(id), rev, p.key, assetKey);
         const oldPost = !reel && p.key.startsWith('vk:') && car.vk?.postId &&
           String(car.vk.url || '').includes(`wall-${p.key.slice(3)}_`);
         const job = { key: p.key, name: p.name, status: prior || oldPost ? 'posted' : 'draft', attempts: 0, ...(p.template && { template: p.template }) };
+        const link = new URL(media.link);
+        link.searchParams.set('utm_source', p.key.split(':')[0].toLowerCase());
+        link.searchParams.set('utm_medium', 'organic_social');
+        link.searchParams.set('utm_content', 'car-' + id + '-' + batchId);
+        const trackedMedia = { ...media, link: link.href, text: media.text.replace(media.link, () => link.href) };
         try { return { ...job,
-          ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(media) };
+          ...(prior || oldPost ? { receipt: prior?.receipt || car.vk, postedAt: prior?.postedAt } : {}), payload: prior?.payload || p.prepare(trackedMedia) };
         } catch (error) {
           if (platform || !/^(instagram|threads):/.test(p.key)) throw error;
           return { ...job, status: 'blocked', preparationFailed: true, error: error.message, payload: { text: '' } };

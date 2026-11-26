@@ -202,9 +202,27 @@ const SERVICE_WORDS = /замен|нов(?:ые|ый|ая)|диагност|ре
 // Строка — отдельное поле, а не всё объявление одной строкой («мерс ешка 17г … цена 2 млн 650»).
 const standalone = (line) => line.length < 40 && !findMake(line) && !detectCar(line).make;
 
+function autotekaUrl(value) {
+  try {
+    const url = new URL(String(value || '').trim());
+    if (url.protocol !== 'https:' || url.username || url.password || url.port || url.href.length > 512) return null;
+    const folder = url.hostname === 'api.autoteka.ru' ? '/pdf-report/uuid/'
+      : ['autoteka.ru', 'www.autoteka.ru'].includes(url.hostname) ? '/report/web/uuid/' : '';
+    if (!folder || !url.pathname.startsWith(folder) || !/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}\/?$/i.test(url.pathname.slice(folder.length))) return null;
+    url.hash = '';
+    return url.href;
+  } catch { return null; }
+}
+
 function parseListing(text) {
   const fields = {};
-  const lines = String(text || '').split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const listing = String(text || '').replace(/https:\/\/[^\s<>"\])]+/gi, candidate => {
+    const report = autotekaUrl(candidate.replace(/[.,;!?]+$/, ''));
+    if (!report) return candidate;
+    fields.autotekaUrl ||= report;
+    return '';
+  });
+  const lines = listing.split(/\r?\n/).map((l) => l.trim()).filter(l => l && !(fields.autotekaUrl && /^автотека\s*[:—-]?$/i.test(l)));
   const used = new Set();
   const service = [];
 
@@ -325,7 +343,7 @@ function parseListing(text) {
   if (!fields.paint && /не\s*крашен|в\s*родн|родная краска|родной окрас|без окрас/.test(all)) fields.paint = 'Без окрасов';
   // Цена последним числом без единиц: «… не бита не крашена, 300» → 300 000 ₽ (кроме чисел, похожих на год).
   if (fields.price == null) {
-    const last = /(?:^|[\s,;])(\d{3,4})\s*$/.exec(String(text).trim());
+    const last = /(?:^|[\s,;])(\d{3,4})\s*$/.exec(listing.trim());
     if (last && !(+last[1] >= 1950 && +last[1] <= new Date().getFullYear() + 1)) fields.price = normalizePrice(+last[1]);
   }
   // Описание — строки, которые не разобрались в поля (кроме первой строки с маркой и моделью).
@@ -348,6 +366,8 @@ function toCar(f) {
     'features', 'defects', 'paint', 'customs', 'keys', 'tires', 'warranty', 'serviceHistory', 'lastOwnerYears', 'history']) {
     if (f[k] !== undefined && f[k] !== '') car[k] = f[k];
   }
+  const report = autotekaUrl(f.autotekaUrl);
+  if (report) car.autotekaUrl = report;
   const engine = {};
   if (f.volume) engine.volume = f.volume;
   if (f.power) engine.power = f.power;
@@ -359,4 +379,4 @@ function toCar(f) {
 const REQUIRED = { make: 'марка', model: 'модель', year: 'год', price: 'цена' };
 function missing(f) { return Object.keys(REQUIRED).filter((k) => f[k] == null || f[k] === '').map((k) => REQUIRED[k]); }
 
-module.exports = { parseListing, toCar, missing, parseAmount, priceOf, normalizePrice, normalizeMileage, maskVin };
+module.exports = { parseListing, toCar, missing, parseAmount, priceOf, normalizePrice, normalizeMileage, maskVin, autotekaUrl };

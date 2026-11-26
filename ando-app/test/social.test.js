@@ -38,7 +38,10 @@ test('посты: предпросмотр сохраняется, отправ�
   const batch = s.preview('123');
   assert.match(batch.jobs[0].payload.text, /Краснодар/);
   assert.match(batch.jobs[0].payload.text, /Скол на капоте/);
-  assert.match(batch.jobs[0].payload.link, /\/cars\/123\/$/);
+  const tracking = new URL(batch.jobs[0].payload.link);
+  assert.equal(tracking.pathname, '/cars/123/');
+  assert.equal(tracking.searchParams.get('utm_source'), 'telegram');
+  assert.equal(tracking.searchParams.get('utm_content'), 'car-123-' + batch.id);
   assert.equal(s.preview('123').id, batch.id);
   await s.tick();
   assert.deepEqual(h.calls, []);
@@ -249,7 +252,7 @@ test('Telegram собирает оформленный пост из подтв�
   assert.match(payload.text, /Двигатель работает стабильно/);
   assert.doesNotMatch(payload.text, /Скол|ржавчина|не работает|https/);
   assert.deepEqual(payload.entities.filter(e => e.type === 'text_link').map(e => [payload.text.slice(e.offset, e.offset + e.length), e.url]), [
-    ['ПОДРОБНЕЕ НА САЙТЕ', 'https://andoauto.ru/cars/123/'],
+    ['ПОДРОБНЕЕ НА САЙТЕ', 'https://andoauto.ru/cars/123/?utm_source=telegram&utm_medium=organic_social&utm_content=car-123-' + batch.id],
     ['ПОДРОБНЕЕ В БОТЕ', 'https://t.me/andoavtobot/cars?startapp=car_123']
   ]);
   await social.tick();

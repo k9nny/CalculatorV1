@@ -9,6 +9,7 @@ const path = require('node:path');
 const https = require('node:https');
 const crypto = require('node:crypto');
 const L = require('./site-layout');
+const { autotekaUrl } = require('./listing-parser');
 const { readCatalog } = require('./catalog');
 const { specRows } = require('./car-specs');
 
@@ -120,6 +121,8 @@ function carPage(site, c) {
   const sub = [c.trim, c.body, c.color].filter(Boolean).join(' · ');
   const list = (arr) => (Array.isArray(arr) ? arr : arr ? [arr] : []).filter(Boolean);
   const defects = list(c.defects);
+  const reserved = c.status === 'reserved';
+  const report = autotekaUrl(c.autotekaUrl);
   return L.head({
     root, siteUrl: site, title: pageTitle, description: description(c), canonical: url, robots,
     image: c.photos && c.photos[0] ? photoUrl(site, c.photos[0]) : '',
@@ -131,6 +134,9 @@ function carPage(site, c) {
       ${L.crumbs(root, [{ name: 'Машины в продаже', href: '../' }, { name: h }])}
       <h1>${esc(h)}</h1>
       ${sub ? `<p class="car-sub">${esc(sub)}</p>` : ''}
+      <div class="car-mobile-action"><strong>${rub(c.price)}</strong>
+        <a class="btn btn-primary" href="#inspection">${reserved ? 'Сообщить о снятии брони' : 'Записаться на осмотр'}</a>
+      </div>
     </div>
   </section>
   <section class="section">
@@ -145,6 +151,7 @@ ${photos.length ? photos.map((src, i) => `          <a href="${esc(book)}"><img 
         ${list(c.features).length ? `<h2>Комплектация и опции</h2><div class="chips">${list(c.features).map((f) => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
         ${list(c.serviceDone).length ? `<h2>Что сделали перед продажей</h2><div class="chips">${list(c.serviceDone).map((f) => `<span>${esc(f)}</span>`).join('')}</div>` : ''}
         ${defects.length ? `<h2>Известные недостатки</h2>\n        <p>${esc(defects.join('\n'))}</p>` : ''}
+        ${report ? `<h2>История автомобиля</h2><p>Отчёт предоставил продавец.</p><a class="btn btn-ghost" href="${esc(report)}" target="_blank" rel="noopener noreferrer">Открыть Автотеку</a>` : ''}
         ${specRows(c.modelSpecs).length ? `<h2>Характеристики модели</h2>
         <dl class="specs">
 ${specRows(c.modelSpecs).map(([k, v]) => `          <div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('\n')}
@@ -160,10 +167,9 @@ ${specs(c).map(([k, v]) => `          <div><dt>${esc(k)}</dt><dd>${esc(v)}</dd><
           ${c.status === 'reserved' ? '<span class="car-status">Забронирована</span>' : ''}
           <span class="car-price">${rub(c.price)}</span>
           ${c.price > 0 && c.marketPrice > c.price ? '<span class="deal good">Ниже рынка</span>' : ''}
-          <a class="btn btn-primary btn-block" href="${esc(book)}">Записаться на осмотр</a>
-          <a class="btn btn-ghost btn-block" href="${esc(book + '&credit=1')}">Купить в кредит</a>
+          ${L.withRoot(L.leadForm(reserved ? 'Сообщить о снятии брони' : 'Осмотр автомобиля', { carId: c.id, reserved }), root)}
           <a class="btn btn-ghost btn-block" href="tel:${L.PHONE}">${L.ICON.phone}${L.PHONE_LABEL}</a>
-          <p class="hint">Номер объявления: ${esc(c.id)}. Машина в Москве, осмотр и тест-драйв по записи.</p>
+          <p class="hint">Объявление № ${esc(c.id)}${c.city ? ' · ' + esc(c.city) : ''}</p>
         </div>
       </aside>
     </div>
@@ -188,11 +194,11 @@ function listPage(site, cars) {
         </div>
       </article>`;
   }).join('\n');
-  const lead = n ? `${n} ${plural(n, 'машина', 'машины', 'машин')} в наличии. Каждую проверяем по базам ГИБДД и реестру залогов, показываем и даём тест-драйв в Москве.`
+  const lead = n ? `${n} ${plural(n, 'машина', 'машины', 'машин')} в каталоге. Откройте карточку, чтобы посмотреть фото, цену и записаться на осмотр.`
     : 'Сейчас все машины проданы. Новые появляются каждую неделю.';
   return L.head({
     root, siteUrl: site, title: `Авто с пробегом в Москве — купить проверенную машину | ${L.BRAND}`,
-    description: 'Автомобили с пробегом в наличии в Москве: проверка по базам ГИБДД и реестру залогов, честное описание недостатков, осмотр и тест-драйв.',
+    description: 'Автомобили с пробегом в каталоге ANDO AUTO. Фотографии, характеристики и запись на осмотр.',
     canonical: url,
     jsonLd: [L.orgJsonLd(site), L.breadcrumbsJsonLd(site, [{ name: 'Машины в продаже', url }]),
       { '@context': 'https://schema.org', '@type': 'ItemList', itemListElement: cars.map((c, i) => ({ '@type': 'ListItem', position: i + 1, url: `${url}${encodeURIComponent(c.id)}/`, name: title(c) })) }]

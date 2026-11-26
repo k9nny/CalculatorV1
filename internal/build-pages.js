@@ -132,7 +132,7 @@ function page(slug) {
     L.faqJsonLd(c.faq)
   ];
   const html = L.head({ root: ROOT, siteUrl: SITE, title: c.title, description: c.description, canonical: url, jsonLd }) +
-    L.header(ROOT) + `
+    L.header(ROOT, { sellHere: true }) + `
 <main id="top">
   <section class="page-hero dark" aria-labelledby="page-title">
     <div class="wrap">

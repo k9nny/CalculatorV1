@@ -10,6 +10,10 @@ const TYPES = {
   credit: 'Покупка в кредит — анкета'
 };
 const CONDITIONS = ['На ходу, без ДТП', 'После ДТП', 'Требует ремонта', 'Не на ходу'];
+const LEAD_ENTRIES = { 'homepage-buyout': 'Главная · выкуп', 'service-buyout': 'Страница выкупа',
+  'web-car': 'Карточка на сайте', 'app-car': 'Карточка в каталоге', 'app-buyout': 'Выкуп в каталоге' };
+const LEAD_STAGES = { new: 'Новая', contacted: 'Связались', booked: 'Осмотр назначен',
+  inspected: 'Осмотр состоялся', won: 'Сделка состоялась', lost: 'Закрыта без сделки', handled: 'Обработана' };
 
 function clean(value, max) {
   return String(value == null ? '' : value)
@@ -51,6 +55,13 @@ function validateLead(body, cars, { now = new Date() } = {}) {
     comment: clean(body.comment, 500),
     platform: ['telegram', 'max', 'web'].includes(body.platform) ? body.platform : 'web'
   };
+  const entry = body.entryPoint;
+  if (Object.hasOwn(LEAD_ENTRIES, entry)) lead.entryPoint = entry;
+  const campaign = String(body.utmSource || '').toLowerCase();
+  if (['vk', 'telegram', 'instagram', 'threads', 'youtube', 'yandex', 'max'].includes(campaign)) {
+    lead.utmSource = campaign;
+    if (/^(car|buyout)-[\w-]{1,80}$/i.test(body.utmContent || '')) lead.utmContent = body.utmContent;
+  }
 
   if (type === 'listing' && !lead.comment) return { ok: false, error: 'Расскажите, какие машины у вас в наличии' };
 
@@ -58,7 +69,9 @@ function validateLead(body, cars, { now = new Date() } = {}) {
     // Название и цену берём из каталога на сервере, а не из запроса.
     const car = (cars || []).find((c) => String(c.id) === String(body.carId));
     if (!car) return { ok: false, error: 'Машина не найдена — обновите каталог' };
+    if (type === 'buy' && car.status === 'sold') return { ok: false, error: 'Эту машину уже продали. Посмотрите другие в каталоге.' };
     lead.car = { id: String(car.id), title: `${car.make} ${car.model}, ${car.year}`, price: car.price };
+    if (type === 'buy' && car.status === 'reserved') lead.car.status = 'reserved';
   }
 
   // Анкета на кредит: машина из каталога (или без машины — подобрать), ФИО, срок, доход, занятость.
@@ -86,6 +99,10 @@ function validateLead(body, cars, { now = new Date() } = {}) {
   }
 
   if (type === 'sell') {
+    if (entry === 'homepage-buyout' || entry === 'service-buyout') {
+      lead.sellVehicle = clean(body.vehicle, 120);
+      return { ok: true, lead };
+    }
     const c = body.car || {};
     const year = intIn(c.year, 1960, now.getFullYear() + 1);
     const mileage = intIn(c.mileage, 0, 3000000);
@@ -100,7 +117,7 @@ function validateLead(body, cars, { now = new Date() } = {}) {
       model,
       year,
       mileage,
-      condition: CONDITIONS.includes(c.condition) ? c.condition : CONDITIONS[0],
+      condition: CONDITIONS.includes(c.condition) ? c.condition : null,
       desiredPrice
     };
   }
@@ -121,12 +138,14 @@ const PLATFORM_NAMES = { telegram: 'Telegram', max: 'MAX', web: 'сайт' };
 function formatLeadMessage(lead, source) {
   const lines = [`<b>Заявка: ${escapeHtml(TYPES[lead.type])}</b>`];
   if (lead.car) lines.push(`${escapeHtml(lead.car.title)} — ${money(lead.car.price)} (№ ${escapeHtml(lead.car.id)})`);
+  if (lead.car?.status === 'reserved') lines.push('Машина в брони · сообщить, если освободится.');
+  if (lead.sellVehicle) lines.push('Машина со слов владельца: ' + escapeHtml(lead.sellVehicle));
   if (lead.sellCar) {
     const c = lead.sellCar;
     lines.push(
       `${escapeHtml(c.make)} ${escapeHtml(c.model)}, ${c.year}` +
         (c.mileage != null ? `, ${c.mileage.toLocaleString('ru-RU').replace(/ /g, ' ')} км` : '') +
-        `\nСостояние: ${escapeHtml(c.condition)}` +
+        (c.condition ? `\nСостояние: ${escapeHtml(c.condition)}` : '') +
         (c.desiredPrice ? `\nХочет: ${money(c.desiredPrice)}` : '')
     );
   }
@@ -149,9 +168,11 @@ function formatLeadMessage(lead, source) {
   lines.push(
     `Источник: ${PLATFORM_NAMES[source.platform] || 'сайт'}` +
       (source.verified ? '' : source.platform === 'web' ? '' : ' (подпись не проверена)') +
-      (who ? ` · ${escapeHtml(who)}` : '')
+      (who ? ` · ${escapeHtml(who)}` : '') +
+      (lead.entryPoint ? ` · ${LEAD_ENTRIES[lead.entryPoint]}` : '') +
+      (lead.utmSource ? ` · ${escapeHtml(lead.utmSource)}` : '')
   );
   return lines.join('\n');
 }
 
-module.exports = { validateLead, formatLeadMessage, normalizePhone, TYPES, EMPLOYMENT };
+module.exports = { validateLead, formatLeadMessage, normalizePhone, TYPES, EMPLOYMENT, LEAD_STAGES };

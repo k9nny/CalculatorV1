@@ -463,3 +463,31 @@ test('админка: заявки видны и отмечаются обраб
     assert.equal((await (await call('/api/leads')).json()).leads[0].done, true);
   });
 });
+
+test('CRM сохраняет этап сделки, предложение, маржу и приватное фото выкупа', async () => {
+  await withAdmin(async ({ call, login, origin }) => {
+    const response = await fetch(origin + '/api/lead', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'sell', entryPoint: 'homepage-buyout', phone: '89001234567', consent: true }) });
+    const { uploadToken } = await response.json();
+    assert.match(uploadToken, /^[a-f0-9]{64}$/);
+    const photo = Buffer.from([255, 216, 255, 224, 255, 217]);
+    const sendPhoto = token => fetch(origin + '/api/lead-photo', { method: 'POST', headers: {
+      'Content-Type': 'image/jpeg', 'X-Ando-Lead-Upload': token
+    }, body: photo });
+    assert.equal((await sendPhoto('f'.repeat(64))).status, 403);
+    assert.equal((await sendPhoto(uploadToken)).status, 200);
+    assert.equal((await call('/api/leads/0/photos/1.jpg')).status, 401);
+    await login();
+    const update = { method: 'PATCH', json: { stage: 'won', offer: 500000, margin: -1200 } };
+    assert.equal((await call('/api/leads/0', update)).status, 200);
+    assert.equal((await call('/api/leads/1', update)).status, 404);
+    const { leads } = await (await call('/api/leads')).json();
+    assert.equal(leads[0].stage, 'won');
+    assert.equal(leads[0].offer, 500000);
+    assert.equal(leads[0].margin, -1200);
+    assert.equal(leads[0].done, true);
+    assert.equal(leads[0].photoKey, undefined);
+    assert.deepEqual(leads[0].photos, ['1.jpg']);
+    assert.deepEqual(Buffer.from(await (await call('/api/leads/0/photos/1.jpg')).arrayBuffer()), photo);
+  });
+});

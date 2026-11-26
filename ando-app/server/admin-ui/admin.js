@@ -294,6 +294,7 @@
           '<button class="btn btn-ghost row-text" type="button" data-text="channel">Текст для канала</button>' +
           '<button class="btn btn-ghost row-text" type="button" data-text="market">Текст для Авито</button>' +
           '<button class="btn btn-ghost row-video" type="button" data-addvideo>Добавить видео</button>' +
+          '<button class="btn btn-ghost" type="button" data-autoteka="' + esc(c.autotekaUrl || '') + '">' + (c.autotekaUrl ? 'Изменить Автотеку' : 'Добавить Автотеку') + '</button>' +
           '<button class="btn btn-ghost" type="button" data-social>Посты в соцсети</button>' +
           (c.status === 'available' && !c.demo ? '<button class="btn btn-ghost" type="button" data-prepare-video>Видео для публикации</button><button class="btn btn-ghost" type="button" data-instagram-post>Пост Instagram</button><button class="btn btn-ghost" type="button" data-threads-post>Пост Threads</button>' +
             (c.videos || []).map(function (src, index) {
@@ -394,6 +395,14 @@
       return;
     }
     if (e.target.matches('[data-addvideo]')) { videoFor = e.target.closest('.row'); $('row-video-input').click(); return; }
+    var report = e.target.closest('[data-autoteka]');
+    if (report) {
+      var link = prompt('Прямая ссылка на отчёт Автотеки. Пустое поле уберёт ссылку из карточки.', report.dataset.autoteka);
+      if (link === null) return;
+      api('cars/' + encodeURIComponent(report.closest('.row').dataset.id), { method: 'PATCH', json: { autotekaUrl: link } })
+        .then(loadCars).catch(function (err) { toast(err.message, true); });
+      return;
+    }
     if (e.target.matches('[data-delvideos]')) {
       if (!confirm('Убрать все видео у этой машины?')) return;
       api('cars/' + encodeURIComponent(e.target.closest('.row').dataset.id) + '/videos', { method: 'DELETE' })
@@ -443,6 +452,8 @@
   function leadBody(l) {
     var lines = [];
     if (l.car) lines.push(l.car.title + ' — ' + UI.rub(l.car.price) + ' (№ ' + l.car.id + ')');
+    if (l.car && l.car.status === 'reserved') lines.push('Сообщить, если снимут бронь');
+    if (l.sellVehicle) lines.push('Машина со слов владельца: ' + l.sellVehicle);
     if (l.sellCar) {
       var c = l.sellCar;
       lines.push(c.make + ' ' + c.model + ', ' + c.year + (c.mileage != null ? ', ' + UI.num(c.mileage) + ' км' : '') +
@@ -472,33 +483,58 @@
     api('leads').then(function (data) {
       var leads = data.leads || [];
       setBadge(leads.filter(function (l) { return !l.done; }).length);
-      if (!leads.length) { $('leads').innerHTML = '<p class="empty">Заявок пока нет. Они появятся здесь сразу, как кто-то оставит телефон на сайте или в приложении.</p>'; return; }
+      var type = $('lead-type-filter').value;
+      if (type) leads = leads.filter(function (l) { return l.type === type; });
+      var wins = leads.filter(function (l) { return l.stage === 'won'; });
+      var withMargin = wins.filter(function (l) { return Number.isSafeInteger(l.margin); });
+      $('lead-summary').textContent = 'Заявок ' + leads.length + ' · Осмотры назначены ' +
+        leads.filter(function (l) { return l.stage === 'booked'; }).length + ' · Сделок ' + wins.length +
+        (withMargin.length ? ' · Маржа по ' + withMargin.length + ' ' + UI.plural(withMargin.length, 'сделке', 'сделкам', 'сделкам') + ' ' +
+          UI.num(withMargin.reduce(function (sum, lead) { return sum + lead.margin; }, 0)) + ' ₽' : '');
+      if (!leads.length) { $('leads').innerHTML = '<p class="empty">По этому фильтру заявок пока нет.</p>'; return; }
       $('leads').innerHTML = leads.map(function (l) {
         var where = { telegram: 'Telegram', max: 'MAX', web: 'сайт' }[l.platform] || 'сайт';
+        var entry = { 'homepage-buyout': 'Главная', 'service-buyout': 'Страница выкупа', 'web-car': 'Карточка на сайте',
+          'app-car': 'Карточка в каталоге', 'app-buyout': 'Выкуп в каталоге' }[l.entryPoint];
         return '<div class="lead' + (l.done ? ' is-done' : '') + '" data-id="' + esc(l.id) + '">' +
-          '<div class="lead-head"><span>' + esc(when(l.at)) + ' · ' + where + '</span><span>' + (l.done ? 'обработана' : '') + '</span></div>' +
+          '<div class="lead-head"><span>' + esc([when(l.at), where, entry, l.utmSource, l.utmContent].filter(Boolean).join(' · ')) + '</span></div>' +
           '<span class="lead-what">' + esc(LEAD_TYPES[l.type] || 'Заявка') + ' · ' + esc(l.phone) + '</span>' +
           '<div class="lead-body">' + esc(leadBody(l)) + '</div>' +
+          (l.photos || []).map(function (name, i) {
+            return '<a target="_blank" rel="noopener" href="api/leads/' + esc(l.id) + '/photos/' + esc(name) + '">Фото ' + (i + 1) + '</a>';
+          }).join('') +
+          '<form class="lead-stage">' +
+          '<label class="field"><span>Этап</span><select name="stage">' + Object.entries(data.stages).map(function ([value, label]) {
+            return '<option value="' + esc(value) + '"' + (value === l.stage ? ' selected' : '') + '>' + esc(label) + '</option>';
+          }).join('') + '</select></label>' +
+          (l.type === 'sell' ? '<label class="field"><span>Предложение, ₽</span><input name="offer" type="number" min="0" step="1" value="' + esc(l.offer ?? '') + '"></label>' : '') +
+          (l.type === 'sell' || l.type === 'buy' ? '<label class="field"><span>Маржа сделки, ₽</span><input name="margin" type="number" step="1" value="' + esc(l.margin ?? '') + '"></label>' : '') +
           '<div class="lead-tools">' +
           '<a class="btn btn-primary" href="tel:' + esc(l.phone) + '">Позвонить</a>' +
-          '<button class="btn btn-ghost" type="button" data-done="' + (l.done ? '0' : '1') + '">' + (l.done ? 'Вернуть' : 'Обработана') + '</button>' +
-          '</div></div>';
+          '<button class="btn btn-ghost" type="submit">Сохранить</button>' +
+          '</div></form></div>';
       }).join('');
     }).catch(function (err) { $('leads').innerHTML = '<p class="empty">' + esc(err.message) + '</p>'; });
   }
 
-  $('leads').addEventListener('click', function (e) {
-    var btn = e.target.closest('[data-done]');
-    if (!btn) return;
-    var id = btn.closest('.lead').dataset.id;
-    api('leads/' + id, { method: 'PATCH', json: { done: btn.dataset.done === '1' } })
-      .then(loadLeads)
-      .catch(function (err) { toast(err.message, true); });
+  $('lead-type-filter').addEventListener('change', loadLeads);
+  $('leads').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var form = e.target;
+    var id = form.closest('.lead').dataset.id;
+    var fields = new FormData(form);
+    var amount = function (key) { return fields.get(key) ? Number(fields.get(key)) : null; };
+    var btn = form.querySelector('[type=submit]');
+    btn.disabled = true;
+    api('leads/' + id, { method: 'PATCH', json: { stage: fields.get('stage'), offer: amount('offer'), margin: amount('margin') } })
+      .then(function () { toast('Заявка обновлена'); loadLeads(); })
+      .catch(function (err) { toast(err.message, true); })
+      .finally(function () { btn.disabled = false; });
   });
 
   // Новые заявки подтягиваются сами, пока вкладка открыта.
   setInterval(function () {
-    if (!$('app').hidden && document.visibilityState === 'visible') loadLeads();
+    if (!$('app').hidden && document.visibilityState === 'visible' && !$('leads').contains(document.activeElement)) loadLeads();
   }, 60000);
 
   var socialLabels = { draft: 'Ждёт подтверждения', queued: 'В очереди', sending: 'Отправляется', posted: 'Опубликовано', retry: 'Повтор запланирован', failed: 'Ошибка', blocked: 'Нужна проверка', review: 'Сверить с площадкой' };
