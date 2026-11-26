@@ -186,12 +186,23 @@ test('сервер: публичные формы различают оценк�
   });
 });
 
-test('Метрика: публичная конфигурация без персональных данных и условный CSP', async () => {
-  await withServer({ metrikaCounter: 123456 }, async (base) => {
+test('Метрика: публичная конфигурация, отдельное согласие и отзыв в журнале', async () => {
+  await withServer({ metrikaCounter: 123456 }, async (base, { log }) => {
     const config = await (await fetch(base + '/api/public-analytics')).json();
-    assert.deepEqual(config, { metrikaCounter: 123456 });
+    assert.deepEqual(config, { metrikaCounter: 123456, consentVersion: '2026-11-26' });
     const headers = (await fetch(base + '/')).headers;
     assert.match(headers.get('content-security-policy'), /connect-src [^;]*https:\/\/mc\.yandex\.ru/);
+    const choose = body => fetch(base + '/api/analytics-choice', { method: 'POST', headers: {
+      'Content-Type': 'application/json'
+    }, body: JSON.stringify(body) });
+    assert.equal((await choose({ version: 'old', decision: 'accepted' })).status, 400);
+    const choice = await choose({ version: config.consentVersion, decision: 'accepted' });
+    const { receipt } = await choice.json();
+    assert.match(receipt, /^[a-f0-9]{32}$/);
+    assert.equal((await choose({ version: config.consentVersion, decision: 'withdrawn', receipt })).status, 200);
+    const records = fs.readFileSync(path.join(path.dirname(log), 'analytics-consent.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
+    assert.deepEqual(records.map(item => item.decision), ['accepted', 'withdrawn']);
+    assert.ok(records.every(item => item.receipt === receipt && !item.ip && !item.phone));
   });
 });
 

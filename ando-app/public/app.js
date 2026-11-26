@@ -285,7 +285,8 @@
     var parts = [sl.name, sl.inn ? 'ИНН ' + sl.inn : '', sl.ogrnip ? 'ОГРНИП ' + sl.ogrnip : '', sl.registered].filter(Boolean);
     return '<footer class="foot">' + (parts.length ? '<p>' + esc(parts.join(', ')) + '</p>' : '') +
       (CFG.vkUrl ? '<a href="' + esc(CFG.vkUrl) + '" target="_blank" rel="noopener">Мы ВКонтакте</a> · ' : '') +
-      '<a href="' + esc(CFG.privacyUrl || 'privacy.html') + '" data-action="privacy">Политика обработки персональных данных</a></footer>';
+      '<a href="' + esc(CFG.privacyUrl || 'privacy.html') + '" data-action="privacy">Политика обработки персональных данных</a>' +
+      '<button type="button" data-cookie-settings>Настройки cookies</button></footer>';
   }
 
   function renderTab() {
@@ -805,8 +806,8 @@
     return '<label class="field"><span>Телефон</span><input name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7 900 000-00-00" maxlength="20" required></label>';
   }
   function consentField() {
-    return '<label class="consent"><input type="checkbox" name="consent" required><span>Согласен на <a href="' + esc(CFG.privacyUrl || 'privacy.html') +
-      '" data-action="privacy">обработку персональных данных</a></span></label>';
+    return '<label class="consent"><input type="checkbox" name="consent" required><span>Даю <a href="' + esc(new URL('consent.html', CFG.siteUrl || new URL('../', location.href)).href) +
+      '" data-action="privacy">согласие на обработку персональных данных</a></span></label>';
   }
 
   var ROTATE = ['ваше авто', 'после ДТП', 'не на ходу', 'под ремонт'];
@@ -1086,7 +1087,7 @@
       case 'share': shareCar(byId(id)); break;
       case 'privacy':
         event.preventDefault();
-        P.openLink(new URL(CFG.privacyUrl || 'privacy.html', location.href).href);
+        P.openLink(new URL(target.getAttribute('href') || CFG.privacyUrl || 'privacy.html', location.href).href);
         break;
       case 'reload': location.reload(); break;
       case 'back':

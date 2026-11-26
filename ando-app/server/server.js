@@ -56,6 +56,7 @@ const SECURITY_HEADERS = {
     "default-src 'self'; script-src 'self' https://telegram.org https://st.max.ru; " +
     "style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: https:; connect-src 'self'; base-uri 'none'; form-action 'self'"
 };
+const ANALYTICS_CONSENT_VERSION = '2026-11-26';
 
 function readConfig(env = process.env) {
   const root = path.resolve(__dirname, '..');
@@ -248,6 +249,7 @@ function createApp(config = readConfig(), deps = {}) {
   const send = deps.sendTelegramMessage || sendTelegramMessage;
   const allow = deps.rateLimiter || createRateLimiter();
   const allowPhoto = createRateLimiter(24);
+  const allowChoices = createRateLimiter(20);
 
   function json(res, status, payload, extra = {}) {
     res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', ...SECURITY_HEADERS, ...extra });
@@ -367,6 +369,31 @@ function createApp(config = readConfig(), deps = {}) {
     return json(res, result.status, result.error ? { error: result.error } : { count: result.count });
   }
 
+  async function recordAnalyticsChoice(req, res) {
+    if (req.method !== 'POST' || !/^application\/json(?:;|$)/i.test(req.headers['content-type'] || '')) {
+      return json(res, 400, { error: 'Некорректный запрос.' });
+    }
+    if (req.headers['sec-fetch-site'] === 'cross-site') return json(res, 403, { error: 'Недоступно.' });
+    const ip = (config.trustProxy && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress;
+    if (!allowChoices(ip)) return json(res, 429, { error: 'Попробуйте позже.' });
+    let body;
+    try { body = JSON.parse(await readBody(req, 2048)); } catch { return json(res, 400, { error: 'Некорректный запрос.' }); }
+    if (body?.version !== ANALYTICS_CONSENT_VERSION || !['accepted', 'withdrawn'].includes(body.decision)) {
+      return json(res, 400, { error: 'Выберите настройку ещё раз.' });
+    }
+    if (body.decision === 'withdrawn' && (typeof body.receipt !== 'string' || !/^[a-f0-9]{32}$/.test(body.receipt))) {
+      return json(res, 400, { error: 'Некорректное подтверждение.' });
+    }
+    if (body.decision === 'accepted' && !config.metrikaCounter) return json(res, 409, { error: 'Аналитика отключена.' });
+    const receipt = body.decision === 'accepted' ? randomBytes(16).toString('hex') : body.receipt;
+    const dir = path.dirname(config.leadsLog);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.appendFileSync(path.join(dir, 'analytics-consent.jsonl'), JSON.stringify({
+      at: new Date().toISOString(), version: ANALYTICS_CONSENT_VERSION, decision: body.decision, receipt
+    }) + '\n', { mode: 0o600 });
+    return json(res, 200, { receipt });
+  }
+
   function serveStatic(req, res) {
     if (req.method !== 'GET' && req.method !== 'HEAD') {
       res.writeHead(405, SECURITY_HEADERS);
@@ -454,7 +481,13 @@ function createApp(config = readConfig(), deps = {}) {
       handleLead(req, res).catch(() => json(res, 500, { error: 'Ошибка сервера' }));
       return;
     }
-    if (pathname === '/api/public-analytics' && req.method === 'GET') return json(res, 200, { metrikaCounter: config.metrikaCounter || null });
+    if (pathname === '/api/public-analytics' && req.method === 'GET') {
+      return json(res, 200, { metrikaCounter: config.metrikaCounter || null, consentVersion: ANALYTICS_CONSENT_VERSION });
+    }
+    if (pathname === '/api/analytics-choice') {
+      recordAnalyticsChoice(req, res).catch(() => json(res, 500, { error: 'Не удалось сохранить выбор.' }));
+      return;
+    }
     if (pathname === '/api/lead-photo') {
       handleLeadPhoto(req, res).catch(error => json(res, error.status || 500, { error: 'Фото не удалось сохранить.' }));
       return;

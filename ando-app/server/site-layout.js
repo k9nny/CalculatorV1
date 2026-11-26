@@ -191,13 +191,14 @@ ${PAGES.map((p) => `        <a href="${root}${p.slug}/">${esc(p.nav)}</a>`).join
       <div class="footer-links">
         <a href="${root}privacy.html">Политика обработки персональных данных</a>
         <a href="${root}consent.html">Согласие на обработку данных</a>
+        ${scripts ? '<button type="button" data-cookie-settings>Настройки cookies</button>' : ''}
       </div>
     </div>
   </div>
 </footer>
 ${scripts ? `<script src="${root}assets/vendor/lenis.min.js"></script>
 <script src="${root}app/card.js?v=covers-43"></script>
-<script src="${root}app/analytics.js"></script>
+<script src="${root}app/analytics.js?v=consent-1"></script>
 <script src="${root}assets/site.js?v=lead-paths-1"></script>` : ''}
 </body>
 </html>
